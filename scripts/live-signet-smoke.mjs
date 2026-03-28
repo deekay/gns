@@ -46,7 +46,7 @@ const LOCAL_RESOLVER_PORT = Number.parseInt(
 const RPC_USERNAME = process.env.GNS_SIGNET_RPC_USERNAME ?? "gnsrpc";
 let cachedRpcPassword = process.env.GNS_SIGNET_RPC_PASSWORD ?? "";
 const PUBLIC_API_BASE =
-  process.env.GNS_PUBLIC_API_BASE ?? "https://trainhappy.coach/gns/api";
+  process.env.GNS_PUBLIC_API_BASE ?? "https://globalnamesystem.org/api";
 const ESPLORA_BASE =
   process.env.GNS_SIGNET_ESPLORA_BASE ?? "https://mempool.space/signet/api";
 
@@ -202,7 +202,7 @@ async function main() {
       "--value-type",
       "2",
       "--payload-utf8",
-      `https://trainhappy.coach/gns?name=${name}`,
+      `https://globalnamesystem.org/names/${name}`,
       "--write",
       VALUE_RECORD_PATH
     ]);

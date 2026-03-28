@@ -226,7 +226,7 @@ Then restart the web service:
 systemctl restart gns-web
 ```
 
-This is useful if another app, such as `trainhappy.coach`, reverse-proxies `https://trainhappy.coach/gns` to the VPS.
+This is useful if another app reverse-proxies a path like `https://example.com/gns` to the VPS.
 
 The live public signet smoke runner publishes its latest summary to `/var/lib/gns/live-smoke-summary.json` by default, and the web app can surface that status via `/api/live-smoke-status`.
 

@@ -177,7 +177,7 @@ Important note:
 
 ## Live Public Signet Smoke Flow
 
-For the shared public demo at [https://trainhappy.coach/gns](https://trainhappy.coach/gns), use:
+For the shared public demo at [https://globalnamesystem.org](https://globalnamesystem.org), use:
 
 ```bash
 npm run test:signet-smoke
@@ -208,7 +208,7 @@ Important note:
 
 - this script does **not** bypass faucet anti-bot protection
 - if the owner address is unfunded, the script will stop at `awaiting_funds` and leave everything ready for the moment a real signet UTXO arrives
-- the public app can surface the latest published status at [https://trainhappy.coach/gns/api/live-smoke-status](https://trainhappy.coach/gns/api/live-smoke-status) once the VPS web service is deployed with `GNS_WEB_LIVE_SMOKE_STATUS_PATH=/var/lib/gns/live-smoke-summary.json`
+- the public app can surface the latest published status at [https://globalnamesystem.org/api/live-smoke-status](https://globalnamesystem.org/api/live-smoke-status) once the VPS web service is deployed with `GNS_WEB_LIVE_SMOKE_STATUS_PATH=/var/lib/gns/live-smoke-summary.json`
 
 ## Private Signet On The Existing VPS
 
@@ -448,7 +448,7 @@ npm run dev:cli -- create-claim-package codexlive2026a \
   --owner-pubkey <owner-pubkey-hex> \
   --bond-destination <funding-address> \
   --change-destination <funding-address> \
-  --write /absolute/path/to/claim-package.json
+  --write /path/to/claim-package.json
 ```
 
 Notes:

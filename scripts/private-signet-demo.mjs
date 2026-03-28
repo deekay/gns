@@ -152,7 +152,7 @@ async function main() {
       "--value-type",
       "2",
       "--payload-utf8",
-      `https://trainhappy.coach/gns-private?name=${names.value}`,
+      `https://globalnamesystem.org/names/${names.value}`,
       "--write",
       join(OUT_DIR, `${names.value}-value.json`)
     ]);

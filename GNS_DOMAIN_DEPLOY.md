@@ -11,11 +11,9 @@ Serve the Global Name System website directly from the VPS at:
 
 while preserving the existing compatibility alias at:
 
-- `https://trainhappy.coach/gns`
+- a legacy shared-host path, if you still use one
 
-The canonical path-based deployment is now:
-
-- `https://trainhappy.coach/gns`
+The dedicated domain deployment serves the app at the root path `/`.
 
 ## 1. Prepare The VPS
 
@@ -36,18 +34,13 @@ That will:
 
 ## 2. Update DNS
 
-Your domain is currently still pointed at Squarespace. In your DNS provider:
+In your DNS provider:
 
-1. remove the Squarespace apex `A` records:
-   - `198.185.159.144`
-   - `198.185.159.145`
-   - `198.49.23.144`
-   - `198.49.23.145`
-2. remove the Squarespace `www` CNAME:
-   - `ext-sq.squarespace.com`
+1. remove any old apex `A` records that still point at a previous host
+2. remove any old `www` CNAME that still points at a previous provider
 3. add a new apex `A` record:
    - host: `@`
-   - value: `146.190.130.124`
+   - value: `<your-vps-ip>`
 4. add a new `www` CNAME:
    - host: `www`
    - value: `globalnamesystem.org`
@@ -88,5 +81,5 @@ Then point DNS back to the previous provider.
 - The product branding is now `Global Name System`.
 - The protocol identifier remains `GNS`.
 - Existing protocol identifiers, JSON `kind` strings, and on-chain magic bytes remain unchanged.
-- The shared-host compatibility route remains `https://trainhappy.coach/gns`.
+- Any shared-host compatibility route is optional and deployment-specific.
 - The dedicated `globalnamesystem.org` deployment serves the app at the root path `/`.

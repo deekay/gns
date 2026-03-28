@@ -16,12 +16,12 @@ If you want to run the current prototype on your own VPS, use [VPS_SETUP.md](./V
 For live testing, the cleanest prototype loop is now:
 
 ```bash
-npm run dev:cli -- generate-live-account --network signet --write /absolute/path/to/live-account.json
+npm run dev:cli -- generate-live-account --network signet --write /path/to/live-account.json
 npm run dev:cli -- create-claim-package <name> \
   --owner-pubkey <owner-pubkey-hex> \
   --bond-destination <funding-address> \
   --change-destination <funding-address> \
-  --write /absolute/path/to/claim-package.json
+  --write /path/to/claim-package.json
 ```
 
 That gives you:
