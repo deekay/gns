@@ -216,7 +216,7 @@ When public faucet funding is unreliable, we can use a parallel private signet o
 
 If you want Sparrow to talk to that private demo chain, use the dedicated setup guide:
 
-- [SPARROW_PRIVATE_SIGNET.md](./SPARROW_PRIVATE_SIGNET.md)
+- [SPARROW_PRIVATE_SIGNET.md](../demo/SPARROW_PRIVATE_SIGNET.md)
 
 Helper commands:
 

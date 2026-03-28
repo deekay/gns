@@ -33,7 +33,7 @@ In Supabase:
 1. open the new Global Name System project
 2. go to `SQL Editor`
 3. create a new query
-4. paste the contents of [gns_documents.sql](./supabase/gns_documents.sql)
+4. paste the contents of [gns_documents.sql](../../supabase/gns_documents.sql)
 5. run it
 
 That creates:

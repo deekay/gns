@@ -210,7 +210,7 @@ npm run test:regtest-cli-suite
 
 ### Private signet demo with Sparrow
 
-- guide: [SPARROW_PRIVATE_SIGNET.md](./SPARROW_PRIVATE_SIGNET.md)
+- guide: [SPARROW_PRIVATE_SIGNET.md](./docs/demo/SPARROW_PRIVATE_SIGNET.md)
 - one-command session helper: `/path/to/gns/scripts/start-private-signet-sparrow-session.sh`
 - official Sparrow download: [https://sparrowwallet.com/download/](https://sparrowwallet.com/download/)
 
@@ -243,15 +243,17 @@ This is a TypeScript monorepo using `npm` workspaces.
 - `scripts/*sparrow*`: local Sparrow + private signet helpers
 - `scripts/*demo*` and `scripts/*suite*`: smoke, demo, and regtest integration flows
 
-## Further Documentation
+## Documentation
 
-- [ARCHITECTURE.md](./ARCHITECTURE.md): system structure, trust boundaries, and runtime modes
+Start here:
+
+- [docs/README.md](./docs/README.md): documentation index
+- [docs/core/ARCHITECTURE.md](./docs/core/ARCHITECTURE.md): system structure, trust boundaries, and runtime modes
+- [docs/core/DECISIONS.md](./docs/core/DECISIONS.md): design decisions and open tradeoffs
+- [docs/core/TESTING.md](./docs/core/TESTING.md): fixture, regtest, public signet, and private signet testing paths
 - [CONTRIBUTING.md](./CONTRIBUTING.md): local setup and contribution workflow
-- [TESTING.md](./TESTING.md): fixture, regtest, public signet, and private signet testing paths
-- [GNS_EXPLAINER.md](./GNS_EXPLAINER.md): longer-form product and protocol essay
-- [GNS-v2-draft.md](./GNS-v2-draft.md): protocol draft
-- [DECISIONS.md](./DECISIONS.md): design decisions and open tradeoffs
-- [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md): roadmap
+
+More exploratory and draft-oriented material lives under [`docs/research/`](./docs/research/).
 
 ## Status
 

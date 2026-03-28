@@ -57,13 +57,13 @@ That is fine, but it helps to be explicit in public docs about which paths are:
 
 ## Suggested Public Repo Shape
 
-If you want the repo to feel approachable on day one, the minimum recommended set is:
+If you want the repo to feel approachable on day one, the minimum recommended public-facing set is:
 
 - `README.md`
-- `ARCHITECTURE.md`
+- `docs/core/ARCHITECTURE.md`
 - `CONTRIBUTING.md`
-- `TESTING.md`
-- `SPARROW_PRIVATE_SIGNET.md`
+- `docs/core/TESTING.md`
+- `docs/demo/SPARROW_PRIVATE_SIGNET.md`
 - `LICENSE`
 - `.github/ISSUE_TEMPLATE/*`
 - `.github/PULL_REQUEST_TEMPLATE.md`

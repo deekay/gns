@@ -9,7 +9,7 @@ Use `esplora` when you want to validate the live read path without running your 
 Use `rpc` when you want the most complete and controllable write path for claim broadcast, reveal broadcast, and transfer execution.
 The prototype CLI now also accepts `--base-url <esplora-url>` for transport commands, but that public write path has not yet been exercised with a funded end-to-end claim.
 
-If you want to run the current prototype on your own VPS, use [VPS_SETUP.md](./VPS_SETUP.md).
+If you want to run the current prototype on your own VPS, use [VPS_SETUP.md](../operators/VPS_SETUP.md).
 
 ## Terminal-Only Live Flow
 
