@@ -1,6 +1,7 @@
 import { PRODUCT_NAME, REVEAL_WINDOW_BLOCKS } from "@gns/protocol";
 
 export type PageKind = "home" | "explore" | "claim" | "transfer" | "setup" | "explainer";
+const GITHUB_REPO_URL = "https://github.com/deekay/gns";
 
 export interface PageShellOptions {
   basePath: string,
@@ -207,6 +208,7 @@ function renderPrimaryNav(configuredBasePath: string, pageKind: PageKind): strin
             `<a class="site-nav-link${link.active ? " is-active" : ""}" href="${link.href}">${escapeHtml(link.label)}</a>`
         )
         .join("")}
+      <a class="site-nav-link site-nav-link-external" href="${GITHUB_REPO_URL}" target="_blank" rel="noreferrer noopener">GitHub</a>
     </div>
   </nav>`;
 }
