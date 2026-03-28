@@ -3121,7 +3121,7 @@ function renderClaimPsbtBundle(bundle) {
       <h3>Sparrow PSBT Bundle Ready</h3>
       <span class="status-pill available">signer-ready</span>
     </div>
-    <p class="field-value">These are the only files from this page that belong in Sparrow. Import the <code>.psbt</code> files there, and keep the reveal backup to resume later.</p>
+    <p class="field-value">These are the only files from this page that belong in Sparrow. Import the <code>.psbt</code> files there, and keep the reveal backup to resume later. The hosted demo should confirm pending claim transactions automatically after broadcast.</p>
     <div class="step-list resume-callout">
       <p class="step-list-label">Before You Leave This Page</p>
       <p class="field-value">Download the Reveal Backup (.json). It is the easiest way to resume the reveal step after the commit confirms.</p>
@@ -3155,9 +3155,9 @@ function renderClaimPsbtBundle(bundle) {
       <p class="step-list-label">What To Do Next</p>
       <ol>
         <li>Download and open the commit PSBT in Sparrow.</li>
-        <li>Sign and broadcast the commit transaction.</li>
-        <li>Wait for the commit to confirm, then open the reveal PSBT in Sparrow.</li>
-        <li>Sign and broadcast the reveal transaction within the ${REVEAL_WINDOW_BLOCKS}-block reveal window.</li>
+        <li>Sign and broadcast the commit transaction. This private demo should confirm it automatically within about 30 seconds.</li>
+        <li>Once the commit confirms, open the reveal PSBT in Sparrow.</li>
+        <li>Sign and broadcast the reveal transaction within the ${REVEAL_WINDOW_BLOCKS}-block reveal window. The hosted demo should confirm that automatically too.</li>
       </ol>
     </div>
     <details class="step-list detail-technical">
@@ -3300,7 +3300,7 @@ function renderPrivateFundingResult(result) {
         <li>Keep using that same wallet when you build the claim transaction.</li>
         <li>Copy a fresh receive address from Sparrow into Bond Destination so the bond output is easy to distinguish from the funding UTXO.</li>
         <li>Optionally paste a dedicated change address too, or let the wallet choose one.</li>
-        <li>Continue with the claim draft below and save the generated demo owner key before you leave the page.</li>
+        <li>Continue with the claim draft below and save the generated demo owner key before you leave the page. Later claim transactions on this hosted demo will confirm automatically after you broadcast them.</li>
       </ol>
     </div>
   \`;
@@ -3422,7 +3422,8 @@ function buildClaimEssentialsText(draft) {
     "2. Add the exact commit OP_RETURN payload above to the commit transaction.",
     "3. Fund fees separately so the bond output does not shrink below the required bond.",
     "4. Broadcast the commit, then paste the final commit txid back into the claim page.",
-    "5. After confirmation, build and broadcast the reveal within the ${REVEAL_WINDOW_BLOCKS}-block reveal window."
+    "5. On the hosted private demo, the commit should confirm automatically soon after broadcast.",
+    "6. After confirmation, build and broadcast the reveal within the ${REVEAL_WINDOW_BLOCKS}-block reveal window."
   );
 
   return lines.join("\\n");

@@ -210,6 +210,14 @@ echo "${TXID}"
 SCRIPT
 chmod 755 /usr/local/bin/gns-private-signet-fund
 
+install -m 755 /opt/gns/app/scripts/private-signet-auto-mine.sh /usr/local/bin/gns-private-signet-auto-mine
+
+cat >/etc/default/gns-private-signet-auto-mine <<'ENVFILE'
+GNS_PRIVATE_SIGNET_AUTO_MINE_INTERVAL_SECONDS=30
+ENVFILE
+chown root:root /etc/default/gns-private-signet-auto-mine
+chmod 644 /etc/default/gns-private-signet-auto-mine
+
 cat >/etc/systemd/system/bitcoind-private-signet.service <<'SERVICE'
 [Unit]
 Description=Bitcoin Core daemon (private signet)
@@ -229,6 +237,27 @@ RuntimeDirectory=bitcoind-private-signet
 RuntimeDirectoryMode=0750
 PrivateTmp=true
 NoNewPrivileges=true
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
+SERVICE
+
+cat >/etc/systemd/system/gns-private-signet-auto-mine.service <<'SERVICE'
+[Unit]
+Description=Global Name System private signet auto-miner
+After=bitcoind-private-signet.service
+Requires=bitcoind-private-signet.service
+
+[Service]
+User=bitcoin
+Group=bitcoin
+EnvironmentFile=-/etc/default/gns-private-signet-auto-mine
+ExecStart=/usr/local/bin/gns-private-signet-auto-mine
+Restart=always
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
 LimitNOFILE=65536
 
 [Install]
@@ -328,6 +357,7 @@ if [[ "$CURRENT_BLOCKS" -lt "${BOOTSTRAP_BLOCKS}" ]]; then
 fi
 
 su -s /bin/bash gns -c 'cd /opt/gns/app && npm ci --no-audit --no-fund'
+systemctl enable --now gns-private-signet-auto-mine.service
 systemctl enable --now gns-private-resolver.service
 systemctl enable --now gns-private-web.service
 
@@ -364,6 +394,9 @@ systemctl --no-pager --full status gns-private-resolver.service | sed -n '1,30p'
 echo
 echo "[private web service]"
 systemctl --no-pager --full status gns-private-web.service | sed -n '1,30p'
+echo
+echo "[private auto-miner service]"
+systemctl --no-pager --full status gns-private-signet-auto-mine.service | sed -n '1,30p'
 EOF
 
 echo

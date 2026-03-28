@@ -104,6 +104,41 @@ install -d /opt/gns/app
 rsync -a --delete "${RELEASE_DIR}/" /opt/gns/app/
 chown -R gns:gns /opt/gns/app
 su -s /bin/bash gns -c 'cd /opt/gns/app && npm ci --no-audit --no-fund'
+
+if [[ -f /etc/bitcoin-private-signet.conf ]]; then
+  install -m 755 /opt/gns/app/scripts/private-signet-auto-mine.sh /usr/local/bin/gns-private-signet-auto-mine
+  cat >/etc/default/gns-private-signet-auto-mine <<'ENVFILE'
+GNS_PRIVATE_SIGNET_AUTO_MINE_INTERVAL_SECONDS=30
+ENVFILE
+  chown root:root /etc/default/gns-private-signet-auto-mine
+  chmod 644 /etc/default/gns-private-signet-auto-mine
+
+  cat >/etc/systemd/system/gns-private-signet-auto-mine.service <<'SERVICE'
+[Unit]
+Description=Global Name System private signet auto-miner
+After=bitcoind-private-signet.service
+Requires=bitcoind-private-signet.service
+
+[Service]
+User=bitcoin
+Group=bitcoin
+EnvironmentFile=-/etc/default/gns-private-signet-auto-mine
+ExecStart=/usr/local/bin/gns-private-signet-auto-mine
+Restart=always
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
+SERVICE
+
+  systemctl daemon-reload
+  systemctl enable --now gns-private-signet-auto-mine.service
+  systemctl restart gns-private-signet-auto-mine.service
+fi
+
 systemctl restart gns-private-resolver.service gns-private-web.service
 
 WEB_PORT=$(env_value GNS_WEB_PORT /etc/gns/gns-private.env)

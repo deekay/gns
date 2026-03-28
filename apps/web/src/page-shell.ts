@@ -43,7 +43,7 @@ export function renderPageHtml(options: PageShellOptions): string {
       : pageKind === "transfer"
         ? "Prepare a Global Name System transfer handoff, then finish the gift or sale flow in the CLI and your signer."
         : pageKind === "setup"
-          ? "Set up Sparrow, the local helper, and demo funding for the Global Name System private signet flow."
+          ? "Set up Sparrow, the local helper, demo funding, and automatic confirmations for the Global Name System private signet flow."
         : pageKind === "explainer"
           ? "Quick orientation for using the hosted Global Name System tools."
         : "Explorer for browsing claimed names and resolver status in Global Name System.";
@@ -139,7 +139,7 @@ function renderHeroSection(
         <p class="eyebrow"><a class="eyebrow-link" href="${withBasePath("/", configuredBasePath)}">Global Name System</a> · ${escapeHtml(configuredNetworkLabel)}</p>
         <h1>Set Up Your Wallet</h1>
         <p class="lede">
-          Sparrow, the local helper, and demo coins for the private signet flow.
+          Sparrow, the local helper, demo coins, and automatic confirmations for the private signet flow.
         </p>
       </div>
     </header>`;
@@ -729,13 +729,13 @@ function renderClaimPrepSection(): string {
             <span class="claim-step-badge">Step 3</span>
             <div class="wizard-step-copy">
               <h3>Build Sparrow PSBTs</h3>
-              <p>Only the <code>.psbt</code> files from this step belong in Sparrow. Save the Reveal Backup if you may finish the reveal later.</p>
+              <p>Only the <code>.psbt</code> files from this step belong in Sparrow. Save the Reveal Backup if you may finish the reveal later. The hosted demo confirms pending claim transactions automatically after broadcast.</p>
             </div>
           </div>
           <span id="claimStepPsbtsState" class="summary-chip wizard-step-state">After step 2</span>
         </summary>
         <div class="wizard-step-body">
-        <p class="field-note">Paste the account metadata from Sparrow and the site will generate ready-to-sign commit and reveal PSBTs for this private signet demo. For higher-value bonds, use the offline architect instead.</p>
+        <p class="field-note">Paste the account metadata from Sparrow and the site will generate ready-to-sign commit and reveal PSBTs for this private signet demo. After you broadcast the commit, the hosted demo should confirm it automatically, then you can broadcast the reveal. For higher-value bonds, use the offline architect instead.</p>
         <div class="draft-grid">
           <label class="draft-field">
             <span class="field-label">Master Fingerprint</span>
@@ -861,7 +861,7 @@ function renderSetupStartSection(configuredBasePath: string): string {
       </article>
       <article class="guide-card">
         <h3>Then Claim</h3>
-        <p>Copy a receive address, get demo coins if you need them, and return to claim prep when the wallet is ready.</p>
+        <p>Copy a receive address, get demo coins if you need them, and return to claim prep when the wallet is ready. After you broadcast claim transactions, this hosted demo mines them automatically.</p>
       </article>
     </div>
     <div class="hero-cta-row section-cta-row">
@@ -884,7 +884,7 @@ function renderSetupFundingSection(privateSignetFundingAmountSats: bigint): stri
       </article>
       <article class="guide-card">
         <h3>What You Receive</h3>
-        <p>${formatBitcoinDisplay(privateSignetFundingAmountSats)} per request, with one block mined immediately so the wallet sees a confirmed balance.</p>
+        <p>${formatBitcoinDisplay(privateSignetFundingAmountSats)} per request, with one block mined immediately so the wallet sees a confirmed balance. Later claim transactions on this hosted demo also confirm automatically after broadcast.</p>
       </article>
     </div>
     <form id="privateFundingForm" class="claim-draft-form">
