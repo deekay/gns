@@ -1,5 +1,8 @@
 import { PRODUCT_NAME, PROTOCOL_NAME } from "@gns/protocol";
 
+const HOSTED_SITE_URL = "https://globalnamesystem.org";
+const GITHUB_REPO_URL = "https://github.com/deekay/gns";
+
 export function renderOfflineClaimPageHtml(scriptBody: string): string {
   const safeScriptBody = scriptBody.replaceAll("</script>", "<\\/script>");
 
@@ -70,6 +73,15 @@ export function renderOfflineClaimPageHtml(scriptBody: string): string {
         letter-spacing: 0.12em;
       }
 
+      .eyebrow a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      .eyebrow a:hover {
+        text-decoration: underline;
+      }
+
       h1 {
         margin: 0;
         font-size: clamp(2.2rem, 4vw, 3.4rem);
@@ -93,6 +105,13 @@ export function renderOfflineClaimPageHtml(scriptBody: string): string {
       .hero-grid {
         margin-top: 20px;
         grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      }
+
+      .hero-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 18px;
       }
 
       .hero-card,
@@ -176,6 +195,16 @@ export function renderOfflineClaimPageHtml(scriptBody: string): string {
         font-weight: 700;
         cursor: pointer;
         text-decoration: none;
+      }
+
+      .text-link {
+        color: var(--accent);
+        text-decoration: none;
+        font-weight: 700;
+      }
+
+      .text-link:hover {
+        text-decoration: underline;
       }
 
       button.secondary,
@@ -275,11 +304,16 @@ export function renderOfflineClaimPageHtml(scriptBody: string): string {
   <body>
     <div class="page">
       <section class="hero">
-        <p class="eyebrow">${escapeHtml(PROTOCOL_NAME)} · Offline Architect</p>
+        <p class="eyebrow"><a href="${HOSTED_SITE_URL}" target="_blank" rel="noreferrer noopener">${escapeHtml(PROTOCOL_NAME)}</a> · Offline Architect</p>
         <h1>Build Claim PSBTs Offline</h1>
         <p class="lede">
           This single-file tool prepares Global Name System claim artifacts entirely in your browser. Paste the wallet metadata and UTXOs you already trust, then carry the resulting PSBTs into Sparrow for signing.
         </p>
+        <div class="hero-links">
+          <a class="text-link" href="${HOSTED_SITE_URL}" target="_blank" rel="noreferrer noopener">Return to main site</a>
+          <a class="text-link" href="${HOSTED_SITE_URL}/claim" target="_blank" rel="noreferrer noopener">Open hosted claim tool</a>
+          <a class="text-link" href="${GITHUB_REPO_URL}" target="_blank" rel="noreferrer noopener">GitHub docs</a>
+        </div>
         <div class="hero-grid">
           <article class="hero-card">
             <h2>What This Does</h2>
