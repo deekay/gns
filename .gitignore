@@ -1,0 +1,22 @@
+node_modules
+dist
+.next
+.data
+.DS_Store
+.env
+.env.local
+coverage
+*.log
+COMMERCIAL_IDEAS.md
+
+# Private strategy and outreach materials
+private/
+PRIVATE/
+*INFLUENCER*LIST*
+*CREATOR*LIST*
+*LEAD*LIST*
+*PARTNER*LIST*
+*OUTREACH*LIST*
+*COMMERCIAL*IDEAS*
+*GO_TO_MARKET*
+*MARKETING_PLAN*

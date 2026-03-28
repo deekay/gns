@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "skipLibCheck": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "baseUrl": ".",
+    "paths": {
+      "@gns/architect": ["packages/architect/src/index.ts"],
+      "@gns/bitcoin": ["packages/bitcoin/src/index.ts"],
+      "@gns/core": ["packages/core/src/index.ts"],
+      "@gns/db": ["packages/db/src/index.ts"],
+      "@gns/protocol": ["packages/protocol/src/index.ts"]
+    }
+  }
+}

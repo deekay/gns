@@ -1,0 +1,16 @@
+{
+  "name": "@gns/indexer",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsx src/index.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@gns/core": "file:../../packages/core",
+    "@gns/db": "file:../../packages/db",
+    "@gns/protocol": "file:../../packages/protocol"
+  }
+}

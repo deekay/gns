@@ -1,0 +1,43 @@
+{
+  "name": "gns",
+  "version": "0.0.0",
+  "private": true,
+  "packageManager": "npm@11.6.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "check": "npm run test",
+    "bootstrap:vps": "bash ./scripts/bootstrap-vps.sh",
+    "bootstrap:gns-domain:vps": "bash ./scripts/bootstrap-gns-domain.sh",
+    "bootstrap:private-signet:vps": "bash ./scripts/bootstrap-private-signet-vps.sh",
+    "dev:all": "concurrently -k -n resolver,web -c auto \"npm run dev:resolver\" \"npm run dev:web\"",
+    "dev:cli": "npm run dev -w @gns/cli --",
+    "dev:indexer": "npm run dev -w @gns/indexer",
+    "dev:resolver": "npm run dev -w @gns/resolver",
+    "dev:web": "npm run dev -w @gns/web",
+    "deploy:vps": "bash ./scripts/deploy-vps.sh",
+    "deploy:private-signet:vps": "bash ./scripts/deploy-private-signet-vps.sh",
+    "sparrow:private-signet:config": "bash ./scripts/print-private-signet-sparrow-config.sh",
+    "sparrow:private-signet:configure": "bash ./scripts/configure-sparrow-private-signet.sh",
+    "sparrow:private-signet:start": "bash ./scripts/start-private-signet-sparrow-session.sh",
+    "sparrow:private-signet:tunnel": "bash ./scripts/open-private-signet-sparrow-tunnel.sh",
+    "reset:private-signet-demo": "bash ./scripts/reset-private-signet-demo.sh",
+    "test:signet-smoke": "node ./scripts/live-signet-smoke.mjs",
+    "test:private-signet-demo": "node ./scripts/private-signet-demo.mjs",
+    "test:regtest-cli-suite": "node ./scripts/regtest-cli-suite.mjs",
+    "test": "npm run build && npm run test:workspaces",
+    "test:smoke-fixture": "node ./scripts/smoke-fixture.mjs",
+    "test:workspaces": "npm run test --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.0",
+    "concurrently": "^9.2.1",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "name": "@gns/cli",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "gns": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsx src/index.ts",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@gns/architect": "file:../../packages/architect",
+    "@gns/bitcoin": "file:../../packages/bitcoin",
+    "@gns/core": "file:../../packages/core",
+    "@gns/protocol": "file:../../packages/protocol",
+    "bip32": "^5.0.1",
+    "bitcoinjs-lib": "^7.0.1",
+    "ecpair": "^3.0.1",
+    "tiny-secp256k1": "^2.2.4"
+  }
+}

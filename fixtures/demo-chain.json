@@ -1,0 +1,40 @@
+{
+  "blocks": [
+    {
+      "hash": "0000000000000000000000000000000000000000000000000000000000000001",
+      "height": 100,
+      "transactions": [
+        {
+          "txid": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "outputs": [
+            {
+              "valueSats": "6250000",
+              "scriptType": "payment"
+            },
+            {
+              "valueSats": "0",
+              "scriptType": "op_return",
+              "dataHex": "474e530101001111111111111111111111111111111111111111111111111111111111111111f09c1bbeb9e322d4cf88437e1d59bb5cad1b1d23fd85e0bf3c2a271d75838f29"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "hash": "0000000000000000000000000000000000000000000000000000000000000002",
+      "height": 101,
+      "transactions": [
+        {
+          "txid": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "outputs": [
+            {
+              "valueSats": "0",
+              "scriptType": "op_return",
+              "dataHex": "474e530102aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa000000000000002a05616c696365"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,906 @@
+import { createServer } from "node:http";
+import { fileURLToPath } from "node:url";
+import { resolve } from "node:path";
+import { dirname } from "node:path";
+
+import {
+  assertBitcoinRpcChain,
+  type BitcoinRpcBlockchainInfo,
+  type BitcoinRpcChain,
+  BitcoinEsploraBlockPoller,
+  BitcoinRpcBlockPoller,
+  findBitcoinEsploraMatchingCheckpoint,
+  findBitcoinRpcMatchingCheckpoint,
+  type BitcoinRpcSyncStatus,
+  createBitcoinEsploraConfig,
+  createBitcoinRpcConfig,
+  isBitcoinEsploraHeadCurrent,
+  isBitcoinRpcHeadCurrent,
+  loadBitcoinBlocksFromSource
+} from "@gns/bitcoin";
+import { InMemoryGnsIndexer } from "@gns/core";
+import {
+  createDatabaseConfig,
+  ensureDatabaseSchema,
+  loadIndexerSnapshotDatabase,
+  loadIndexerSnapshotFile,
+  saveIndexerSnapshotDatabase,
+  saveIndexerSnapshotFile,
+  type DatabaseConfig
+} from "@gns/db";
+import {
+  getBondSats,
+  getEpochIndex,
+  getMaturityBlocks,
+  getMaturityHeight,
+  normalizeName,
+  parseSignedValueRecord,
+  PRODUCT_NAME,
+  PROTOCOL_NAME,
+  REVEAL_WINDOW_BLOCKS,
+  type SignedValueRecord,
+  verifyValueRecord
+} from "@gns/protocol";
+import {
+  loadValueRecordStoreDatabase,
+  loadValueRecordStoreFile,
+  saveValueRecordStoreDatabase,
+  saveValueRecordStoreFile
+} from "./value-store.js";
+
+const port = parsePort(
+  process.env.GNS_RESOLVER_PORT ?? "8787",
+  "GNS_RESOLVER_PORT"
+);
+const defaultPollIntervalMs = Number.parseInt(
+  process.env.GNS_RPC_POLL_INTERVAL_MS ?? "10000",
+  10
+);
+const currentDir = dirname(fileURLToPath(import.meta.url));
+void main();
+
+async function main(): Promise<void> {
+  const sourceMode = parseSourceMode(process.env.GNS_SOURCE_MODE);
+  const fixturePath =
+    (process.env.GNS_FIXTURE_PATH) === undefined
+      ? resolve(currentDir, "../../../fixtures/demo-chain.json")
+      : resolve(process.cwd(), process.env.GNS_FIXTURE_PATH ?? "");
+  const launchHeight = parseOptionalInteger(process.env.GNS_LAUNCH_HEIGHT);
+  const endHeight = parseOptionalInteger(process.env.GNS_RPC_END_HEIGHT);
+  const expectedChain = parseExpectedChain(process.env.GNS_EXPECT_CHAIN ?? "signet");
+  const snapshotPath =
+    (process.env.GNS_SNAPSHOT_PATH) === undefined
+      ? resolve(process.cwd(), ".data/resolver-snapshot.json")
+      : resolve(process.cwd(), process.env.GNS_SNAPSHOT_PATH ?? "");
+  const valueStorePath =
+    (process.env.GNS_VALUE_STORE_PATH) === undefined
+      ? resolve(process.cwd(), ".data/value-records.json")
+      : resolve(process.cwd(), process.env.GNS_VALUE_STORE_PATH ?? "");
+  const database = resolveDatabaseConfig();
+  const snapshotDocumentKey = process.env.GNS_SNAPSHOT_KEY?.trim() || "resolver";
+  const valueStoreDocumentKey = process.env.GNS_VALUE_STORE_KEY?.trim() || "resolver";
+  const configuredRpcUrl = resolveConfiguredEndpoint(
+    process.env.GNS_BITCOIN_RPC_URL,
+    "GNS_BITCOIN_RPC_URL"
+  );
+  const configuredEsploraBaseUrl = resolveConfiguredEndpoint(
+    process.env.GNS_ESPLORA_BASE_URL,
+    "GNS_ESPLORA_BASE_URL"
+  );
+  const rpc =
+    sourceMode === "fixture" || sourceMode === "esplora" || configuredRpcUrl === undefined
+      ? undefined
+      : createBitcoinRpcConfig(
+        configuredRpcUrl,
+          process.env.GNS_BITCOIN_RPC_USERNAME,
+          process.env.GNS_BITCOIN_RPC_PASSWORD
+        );
+  const esplora =
+    sourceMode === "fixture" || sourceMode === "rpc" || configuredEsploraBaseUrl === undefined
+      ? undefined
+      : createBitcoinEsploraConfig(configuredEsploraBaseUrl);
+
+  if (sourceMode === "rpc" && rpc === undefined) {
+    throw new Error(
+      "GNS_SOURCE_MODE=rpc requires a real GNS_BITCOIN_RPC_URL"
+    );
+  }
+
+  if (sourceMode === "esplora" && esplora === undefined) {
+    throw new Error(
+      "GNS_SOURCE_MODE=esplora requires a real GNS_ESPLORA_BASE_URL"
+    );
+  }
+
+  if (database !== null) {
+    await ensureDatabaseSchema(database);
+  }
+
+  let restoredFromSnapshot = false;
+  let indexer: InMemoryGnsIndexer;
+  const valueRecords =
+    database === null
+      ? await loadValueRecordStoreFile(valueStorePath)
+      : await loadValueRecordStoreDatabase(database, valueStoreDocumentKey);
+  let source: "fixture" | "rpc" | "esplora";
+  let descriptor: string;
+  let syncMode: "fixture" | "rpc-oneshot" | "rpc-polling" | "esplora-oneshot" | "esplora-polling";
+  let rpcStatus: BitcoinRpcSyncStatus | null = null;
+  let rpcChainInfo: BitcoinRpcBlockchainInfo | null = null;
+
+  if (rpc !== undefined) {
+    source = "rpc";
+    descriptor = rpc.url;
+    rpcChainInfo = await assertBitcoinRpcChain(rpc, expectedChain);
+
+    try {
+      indexer = InMemoryGnsIndexer.fromSnapshot(await loadSnapshot(database, snapshotPath, snapshotDocumentKey));
+      restoredFromSnapshot = true;
+    } catch {
+      if (launchHeight === undefined) {
+        throw new Error(
+          "GNS_LAUNCH_HEIGHT is required for rpc mode when no snapshot is available"
+        );
+      }
+
+      indexer = new InMemoryGnsIndexer({ launchHeight });
+    }
+
+    if (
+      restoredFromSnapshot &&
+      !(await isBitcoinRpcHeadCurrent(
+        rpc,
+        indexer.getStats().currentHeight,
+        indexer.getStats().currentBlockHash
+      ))
+    ) {
+      const matchingCheckpoint = await findBitcoinRpcMatchingCheckpoint(rpc, indexer.listRecentCheckpoints());
+
+      if (matchingCheckpoint !== null) {
+        restoredFromSnapshot = true;
+        indexer.restoreRecentCheckpoint(matchingCheckpoint.height, matchingCheckpoint.hash);
+      } else {
+        if (launchHeight === undefined) {
+          throw new Error(
+            "GNS_LAUNCH_HEIGHT is required to rebuild after a reorg mismatch"
+          );
+        }
+
+        restoredFromSnapshot = false;
+        indexer = new InMemoryGnsIndexer({ launchHeight });
+      }
+    }
+
+    syncMode = Number.isFinite(defaultPollIntervalMs) && defaultPollIntervalMs > 0 ? "rpc-polling" : "rpc-oneshot";
+
+    const startHeight = (indexer.getStats().currentHeight ?? indexer.getLaunchHeight() - 1) + 1;
+    const poller = new BitcoinRpcBlockPoller({
+      rpc,
+      launchHeight: startHeight
+    });
+
+    const initialBlocks = await poller.bootstrap(endHeight);
+    if (initialBlocks.length > 0) {
+      indexer.ingestBlocks(initialBlocks);
+    }
+    rpcStatus = poller.getStatus();
+    await saveSnapshot(database, snapshotPath, snapshotDocumentKey, indexer);
+
+    if (syncMode === "rpc-polling") {
+      let syncInFlight = false;
+      const pollOnce = async (): Promise<void> => {
+        if (syncInFlight) {
+          return;
+        }
+
+        syncInFlight = true;
+
+        try {
+          if (
+            !(await isBitcoinRpcHeadCurrent(
+              rpc,
+              indexer.getStats().currentHeight,
+              indexer.getStats().currentBlockHash
+            ))
+          ) {
+            const matchingCheckpoint = await findBitcoinRpcMatchingCheckpoint(rpc, indexer.listRecentCheckpoints());
+
+            if (matchingCheckpoint !== null && indexer.restoreRecentCheckpoint(matchingCheckpoint.height, matchingCheckpoint.hash)) {
+              const checkpointPoller = new BitcoinRpcBlockPoller({
+                rpc,
+                launchHeight: matchingCheckpoint.height + 1
+              });
+              const replayedBlocks = await checkpointPoller.bootstrap(endHeight);
+              indexer.ingestBlocks(replayedBlocks);
+              rpcStatus = checkpointPoller.getStatus();
+              await saveSnapshot(database, snapshotPath, snapshotDocumentKey, indexer);
+              return;
+            }
+
+            indexer = new InMemoryGnsIndexer({ launchHeight: indexer.getLaunchHeight() });
+            const rebuildPoller = new BitcoinRpcBlockPoller({
+              rpc,
+              launchHeight: indexer.getLaunchHeight()
+            });
+            const rebuiltBlocks = await rebuildPoller.bootstrap(endHeight);
+            indexer.ingestBlocks(rebuiltBlocks);
+            rpcStatus = rebuildPoller.getStatus();
+            await saveSnapshot(database, snapshotPath, snapshotDocumentKey, indexer);
+            return;
+          }
+
+          const newBlocks = await poller.poll(endHeight);
+          if (newBlocks.length > 0) {
+            indexer.ingestBlocks(newBlocks);
+            await saveSnapshot(database, snapshotPath, snapshotDocumentKey, indexer);
+          }
+          rpcStatus = poller.getStatus();
+        } catch (error) {
+          console.error(`${PRODUCT_NAME} resolver RPC poll failed:`, error);
+        } finally {
+          syncInFlight = false;
+        }
+      };
+
+      setInterval(() => {
+        void pollOnce();
+      }, defaultPollIntervalMs);
+    }
+  } else if (esplora !== undefined) {
+    source = "esplora";
+    descriptor = esplora.baseUrl;
+
+    try {
+      indexer = InMemoryGnsIndexer.fromSnapshot(await loadSnapshot(database, snapshotPath, snapshotDocumentKey));
+      restoredFromSnapshot = true;
+    } catch {
+      if (launchHeight === undefined) {
+        throw new Error(
+          "GNS_LAUNCH_HEIGHT is required for esplora mode when no snapshot is available"
+        );
+      }
+
+      indexer = new InMemoryGnsIndexer({ launchHeight });
+    }
+
+    if (
+      restoredFromSnapshot &&
+      !(await isBitcoinEsploraHeadCurrent(
+        esplora,
+        indexer.getStats().currentHeight,
+        indexer.getStats().currentBlockHash
+      ))
+    ) {
+      const matchingCheckpoint = await findBitcoinEsploraMatchingCheckpoint(
+        esplora,
+        indexer.listRecentCheckpoints()
+      );
+
+      if (matchingCheckpoint !== null) {
+        restoredFromSnapshot = true;
+        indexer.restoreRecentCheckpoint(matchingCheckpoint.height, matchingCheckpoint.hash);
+      } else {
+        if (launchHeight === undefined) {
+          throw new Error(
+            "GNS_LAUNCH_HEIGHT is required to rebuild after an esplora reorg mismatch"
+          );
+        }
+
+        restoredFromSnapshot = false;
+        indexer = new InMemoryGnsIndexer({ launchHeight });
+      }
+    }
+
+    syncMode =
+      Number.isFinite(defaultPollIntervalMs) && defaultPollIntervalMs > 0
+        ? "esplora-polling"
+        : "esplora-oneshot";
+
+    const startHeight = (indexer.getStats().currentHeight ?? indexer.getLaunchHeight() - 1) + 1;
+    const poller = new BitcoinEsploraBlockPoller({
+      esplora,
+      launchHeight: startHeight
+    });
+
+    const initialBlocks = await poller.bootstrap(endHeight);
+    if (initialBlocks.length > 0) {
+      indexer.ingestBlocks(initialBlocks);
+    }
+    rpcStatus = poller.getStatus();
+    await saveSnapshot(database, snapshotPath, snapshotDocumentKey, indexer);
+
+    if (syncMode === "esplora-polling") {
+      let syncInFlight = false;
+      const pollOnce = async (): Promise<void> => {
+        if (syncInFlight) {
+          return;
+        }
+
+        syncInFlight = true;
+
+        try {
+          if (
+            !(await isBitcoinEsploraHeadCurrent(
+              esplora,
+              indexer.getStats().currentHeight,
+              indexer.getStats().currentBlockHash
+            ))
+          ) {
+            const matchingCheckpoint = await findBitcoinEsploraMatchingCheckpoint(
+              esplora,
+              indexer.listRecentCheckpoints()
+            );
+
+            if (matchingCheckpoint !== null && indexer.restoreRecentCheckpoint(matchingCheckpoint.height, matchingCheckpoint.hash)) {
+              const checkpointPoller = new BitcoinEsploraBlockPoller({
+                esplora,
+                launchHeight: matchingCheckpoint.height + 1
+              });
+              const replayedBlocks = await checkpointPoller.bootstrap(endHeight);
+              indexer.ingestBlocks(replayedBlocks);
+              rpcStatus = checkpointPoller.getStatus();
+              await saveSnapshot(database, snapshotPath, snapshotDocumentKey, indexer);
+              return;
+            }
+
+            indexer = new InMemoryGnsIndexer({ launchHeight: indexer.getLaunchHeight() });
+            const rebuildPoller = new BitcoinEsploraBlockPoller({
+              esplora,
+              launchHeight: indexer.getLaunchHeight()
+            });
+            const rebuiltBlocks = await rebuildPoller.bootstrap(endHeight);
+            indexer.ingestBlocks(rebuiltBlocks);
+            rpcStatus = rebuildPoller.getStatus();
+            await saveSnapshot(database, snapshotPath, snapshotDocumentKey, indexer);
+            return;
+          }
+
+          const newBlocks = await poller.poll(endHeight);
+          if (newBlocks.length > 0) {
+            indexer.ingestBlocks(newBlocks);
+            await saveSnapshot(database, snapshotPath, snapshotDocumentKey, indexer);
+          }
+          rpcStatus = poller.getStatus();
+        } catch (error) {
+          console.error(`${PRODUCT_NAME} resolver Esplora poll failed:`, error);
+        } finally {
+          syncInFlight = false;
+        }
+      };
+
+      setInterval(() => {
+        void pollOnce();
+      }, defaultPollIntervalMs);
+    }
+  } else {
+    const loaded = await loadBitcoinBlocksFromSource({
+      fixturePath,
+      ...(esplora === undefined ? {} : { esplora }),
+      ...(launchHeight === undefined ? {} : { launchHeight }),
+      ...(endHeight === undefined ? {} : { endHeight })
+    });
+
+    source = loaded.source;
+    descriptor = loaded.descriptor;
+    syncMode = "fixture";
+    indexer = new InMemoryGnsIndexer({ launchHeight: loaded.launchHeight });
+    indexer.ingestBlocks(loaded.blocks);
+  }
+
+  const server = createServer((request, response) => {
+    void handleRequest(request, response);
+  });
+
+  async function handleRequest(
+    request: import("node:http").IncomingMessage,
+    response: import("node:http").ServerResponse
+  ): Promise<void> {
+    const method = request.method ?? "GET";
+    const url = new URL(request.url ?? "/", `http://${request.headers.host ?? "localhost"}`);
+
+    if (method === "POST" && url.pathname === "/values") {
+      try {
+        const parsedRecord = parseSignedValueRecord(await readJsonBody(request));
+
+        if (!verifyValueRecord(parsedRecord)) {
+          return writeJson(response, 400, {
+            error: "invalid_signature",
+            message: "Value record signature did not verify."
+          });
+        }
+
+        const currentNameRecord = indexer.getName(parsedRecord.name);
+
+        if (currentNameRecord === null || currentNameRecord.status === "invalid") {
+          return writeJson(response, 404, {
+            error: "name_not_found",
+            message: "Cannot publish a value for an unclaimed or invalid name.",
+            name: parsedRecord.name
+          });
+        }
+
+        if (currentNameRecord.currentOwnerPubkey !== parsedRecord.ownerPubkey) {
+          return writeJson(response, 409, {
+            error: "owner_mismatch",
+            message: "Value record owner pubkey does not match the resolver's current owner.",
+            name: parsedRecord.name,
+            currentOwnerPubkey: currentNameRecord.currentOwnerPubkey
+          });
+        }
+
+        const existingRecord = getCurrentValueRecord(valueRecords, indexer, parsedRecord.name);
+        if (existingRecord !== null && parsedRecord.sequence <= existingRecord.sequence) {
+          return writeJson(response, 409, {
+            error: "stale_sequence",
+            message: "Value record sequence must increase relative to the current owner-visible record.",
+            name: parsedRecord.name,
+            currentSequence: existingRecord.sequence
+          });
+        }
+
+        valueRecords.set(parsedRecord.name, parsedRecord);
+        if (database === null) {
+          await saveValueRecordStoreFile(valueStorePath, valueRecords);
+        } else {
+          await saveValueRecordStoreDatabase(database, valueStoreDocumentKey, valueRecords);
+        }
+
+        return writeJson(response, 201, {
+          ok: true,
+          name: parsedRecord.name,
+          sequence: parsedRecord.sequence,
+          valueType: parsedRecord.valueType,
+          valueStorePath
+        });
+      } catch (error) {
+        return writeJson(response, 400, {
+          error: "invalid_value_record",
+          message: error instanceof Error ? error.message : "Invalid value record"
+        });
+      }
+    }
+
+    if (method !== "GET") {
+      return writeJson(response, 405, {
+        error: "method_not_allowed",
+        message: "Only GET and POST /values are supported in the prototype resolver."
+      });
+    }
+
+    if (url.pathname === "/health") {
+      return writeJson(response, 200, {
+        ok: true,
+        product: PRODUCT_NAME,
+        protocol: PROTOCOL_NAME,
+        syncMode,
+        source,
+        descriptor,
+        restoredFromSnapshot,
+        snapshotPath:
+          rpc === undefined && esplora === undefined
+            ? null
+            : database === null
+              ? snapshotPath
+              : `${database.schema}:indexer_snapshot/${snapshotDocumentKey}`,
+        expectedChain: rpc === undefined && esplora === undefined ? null : expectedChain,
+        rpcChainInfo,
+        rpcStatus,
+        valueRecordsTracked: valueRecords.size,
+        valueStorePath:
+          database === null ? valueStorePath : `${database.schema}:value_record_store/${valueStoreDocumentKey}`,
+        stats: indexer.getStats()
+      });
+    }
+
+    if (url.pathname === "/stats") {
+      return writeJson(response, 200, indexer.getStats());
+    }
+
+    if (url.pathname === "/names") {
+      return writeJson(response, 200, {
+        names: indexer.listNames()
+      });
+    }
+
+    if (url.pathname === "/pending-commits") {
+      return writeJson(response, 200, {
+        pendingCommits: indexer.listPendingCommits()
+      });
+    }
+
+    if (url.pathname === "/activity") {
+      try {
+        const requestedLimit = url.searchParams.get("limit");
+        const limit = requestedLimit === null ? 12 : parseNonNegativeInteger(requestedLimit, "limit");
+
+        return writeJson(response, 200, {
+          activity: indexer.listRecentActivity(limit)
+        });
+      } catch (error) {
+        return writeJson(response, 400, {
+          error: "invalid_limit",
+          message: error instanceof Error ? error.message : "Invalid activity limit"
+        });
+      }
+    }
+
+    if (url.pathname.startsWith("/tx/")) {
+      const requestedTxid = decodeURIComponent(url.pathname.slice("/tx/".length)).trim().toLowerCase();
+
+      if (!/^[0-9a-f]{64}$/.test(requestedTxid)) {
+        return writeJson(response, 400, {
+          error: "invalid_txid",
+          message: "Transaction ids must be 64 lowercase or uppercase hex characters."
+        });
+      }
+
+      const record = indexer.getTransactionProvenance(requestedTxid);
+
+      if (record === null) {
+        return writeJson(response, 404, {
+          error: "tx_not_found",
+          txid: requestedTxid
+        });
+      }
+
+      return writeJson(response, 200, record);
+    }
+
+    if (url.pathname.startsWith("/claim-plan/")) {
+      const requested = decodeURIComponent(url.pathname.slice("/claim-plan/".length));
+
+      try {
+        const normalized = normalizeName(requested);
+        return writeJson(response, 200, buildClaimPlan(indexer, normalized));
+      } catch (error) {
+        return writeJson(response, 400, {
+          error: "invalid_name",
+          message: error instanceof Error ? error.message : "Invalid name"
+        });
+      }
+    }
+
+    if (url.pathname.startsWith("/name/")) {
+      const activityPathMatch = url.pathname.match(/^\/name\/(.+)\/activity$/);
+
+      if (activityPathMatch) {
+        const requested = decodeURIComponent(activityPathMatch[1] ?? "");
+
+        try {
+          const normalized = normalizeName(requested);
+          const currentNameRecord = indexer.getName(normalized);
+
+          if (currentNameRecord === null) {
+            return writeJson(response, 404, {
+              error: "name_not_found",
+              name: normalized
+            });
+          }
+
+          const requestedLimit = url.searchParams.get("limit");
+          const limit = requestedLimit === null ? 8 : parseNonNegativeInteger(requestedLimit, "limit");
+
+          return writeJson(response, 200, {
+            name: normalized,
+            activity: indexer.listRecentActivityForName(normalized, limit)
+          });
+        } catch (error) {
+          return writeJson(response, 400, {
+            error: "invalid_name",
+            message: error instanceof Error ? error.message : "Invalid name"
+          });
+        }
+      }
+
+      const valuePathMatch = url.pathname.match(/^\/name\/(.+)\/value$/);
+
+      if (valuePathMatch) {
+        const requested = decodeURIComponent(valuePathMatch[1] ?? "");
+
+        try {
+          const normalized = normalizeName(requested);
+          const currentNameRecord = indexer.getName(normalized);
+
+          if (currentNameRecord === null) {
+            return writeJson(response, 404, {
+              error: "name_not_found",
+              name: normalized
+            });
+          }
+
+          const valueRecord = getCurrentValueRecord(valueRecords, indexer, normalized);
+          if (valueRecord === null) {
+            return writeJson(response, 404, {
+              error: "value_not_found",
+              name: normalized
+            });
+          }
+
+          return writeJson(response, 200, valueRecord);
+        } catch (error) {
+          return writeJson(response, 400, {
+            error: "invalid_name",
+            message: error instanceof Error ? error.message : "Invalid name"
+          });
+        }
+      }
+
+      const requested = decodeURIComponent(url.pathname.slice("/name/".length));
+
+      try {
+        const normalized = normalizeName(requested);
+        const record = indexer.getName(normalized);
+
+        if (record === null) {
+          return writeJson(response, 404, {
+            error: "name_not_found",
+            name: normalized
+          });
+        }
+
+        return writeJson(response, 200, record);
+      } catch (error) {
+        return writeJson(response, 400, {
+          error: "invalid_name",
+          message: error instanceof Error ? error.message : "Invalid name"
+        });
+      }
+    }
+
+    return writeJson(response, 404, {
+      error: "not_found",
+      message:
+        "Supported prototype endpoints: /health, /stats, /names, /pending-commits, /activity, /tx/{txid}, /claim-plan/{normalized_name}, /name/{normalized_name}, /name/{normalized_name}/activity, /name/{normalized_name}/value, POST /values"
+    });
+  }
+
+  server.on("error", (error: NodeJS.ErrnoException) => {
+    if (error.code === "EADDRINUSE") {
+      console.error(
+        [
+          `${PRODUCT_NAME} resolver could not start because port ${port} is already in use.`,
+          "Try: GNS_RESOLVER_PORT=8788 npm run dev:resolver",
+          "Or run both together with: GNS_RESOLVER_PORT=8788 GNS_WEB_PORT=3001 npm run dev:all"
+        ].join("\n")
+      );
+      process.exit(1);
+    }
+
+    throw error;
+  });
+
+  server.listen(port, () => {
+    console.log(
+      `${PRODUCT_NAME} resolver listening on http://127.0.0.1:${port} (${source}/${syncMode}: ${descriptor})`
+    );
+  });
+}
+
+function writeJson(
+  response: import("node:http").ServerResponse,
+  statusCode: number,
+  body: unknown
+): void {
+  response.writeHead(statusCode, {
+    "content-type": "application/json; charset=utf-8"
+  });
+  response.end(JSON.stringify(body, bigintJsonReplacer));
+}
+
+function bigintJsonReplacer(_key: string, value: unknown): unknown {
+  return typeof value === "bigint" ? value.toString() : value;
+}
+
+function parseOptionalInteger(value: string | undefined): number | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isInteger(parsed)) {
+    throw new Error(`invalid integer value: ${value}`);
+  }
+
+  return parsed;
+}
+
+function parsePort(value: string, envName: string): number {
+  const parsed = Number.parseInt(value, 10);
+
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    throw new Error(`invalid ${envName} value: ${value}`);
+  }
+
+  return parsed;
+}
+
+function parseNonNegativeInteger(value: string, label: string): number {
+  const parsed = Number.parseInt(value, 10);
+
+  if (!Number.isSafeInteger(parsed) || parsed < 0) {
+    throw new Error(`${label} must be a non-negative safe integer`);
+  }
+
+  return parsed;
+}
+
+function parseExpectedChain(value: string): BitcoinRpcChain {
+  if (value !== "main" && value !== "test" && value !== "signet" && value !== "regtest") {
+    throw new Error(`invalid GNS_EXPECT_CHAIN value: ${value}`);
+  }
+
+  return value;
+}
+
+function parseSourceMode(value: string | undefined): "auto" | "fixture" | "rpc" | "esplora" {
+  if (value === undefined || value.trim() === "") {
+    return "auto";
+  }
+
+  if (value === "auto" || value === "fixture" || value === "rpc" || value === "esplora") {
+    return value;
+  }
+
+  throw new Error("GNS_SOURCE_MODE must be one of auto, fixture, rpc, esplora");
+}
+
+function resolveConfiguredEndpoint(value: string | undefined, envName: string): string | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  const trimmed = value.trim();
+  if (trimmed.length === 0) {
+    return undefined;
+  }
+
+  if (looksLikePlaceholderEndpoint(trimmed)) {
+    console.warn(`${PRODUCT_NAME} resolver ignoring placeholder ${envName}: ${trimmed}`);
+    return undefined;
+  }
+
+  return trimmed;
+}
+
+function looksLikePlaceholderEndpoint(value: string): boolean {
+  if (value.includes("your-remote-signet-node.example")) {
+    return true;
+  }
+
+  try {
+    const parsed = new URL(value);
+    return parsed.hostname === "example" || parsed.hostname.endsWith(".example");
+  } catch {
+    return value.includes(".example");
+  }
+}
+
+function resolveDatabaseConfig(): DatabaseConfig | null {
+  const connectionString = process.env.GNS_DATABASE_URL?.trim() ?? "";
+  if (connectionString === "") {
+    return null;
+  }
+
+  return createDatabaseConfig(connectionString, {
+    schema:
+      process.env.GNS_DATABASE_SCHEMA?.trim()
+      || "public"
+  });
+}
+
+async function loadSnapshot(
+  database: DatabaseConfig | null,
+  snapshotPath: string,
+  documentKey: string
+) {
+  if (database === null) {
+    return loadIndexerSnapshotFile(snapshotPath);
+  }
+
+  const snapshot = await loadIndexerSnapshotDatabase(database, documentKey);
+  if (snapshot === null) {
+    throw new Error(`indexer snapshot document not found: ${documentKey}`);
+  }
+
+  return snapshot;
+}
+
+async function saveSnapshot(
+  database: DatabaseConfig | null,
+  snapshotPath: string,
+  documentKey: string,
+  indexer: InMemoryGnsIndexer
+): Promise<void> {
+  const snapshot = indexer.exportSnapshot();
+
+  if (database === null) {
+    saveIndexerSnapshotFile(snapshotPath, snapshot);
+    return;
+  }
+
+  await saveIndexerSnapshotDatabase(database, documentKey, snapshot);
+}
+
+async function readJsonBody(
+  request: import("node:http").IncomingMessage
+): Promise<unknown> {
+  const chunks: Buffer[] = [];
+
+  for await (const chunk of request) {
+    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+  }
+
+  const raw = Buffer.concat(chunks).toString("utf8");
+
+  if (raw.trim().length === 0) {
+    throw new Error("request body must be valid JSON");
+  }
+
+  return JSON.parse(raw);
+}
+
+function getCurrentValueRecord(
+  valueRecords: ReadonlyMap<string, SignedValueRecord>,
+  indexer: InMemoryGnsIndexer,
+  name: string
+): SignedValueRecord | null {
+  const normalized = normalizeName(name);
+  const currentNameRecord = indexer.getName(normalized);
+  const valueRecord = valueRecords.get(normalized) ?? null;
+
+  if (currentNameRecord === null || valueRecord === null) {
+    return null;
+  }
+
+  if (currentNameRecord.currentOwnerPubkey !== valueRecord.ownerPubkey) {
+    return null;
+  }
+
+  return valueRecord;
+}
+
+function buildClaimPlan(indexer: InMemoryGnsIndexer, normalizedName: string) {
+  const existingRecord = indexer.getName(normalizedName);
+  const stats = indexer.getStats();
+  const currentHeight = stats.currentHeight ?? indexer.getLaunchHeight() - 1;
+  const plannedCommitHeight = Math.max(indexer.getLaunchHeight(), currentHeight + 1);
+  const epochIndex = getEpochIndex(plannedCommitHeight, indexer.getLaunchHeight());
+  const maturityBlocks = getMaturityBlocks(epochIndex);
+
+  return {
+    name: normalizedName,
+    appearsAvailable: existingRecord === null,
+    availabilityNote:
+      existingRecord === null
+        ? "No revealed claim is visible right now. Hidden commits inside the reveal window are still possible."
+        : "A revealed claim is already visible for this name in the current resolver view.",
+    currentResolverHeight: stats.currentHeight,
+    launchHeight: indexer.getLaunchHeight(),
+    plannedCommitHeight,
+    recommendedBondVout: 0,
+    revealWindowBlocks: REVEAL_WINDOW_BLOCKS,
+    revealDeadlineHeight: plannedCommitHeight + REVEAL_WINDOW_BLOCKS,
+    epochIndex,
+    maturityBlocks,
+    maturityHeight: getMaturityHeight(plannedCommitHeight, maturityBlocks),
+    requiredBondSats: getBondSats(normalizedName.length),
+    existingClaim:
+      existingRecord === null
+        ? null
+        : {
+            status: existingRecord.status,
+            currentOwnerPubkey: existingRecord.currentOwnerPubkey,
+            claimCommitTxid: existingRecord.claimCommitTxid,
+            claimRevealTxid: existingRecord.claimRevealTxid,
+            currentBondTxid: existingRecord.currentBondTxid,
+            currentBondVout: existingRecord.currentBondVout,
+            currentBondValueSats: existingRecord.currentBondValueSats
+          },
+    nextSteps: [
+      "Build a commit transaction with the dedicated bond output and commit payload.",
+      "Wait for the commit transaction to confirm.",
+      `Broadcast the reveal transaction within ${REVEAL_WINDOW_BLOCKS} blocks of the commit confirmation.`,
+      "Monitor the resolver until the name appears as immature, then later mature."
+    ]
+  };
+}
