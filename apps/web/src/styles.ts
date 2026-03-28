@@ -380,6 +380,17 @@ h2 {
   margin-top: 0;
 }
 
+.tool-handoff-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.tool-handoff-note a {
+  color: var(--accent-strong);
+}
+
 .panel-home {
   max-width: 1040px;
   width: 100%;

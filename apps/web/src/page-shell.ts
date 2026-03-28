@@ -195,8 +195,7 @@ function renderPrimaryNav(configuredBasePath: string, pageKind: PageKind): strin
     { href: withBasePath("/explore", configuredBasePath), label: "Explore", active: pageKind === "explore" },
     { href: withBasePath("/claim", configuredBasePath), label: "Claim", active: pageKind === "claim" },
     { href: withBasePath("/transfer", configuredBasePath), label: "Transfer", active: pageKind === "transfer" },
-    { href: withBasePath("/setup", configuredBasePath), label: "Setup", active: pageKind === "setup" },
-    { href: withBasePath("/explainer", configuredBasePath), label: "Overview", active: pageKind === "explainer" }
+    { href: withBasePath("/setup", configuredBasePath), label: "Setup", active: pageKind === "setup" }
   ];
 
   return `<nav class="site-nav" aria-label="Primary">
@@ -305,9 +304,7 @@ function renderHomeActionsSection(configuredBasePath: string): string {
         </div>
       </article>
     </div>
-    <div class="hero-cta-row path-support-row">
-      <a class="action-link secondary" href="${withBasePath("/explainer", configuredBasePath)}">Quick overview</a>
-    </div>
+    <p class="tool-handoff-note">Project background and deeper documentation live on <a href="${GITHUB_REPO_URL}" target="_blank" rel="noreferrer noopener">GitHub</a>.</p>
   </section>`;
 }
 
@@ -927,23 +924,22 @@ function formatBtcDecimal(sats: bigint): string {
 
 function renderClaimSupportStrip(configuredBasePath: string): string {
   return `<section id="claim-support" class="panel panel-support-strip">
-    <p class="support-strip-label">Setup, offline architect, and docs</p>
+    <p class="support-strip-label">Utility links</p>
     <div class="hero-cta-row support-strip-actions">
       <a class="action-link secondary" href="${withBasePath("/setup", configuredBasePath)}">Open setup</a>
       <a class="action-link secondary" href="${withBasePath("/claim/offline", configuredBasePath)}">Open offline architect</a>
-      <a class="action-link secondary" href="${withBasePath("/claim/offline/download", configuredBasePath)}">Download offline architect</a>
-      <a class="action-link secondary" href="${withBasePath("/explainer", configuredBasePath)}">Open explainer</a>
+      <a class="action-link secondary" href="${GITHUB_REPO_URL}" target="_blank" rel="noreferrer noopener">GitHub docs</a>
     </div>
   </section>`;
 }
 
 function renderSetupSupportStrip(configuredBasePath: string): string {
   return `<section id="setup-support" class="panel panel-support-strip">
-    <p class="support-strip-label">Next steps</p>
+    <p class="support-strip-label">Utility links</p>
     <div class="hero-cta-row support-strip-actions">
       <a class="action-link secondary" href="${withBasePath("/claim", configuredBasePath)}">Open claim prep</a>
       <a class="action-link secondary" href="${withBasePath("/claim/offline", configuredBasePath)}">Open offline architect</a>
-      <a class="action-link secondary" href="${withBasePath("/explainer", configuredBasePath)}">Open explainer</a>
+      <a class="action-link secondary" href="${GITHUB_REPO_URL}" target="_blank" rel="noreferrer noopener">GitHub docs</a>
     </div>
   </section>`;
 }
@@ -1122,10 +1118,10 @@ function renderTransferPrepSection(): string {
 
 function renderTransferSupportStrip(configuredBasePath: string): string {
   return `<section id="transfer-support" class="panel panel-support-strip">
-    <p class="support-strip-label">Explorer and docs</p>
+    <p class="support-strip-label">Utility links</p>
     <div class="hero-cta-row support-strip-actions">
       <a class="action-link secondary" href="${withBasePath("/explore", configuredBasePath)}">Open explorer</a>
-      <a class="action-link secondary" href="${withBasePath("/explainer", configuredBasePath)}">Open explainer</a>
+      <a class="action-link secondary" href="${GITHUB_REPO_URL}" target="_blank" rel="noreferrer noopener">GitHub docs</a>
     </div>
   </section>`;
 }
