@@ -1,0 +1,137 @@
+# Cold-User Walkthrough
+
+Use this when you want a first-time user to try GNS with little or no coaching and give back useful notes.
+
+This is not a protocol test. It is a product-usability test for the current hosted private demo and repo entry points.
+
+## Goal
+
+Learn where a technically capable new user gets stuck when they:
+
+- land in the repo or website for the first time
+- set up the private demo wallet flow
+- try to claim one name
+- try to understand what to save and what to do next
+
+## Suggested Tester
+
+Best fit:
+
+- comfortable installing desktop software
+- comfortable running one terminal command
+- not already familiar with the GNS claim flow
+
+Avoid:
+
+- someone who already knows the protocol deeply
+- someone who needs constant help using a terminal at all
+
+## Facilitator Rules
+
+Keep the session as cold as possible.
+
+- Start by sending only the link you want tested:
+  - website: [https://globalnamesystem.org](https://globalnamesystem.org)
+  - repo: [https://github.com/deekay/gns](https://github.com/deekay/gns)
+- Do not explain the flow up front.
+- Let the tester narrate what they think each page is for.
+- Do not rescue immediately when they pause.
+- If they are blocked for more than a few minutes, ask what they expected to happen before you explain anything.
+
+## Primary Task
+
+Ask the tester to do this:
+
+> Claim a demo name from scratch using the hosted private demo.
+
+What success looks like:
+
+- they get Sparrow connected
+- they receive demo coins
+- they prepare the claim
+- they sign and broadcast commit + reveal
+- they can find the claimed name afterward
+
+## Optional Follow-Up Task
+
+If the first task succeeds without much help:
+
+> Tell me which key matters after the claim, and how you think you would update or transfer the name later.
+
+This is useful because it reveals whether the difference between:
+
+- wallet key
+- owner key
+
+is actually clear.
+
+## What To Observe
+
+Capture the first point where they hesitate on each of these:
+
+- understanding what GNS is
+- choosing between website vs GitHub vs self-hosting
+- wallet setup
+- requesting demo coins
+- understanding what to save
+- understanding which files belong in Sparrow
+- understanding commit vs reveal timing
+- finding the claimed name afterward
+
+Also capture:
+
+- what they clicked first
+- what they ignored completely
+- what wording they repeated back incorrectly
+- any place where they expected the site to do more than it currently does
+
+## Session Notes Template
+
+Use this structure:
+
+```md
+# Cold-User Walkthrough
+
+Date:
+Tester:
+Facilitator:
+Starting point:
+- [ ] Website
+- [ ] GitHub
+
+## Outcome
+
+- [ ] Completed the hosted demo claim
+- [ ] Needed help
+- [ ] Stopped before completion
+
+## First major point of confusion
+
+Describe the first real place they stalled.
+
+## Other friction points
+
+1.
+2.
+3.
+
+## Misunderstandings
+
+- 
+
+## Quotes worth keeping
+
+-
+
+## Changes this suggests
+
+1.
+2.
+3.
+```
+
+## How To File The Result
+
+Open a GitHub issue using the `Cold-user walkthrough` template and paste in the notes.
+
+If several sessions point to the same problem, open one follow-up implementation issue rather than letting the walkthrough issues turn into a backlog by themselves.

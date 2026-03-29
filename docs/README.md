@@ -17,6 +17,7 @@ These documents are specifically about the current hosted and private-signet dem
 
 - [SPARROW_PRIVATE_SIGNET.md](./demo/SPARROW_PRIVATE_SIGNET.md): Sparrow + private signet setup for the hosted demo
 - [RUN_SIGNET.md](./demo/RUN_SIGNET.md): running the prototype against signet backends
+- [COLD_USER_WALKTHROUGH.md](./demo/COLD_USER_WALKTHROUGH.md): how to run and record a first-time user walkthrough
 
 ## Operators
 
