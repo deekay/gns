@@ -1070,14 +1070,15 @@ function renderValuesToolSection(): string {
                 <span id="valueSequenceHint" class="field-hint">Load the current name first to confirm the next sequence.</span>
               </label>
               <label class="draft-field">
-                <span class="field-label">Value Type</span>
+                <span class="field-label">Value Format</span>
                 <select id="valueTypeInput" name="valueType">
-                  <option value="2" selected>0x02 (https target)</option>
+                  <option value="255:bundle" selected>0xff (profile bundle: website, payments, channels, services)</option>
+                  <option value="2">0x02 (single https target)</option>
                   <option value="1">0x01 (bitcoin payment target)</option>
-                  <option value="255">0xff (raw / app-defined hex)</option>
+                  <option value="255:raw">0xff (raw / app-defined hex)</option>
                 </select>
               </label>
-              <label class="draft-field draft-field-full">
+              <label id="valuePayloadField" class="draft-field draft-field-full">
                 <span class="field-label">Payload</span>
                 <textarea
                   id="valuePayloadInput"
@@ -1087,6 +1088,35 @@ function renderValuesToolSection(): string {
                 ></textarea>
                 <span id="valuePayloadHint" class="field-hint">HTTPS and payment targets are encoded as UTF-8 text. Raw/app-defined values expect hex.</span>
               </label>
+              <div id="valueBundleEditor" class="value-bundle-editor draft-field-full" hidden>
+                <div class="value-bundle-grid">
+                  <label class="draft-field">
+                    <span class="field-label">Website</span>
+                    <input id="valueBundleWebsiteInput" name="valueBundleWebsite" type="url" placeholder="https://presidiobitcoin.com" autocomplete="off" spellcheck="false" />
+                  </label>
+                  <label class="draft-field">
+                    <span class="field-label">Bitcoin Payment Target</span>
+                    <input id="valueBundleBitcoinInput" name="valueBundleBitcoin" type="text" placeholder="bitcoin:bc1..." autocomplete="off" spellcheck="false" />
+                  </label>
+                  <label class="draft-field">
+                    <span class="field-label">YouTube</span>
+                    <input id="valueBundleYoutubeInput" name="valueBundleYoutube" type="url" placeholder="https://youtube.com/@presidiobitcoin" autocomplete="off" spellcheck="false" />
+                  </label>
+                  <label class="draft-field">
+                    <span class="field-label">X / Social</span>
+                    <input id="valueBundleXInput" name="valueBundleX" type="url" placeholder="https://x.com/presidiobitcoin" autocomplete="off" spellcheck="false" />
+                  </label>
+                  <label class="draft-field draft-field-full">
+                    <span class="field-label">Service / API</span>
+                    <input id="valueBundleServiceInput" name="valueBundleService" type="url" placeholder="https://api.presidiobitcoin.com" autocomplete="off" spellcheck="false" />
+                  </label>
+                  <label class="draft-field draft-field-full">
+                    <span class="field-label">Notes</span>
+                    <textarea id="valueBundleNotesInput" name="valueBundleNotes" placeholder="Optional human-readable note or short description." spellcheck="false"></textarea>
+                  </label>
+                </div>
+                <span class="field-hint">One signed profile bundle can carry several destinations at once. It is encoded as JSON inside a 0xff app-defined value record.</span>
+              </div>
             </div>
             <div class="draft-actions claim-step-actions">
               <button id="valueSignButton" type="submit">Sign locally</button>

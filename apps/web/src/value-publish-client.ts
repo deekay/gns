@@ -6,6 +6,15 @@ import {
   verifyBrowserValueRecord,
   type BrowserSignedValueRecord
 } from "./browser-value-record.js";
+import {
+  decodeHexUtf8,
+  decodeProfileBundlePayloadHex,
+  describeProfileBundle,
+  emptyProfileBundleDraft,
+  encodeProfileBundlePayloadHex,
+  listProfileBundleEntries,
+  profileBundleDraftFromPayload
+} from "./value-bundle.js";
 
 type NameRecord = {
   readonly name: string;
@@ -45,8 +54,16 @@ const elements = {
   sequenceInput: document.getElementById("valueSequenceInput") as HTMLInputElement | null,
   sequenceHint: document.getElementById("valueSequenceHint"),
   valueTypeInput: document.getElementById("valueTypeInput") as HTMLSelectElement | null,
+  payloadField: document.getElementById("valuePayloadField"),
   payloadInput: document.getElementById("valuePayloadInput") as HTMLTextAreaElement | null,
   payloadHint: document.getElementById("valuePayloadHint"),
+  bundleEditor: document.getElementById("valueBundleEditor"),
+  bundleWebsiteInput: document.getElementById("valueBundleWebsiteInput") as HTMLInputElement | null,
+  bundleBitcoinInput: document.getElementById("valueBundleBitcoinInput") as HTMLInputElement | null,
+  bundleYoutubeInput: document.getElementById("valueBundleYoutubeInput") as HTMLInputElement | null,
+  bundleXInput: document.getElementById("valueBundleXInput") as HTMLInputElement | null,
+  bundleServiceInput: document.getElementById("valueBundleServiceInput") as HTMLInputElement | null,
+  bundleNotesInput: document.getElementById("valueBundleNotesInput") as HTMLTextAreaElement | null,
   signResult: document.getElementById("valueSignResult"),
   publishResult: document.getElementById("valuePublishResult"),
   downloadSignedValueButton: document.getElementById("downloadSignedValueButton") as HTMLButtonElement | null,
@@ -65,6 +82,9 @@ const state: {
   lastSuggestedSequence: null
 };
 
+const VALUE_MODE_PROFILE_BUNDLE = "255:bundle";
+const VALUE_MODE_RAW = "255:raw";
+
 if (elements.lookupForm && elements.nameInput) {
   void bootstrap();
 }
@@ -74,7 +94,7 @@ async function bootstrap(): Promise<void> {
   renderLookupMessage("Enter a claimed name to load the current owner and published value.");
   renderSignMessage("Load a claimed name first, then sign the next value record locally.");
   renderPublishMessage("Sign a value record first. Then publish the signed JSON to the resolver.");
-  updatePayloadHint();
+  updateValueEditorState();
 
   const initialName = new URL(window.location.href).searchParams.get("name")?.trim().toLowerCase() ?? "";
   if (initialName !== "") {
@@ -109,13 +129,26 @@ async function bootstrap(): Promise<void> {
   });
 
   elements.valueTypeInput?.addEventListener("change", () => {
-    updatePayloadHint();
+    updateValueEditorState();
     invalidateSignedRecord("Value type changed. Sign again before publishing.");
   });
 
   elements.payloadInput?.addEventListener("input", () => {
     invalidateSignedRecord("Payload changed. Sign again before publishing.");
   });
+
+  for (const input of [
+    elements.bundleWebsiteInput,
+    elements.bundleBitcoinInput,
+    elements.bundleYoutubeInput,
+    elements.bundleXInput,
+    elements.bundleServiceInput,
+    elements.bundleNotesInput
+  ]) {
+    input?.addEventListener("input", () => {
+      invalidateSignedRecord("Profile bundle changed. Sign again before publishing.");
+    });
+  }
 
   elements.downloadSignedValueButton?.addEventListener("click", () => {
     if (state.signedRecord === null) {
@@ -154,6 +187,7 @@ async function loadName(rawName: string): Promise<void> {
     state.currentName = nameRecord;
     state.currentValueRecord = valueRecord;
     applySuggestedSequence(valueRecord === null ? 0 : valueRecord.sequence + 1);
+    applyValueDefaults(valueRecord);
     renderLookupRecord(nameRecord, valueRecord);
     updateDerivedOwnerState();
     syncWizard();
@@ -161,6 +195,7 @@ async function loadName(rawName: string): Promise<void> {
     state.currentName = null;
     state.currentValueRecord = null;
     state.lastSuggestedSequence = null;
+    resetValueInputs();
     invalidateSignedRecord("Load a claimed name first, then sign the next value record locally.");
     renderLookupMessage(error instanceof Error ? error.message : "Unable to load the requested name.");
     syncWizard();
@@ -194,11 +229,8 @@ function signLocally(): void {
       requireInput(elements.sequenceInput, "Enter the next sequence."),
       "sequence"
     );
-    const valueType = parseByte(
-      elements.valueTypeInput?.value ?? "",
-      "valueType"
-    );
-    const payloadHex = resolvePayloadHex(valueType, elements.payloadInput?.value ?? "");
+    const { valueType, mode } = parseSelectedValueFormat(elements.valueTypeInput?.value ?? "");
+    const payloadHex = resolvePayloadHex(mode, valueType, elements.payloadInput?.value ?? "");
 
     const signedRecord = signBrowserValueRecord({
       name,
@@ -344,11 +376,11 @@ function renderSignedRecord(record: BrowserSignedValueRecord): void {
       </div>
       <div class="result-item">
         <label>Value Type</label>
-        <p class="field-value">${escapeHtml(formatValueType(record.valueType))}</p>
+        <p class="field-value">${escapeHtml(formatValueType(record.valueType, record.payloadHex))}</p>
       </div>
       <div class="result-item">
         <label>Payload</label>
-        <p class="field-value">${escapeHtml(previewPayload(record.valueType, record.payloadHex))}</p>
+        ${renderPayloadPreview(record.valueType, record.payloadHex)}
       </div>
     </div>
     <pre class="value-json-preview">${escapeHtml(JSON.stringify(record, null, 2))}</pre>
@@ -364,6 +396,7 @@ function renderPublishResult(result: unknown): void {
   const name = typeof record.name === "string" ? record.name : state.signedRecord?.name ?? "unknown";
   const sequence = typeof record.sequence === "number" ? record.sequence : state.signedRecord?.sequence ?? 0;
   const valueType = typeof record.valueType === "number" ? record.valueType : state.signedRecord?.valueType ?? 0;
+  const payloadHex = state.signedRecord?.payloadHex ?? "";
 
   elements.publishResult.classList.remove("empty");
   elements.publishResult.innerHTML = `
@@ -371,7 +404,7 @@ function renderPublishResult(result: unknown): void {
       <h3>Value Published</h3>
       <span class="status-pill mature">Resolver updated</span>
     </div>
-    <p class="result-meta">${escapeHtml(name)} · sequence ${escapeHtml(String(sequence))} · ${escapeHtml(formatValueType(valueType))}</p>
+    <p class="result-meta">${escapeHtml(name)} · sequence ${escapeHtml(String(sequence))} · ${escapeHtml(formatValueType(valueType, payloadHex))}</p>
     <p class="field-value">The resolver accepted the signed value record and will now serve it for the current on-chain owner.</p>
   `;
 }
@@ -410,13 +443,27 @@ function updateDerivedOwnerState(): void {
   }
 }
 
-function updatePayloadHint(): void {
+function updateValueEditorState(): void {
   if (!elements.payloadInput || !elements.payloadHint) {
     return;
   }
 
-  const valueType = Number(elements.valueTypeInput?.value ?? 2);
-  if (valueType === 255) {
+  const { valueType, mode } = parseSelectedValueFormat(elements.valueTypeInput?.value ?? VALUE_MODE_PROFILE_BUNDLE);
+
+  if (elements.payloadField instanceof HTMLElement) {
+    elements.payloadField.hidden = mode === "bundle";
+  }
+  if (elements.bundleEditor instanceof HTMLElement) {
+    elements.bundleEditor.hidden = mode !== "bundle";
+  }
+
+  if (mode === "bundle") {
+    elements.payloadHint.textContent =
+      "The profile bundle is encoded as UTF-8 JSON inside a 0xff app-defined value record.";
+    return;
+  }
+
+  if (mode === "raw") {
     elements.payloadInput.placeholder = "68747470733a2f2f6578616d706c652e636f6d";
     elements.payloadHint.textContent = "Raw/app-defined values expect hex. Use even-length hex without a 0x prefix.";
     return;
@@ -430,6 +477,90 @@ function updatePayloadHint(): void {
 
   elements.payloadInput.placeholder = "https://example.com";
   elements.payloadHint.textContent = "HTTPS targets are encoded as UTF-8 text before signing.";
+}
+
+function applyValueDefaults(valueRecord: ValueRecord | null): void {
+  if (valueRecord === null) {
+    resetValueInputs();
+    return;
+  }
+
+  if (valueRecord.valueType === 255) {
+    const bundle = decodeProfileBundlePayloadHex(valueRecord.payloadHex);
+    if (bundle !== null) {
+      if (elements.valueTypeInput) {
+        elements.valueTypeInput.value = VALUE_MODE_PROFILE_BUNDLE;
+      }
+      writeBundleDraft(profileBundleDraftFromPayload(bundle));
+      if (elements.payloadInput) {
+        elements.payloadInput.value = "";
+      }
+      updateValueEditorState();
+      return;
+    }
+
+    if (elements.valueTypeInput) {
+      elements.valueTypeInput.value = VALUE_MODE_RAW;
+    }
+    if (elements.payloadInput) {
+      elements.payloadInput.value = valueRecord.payloadHex;
+    }
+    writeBundleDraft(emptyProfileBundleDraft());
+    updateValueEditorState();
+    return;
+  }
+
+  if (elements.valueTypeInput) {
+    elements.valueTypeInput.value = String(valueRecord.valueType);
+  }
+  if (elements.payloadInput) {
+    elements.payloadInput.value = decodeHexUtf8(valueRecord.payloadHex) ?? valueRecord.payloadHex;
+  }
+  writeBundleDraft(emptyProfileBundleDraft());
+  updateValueEditorState();
+}
+
+function resetValueInputs(): void {
+  if (elements.valueTypeInput) {
+    elements.valueTypeInput.value = VALUE_MODE_PROFILE_BUNDLE;
+  }
+  if (elements.payloadInput) {
+    elements.payloadInput.value = "";
+  }
+  writeBundleDraft(emptyProfileBundleDraft());
+  updateValueEditorState();
+}
+
+function writeBundleDraft(draft: ReturnType<typeof emptyProfileBundleDraft>): void {
+  if (elements.bundleWebsiteInput) {
+    elements.bundleWebsiteInput.value = draft.website;
+  }
+  if (elements.bundleBitcoinInput) {
+    elements.bundleBitcoinInput.value = draft.bitcoin;
+  }
+  if (elements.bundleYoutubeInput) {
+    elements.bundleYoutubeInput.value = draft.youtube;
+  }
+  if (elements.bundleXInput) {
+    elements.bundleXInput.value = draft.x;
+  }
+  if (elements.bundleServiceInput) {
+    elements.bundleServiceInput.value = draft.service;
+  }
+  if (elements.bundleNotesInput) {
+    elements.bundleNotesInput.value = draft.notes;
+  }
+}
+
+function readBundleDraft(): ReturnType<typeof emptyProfileBundleDraft> {
+  return {
+    website: elements.bundleWebsiteInput?.value ?? "",
+    bitcoin: elements.bundleBitcoinInput?.value ?? "",
+    youtube: elements.bundleYoutubeInput?.value ?? "",
+    x: elements.bundleXInput?.value ?? "",
+    service: elements.bundleServiceInput?.value ?? "",
+    notes: elements.bundleNotesInput?.value ?? ""
+  };
 }
 
 function applySuggestedSequence(nextSequence: number): void {
@@ -497,10 +628,29 @@ function requireInput(node: HTMLInputElement | HTMLTextAreaElement | null, messa
   return value;
 }
 
-function resolvePayloadHex(valueType: number, payloadValue: string): string {
+function parseSelectedValueFormat(value: string): { valueType: number; mode: "utf8" | "bundle" | "raw" } {
+  if (value === VALUE_MODE_PROFILE_BUNDLE) {
+    return { valueType: 255, mode: "bundle" };
+  }
+
+  if (value === VALUE_MODE_RAW) {
+    return { valueType: 255, mode: "raw" };
+  }
+
+  return {
+    valueType: parseByte(value, "valueType"),
+    mode: "utf8"
+  };
+}
+
+function resolvePayloadHex(mode: "utf8" | "bundle" | "raw", valueType: number, payloadValue: string): string {
+  if (mode === "bundle") {
+    return encodeProfileBundlePayloadHex(readBundleDraft());
+  }
+
   const trimmed = payloadValue.trim();
 
-  if (valueType === 255) {
+  if (mode === "raw" || valueType === 255) {
     if (trimmed === "") {
       throw new Error("Enter a raw hex payload.");
     }
@@ -599,10 +749,31 @@ function describeCurrentValue(valueRecord: ValueRecord | null): string {
     return "No published value yet";
   }
 
-  return `${formatValueType(valueRecord.valueType)} · sequence ${valueRecord.sequence}`;
+  return `${formatValueType(valueRecord.valueType, valueRecord.payloadHex)} · sequence ${valueRecord.sequence}`;
 }
 
-function previewPayload(valueType: number, payloadHex: string): string {
+function renderPayloadPreview(valueType: number, payloadHex: string): string {
+  const bundle = Number(valueType) === 255 ? decodeProfileBundlePayloadHex(payloadHex) : null;
+  if (bundle !== null) {
+    const rows = listProfileBundleEntries(bundle)
+      .map((entry) => {
+        return `
+          <div class="value-bundle-preview-row">
+            <label>${escapeHtml(entry.label)}</label>
+            <p class="field-value">${renderBundleValue(entry.value)}</p>
+          </div>
+        `;
+      })
+      .join("");
+
+    return `<div class="value-bundle-preview">${rows}</div>`;
+  }
+
+  const preview = previewPayloadText(valueType, payloadHex);
+  return `<p class="field-value">${escapeHtml(preview)}</p>`;
+}
+
+function previewPayloadText(valueType: number, payloadHex: string): string {
   if (Number(valueType) === 255) {
     return payloadHex;
   }
@@ -644,17 +815,28 @@ function formatStateLabel(status: string): string {
   }
 }
 
-function formatValueType(valueType: number): string {
+function formatValueType(valueType: number, payloadHex = ""): string {
   switch (Number(valueType)) {
     case 1:
       return "0x01 (bitcoin payment target)";
     case 2:
       return "0x02 (https target)";
     case 255:
-      return "0xff (raw/app-defined)";
+      return decodeProfileBundlePayloadHex(payloadHex) !== null
+        ? "0xff (profile bundle)"
+        : "0xff (raw/app-defined)";
     default:
       return `0x${Number(valueType).toString(16).padStart(2, "0")}`;
   }
+}
+
+function renderBundleValue(value: string): string {
+  const trimmed = value.trim();
+  if (/^https?:\/\//i.test(trimmed) || /^bitcoin:/i.test(trimmed)) {
+    return `<a class="detail-link" href="${escapeHtml(trimmed)}" target="_blank" rel="noreferrer noopener">${escapeHtml(trimmed)}</a>`;
+  }
+
+  return escapeHtml(trimmed);
 }
 
 function formatSats(value: string | number | bigint): string {

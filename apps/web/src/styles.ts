@@ -691,6 +691,39 @@ h2 {
   grid-column: 1 / -1;
 }
 
+.value-bundle-editor {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.54);
+}
+
+.value-bundle-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.value-bundle-preview {
+  display: grid;
+  gap: 10px;
+}
+
+.value-bundle-preview-row {
+  display: grid;
+  gap: 4px;
+}
+
+.value-bundle-preview-row label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
 .draft-actions {
   display: flex;
   flex-wrap: wrap;
@@ -2021,6 +2054,10 @@ button:disabled {
   .search-row,
   .inline-input-row,
   .draft-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .value-bundle-grid {
     grid-template-columns: minmax(0, 1fr);
   }
 

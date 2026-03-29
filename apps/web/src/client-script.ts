@@ -2795,12 +2795,19 @@ function detailValueValue(valueRecord) {
     return "No off-chain data";
   }
 
+  const bundle = Number(valueRecord.valueType) === 255
+    ? decodeProfileBundlePayloadHex(valueRecord.payloadHex)
+    : null;
+  if (bundle !== null) {
+    return truncateMiddle(listProfileBundleEntries(bundle).map((entry) => entry.label).join(", "), 26, 18);
+  }
+
   const utf8Preview = decodeValuePayloadUtf8(valueRecord.payloadHex);
   if (utf8Preview !== null && utf8Preview.trim() !== "") {
     return truncateMiddle(utf8Preview, 26, 18);
   }
 
-  return formatValueType(valueRecord.valueType);
+  return formatValueType(valueRecord.valueType, valueRecord.payloadHex);
 }
 
 function detailValueCopy(valueRecord) {
@@ -2817,7 +2824,7 @@ function detailValueCopy(valueRecord) {
 }
 
 function renderOffChainDataSection(valueRecord) {
-  const typeValue = valueRecord ? formatValueType(valueRecord.valueType) : "Not published";
+  const typeValue = valueRecord ? formatValueType(valueRecord.valueType, valueRecord.payloadHex) : "Not published";
   const sequenceValue = valueRecord ? String(valueRecord.sequence) : "None yet";
   const publishedValue = valueRecord ? new Date(valueRecord.exportedAt).toLocaleString() : "Not published";
   const explanatoryCopy = valueRecord
@@ -4125,6 +4132,13 @@ function renderValueRecordPreview(valueRecord) {
     return '<p class="field-value">Null / cleared value</p>';
   }
 
+  const bundle = Number(valueRecord.valueType) === 255
+    ? decodeProfileBundlePayloadHex(valueRecord.payloadHex)
+    : null;
+  if (bundle !== null) {
+    return renderProfileBundlePreview(bundle);
+  }
+
   const utf8Preview = decodeValuePayloadUtf8(valueRecord.payloadHex);
   if (utf8Preview !== null) {
     if (Number(valueRecord.valueType) === 2 && /^https?:\\/\\//i.test(utf8Preview)) {
@@ -4148,10 +4162,10 @@ function formatValueRecordMeta(valueRecord) {
     return "No value record";
   }
 
-  return "type " + formatValueType(valueRecord.valueType) + " · sequence " + String(valueRecord.sequence);
+  return "type " + formatValueType(valueRecord.valueType, valueRecord.payloadHex) + " · sequence " + String(valueRecord.sequence);
 }
 
-function formatValueType(valueType) {
+function formatValueType(valueType, payloadHex) {
   switch (Number(valueType)) {
     case 0:
       return "0x00 (null)";
@@ -4160,9 +4174,78 @@ function formatValueType(valueType) {
     case 2:
       return "0x02 (https target)";
     case 255:
-      return "0xff (raw/app-defined)";
+      return decodeProfileBundlePayloadHex(payloadHex) !== null
+        ? "0xff (profile bundle)"
+        : "0xff (raw/app-defined)";
     default:
       return "0x" + Number(valueType).toString(16).padStart(2, "0");
+  }
+}
+
+function renderProfileBundlePreview(bundle) {
+  const rows = listProfileBundleEntries(bundle)
+    .map((entry) => {
+      return (
+        '<div class="value-bundle-preview-row">' +
+        '<label>' + escapeHtml(entry.label) + "</label>" +
+        '<p class="field-value">' + renderBundleValue(entry.value) + "</p>" +
+        "</div>"
+      );
+    })
+    .join("");
+
+  return '<div class="value-bundle-preview">' + rows + "</div>";
+}
+
+function listProfileBundleEntries(bundle) {
+  const fieldMap = [
+    ["website", "Website"],
+    ["bitcoin", "Bitcoin"],
+    ["youtube", "YouTube"],
+    ["x", "X"],
+    ["service", "Service"],
+    ["notes", "Notes"]
+  ];
+
+  return fieldMap
+    .map(([key, label]) => {
+      const value = bundle[key];
+      return typeof value === "string" && value.trim() !== ""
+        ? { label, value: value.trim() }
+        : null;
+    })
+    .filter(Boolean);
+}
+
+function renderBundleValue(value) {
+  if (/^https?:\\/\\//i.test(value) || /^bitcoin:/i.test(value)) {
+    return (
+      '<a class="detail-link" href="' +
+      escapeHtml(value) +
+      '" target="_blank" rel="noreferrer noopener">' +
+      escapeHtml(value) +
+      "</a>"
+    );
+  }
+
+  return escapeHtml(value);
+}
+
+function decodeProfileBundlePayloadHex(payloadHex) {
+  const text = decodeValuePayloadUtf8(payloadHex);
+  if (text === null) {
+    return null;
+  }
+
+  try {
+    const payload = JSON.parse(text);
+    if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+      return null;
+    }
+
+    return payload.kind === "gns-profile-bundle" && payload.version === 1 ? payload : null;
+  } catch {
+    return null;
   }
 }
 
