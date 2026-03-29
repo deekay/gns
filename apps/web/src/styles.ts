@@ -687,6 +687,10 @@ h2 {
   gap: 10px;
 }
 
+.draft-field-full {
+  grid-column: 1 / -1;
+}
+
 .draft-actions {
   display: flex;
   flex-wrap: wrap;
@@ -828,6 +832,11 @@ select {
   color: var(--ink);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
   min-height: 48px;
+}
+
+input[readonly] {
+  background: rgba(244, 239, 232, 0.92);
+  color: var(--muted);
 }
 
 textarea {
@@ -974,6 +983,20 @@ button:disabled {
 
 .claim-funding-card {
   background: rgba(176, 90, 43, 0.05);
+}
+
+.value-json-preview {
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: rgba(26, 17, 8, 0.92);
+  color: #f5f0eb;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .claim-funding-result {

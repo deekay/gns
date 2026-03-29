@@ -10,10 +10,11 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@noble/hashes": "^1.8.0",
     "@gns/architect": "file:../../packages/architect",
+    "@gns/protocol": "file:../../packages/protocol",
+    "@noble/curves": "^1.9.7",
+    "@noble/hashes": "^1.8.0",
     "buffer": "^6.0.3",
-    "esbuild": "^0.25.12",
-    "@gns/protocol": "file:../../packages/protocol"
+    "esbuild": "^0.25.12"
   }
 }

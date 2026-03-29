@@ -1,6 +1,6 @@
 import { PRODUCT_NAME, REVEAL_WINDOW_BLOCKS } from "@gns/protocol";
 
-export type PageKind = "home" | "explore" | "claim" | "transfer" | "setup" | "explainer";
+export type PageKind = "home" | "explore" | "claim" | "values" | "transfer" | "setup" | "explainer";
 const GITHUB_REPO_URL = "https://github.com/deekay/gns";
 
 export interface PageShellOptions {
@@ -28,6 +28,8 @@ export function renderPageHtml(options: PageShellOptions): string {
       ? PRODUCT_NAME
       : pageKind === "claim"
       ? `${PRODUCT_NAME} Claim Prep`
+      : pageKind === "values"
+        ? `${PRODUCT_NAME} Value Publishing`
       : pageKind === "transfer"
         ? `${PRODUCT_NAME} Transfer Prep`
         : pageKind === "setup"
@@ -40,6 +42,8 @@ export function renderPageHtml(options: PageShellOptions): string {
       ? "Search a name, understand the model, and choose whether to explore, claim, or learn more about Global Name System."
       : pageKind === "claim"
       ? "Prepare a Global Name System claim package, then finish the commit and reveal flow in Sparrow or another external signer."
+      : pageKind === "values"
+        ? "Sign a Global Name System value record locally in the browser, then publish the signed record to the resolver."
       : pageKind === "transfer"
         ? "Prepare a Global Name System transfer handoff, then finish the gift or sale flow in the CLI and your signer."
         : pageKind === "setup"
@@ -47,6 +51,15 @@ export function renderPageHtml(options: PageShellOptions): string {
         : pageKind === "explainer"
           ? "Quick orientation for using the hosted Global Name System tools."
         : "Explorer for browsing claimed names and resolver status in Global Name System.";
+
+  const pageScripts = [
+    `<script type="module" src="${withBasePath("/app.js", basePath)}"></script>`,
+    pageKind === "values"
+      ? `<script type="module" src="${withBasePath("/value-tools.js", basePath)}"></script>`
+      : ""
+  ]
+    .filter(Boolean)
+    .join("\n    ");
 
   return `<!doctype html>
 <html lang="en">
@@ -62,7 +75,7 @@ export function renderPageHtml(options: PageShellOptions): string {
     <link rel="apple-touch-icon" href="${faviconDataUrl}" />
     <link rel="stylesheet" href="${withBasePath("/styles.css", basePath)}" />
   </head>
-  <body>
+  <body data-base-path="${escapeHtml(basePath)}" data-page-kind="${escapeHtml(pageKind)}">
     <div class="page-shell">
       ${renderPrimaryNav(basePath, pageKind, faviconDataUrl)}
       ${renderHeroSection(basePath, networkLabel, pageKind)}
@@ -72,6 +85,8 @@ export function renderPageHtml(options: PageShellOptions): string {
             ? renderHomePageSections(basePath)
             : pageKind === "claim"
             ? renderClaimPageSections(basePath, privateSignetFundingEnabled, privateSignetFundingAmountSats)
+            : pageKind === "values"
+              ? renderValuesPageSections(basePath)
             : pageKind === "transfer"
               ? renderTransferPageSections(basePath)
               : pageKind === "setup"
@@ -82,7 +97,7 @@ export function renderPageHtml(options: PageShellOptions): string {
         }
       </main>
     </div>
-    <script type="module" src="${withBasePath("/app.js", basePath)}"></script>
+    ${pageScripts}
   </body>
 </html>`;
 }
@@ -114,6 +129,21 @@ function renderHeroSection(
         <h1>Prepare A Global Name System Transfer</h1>
         <p class="lede">
           Current name, new owner, and transfer handoff.
+        </p>
+        <p id="chainSummary" class="hero-status">
+          ${escapeHtml(configuredNetworkLabel)} · Height - · 0 names · 0 pending
+        </p>
+      </div>
+    </header>`;
+  }
+
+  if (pageKind === "values") {
+    return `<header class="hero hero-single hero-page">
+      <div class="hero-copy">
+        <p class="eyebrow"><a class="eyebrow-link" href="${withBasePath("/", configuredBasePath)}">Global Name System</a> · ${escapeHtml(configuredNetworkLabel)}</p>
+        <h1>Publish An Off-Chain Value</h1>
+        <p class="lede">
+          Load the current name state, sign a value record locally in the browser, then publish only the signed record.
         </p>
         <p id="chainSummary" class="hero-status">
           ${escapeHtml(configuredNetworkLabel)} · Height - · 0 names · 0 pending
@@ -195,6 +225,7 @@ function renderPrimaryNav(configuredBasePath: string, pageKind: PageKind, favico
     { href: withBasePath("/", configuredBasePath), label: "Home", active: pageKind === "home" },
     { href: withBasePath("/explore", configuredBasePath), label: "Explore", active: pageKind === "explore" },
     { href: withBasePath("/claim", configuredBasePath), label: "Claim", active: pageKind === "claim" },
+    { href: withBasePath("/values", configuredBasePath), label: "Values", active: pageKind === "values" },
     { href: withBasePath("/transfer", configuredBasePath), label: "Transfer", active: pageKind === "transfer" },
     { href: withBasePath("/setup", configuredBasePath), label: "Setup", active: pageKind === "setup" }
   ];
@@ -262,6 +293,11 @@ function renderClaimPageSections(
 function renderTransferPageSections(configuredBasePath: string): string {
   return `${renderTransferPrepSection()}
     ${renderTransferSupportStrip(configuredBasePath)}`;
+}
+
+function renderValuesPageSections(configuredBasePath: string): string {
+  return `${renderValuesToolSection()}
+    ${renderValuesSupportStrip(configuredBasePath)}`;
 }
 
 function renderSetupPageSections(
@@ -939,6 +975,7 @@ function renderClaimSupportStrip(configuredBasePath: string): string {
     <p class="support-strip-label">Utility links</p>
     <div class="hero-cta-row support-strip-actions">
       <a class="action-link secondary" href="${withBasePath("/setup", configuredBasePath)}">Open setup</a>
+      <a class="action-link secondary" href="${withBasePath("/values", configuredBasePath)}">Publish value</a>
       <a class="action-link secondary" href="${withBasePath("/claim/offline", configuredBasePath)}">Open offline architect</a>
       <a class="action-link secondary" href="${GITHUB_REPO_URL}" target="_blank" rel="noreferrer noopener">GitHub docs</a>
     </div>
@@ -950,7 +987,148 @@ function renderSetupSupportStrip(configuredBasePath: string): string {
     <p class="support-strip-label">Utility links</p>
     <div class="hero-cta-row support-strip-actions">
       <a class="action-link secondary" href="${withBasePath("/claim", configuredBasePath)}">Open claim prep</a>
+      <a class="action-link secondary" href="${withBasePath("/values", configuredBasePath)}">Publish value</a>
       <a class="action-link secondary" href="${withBasePath("/claim/offline", configuredBasePath)}">Open offline architect</a>
+      <a class="action-link secondary" href="${GITHUB_REPO_URL}" target="_blank" rel="noreferrer noopener">GitHub docs</a>
+    </div>
+  </section>`;
+}
+
+function renderValuesToolSection(): string {
+  return `<section id="value-publish" class="panel panel-compose panel-compose-minimal">
+    <div class="claim-flow value-flow">
+      <details id="value-step-inspect" class="claim-flow-step wizard-step" open>
+        <summary class="wizard-step-summary">
+          <div class="wizard-step-heading">
+            <span class="claim-step-badge">Step 1</span>
+            <div class="wizard-step-copy">
+              <h3>Load The Current Name State</h3>
+              <p>Start with the claimed name you control. The site will pull the current owner and latest published value so the next sequence is clear.</p>
+            </div>
+          </div>
+          <span id="valueStepInspectState" class="summary-chip wizard-step-state">Start here</span>
+        </summary>
+        <div class="wizard-step-body">
+          <form id="valueLookupForm" class="claim-draft-form">
+            <div class="draft-grid">
+              <label class="draft-field">
+                <span class="field-label">Name</span>
+                <input id="valueNameInput" name="valueName" type="text" maxlength="32" placeholder="alice" autocomplete="off" />
+                <span class="field-hint">This tool only publishes off-chain values for names the resolver already recognizes as claimed.</span>
+              </label>
+            </div>
+            <div class="draft-actions">
+              <button id="valueInspectButton" type="submit">Load name</button>
+            </div>
+          </form>
+          <div id="valueLookupResult" class="result-card empty">
+            Enter a claimed name to load the current owner and any published value record.
+          </div>
+        </div>
+      </details>
+      <details id="value-step-sign" class="claim-flow-step wizard-step">
+        <summary class="wizard-step-summary">
+          <div class="wizard-step-heading">
+            <span class="claim-step-badge">Step 2</span>
+            <div class="wizard-step-copy">
+              <h3>Sign The Value Record Locally</h3>
+              <p>Your owner private key stays in this browser. Only the signed record will be sent to the resolver later.</p>
+            </div>
+          </div>
+          <span id="valueStepSignState" class="summary-chip wizard-step-state">After step 1</span>
+        </summary>
+        <div class="wizard-step-body">
+          <p class="field-note">Use the same owner key that controls the name. This is not the funding wallet key unless you intentionally made them the same.</p>
+          <form id="valueSignForm" class="claim-draft-form">
+            <div class="draft-grid">
+              <label class="draft-field">
+                <span class="field-label">Owner Private Key (32-byte hex)</span>
+                <input
+                  id="valueOwnerPrivateKeyInput"
+                  name="valueOwnerPrivateKey"
+                  type="password"
+                  maxlength="64"
+                  placeholder="32-byte secp256k1 private key in hex"
+                  autocomplete="off"
+                  spellcheck="false"
+                />
+              </label>
+              <label class="draft-field">
+                <span class="field-label">Derived Owner Pubkey</span>
+                <input
+                  id="valueOwnerPubkeyPreview"
+                  name="valueOwnerPubkeyPreview"
+                  type="text"
+                  readonly
+                  placeholder="Derived locally after you paste a private key"
+                />
+                <span id="valueOwnerMatchNote" class="field-hint">The derived owner will be compared against the resolver’s current owner.</span>
+              </label>
+              <label class="draft-field">
+                <span class="field-label">Sequence</span>
+                <input id="valueSequenceInput" name="valueSequence" type="number" min="0" step="1" value="0" />
+                <span id="valueSequenceHint" class="field-hint">Load the current name first to confirm the next sequence.</span>
+              </label>
+              <label class="draft-field">
+                <span class="field-label">Value Type</span>
+                <select id="valueTypeInput" name="valueType">
+                  <option value="2" selected>0x02 (https target)</option>
+                  <option value="1">0x01 (bitcoin payment target)</option>
+                  <option value="255">0xff (raw / app-defined hex)</option>
+                </select>
+              </label>
+              <label class="draft-field draft-field-full">
+                <span class="field-label">Payload</span>
+                <textarea
+                  id="valuePayloadInput"
+                  name="valuePayload"
+                  placeholder="https://example.com"
+                  spellcheck="false"
+                ></textarea>
+                <span id="valuePayloadHint" class="field-hint">HTTPS and payment targets are encoded as UTF-8 text. Raw/app-defined values expect hex.</span>
+              </label>
+            </div>
+            <div class="draft-actions claim-step-actions">
+              <button id="valueSignButton" type="submit">Sign locally</button>
+              <button id="downloadSignedValueButton" type="button" class="secondary-button" disabled>Download signed record (.json)</button>
+            </div>
+          </form>
+          <div id="valueSignResult" class="result-card empty">
+            Load a claimed name, then sign the next value record locally in this browser.
+          </div>
+        </div>
+      </details>
+      <details id="value-step-publish" class="claim-flow-step claim-flow-step-emphasis wizard-step">
+        <summary class="wizard-step-summary">
+          <div class="wizard-step-heading">
+            <span class="claim-step-badge">Step 3</span>
+            <div class="wizard-step-copy">
+              <h3>Publish The Signed Record</h3>
+              <p>Upload the signed record to the resolver. Ownership stays on-chain; the resolver only stores the latest owner-authorized value.</p>
+            </div>
+          </div>
+          <span id="valueStepPublishState" class="summary-chip wizard-step-state">After step 2</span>
+        </summary>
+        <div class="wizard-step-body">
+          <p class="field-note">The publish request only sends the signed JSON record. The owner private key never leaves the page.</p>
+          <div class="draft-actions claim-step-actions">
+            <button id="publishValueButton" type="button" disabled>Publish signed record</button>
+          </div>
+          <div id="valuePublishResult" class="result-card empty">
+            Sign a value record first. Then this step will publish it to the resolver and reload the current visible value.
+          </div>
+        </div>
+      </details>
+    </div>
+  </section>`;
+}
+
+function renderValuesSupportStrip(configuredBasePath: string): string {
+  return `<section id="values-support" class="panel panel-support-strip">
+    <p class="support-strip-label">Utility links</p>
+    <div class="hero-cta-row support-strip-actions">
+      <a class="action-link secondary" href="${withBasePath("/claim", configuredBasePath)}">Open claim prep</a>
+      <a class="action-link secondary" href="${withBasePath("/transfer", configuredBasePath)}">Open transfer prep</a>
       <a class="action-link secondary" href="${GITHUB_REPO_URL}" target="_blank" rel="noreferrer noopener">GitHub docs</a>
     </div>
   </section>`;
@@ -1132,6 +1310,7 @@ function renderTransferSupportStrip(configuredBasePath: string): string {
   return `<section id="transfer-support" class="panel panel-support-strip">
     <p class="support-strip-label">Utility links</p>
     <div class="hero-cta-row support-strip-actions">
+      <a class="action-link secondary" href="${withBasePath("/values", configuredBasePath)}">Publish value</a>
       <a class="action-link secondary" href="${withBasePath("/explore", configuredBasePath)}">Open explorer</a>
       <a class="action-link secondary" href="${GITHUB_REPO_URL}" target="_blank" rel="noreferrer noopener">GitHub docs</a>
     </div>

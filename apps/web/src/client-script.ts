@@ -1691,7 +1691,8 @@ function renderSearchRecord(record, valueRecord) {
     <div class="hero-cta-row lookup-result-actions">
       \${String(record.status) === "invalid"
         ? \`<a class="action-link" href="\${escapeHtml(buildClaimPrepPath(record.name))}">Prepare a reclaim</a>\`
-        : \`<a class="action-link" href="\${escapeHtml(buildTransferPrepPath(record.name))}">Prepare transfer</a>\`}
+        : \`<a class="action-link" href="\${escapeHtml(buildValuePublishPath(record.name))}">Publish value</a>
+           <a class="action-link secondary" href="\${escapeHtml(buildTransferPrepPath(record.name))}">Prepare transfer</a>\`}
       <a class="action-link secondary" href="\${escapeHtml(buildNameDetailPath(record.name))}">Open detail page</a>
     </div>
     <details class="detail-technical lookup-technical">
@@ -1738,8 +1739,9 @@ function renderNameDetailRecord(record, valueRecord, panelId) {
       <a class="action-link secondary" href="\${escapeHtml(withBasePath("/"))}">Back to explorer</a>
       \${String(record.status) === "invalid"
         ? \`<a class="action-link" href="\${escapeHtml(buildClaimPrepPath(record.name))}">Prepare a reclaim</a>\`
-        : \`<a class="action-link secondary" href="\${escapeHtml(buildTransferPrepPath(record.name))}">Prepare a transfer</a>
-           <a class="action-link" href="\${escapeHtml(withBasePath("/claim"))}">Prepare a new claim</a>\`}
+        : \`<a class="action-link" href="\${escapeHtml(buildValuePublishPath(record.name))}">Publish value</a>
+           <a class="action-link secondary" href="\${escapeHtml(buildTransferPrepPath(record.name))}">Prepare a transfer</a>
+           <a class="action-link secondary" href="\${escapeHtml(withBasePath("/claim"))}">Prepare a new claim</a>\`}
     </div>
     \${renderInvalidationSummary(record, state.activeNameActivity, panelId)}
     <div class="detail-overview-grid">
@@ -2048,6 +2050,12 @@ function buildTransferPrepPath(name) {
   return normalizedName === "" ? baseTransferPath : baseTransferPath + "?name=" + encodeURIComponent(normalizedName);
 }
 
+function buildValuePublishPath(name) {
+  const normalizedName = String(name ?? "").trim().toLowerCase();
+  const baseValuesPath = withBasePath("/values");
+  return normalizedName === "" ? baseValuesPath : baseValuesPath + "?name=" + encodeURIComponent(normalizedName);
+}
+
 function updateNameDetailHistory(name) {
   const targetPath = buildNameDetailPath(name);
 
@@ -2250,7 +2258,7 @@ function renderNameCard(record) {
       <div class="name-card-body">
         <p class="result-meta">
           \${renderDetailLink(record.name, "Open detail page")}
-          \${String(record.status) === "invalid" ? "" : " · " + renderTransferPrepLink(record.name, "Prepare transfer")}
+          \${String(record.status) === "invalid" ? "" : " · " + renderValuePublishLink(record.name, "Publish value") + " · " + renderTransferPrepLink(record.name, "Prepare transfer")}
         </p>
         <div class="name-grid">
           <div class="name-item">
@@ -2314,7 +2322,10 @@ function renderCompactNameCard(record) {
         </div>
       </summary>
       <div class="name-card-body">
-        <p class="result-meta">\${renderDetailLink(record.name, "Open detail page")}</p>
+        <p class="result-meta">
+          \${renderDetailLink(record.name, "Open detail page")}
+          \${String(record.status) === "invalid" ? "" : " · " + renderValuePublishLink(record.name, "Publish value")}
+        </p>
         <div class="name-grid">
           <div class="name-item">
             <label>Owner Pubkey</label>
@@ -2357,7 +2368,7 @@ function renderRecentNameRow(record) {
         </div>
         <div class="recent-name-links result-meta">
           \${renderDetailLink(record.name, "Open detail page")}
-          \${String(record.status) === "invalid" ? "" : renderTransferPrepLink(record.name, "Prepare transfer")}
+          \${String(record.status) === "invalid" ? "" : " · " + renderValuePublishLink(record.name, "Publish value") + " · " + renderTransferPrepLink(record.name, "Prepare transfer")}
         </div>
       </div>
       <p class="recent-name-meta">
@@ -2650,6 +2661,11 @@ function renderClaimPrepLink(name, label) {
 function renderTransferPrepLink(name, label) {
   const normalizedName = String(name).trim().toLowerCase();
   return '<a class="detail-link" href="' + escapeHtml(buildTransferPrepPath(normalizedName)) + '">' + escapeHtml(label) + "</a>";
+}
+
+function renderValuePublishLink(name, label) {
+  const normalizedName = String(name).trim().toLowerCase();
+  return '<a class="detail-link" href="' + escapeHtml(buildValuePublishPath(normalizedName)) + '">' + escapeHtml(label) + "</a>";
 }
 
 function renderDetailPageMeta(record, valueRecord, currentHeight) {

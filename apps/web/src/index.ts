@@ -25,6 +25,7 @@ import { renderOfflineClaimPageHtml } from "./offline-claim-page.js";
 import { renderPageHtml } from "./page-shell.js";
 import { buildPrivateSignetClaimPsbtBundle } from "./private-signet-claim.js";
 import { STYLESHEET } from "./styles.js";
+import { getValuePublishClientBundle } from "./value-publish-bundle.js";
 
 const execFile = promisify(execFileCallback);
 
@@ -218,6 +219,38 @@ const server = createServer(async (request, response) => {
     }
   }
 
+  if (pathname === "/api/values") {
+    if (method !== "POST") {
+      return writeJson(response, 405, {
+        error: "method_not_allowed",
+        message: "Use POST for signed value record publishing."
+      });
+    }
+
+    try {
+      const body = await readJsonBody(request);
+      return proxyJson(response, `${resolverUrl}/values`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json"
+        },
+        body: JSON.stringify(body)
+      });
+    } catch (error) {
+      if (error instanceof HttpRequestError) {
+        return writeJson(response, error.statusCode, {
+          error: error.code,
+          message: error.message
+        });
+      }
+
+      return writeJson(response, 400, {
+        error: "invalid_value_record",
+        message: error instanceof Error ? error.message : "Unable to publish the signed value record."
+      });
+    }
+  }
+
   if (method !== "GET") {
     return writeJson(response, 405, {
       error: "method_not_allowed",
@@ -261,6 +294,7 @@ const server = createServer(async (request, response) => {
     || isExplorePath(pathname)
     || isNameDetailPath(pathname)
     || isClaimPath(pathname)
+    || isValuesPath(pathname)
     || isTransferPath(pathname)
     || isSetupPath(pathname)
     || isExplainerPath(pathname)
@@ -276,6 +310,8 @@ const server = createServer(async (request, response) => {
           ? "home"
           : isClaimPath(pathname)
           ? "claim"
+          : isValuesPath(pathname)
+            ? "values"
           : isTransferPath(pathname)
             ? "transfer"
             : isSetupPath(pathname)
@@ -295,6 +331,25 @@ const server = createServer(async (request, response) => {
 
   if (pathname === "/app.js") {
     return writeText(response, 200, renderClientScript(basePath), "application/javascript; charset=utf-8");
+  }
+
+  if (pathname === "/value-tools.js") {
+    try {
+      return writeText(
+        response,
+        200,
+        await getValuePublishClientBundle(),
+        "application/javascript; charset=utf-8"
+      );
+    } catch (error) {
+      return writeJson(response, 500, {
+        error: "value_tools_unavailable",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Unable to generate the value publishing client bundle."
+      });
+    }
   }
 
   if (pathname === "/api/config") {
@@ -403,8 +458,8 @@ const server = createServer(async (request, response) => {
   return writeJson(response, 404, {
     error: "not_found",
     message:
-      "Supported paths: /, /explore, /claim, /transfer, /setup, /explainer, /api/config, /api/health, /api/names, /api/pending-commits, /api/activity, /api/tx/{txid}, /api/dev-owner-key, /api/private-signet-fund, /api/claim-draft/{name}, /api/claim-plan/{name}, /api/name/{name}, /api/name/{name}/activity, /api/name/{name}/value"
-      + ", /api/private-signet-claim-psbts, /claim/offline, /claim/offline/download"
+      "Supported paths: /, /explore, /claim, /values, /transfer, /setup, /explainer, /api/config, /api/health, /api/names, /api/pending-commits, /api/activity, /api/tx/{txid}, /api/dev-owner-key, /api/private-signet-fund, /api/claim-draft/{name}, /api/claim-plan/{name}, /api/name/{name}, /api/name/{name}/activity, /api/name/{name}/value"
+      + ", /api/private-signet-claim-psbts, /api/values, /claim/offline, /claim/offline/download"
   });
 });
 
@@ -441,6 +496,10 @@ function isClaimPath(pathname: string): boolean {
   return pathname === "/claim" || pathname === "/claim/";
 }
 
+function isValuesPath(pathname: string): boolean {
+  return pathname === "/values" || pathname === "/values/";
+}
+
 function isTransferPath(pathname: string): boolean {
   return pathname === "/transfer" || pathname === "/transfer/";
 }
@@ -455,10 +514,11 @@ function isExplainerPath(pathname: string): boolean {
 
 async function proxyJson(
   response: import("node:http").ServerResponse,
-  targetUrl: string
+  targetUrl: string,
+  init?: RequestInit
 ): Promise<void> {
   try {
-    const upstream = await fetch(targetUrl);
+    const upstream = await fetch(targetUrl, init);
     const body = await upstream.text();
 
     response.writeHead(upstream.status, {
