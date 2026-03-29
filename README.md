@@ -16,9 +16,9 @@ This repository is where the fuller project explanation lives.
 
 Human-facing amounts in GNS use integer bitcoin notation alongside the conventional BTC equivalent. Example: `₿50,000 (0.0005 BTC)`.
 
-## Try The Hosted Demo
+## Start Here
 
-If you want the shortest first walkthrough, use the hosted private demo:
+If you want the fastest first walkthrough, use the hosted private demo:
 
 1. Open [setup](https://globalnamesystem.org/setup) and run the Sparrow helper shown there.
 2. Request demo coins into the same Sparrow wallet you plan to spend from.
@@ -32,35 +32,37 @@ Keep these distinctions in mind:
 - the hosted site prepares the flow, but your wallet still signs and broadcasts it
 - in v1, losing the **owner key** means losing update and transfer authority for that name
 
-## Choose Your Path
+### Pick The Path That Fits
 
 There are three practical ways to use GNS today:
 
-### 1. Hosted Private Demo
+- `Hosted Private Demo`
+  Fastest first walkthrough.
+  Website: [https://globalnamesystem.org](https://globalnamesystem.org)
+  Setup: [https://globalnamesystem.org/setup](https://globalnamesystem.org/setup)
+  Claim prep: [https://globalnamesystem.org/claim](https://globalnamesystem.org/claim)
 
-Best if you want the fastest first walkthrough.
+- `Self-Hosted Website + Resolver`
+  Best if you do not want to depend on the hosted website or hosted resolver.
+  Quick guide: [SELF_HOSTING.md](./docs/core/SELF_HOSTING.md)
 
-- website: [https://globalnamesystem.org](https://globalnamesystem.org)
-- setup: [https://globalnamesystem.org/setup](https://globalnamesystem.org/setup)
-- claim prep: [https://globalnamesystem.org/claim](https://globalnamesystem.org/claim)
+- `Offline / Higher-Trust Claim Prep`
+  Best if you want the hosted site to matter as little as possible during claim preparation.
+  Offline architect: [https://globalnamesystem.org/claim/offline](https://globalnamesystem.org/claim/offline)
 
-This is the easiest way to understand the claim flow, but it is still a prototype demo built around a private signet environment and Sparrow.
+## Screenshots
 
-### 2. Self-Hosted Website + Resolver
+The hosted site is intentionally more tool-oriented than explanatory. A new user usually moves through:
 
-Best if you do not want to depend on the hosted website or hosted resolver.
+1. the homepage and name lookup
+2. setup for the hosted private demo
+3. claim prep or value publishing
 
-- quick guide: [SELF_HOSTING.md](./docs/core/SELF_HOSTING.md)
+![GNS homepage](./docs/assets/website-home.png)
 
-This lets you run your own GNS web surface and resolver, first against the bundled fixture chain and later against your own Bitcoin backend.
+![GNS setup](./docs/assets/website-setup.png)
 
-### 3. Offline / Higher-Trust Claim Prep
-
-Best if you want the hosted site to matter as little as possible during claim preparation.
-
-- offline architect: [https://globalnamesystem.org/claim/offline](https://globalnamesystem.org/claim/offline)
-
-This keeps claim construction local in your browser and leaves signing to your wallet.
+![GNS value bundle](./docs/assets/website-values-bundle.png)
 
 ## What GNS Is
 
@@ -222,30 +224,6 @@ The current hosted product is here:
 - Offline claim architect: [https://globalnamesystem.org/claim/offline](https://globalnamesystem.org/claim/offline)
 
 The website is intentionally becoming more tool-oriented over time. The deeper explanation, economics, and design rationale are expected to live here in the repo.
-
-## How To Claim A Name
-
-For the hosted private demo today, the shortest path is:
-
-1. Open [setup](https://globalnamesystem.org/setup) and get Sparrow talking to the private signet demo.
-2. Request demo coins into the same Sparrow wallet you plan to spend from.
-3. Open [claim prep](https://globalnamesystem.org/claim) and choose the name you want.
-4. Generate or paste the owner key, then save that owner key and the backup package.
-5. Build the commit and reveal PSBTs, then sign and broadcast them in Sparrow.
-6. Watch the name move through the lifecycle in [explore](https://globalnamesystem.org/explore).
-
-Important distinctions:
-
-- the **wallet key** signs Bitcoin transactions
-- the **owner key** controls the name later for value updates and transfers
-- the hosted site prepares the claim, but your wallet still signs and broadcasts it
-
-Do you have to trust the hosted site?
-
-- no, not completely
-- you can use the offline architect for claim construction
-- you can self-host your own website + resolver stack
-- if you also use your own Bitcoin backend, the full read path becomes yours
 
 ## Current Demo Wallet Support
 

@@ -893,17 +893,17 @@ function renderSetupQuickstartSection(configuredBasePath: string): string {
   return `<section id="setup-start" class="panel panel-guide">
     ${renderPanelHead(
       "Private Demo Setup",
-      "Run one helper, confirm the wallet is connected, then return to claim."
+      "Start the helper once, confirm Sparrow is pointed at the demo chain, then return to claim."
     )}
     <div class="guide-grid">
       <article class="guide-card">
-        <h3>Run This Command</h3>
-        <p>From your local clone, start the supported helper for the hosted private demo:</p>
+        <h3>1. Start The Helper</h3>
+        <p>From your local clone, run:</p>
         <pre class="command-block"><code>npm run sparrow:private-signet:start</code></pre>
-        <p>It configures Sparrow, opens the SSH tunnel, and keeps the connection pointed at the private signet node.</p>
+        <p class="tool-handoff-note">This configures Sparrow, opens the SSH tunnel, and keeps the connection pointed at the hosted private signet node.</p>
       </article>
       <article class="guide-card">
-        <h3>You Are Ready When</h3>
+        <h3>2. Confirm Sparrow</h3>
         <ul class="guide-list">
           <li>Sparrow is open in <code>signet</code> mode.</li>
           <li>The server type is <code>Bitcoin Core</code>.</li>
@@ -923,18 +923,9 @@ function renderSetupFundingSection(privateSignetFundingAmountSats: bigint): stri
   return `<section id="setup-funding" class="panel panel-guide">
     ${renderPanelHead(
       "Get Demo Coins",
-      "Fund the same Sparrow signet wallet you plan to spend from."
+      "Paste a signet receive address from the same Sparrow wallet you plan to spend from."
     )}
-    <div class="guide-grid">
-      <article class="guide-card">
-        <h3>Before You Request Funds</h3>
-        <p>Make sure Sparrow is already using the local helper and the SSH tunnel. Public signet servers will not show balances from this private demo network.</p>
-      </article>
-      <article class="guide-card">
-        <h3>What You Receive</h3>
-        <p>${formatBitcoinDisplay(privateSignetFundingAmountSats)} per request, with one block mined immediately so the wallet sees a confirmed balance. Later claim transactions on this hosted demo also confirm automatically after broadcast.</p>
-      </article>
-    </div>
+    <p class="tool-handoff-note">${formatBitcoinDisplay(privateSignetFundingAmountSats)} per request, with one block mined immediately so Sparrow sees a confirmed balance. Later claim transactions on this hosted demo also confirm automatically after broadcast.</p>
     <form id="privateFundingForm" class="claim-draft-form">
       <div class="draft-grid">
         <label class="draft-field">
@@ -946,7 +937,7 @@ function renderSetupFundingSection(privateSignetFundingAmountSats: bigint): stri
             placeholder="Paste a signet receive address from Sparrow"
             autocomplete="off"
           />
-          <span class="field-hint">Use the same wallet you plan to spend from when you build the claim transaction. If Sparrow cannot see the funds afterward, the local tunnel is usually the missing step.</span>
+          <span class="field-hint">Use the same wallet you plan to spend from when you build the claim transaction. If Sparrow cannot see the funds afterward, the helper / tunnel is usually the missing step.</span>
         </label>
       </div>
       <div class="draft-actions">
@@ -987,8 +978,6 @@ function renderSetupSupportStrip(configuredBasePath: string): string {
     <p class="support-strip-label">Utility links</p>
     <div class="hero-cta-row support-strip-actions">
       <a class="action-link secondary" href="${withBasePath("/claim", configuredBasePath)}">Open claim prep</a>
-      <a class="action-link secondary" href="${withBasePath("/values", configuredBasePath)}">Publish value</a>
-      <a class="action-link secondary" href="${withBasePath("/claim/offline", configuredBasePath)}">Open offline architect</a>
       <a class="action-link secondary" href="${GITHUB_REPO_URL}" target="_blank" rel="noreferrer noopener">GitHub docs</a>
     </div>
   </section>`;
