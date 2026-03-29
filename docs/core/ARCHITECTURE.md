@@ -121,6 +121,7 @@ These are the main issues we already understand and want reviewers to keep pushi
 - **Post-maturity holding cost:** mature names no longer require bond continuity. That reduces permanent UTXO pressure, but it also means long names become cheap to hold indefinitely after the maturity period.
 - **Resolver concentration:** ownership is chain-derived, but value-record availability is still vulnerable to concentration if only one or a few resolvers matter in practice.
 - **Reveal-window exposure:** a failed reveal is not just a failed claim. It also exposes which name somebody wanted, which can make the next attempt more competitive. That makes the reveal window a market-structure question, not only a wallet UX question.
+- **Owner-key recovery:** the prototype intentionally separates the wallet/funding key from the owner key. That keeps authority clean, but it means v1 has no built-in recovery path if the owner key is lost.
 
 ### `apps/indexer`
 

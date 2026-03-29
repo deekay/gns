@@ -30,6 +30,7 @@ Keep these distinctions in mind:
 - the **wallet key** signs Bitcoin transactions
 - the **owner key** controls the name later for value updates and transfers
 - the hosted site prepares the flow, but your wallet still signs and broadcasts it
+- in v1, losing the **owner key** means losing update and transfer authority for that name
 
 ## Choose Your Path
 
@@ -120,6 +121,7 @@ Transfers move owner authority from one pubkey to another.
 - active names no longer require that continuity
 - the owner key, not a resolver, is what authorizes future value updates
 - after a transfer, the old owner can no longer publish new value records for that name
+- if the owner key is lost, v1 has no built-in protocol recovery path even if the user still controls the wallet that funded the claim
 
 ### Values
 

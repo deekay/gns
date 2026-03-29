@@ -434,6 +434,7 @@ Reviewer-facing trade-offs that should be stated plainly include:
 - mature names currently remain valid without ongoing bond continuity
 - v1 resolver usage may still concentrate value-record availability around a small number of hosted resolvers
 - a missed reveal does not just fail a claim; it also exposes demand for that specific name before the claimant secures it
+- the owner key is distinct from the funding wallet key, and v1 does not include a protocol recovery path if that owner key is lost
 
 5. Concrete wire format
 
