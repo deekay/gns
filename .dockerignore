@@ -1,0 +1,13 @@
+.git
+.data
+node_modules
+apps/*/node_modules
+packages/*/node_modules
+dist
+apps/*/dist
+packages/*/dist
+private
+.DS_Store
+tmp
+coverage
+*.log

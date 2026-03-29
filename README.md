@@ -202,6 +202,19 @@ Then open:
 
 - `http://127.0.0.1:3000`
 
+### Run your own web + resolver stack
+
+```bash
+cp .env.example .env
+docker compose up --build
+```
+
+Then open:
+
+- `http://127.0.0.1:3000`
+
+That default path runs against the bundled fixture chain so you can use your own site and resolver immediately. To point the stack at your own Bitcoin backend later, use [SELF_HOSTING.md](./docs/core/SELF_HOSTING.md).
+
 ### Run the controlled-chain suite
 
 ```bash
@@ -248,6 +261,7 @@ This is a TypeScript monorepo using `npm` workspaces.
 Start here:
 
 - [docs/README.md](./docs/README.md): documentation index
+- [docs/core/SELF_HOSTING.md](./docs/core/SELF_HOSTING.md): run your own website + resolver stack
 - [docs/core/ARCHITECTURE.md](./docs/core/ARCHITECTURE.md): system structure, trust boundaries, and runtime modes
 - [docs/core/DECISIONS.md](./docs/core/DECISIONS.md): design decisions and open tradeoffs
 - [docs/core/TESTING.md](./docs/core/TESTING.md): fixture, regtest, public signet, and private signet testing paths
