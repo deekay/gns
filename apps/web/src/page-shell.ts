@@ -251,7 +251,8 @@ function renderClaimPageSections(
   _privateSignetFundingEnabled: boolean,
   _privateSignetFundingAmountSats: bigint
 ): string {
-  return `${renderClaimPrepSection()}
+  return `${renderClaimOrientationSection(configuredBasePath)}
+    ${renderClaimPrepSection()}
     ${renderClaimSupportStrip(configuredBasePath)}`;
 }
 
@@ -266,6 +267,7 @@ function renderSetupPageSections(
   privateSignetFundingAmountSats: bigint
 ): string {
   return `${renderSetupStartSection(configuredBasePath)}
+    ${renderSetupReadySection()}
     ${privateSignetFundingEnabled ? renderSetupFundingSection(privateSignetFundingAmountSats) : ""}
     ${renderSetupSupportStrip(configuredBasePath)}`;
 }
@@ -801,6 +803,44 @@ function renderClaimPrepSection(): string {
   </section>`;
 }
 
+function renderClaimOrientationSection(configuredBasePath: string): string {
+  return `<section id="claim-orientation" class="panel panel-guide">
+    ${renderPanelHead(
+      "Before You Claim",
+      "The shortest path, what is required, and which key does what."
+    )}
+    <div class="guide-grid">
+      <article class="guide-card">
+        <h3>Ready To Claim?</h3>
+        <ul class="guide-list">
+          <li>Sparrow is in <code>signet</code> mode.</li>
+          <li>The local helper / tunnel is running.</li>
+          <li>Your demo coins are visible in Sparrow.</li>
+          <li>You know which name you want to claim.</li>
+        </ul>
+      </article>
+      <article class="guide-card">
+        <h3>Required Vs Optional</h3>
+        <ul class="guide-list">
+          <li><strong>Required:</strong> desired name, owner key, wallet funding, commit PSBT, reveal PSBT.</li>
+          <li><strong>Optional:</strong> signer notes, custom bond destination, custom change destination, resume backup.</li>
+        </ul>
+      </article>
+      <article class="guide-card">
+        <h3>Which Key Does What?</h3>
+        <ul class="guide-list">
+          <li><strong>Wallet key:</strong> signs and broadcasts the Bitcoin transactions in Sparrow.</li>
+          <li><strong>Owner key:</strong> controls the name later for value updates and transfers.</li>
+          <li>This page prepares the claim. Your wallet signs it.</li>
+        </ul>
+        <div class="hero-cta-row">
+          <a class="action-link secondary" href="${withBasePath("/claim/offline", configuredBasePath)}">Offline architect</a>
+        </div>
+      </article>
+    </div>
+  </section>`;
+}
+
 function renderSignerWorkflowSection(collapsible: boolean): string {
   const body = `<div class="guide-grid">
       <article class="guide-card">
@@ -867,6 +907,38 @@ function renderSetupStartSection(configuredBasePath: string): string {
     <div class="hero-cta-row section-cta-row">
       <a class="action-link" href="${withBasePath("/claim", configuredBasePath)}">Open claim prep</a>
       <a class="action-link secondary" href="https://sparrowwallet.com/download/" target="_blank" rel="noreferrer">Download Sparrow</a>
+    </div>
+  </section>`;
+}
+
+function renderSetupReadySection(): string {
+  return `<section id="setup-ready" class="panel panel-guide">
+    ${renderPanelHead(
+      "You Are Ready When",
+      "Use this quick checklist before moving into claim prep."
+    )}
+    <div class="guide-grid">
+      <article class="guide-card">
+        <h3>Wallet</h3>
+        <ul class="guide-list">
+          <li>Sparrow is open in <code>signet</code> mode.</li>
+          <li>The server type is <code>Bitcoin Core</code>.</li>
+        </ul>
+      </article>
+      <article class="guide-card">
+        <h3>Connection</h3>
+        <ul class="guide-list">
+          <li>The local helper / SSH tunnel is still running.</li>
+          <li>Sparrow can talk to the private demo node.</li>
+        </ul>
+      </article>
+      <article class="guide-card">
+        <h3>Funds</h3>
+        <ul class="guide-list">
+          <li>Your demo coins are visible in the wallet.</li>
+          <li>You plan to use that same wallet for the claim transaction.</li>
+        </ul>
+      </article>
     </div>
   </section>`;
 }
