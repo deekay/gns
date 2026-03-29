@@ -2815,6 +2815,20 @@ function detailValueCopy(valueRecord) {
     return "The owner has not published an off-chain value record yet.";
   }
 
+  const bundle = Number(valueRecord.valueType) === 255
+    ? decodeProfileBundlePayloadHex(valueRecord.payloadHex)
+    : null;
+  if (bundle !== null) {
+    const destinationCount = listProfileBundleEntries(bundle).length;
+    return (
+      "Signed off-chain by the current owner. This profile bundle currently points to " +
+      String(destinationCount) +
+      " destination" +
+      (destinationCount === 1 ? "" : "s") +
+      "."
+    );
+  }
+
   return (
     "Signed off-chain by the current owner. Latest sequence " +
     String(valueRecord.sequence) +
@@ -2827,9 +2841,15 @@ function renderOffChainDataSection(valueRecord) {
   const typeValue = valueRecord ? formatValueType(valueRecord.valueType, valueRecord.payloadHex) : "Not published";
   const sequenceValue = valueRecord ? String(valueRecord.sequence) : "None yet";
   const publishedValue = valueRecord ? new Date(valueRecord.exportedAt).toLocaleString() : "Not published";
+  const bundle = valueRecord && Number(valueRecord.valueType) === 255
+    ? decodeProfileBundlePayloadHex(valueRecord.payloadHex)
+    : null;
   const explanatoryCopy = valueRecord
-    ? "This is the current signed value record for the name. Ownership stays on-chain; the resolution target is stored and updated off-chain."
+    ? bundle !== null
+      ? "This name currently resolves through one signed profile bundle. Ownership stays on-chain; the bundle carries several off-chain destinations at once."
+      : "This is the current signed value record for the name. Ownership stays on-chain; the resolution target is stored and updated off-chain."
     : "No signed off-chain value record has been published yet. The name exists, but it does not currently point anywhere.";
+  const destinationCountValue = bundle !== null ? String(listProfileBundleEntries(bundle).length) : null;
 
   return (
     '<section class="step-list offchain-data-section">' +
@@ -2840,6 +2860,9 @@ function renderOffChainDataSection(valueRecord) {
     '<div class="result-item"><label>Record Type</label><p class="field-value">' + escapeHtml(typeValue) + "</p></div>" +
     '<div class="result-item"><label>Sequence</label><p class="field-value">' + escapeHtml(sequenceValue) + "</p></div>" +
     '<div class="result-item"><label>Last Published</label><p class="field-value">' + escapeHtml(publishedValue) + "</p></div>" +
+    (destinationCountValue === null
+      ? ""
+      : '<div class="result-item"><label>Destinations</label><p class="field-value">' + escapeHtml(destinationCountValue) + "</p></div>") +
     "</div>" +
     "</section>"
   );

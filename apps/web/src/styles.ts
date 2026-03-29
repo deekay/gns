@@ -708,12 +708,16 @@ h2 {
 
 .value-bundle-preview {
   display: grid;
-  gap: 10px;
+  gap: 12px;
 }
 
 .value-bundle-preview-row {
   display: grid;
-  gap: 4px;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(31, 29, 26, 0.08);
+  background: rgba(244, 239, 232, 0.72);
 }
 
 .value-bundle-preview-row label {
@@ -722,6 +726,12 @@ h2 {
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.04em;
+}
+
+.value-bundle-preview-row .field-value {
+  margin: 0;
+  line-height: 1.55;
+  word-break: break-word;
 }
 
 .draft-actions {
