@@ -1,0 +1,650 @@
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { existsSync } from "node:fs";
+import { join, resolve } from "node:path";
+import { spawn } from "node:child_process";
+
+const ROOT = resolve(new URL("..", import.meta.url).pathname);
+const DATA_DIR = resolve(ROOT, ".data/private-signet-demo");
+const OUT_DIR = resolve(DATA_DIR, "artifacts");
+const OWNER_PATH = resolve(DATA_DIR, "owner.json");
+const RECIPIENT_PATH = resolve(DATA_DIR, "recipient.json");
+const PENDING_OWNER_PATH = resolve(DATA_DIR, "pending-owner.json");
+
+const TSX_BIN = resolve(ROOT, "node_modules/.bin/tsx");
+const CLI_ENTRY = "apps/cli/src/index.ts";
+
+const SSH_TARGET =
+  process.env.GNS_PRIVATE_SIGNET_SSH_TARGET
+  ?? process.env.GNS_SSH_TARGET
+  ?? "";
+const SSH_KEY =
+  process.env.GNS_PRIVATE_SIGNET_SSH_KEY
+  ?? process.env.GNS_SSH_KEY
+  ?? "";
+const SSH_SOCKET =
+  process.env.GNS_PRIVATE_SIGNET_SSH_SOCKET
+  ?? "/tmp/gns-private-signet.sock";
+const REMOTE_RPC_PORT = Number.parseInt(
+  process.env.GNS_PRIVATE_SIGNET_REMOTE_RPC_PORT
+    ?? "39332",
+  10
+);
+const REMOTE_RESOLVER_PORT = Number.parseInt(
+  process.env.GNS_PRIVATE_SIGNET_REMOTE_RESOLVER_PORT
+    ?? "8788",
+  10
+);
+const LOCAL_RPC_PORT = Number.parseInt(
+  process.env.GNS_PRIVATE_SIGNET_LOCAL_RPC_PORT
+    ?? "39342",
+  10
+);
+const LOCAL_RESOLVER_PORT = Number.parseInt(
+  process.env.GNS_PRIVATE_SIGNET_LOCAL_RESOLVER_PORT
+    ?? "18788",
+  10
+);
+const RPC_USERNAME =
+  process.env.GNS_PRIVATE_SIGNET_RPC_USERNAME
+  ?? "gnsrpcprivate";
+
+export const COMMIT_FEE_SATS = 1_000n;
+export const REVEAL_FEE_SATS = 500n;
+export const TRANSFER_FEE_SATS = 1_000n;
+export const REQUIRED_BOND_SATS = 50_000n;
+export const FUNDING_SATS = 400_000n;
+export const MATURITY_BLOCKS = Number.parseInt(
+  process.env.GNS_PRIVATE_SIGNET_TEST_MATURITY_BLOCKS
+    ?? "12",
+  10
+);
+
+let cachedRpcPassword = null;
+
+export async function withPrivateSignetSession(callback) {
+  ensureSshConfig();
+  await mkdir(DATA_DIR, { recursive: true });
+  await mkdir(OUT_DIR, { recursive: true });
+
+  const owner = await ensureAccount(OWNER_PATH);
+  const recipient = await ensureAccount(RECIPIENT_PATH);
+  const pendingOwner = await ensureAccount(PENDING_OWNER_PATH);
+  const rpcPassword = await getRemotePrivateRpcPassword();
+
+  await openTunnel();
+
+  try {
+    await waitForResolver();
+
+    return await callback({
+      owner,
+      recipient,
+      pendingOwner,
+      rpcPassword,
+      dataDir: DATA_DIR,
+      artifactsRoot: OUT_DIR,
+      resolverUrl: resolverUrl(),
+      rpcUrl: localRpcUrl()
+    });
+  } finally {
+    await closeTunnel();
+  }
+}
+
+export function createScenarioName(prefix) {
+  return `${prefix}${Date.now().toString(36).slice(-6)}`;
+}
+
+export function scenarioArtifactsDir(name) {
+  return join(OUT_DIR, name);
+}
+
+export function scenarioSummaryPath(name) {
+  return resolve(DATA_DIR, `${name}-summary.json`);
+}
+
+export async function writeScenarioSummary(name, summary) {
+  await writeFile(scenarioSummaryPath(name), JSON.stringify(summary, null, 2));
+}
+
+export async function claimName({ name, account, rpcPassword, outDir }) {
+  await mkdir(outDir, { recursive: true });
+  const claimPackage = await createClaimPackage({
+    name,
+    account,
+    writePath: join(outDir, `${name}-claim.json`)
+  });
+  const fundingUtxo = await fundAddress(account.fundingAddress, FUNDING_SATS);
+  const queuePath = join(outDir, `${name}-queue.json`);
+
+  const result = await cliJson([
+    "submit-claim",
+    claimPackage.path,
+    "--commit-input",
+    formatDescriptor(fundingUtxo),
+    "--commit-fee-sats",
+    COMMIT_FEE_SATS.toString(),
+    "--reveal-fee-sats",
+    REVEAL_FEE_SATS.toString(),
+    "--wif",
+    account.fundingWif,
+    "--network",
+    "signet",
+    "--expected-chain",
+    "signet",
+    "--rpc-url",
+    localRpcUrl(),
+    "--rpc-username",
+    RPC_USERNAME,
+    "--rpc-password",
+    rpcPassword,
+    "--bond-address",
+    account.fundingAddress,
+    "--commit-change-address",
+    account.fundingAddress,
+    "--reveal-change-address",
+    account.fundingAddress,
+    "--queue",
+    queuePath,
+    "--out-dir",
+    outDir
+  ]);
+
+  await mineBlocks(1);
+  await waitForResolverHeight(await getBlockCount());
+
+  const watcherResult = await cliJson([
+    "run-reveal-watcher",
+    "--queue",
+    queuePath,
+    "--rpc-url",
+    localRpcUrl(),
+    "--rpc-username",
+    RPC_USERNAME,
+    "--rpc-password",
+    rpcPassword,
+    "--expected-chain",
+    "signet",
+    "--once"
+  ]);
+
+  await mineBlocks(1);
+  await waitForResolverHeight(await getBlockCount());
+
+  const record = await cliJson(["get-name", name, "--resolver-url", resolverUrl()]);
+
+  return {
+    name,
+    claimPackagePath: claimPackage.path,
+    commitTxid: result.commitTxid,
+    revealTxid: result.revealTxid,
+    watcherResult,
+    record
+  };
+}
+
+export async function giftTransferName({
+  nameRecord,
+  currentOwnerAccount,
+  newOwnerAccount,
+  rpcPassword,
+  outDir
+}) {
+  await mkdir(outDir, { recursive: true });
+  const feeUtxo = await fundAddress(currentOwnerAccount.fundingAddress, 20_000n);
+  const transferResult = await cliJson([
+    "submit-transfer",
+    "--prev-state-txid",
+    nameRecord.lastStateTxid,
+    "--new-owner-pubkey",
+    newOwnerAccount.ownerPubkey,
+    "--owner-private-key-hex",
+    currentOwnerAccount.ownerPrivateKeyHex,
+    "--bond-input",
+    formatDescriptor({
+      txid: nameRecord.currentBondTxid,
+      vout: nameRecord.currentBondVout,
+      valueSats: BigInt(nameRecord.currentBondValueSats),
+      address: currentOwnerAccount.fundingAddress
+    }),
+    "--input",
+    formatDescriptor(feeUtxo),
+    "--successor-bond-vout",
+    "0",
+    "--successor-bond-sats",
+    nameRecord.currentBondValueSats,
+    "--fee-sats",
+    TRANSFER_FEE_SATS.toString(),
+    "--bond-address",
+    newOwnerAccount.fundingAddress,
+    "--change-address",
+    currentOwnerAccount.fundingAddress,
+    "--wif",
+    currentOwnerAccount.fundingWif,
+    "--network",
+    "signet",
+    "--expected-chain",
+    "signet",
+    "--rpc-url",
+    localRpcUrl(),
+    "--rpc-username",
+    RPC_USERNAME,
+    "--rpc-password",
+    rpcPassword,
+    "--out-dir",
+    outDir
+  ]);
+
+  await mineBlocks(1);
+  await waitForResolverHeight(await getBlockCount());
+
+  return {
+    transferResult,
+    record: await cliJson(["get-name", nameRecord.name, "--resolver-url", resolverUrl()])
+  };
+}
+
+export async function immatureSaleTransferName({
+  nameRecord,
+  sellerAccount,
+  buyerAccount,
+  rpcPassword,
+  outDir,
+  salePriceSats = 20_000n
+}) {
+  await mkdir(outDir, { recursive: true });
+  const buyerFunding = await fundAddress(
+    buyerAccount.fundingAddress,
+    BigInt(nameRecord.currentBondValueSats) + salePriceSats + 20_000n
+  );
+
+  const transferResult = await cliJson([
+    "submit-immature-sale-transfer",
+    "--prev-state-txid",
+    nameRecord.lastStateTxid,
+    "--new-owner-pubkey",
+    buyerAccount.ownerPubkey,
+    "--owner-private-key-hex",
+    sellerAccount.ownerPrivateKeyHex,
+    "--bond-input",
+    formatDescriptor({
+      txid: nameRecord.currentBondTxid,
+      vout: nameRecord.currentBondVout,
+      valueSats: BigInt(nameRecord.currentBondValueSats),
+      address: sellerAccount.fundingAddress
+    }),
+    "--buyer-input",
+    formatDescriptor(buyerFunding),
+    "--successor-bond-vout",
+    "0",
+    "--successor-bond-sats",
+    nameRecord.currentBondValueSats,
+    "--sale-price-sats",
+    salePriceSats.toString(),
+    "--seller-payout-address",
+    sellerAccount.fundingAddress,
+    "--buyer-change-address",
+    buyerAccount.fundingAddress,
+    "--fee-sats",
+    TRANSFER_FEE_SATS.toString(),
+    "--bond-address",
+    buyerAccount.fundingAddress,
+    "--wif",
+    sellerAccount.fundingWif,
+    "--wif",
+    buyerAccount.fundingWif,
+    "--network",
+    "signet",
+    "--expected-chain",
+    "signet",
+    "--rpc-url",
+    localRpcUrl(),
+    "--rpc-username",
+    RPC_USERNAME,
+    "--rpc-password",
+    rpcPassword,
+    "--out-dir",
+    outDir
+  ]);
+
+  await mineBlocks(1);
+  await waitForResolverHeight(await getBlockCount());
+
+  return {
+    transferResult,
+    record: await cliJson(["get-name", nameRecord.name, "--resolver-url", resolverUrl()])
+  };
+}
+
+export async function ensureAccount(path) {
+  try {
+    return JSON.parse(await readFile(path, "utf8"));
+  } catch {
+    return cliJson(["generate-live-account", "--network", "signet", "--write", path]);
+  }
+}
+
+export async function createClaimPackage({ name, account, writePath }) {
+  const result = await cliJson([
+    "create-claim-package",
+    name,
+    "--owner-pubkey",
+    account.ownerPubkey,
+    "--bond-destination",
+    account.fundingAddress,
+    "--change-destination",
+    account.fundingAddress,
+    "--write",
+    writePath
+  ]);
+
+  return {
+    ...result,
+    path: writePath
+  };
+}
+
+export async function fundAddress(address, sats) {
+  const amountBtc = satsToBtcString(sats);
+  const txid = (await runRemote(`gns-private-signet-fund ${shellEscape(address)} ${shellEscape(amountBtc)}`)).trim();
+  if (!txid) {
+    throw new Error(`private signet funding did not return a txid for ${address}`);
+  }
+
+  await waitForResolverHeight(await getBlockCount());
+  return await waitForAddressUtxo(txid, address);
+}
+
+export async function mineBlocks(blocks) {
+  await runRemote(`gns-private-signet-mine ${Number.parseInt(String(blocks), 10)}`);
+}
+
+export async function waitForAddressUtxo(txid, address, attempts = 40) {
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    const tx = await rpcCall("getrawtransaction", [txid, true]).catch(() => null);
+    if (tx?.vout) {
+      const match = tx.vout.find((output) => {
+        return output.scriptPubKey?.address === address || output.scriptPubKey?.addresses?.includes(address);
+      });
+      if (match) {
+        return {
+          txid,
+          vout: match.n,
+          valueSats: btcDecimalToSats(match.value),
+          address
+        };
+      }
+    }
+    await sleep(500);
+  }
+
+  throw new Error(`timed out waiting for funded output ${txid} -> ${address}`);
+}
+
+export async function getBlockCount() {
+  return await rpcCall("getblockcount", []);
+}
+
+export async function waitForResolver() {
+  for (let attempt = 0; attempt < 40; attempt += 1) {
+    try {
+      const health = await fetchJson(`${resolverUrl()}/health`);
+      if (health.ok === true) {
+        return health;
+      }
+    } catch {
+      // keep polling
+    }
+    await sleep(1_000);
+  }
+
+  throw new Error("private resolver did not become ready in time");
+}
+
+export async function waitForResolverHeight(targetHeight, attempts = 60) {
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    const health = await fetchJson(`${resolverUrl()}/health`);
+    if ((health.stats?.currentHeight ?? -1) >= targetHeight) {
+      return health;
+    }
+    await sleep(1_000);
+  }
+
+  throw new Error(`resolver did not reach height ${targetHeight}`);
+}
+
+export async function rpcCall(method, params) {
+  const response = await fetch(localRpcUrl(), {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      authorization: `Basic ${Buffer.from(`${RPC_USERNAME}:${await getRemotePrivateRpcPassword()}`).toString("base64")}`
+    },
+    body: JSON.stringify({
+      jsonrpc: "1.0",
+      id: method,
+      method,
+      params
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(`rpc ${method} failed with http ${response.status}`);
+  }
+
+  const payload = await response.json();
+  if (payload.error) {
+    throw new Error(`rpc ${method} failed: ${payload.error.message ?? JSON.stringify(payload.error)}`);
+  }
+
+  return payload.result;
+}
+
+export async function getRemotePrivateRpcPassword() {
+  if (cachedRpcPassword) {
+    return cachedRpcPassword;
+  }
+
+  cachedRpcPassword = (await runRemote(`awk -F= '/^GNS_BITCOIN_RPC_PASSWORD=/{print $2}' /etc/gns/gns-private.env`)).trim();
+  if (!cachedRpcPassword) {
+    throw new Error("unable to read private signet RPC password from VPS");
+  }
+
+  return cachedRpcPassword;
+}
+
+export async function openTunnel() {
+  await closeTunnel().catch(() => {});
+  await runCommand("ssh", [
+    ...sshIdentityArgs(),
+    "-o",
+    "ExitOnForwardFailure=yes",
+    "-M",
+    "-S",
+    SSH_SOCKET,
+    "-fnNT",
+    "-L",
+    `${LOCAL_RPC_PORT}:127.0.0.1:${REMOTE_RPC_PORT}`,
+    "-L",
+    `${LOCAL_RESOLVER_PORT}:127.0.0.1:${REMOTE_RESOLVER_PORT}`,
+    SSH_TARGET
+  ]);
+}
+
+export async function closeTunnel() {
+  await runCommand(
+    "ssh",
+    ["-S", SSH_SOCKET, "-O", "exit", SSH_TARGET],
+    { allowFailure: true, timeoutMs: 3_000 }
+  ).catch(() => {});
+
+  for (const pid of await findTunnelListenerPids()) {
+    try {
+      process.kill(pid, "SIGTERM");
+    } catch {
+      // Ignore already-exited listeners.
+    }
+  }
+}
+
+export async function runRemote(command) {
+  const { stdout } = await runCommand("ssh", [...sshIdentityArgs(), SSH_TARGET, command]);
+  return stdout;
+}
+
+export function ensureSshConfig() {
+  if (!SSH_TARGET) {
+    throw new Error("Set GNS_PRIVATE_SIGNET_SSH_TARGET or GNS_SSH_TARGET before running private-signet smoke checks.");
+  }
+
+  if (SSH_KEY && !existsSync(SSH_KEY)) {
+    throw new Error(`SSH key not found: ${SSH_KEY}`);
+  }
+}
+
+export function sshIdentityArgs() {
+  return SSH_KEY ? ["-i", SSH_KEY, "-o", "IdentitiesOnly=yes"] : [];
+}
+
+export async function cliJson(args) {
+  const { stdout } = await runCommand(TSX_BIN, [CLI_ENTRY, ...args], {
+    cwd: ROOT
+  });
+
+  try {
+    return JSON.parse(stdout);
+  } catch (error) {
+    throw new Error(`unable to parse CLI JSON for ${args[0]}: ${stdout}\n${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
+export async function fetchJson(url) {
+  const response = await fetch(url);
+  const payload = await response.json();
+  if (!response.ok) {
+    const error = new Error(payload.message ?? `request failed: ${response.status}`);
+    error.code = payload.error;
+    throw error;
+  }
+  return payload;
+}
+
+export async function postValueRecord(record) {
+  const response = await fetch(`${resolverUrl()}/values`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json; charset=utf-8"
+    },
+    body: JSON.stringify(record)
+  });
+  const raw = await response.text();
+  return {
+    status: response.status,
+    payload: raw.length === 0 ? null : JSON.parse(raw)
+  };
+}
+
+export async function runCommand(command, args, options = {}) {
+  const { cwd = ROOT, allowFailure = false, timeoutMs } = options;
+
+  return await new Promise((resolvePromise, rejectPromise) => {
+    const child = spawn(command, args, {
+      cwd,
+      stdio: ["ignore", "pipe", "pipe"],
+      env: process.env
+    });
+
+    let stdout = "";
+    let stderr = "";
+    let timeoutId = null;
+
+    child.stdout.on("data", (chunk) => {
+      stdout += chunk.toString();
+    });
+    child.stderr.on("data", (chunk) => {
+      stderr += chunk.toString();
+    });
+
+    if (typeof timeoutMs === "number" && timeoutMs > 0) {
+      timeoutId = setTimeout(() => {
+        child.kill("SIGTERM");
+      }, timeoutMs);
+    }
+
+    child.on("error", rejectPromise);
+    child.on("close", (code, signal) => {
+      if (timeoutId !== null) {
+        clearTimeout(timeoutId);
+      }
+
+      const timedOut = typeof timeoutMs === "number" && timeoutMs > 0 && signal === "SIGTERM";
+      if (timedOut && !allowFailure) {
+        rejectPromise(
+          new Error(`${command} ${args.join(" ")} timed out after ${timeoutMs}ms\nstdout:\n${stdout}\nstderr:\n${stderr}`)
+        );
+        return;
+      }
+
+      if (code !== 0 && !allowFailure) {
+        rejectPromise(
+          new Error(`${command} ${args.join(" ")} exited with code ${code}\nstdout:\n${stdout}\nstderr:\n${stderr}`)
+        );
+        return;
+      }
+
+      resolvePromise({ code, stdout: stdout.trim(), stderr: stderr.trim() });
+    });
+  });
+}
+
+async function findTunnelListenerPids() {
+  const pidLines = [];
+
+  for (const port of [LOCAL_RPC_PORT, LOCAL_RESOLVER_PORT]) {
+    const { stdout } = await runCommand(
+      "lsof",
+      ["-tiTCP:" + String(port), "-sTCP:LISTEN"],
+      { allowFailure: true, timeoutMs: 2_000 }
+    ).catch(() => ({ stdout: "" }));
+
+    if (stdout.trim() !== "") {
+      pidLines.push(...stdout.trim().split(/\s+/g));
+    }
+  }
+
+  return [...new Set(pidLines)]
+    .map((value) => Number.parseInt(value, 10))
+    .filter((value) => Number.isInteger(value) && value > 0);
+}
+
+export function satsToBtcString(sats) {
+  const whole = sats / 100_000_000n;
+  const fractional = sats % 100_000_000n;
+  return `${whole}.${fractional.toString().padStart(8, "0")}`;
+}
+
+export function btcDecimalToSats(value) {
+  const [whole, fractional = ""] = String(value).split(".");
+  const padded = (fractional + "00000000").slice(0, 8);
+  return BigInt(whole) * 100_000_000n + BigInt(padded);
+}
+
+export function formatDescriptor(utxo) {
+  return `${utxo.txid}:${utxo.vout}:${utxo.valueSats}:${utxo.address}`;
+}
+
+export function localRpcUrl() {
+  return `http://127.0.0.1:${LOCAL_RPC_PORT}`;
+}
+
+export function resolverUrl() {
+  return `http://127.0.0.1:${LOCAL_RESOLVER_PORT}`;
+}
+
+export function shellEscape(value) {
+  return `'${String(value).replaceAll("'", `'\\''`)}'`;
+}
+
+export function sleep(ms) {
+  return new Promise((resolvePromise) => setTimeout(resolvePromise, ms));
+}

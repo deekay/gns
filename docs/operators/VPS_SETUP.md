@@ -138,6 +138,14 @@ To seed the private demo with visible names and lifecycle states, run from the l
 npm run test:private-signet-demo
 ```
 
+For smaller, easier-to-debug checks, run:
+
+```bash
+npm run test:private-signet-claim-smoke
+npm run test:private-signet-transfer-smoke
+npm run test:private-signet-value-handoff-smoke
+```
+
 ## Public URL
 
 After bootstrap, the live web app should be available at:

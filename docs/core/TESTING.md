@@ -262,7 +262,7 @@ To seed a fresh private-signet demo state from the CLI against that VPS:
 npm run test:private-signet-demo
 ```
 
-That script:
+That full script:
 
 - funds demo accounts from the VPS miner wallet
 - claims multiple names
@@ -271,6 +271,20 @@ That script:
 - performs an immature buyer-funded sale transfer
 - advances blocks into maturity
 - leaves one fresh immature name and one pending claim plan behind for UI inspection
+
+For faster, focused checks, use:
+
+```bash
+npm run test:private-signet-claim-smoke
+npm run test:private-signet-transfer-smoke
+npm run test:private-signet-value-handoff-smoke
+```
+
+Those focused smokes cover:
+
+- `claim-smoke`: one name through commit, reveal, and claimed state
+- `transfer-smoke`: gift transfer and immature buyer-funded sale transfer
+- `value-handoff-smoke`: post-transfer value authority moving from the old owner to the new owner
 
 Useful server-side commands:
 
