@@ -255,8 +255,7 @@ function renderClaimPageSections(
   _privateSignetFundingEnabled: boolean,
   _privateSignetFundingAmountSats: bigint
 ): string {
-  return `${renderClaimOrientationSection(configuredBasePath)}
-    ${renderClaimPrepSection()}
+  return `${renderClaimPrepSection(configuredBasePath)}
     ${renderClaimSupportStrip(configuredBasePath)}`;
 }
 
@@ -270,8 +269,7 @@ function renderSetupPageSections(
   privateSignetFundingEnabled: boolean,
   privateSignetFundingAmountSats: bigint
 ): string {
-  return `${renderSetupStartSection(configuredBasePath)}
-    ${renderSetupReadySection()}
+  return `${renderSetupQuickstartSection(configuredBasePath)}
     ${privateSignetFundingEnabled ? renderSetupFundingSection(privateSignetFundingAmountSats) : ""}
     ${renderSetupSupportStrip(configuredBasePath)}`;
 }
@@ -610,7 +608,7 @@ function renderClaimGuideSection(collapsible: boolean): string {
   </details>`;
 }
 
-function renderClaimPrepSection(): string {
+function renderClaimPrepSection(configuredBasePath: string): string {
   const body = `<div class="claim-flow">
       <details id="claim-step-inputs" class="claim-flow-step wizard-step" open>
         <summary class="wizard-step-summary">
@@ -618,12 +616,16 @@ function renderClaimPrepSection(): string {
             <span class="claim-step-badge">Step 1</span>
             <div class="wizard-step-copy">
               <h3>Enter Claim Details</h3>
-              <p>Name, owner pubkey, and nonce are the core claim inputs. The advanced fields only matter if you want to override the default bond flow.</p>
+              <p>Choose the name, paste or generate the owner key, and prepare the draft. The advanced fields only matter if you want to override the default bond flow.</p>
             </div>
           </div>
           <span id="claimStepInputsState" class="summary-chip wizard-step-state">Start here</span>
         </summary>
         <div class="wizard-step-body">
+        <div class="tool-callout-row">
+          <p class="field-note">Need wallet setup first? Use the private signet helper, then come back here to prepare the draft.</p>
+          <a class="action-link secondary" href="${withBasePath("/setup", configuredBasePath)}">Open setup</a>
+        </div>
         <form id="claimDraftForm" class="claim-draft-form">
           <div class="draft-grid">
             <label class="draft-field">
@@ -710,13 +712,14 @@ function renderClaimPrepSection(): string {
           <div class="wizard-step-heading">
             <span class="claim-step-badge">Step 2</span>
             <div class="wizard-step-copy">
-              <h3>Save Keys And Backups</h3>
-              <p>Save the demo owner key first. These files are for backup and resume, not for Sparrow import.</p>
+              <h3>Save The Key And Backup</h3>
+              <p>If you generated a demo owner key, save it now. These files help you resume later and do not belong in Sparrow.</p>
             </div>
           </div>
           <span id="claimStepBackupsState" class="summary-chip wizard-step-state">After step 1</span>
         </summary>
         <div class="wizard-step-body">
+        <p class="field-note">Do not leave this flow without saving the owner key and the reveal backup if you plan to finish later.</p>
         <div id="testKeyResult" class="result-card empty">
           No generated test key yet. Use <strong>Generate Test Key</strong> for local prototype work only.
         </div>
@@ -735,13 +738,13 @@ function renderClaimPrepSection(): string {
             <span class="claim-step-badge">Step 3</span>
             <div class="wizard-step-copy">
               <h3>Build Sparrow PSBTs</h3>
-              <p>Only the <code>.psbt</code> files from this step belong in Sparrow. Save the Reveal Backup if you may finish the reveal later. The hosted demo confirms pending claim transactions automatically after broadcast.</p>
+              <p>Only the <code>.psbt</code> files from this step belong in Sparrow. The hosted demo confirms pending claim transactions automatically after broadcast.</p>
             </div>
           </div>
           <span id="claimStepPsbtsState" class="summary-chip wizard-step-state">After step 2</span>
         </summary>
         <div class="wizard-step-body">
-        <p class="field-note">Paste the account metadata from Sparrow and the site will generate ready-to-sign commit and reveal PSBTs for this private signet demo. After you broadcast the commit, the hosted demo should confirm it automatically, then you can broadcast the reveal. For higher-value bonds, use the offline architect instead.</p>
+        <p class="field-note">Paste the account metadata from Sparrow and the site will generate ready-to-sign commit and reveal PSBTs. Import them through Sparrow’s transaction flow, not by dropping backup files onto the app window.</p>
         <div class="draft-grid">
           <label class="draft-field">
             <span class="field-label">Master Fingerprint</span>
@@ -807,44 +810,6 @@ function renderClaimPrepSection(): string {
   </section>`;
 }
 
-function renderClaimOrientationSection(configuredBasePath: string): string {
-  return `<section id="claim-orientation" class="panel panel-guide">
-    ${renderPanelHead(
-      "Before You Claim",
-      "The shortest path, what is required, and which key does what."
-    )}
-    <div class="guide-grid">
-      <article class="guide-card">
-        <h3>Ready To Claim?</h3>
-        <ul class="guide-list">
-          <li>Sparrow is in <code>signet</code> mode.</li>
-          <li>The local helper / tunnel is running.</li>
-          <li>Your demo coins are visible in Sparrow.</li>
-          <li>You know which name you want to claim.</li>
-        </ul>
-      </article>
-      <article class="guide-card">
-        <h3>Required Vs Optional</h3>
-        <ul class="guide-list">
-          <li><strong>Required:</strong> desired name, owner key, wallet funding, commit PSBT, reveal PSBT.</li>
-          <li><strong>Optional:</strong> signer notes, custom bond destination, custom change destination, resume backup.</li>
-        </ul>
-      </article>
-      <article class="guide-card">
-        <h3>Which Key Does What?</h3>
-        <ul class="guide-list">
-          <li><strong>Wallet key:</strong> signs and broadcasts the Bitcoin transactions in Sparrow.</li>
-          <li><strong>Owner key:</strong> controls the name later for value updates and transfers.</li>
-          <li>This page prepares the claim. Your wallet signs it.</li>
-        </ul>
-        <div class="hero-cta-row">
-          <a class="action-link secondary" href="${withBasePath("/claim/offline", configuredBasePath)}">Offline architect</a>
-        </div>
-      </article>
-    </div>
-  </section>`;
-}
-
 function renderSignerWorkflowSection(collapsible: boolean): string {
   const body = `<div class="guide-grid">
       <article class="guide-card">
@@ -888,61 +853,32 @@ function renderSignerWorkflowSection(collapsible: boolean): string {
   </details>`;
 }
 
-function renderSetupStartSection(configuredBasePath: string): string {
+function renderSetupQuickstartSection(configuredBasePath: string): string {
   return `<section id="setup-start" class="panel panel-guide">
     ${renderPanelHead(
-      "Start Here",
-      "Get Sparrow ready first, then come back to claim."
+      "Private Demo Setup",
+      "Run one helper, confirm the wallet is connected, then return to claim."
     )}
     <div class="guide-grid">
       <article class="guide-card">
-        <h3>Install Sparrow</h3>
-        <p>Use Sparrow in <code>signet</code> mode for the supported private demo flow.</p>
+        <h3>Run This Command</h3>
+        <p>From your local clone, start the supported helper for the hosted private demo:</p>
+        <pre class="command-block"><code>npm run sparrow:private-signet:start</code></pre>
+        <p>It configures Sparrow, opens the SSH tunnel, and keeps the connection pointed at the private signet node.</p>
       </article>
       <article class="guide-card">
-        <h3>Run The Local Helper</h3>
-        <p>Start the helper from your clone’s <code>scripts</code> folder. It configures Sparrow, opens the SSH tunnel, and gets the wallet talking to the private demo node.</p>
-      </article>
-      <article class="guide-card">
-        <h3>Then Claim</h3>
-        <p>Copy a receive address, get demo coins if you need them, and return to claim prep when the wallet is ready. After you broadcast claim transactions, this hosted demo mines them automatically.</p>
+        <h3>You Are Ready When</h3>
+        <ul class="guide-list">
+          <li>Sparrow is open in <code>signet</code> mode.</li>
+          <li>The server type is <code>Bitcoin Core</code>.</li>
+          <li>The helper / tunnel is still running.</li>
+          <li>Demo coins are visible in the same wallet you plan to spend from.</li>
+        </ul>
       </article>
     </div>
     <div class="hero-cta-row section-cta-row">
       <a class="action-link" href="${withBasePath("/claim", configuredBasePath)}">Open claim prep</a>
       <a class="action-link secondary" href="https://sparrowwallet.com/download/" target="_blank" rel="noreferrer">Download Sparrow</a>
-    </div>
-  </section>`;
-}
-
-function renderSetupReadySection(): string {
-  return `<section id="setup-ready" class="panel panel-guide">
-    ${renderPanelHead(
-      "You Are Ready When",
-      "Use this quick checklist before moving into claim prep."
-    )}
-    <div class="guide-grid">
-      <article class="guide-card">
-        <h3>Wallet</h3>
-        <ul class="guide-list">
-          <li>Sparrow is open in <code>signet</code> mode.</li>
-          <li>The server type is <code>Bitcoin Core</code>.</li>
-        </ul>
-      </article>
-      <article class="guide-card">
-        <h3>Connection</h3>
-        <ul class="guide-list">
-          <li>The local helper / SSH tunnel is still running.</li>
-          <li>Sparrow can talk to the private demo node.</li>
-        </ul>
-      </article>
-      <article class="guide-card">
-        <h3>Funds</h3>
-        <ul class="guide-list">
-          <li>Your demo coins are visible in the wallet.</li>
-          <li>You plan to use that same wallet for the claim transaction.</li>
-        </ul>
-      </article>
     </div>
   </section>`;
 }

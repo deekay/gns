@@ -16,6 +16,21 @@ This repository is where the fuller project explanation lives.
 
 Human-facing amounts in GNS use integer bitcoin notation alongside the conventional BTC equivalent. Example: `₿50,000 (0.0005 BTC)`.
 
+## Try The Hosted Demo
+
+If you want the shortest first walkthrough, use the hosted private demo:
+
+1. Open [setup](https://globalnamesystem.org/setup) and run the Sparrow helper shown there.
+2. Request demo coins into the same Sparrow wallet you plan to spend from.
+3. Open [claim prep](https://globalnamesystem.org/claim), choose the name, and save the owner key + backup package.
+4. Build the commit and reveal PSBTs, sign them in Sparrow, and watch the name appear in [explore](https://globalnamesystem.org/explore).
+
+Keep these distinctions in mind:
+
+- the **wallet key** signs Bitcoin transactions
+- the **owner key** controls the name later for value updates and transfers
+- the hosted site prepares the flow, but your wallet still signs and broadcasts it
+
 ## Choose Your Path
 
 There are three practical ways to use GNS today:
@@ -104,6 +119,7 @@ Transfers move owner authority from one pubkey to another.
 - settling names still require successor-bond continuity
 - active names no longer require that continuity
 - the owner key, not a resolver, is what authorizes future value updates
+- after a transfer, the old owner can no longer publish new value records for that name
 
 ### Values
 

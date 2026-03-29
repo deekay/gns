@@ -212,6 +212,74 @@ async function main() {
     await waitForResolverHeight(await getBlockCount());
     summary.steps.push({ step: "gift_transfer", result: transferResult });
 
+    const transferredGiftRecord = await cliJson(["get-name", names.gift, "--resolver-url", resolverUrl()]);
+    const staleGiftValue = await cliJson([
+      "sign-value-record",
+      "--name",
+      names.gift,
+      "--owner-private-key-hex",
+      owner.ownerPrivateKeyHex,
+      "--sequence",
+      "1",
+      "--value-type",
+      "2",
+      "--payload-utf8",
+      `https://example.invalid/${names.gift}/stale-owner`,
+      "--write",
+      join(OUT_DIR, `${names.gift}-old-owner-value.json`)
+    ]);
+    const staleGiftPublish = await postValueRecord(staleGiftValue);
+    if (staleGiftPublish.status !== 409 || staleGiftPublish.payload?.error !== "owner_mismatch") {
+      throw new Error(`expected old owner value publish for ${names.gift} to fail with owner_mismatch`);
+    }
+
+    const currentGiftValueBeforeRecipient = await fetchJson(`${resolverUrl()}/name/${encodeURIComponent(names.gift)}/value`).catch((error) => {
+      if (error?.code === "value_not_found") {
+        return null;
+      }
+      throw error;
+    });
+    if (currentGiftValueBeforeRecipient !== null) {
+      throw new Error(`expected ${names.gift} to have no current value before recipient publish`);
+    }
+
+    const recipientGiftValue = await cliJson([
+      "sign-value-record",
+      "--name",
+      names.gift,
+      "--owner-private-key-hex",
+      recipient.ownerPrivateKeyHex,
+      "--sequence",
+      "0",
+      "--value-type",
+      "2",
+      "--payload-utf8",
+      `https://example.invalid/${names.gift}/recipient-owner`,
+      "--write",
+      join(OUT_DIR, `${names.gift}-new-owner-value.json`)
+    ]);
+    const recipientGiftPublish = await postValueRecord(recipientGiftValue);
+    if (recipientGiftPublish.status !== 201 || recipientGiftPublish.payload?.ok !== true) {
+      throw new Error(`expected recipient value publish for ${names.gift} to succeed`);
+    }
+
+    const currentGiftValue = await cliJson(["get-value", names.gift, "--resolver-url", resolverUrl()]);
+    if (currentGiftValue.ownerPubkey !== recipient.ownerPubkey) {
+      throw new Error(`expected ${names.gift} current value owner to match recipient after transfer`);
+    }
+    if (currentGiftValue.payloadHex !== Buffer.from(`https://example.invalid/${names.gift}/recipient-owner`, "utf8").toString("hex")) {
+      throw new Error(`expected ${names.gift} current value payload to match recipient publish`);
+    }
+    summary.steps.push({
+      step: "gift_transfer_value_handoff",
+      result: {
+        record: transferredGiftRecord,
+        stalePublish: staleGiftPublish.payload,
+        recipientPublish: recipientGiftPublish.payload,
+        currentValue: currentGiftValue
+      }
+    });
+
     const immatureSaleRecord = await cliJson(["get-name", names.immatureSale, "--resolver-url", resolverUrl()]);
     const immatureSaleBuyerFunding = await fundAddress(
       recipient.fundingAddress,
@@ -681,6 +749,21 @@ async function fetchJson(url) {
     throw error;
   }
   return payload;
+}
+
+async function postValueRecord(record) {
+  const response = await fetch(`${resolverUrl()}/values`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json; charset=utf-8"
+    },
+    body: JSON.stringify(record)
+  });
+  const raw = await response.text();
+  return {
+    status: response.status,
+    payload: raw.length === 0 ? null : JSON.parse(raw)
+  };
 }
 
 async function runCommand(command, args, options = {}) {

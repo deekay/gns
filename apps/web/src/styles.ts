@@ -402,6 +402,31 @@ h2 {
   color: var(--accent-strong);
 }
 
+.tool-callout-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 16px;
+  margin-bottom: 18px;
+}
+
+.command-block {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: rgba(26, 17, 8, 0.92);
+  color: #f5f0eb;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  overflow-x: auto;
+}
+
+.command-block code {
+  font-family: "SFMono-Regular", SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+}
+
 .panel-home {
   max-width: 1040px;
   width: 100%;
@@ -1912,6 +1937,10 @@ button:disabled {
 
   .claim-key-grid {
     grid-template-columns: 1fr;
+  }
+
+  .tool-callout-row {
+    align-items: flex-start;
   }
 }
 
