@@ -51,10 +51,21 @@ body {
 }
 
 .site-nav-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
   color: var(--ink);
   text-decoration: none;
   font-weight: 700;
   letter-spacing: 0.01em;
+}
+
+.site-nav-brand-mark {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  display: block;
+  flex: 0 0 auto;
 }
 
 .site-nav-links {

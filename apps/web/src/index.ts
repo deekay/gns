@@ -1,6 +1,6 @@
 import { execFile as execFileCallback } from "node:child_process";
 import { generateKeyPairSync } from "node:crypto";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { createServer } from "node:http";
 import { fileURLToPath } from "node:url";
@@ -81,7 +81,13 @@ const privateSignetFundingRequestTimes = new Map<string, number>();
 const faviconDataUrl =
   "data:image/svg+xml," +
   encodeURIComponent(
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#b05a2b"/><text x="50%" y="53%" dominant-baseline="middle" text-anchor="middle" font-family="Iowan Old Style, Palatino Linotype, serif" font-size="34" fill="#fff7ef">P</text></svg>`
+    readFileSync(
+      fileURLToPath(new URL("../../../icon.svg", import.meta.url)),
+      "utf8"
+    )
+      .replace(/<!--[\s\S]*?-->/g, "")
+      .replace(/\s+/g, " ")
+      .trim()
   );
 const liveSmokeStatusPath =
   normalizeOptionalText(process.env.GNS_WEB_LIVE_SMOKE_STATUS_PATH) ??

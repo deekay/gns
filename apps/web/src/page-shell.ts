@@ -59,11 +59,12 @@ export function renderPageHtml(options: PageShellOptions): string {
       content="${escapeHtml(description)}"
     />
     <link rel="icon" href="${faviconDataUrl}" />
+    <link rel="apple-touch-icon" href="${faviconDataUrl}" />
     <link rel="stylesheet" href="${withBasePath("/styles.css", basePath)}" />
   </head>
   <body>
     <div class="page-shell">
-      ${renderPrimaryNav(basePath, pageKind)}
+      ${renderPrimaryNav(basePath, pageKind, faviconDataUrl)}
       ${renderHeroSection(basePath, networkLabel, pageKind)}
       <main class="content-grid">
         ${
@@ -189,7 +190,7 @@ function renderHeroSection(
   </header>`;
 }
 
-function renderPrimaryNav(configuredBasePath: string, pageKind: PageKind): string {
+function renderPrimaryNav(configuredBasePath: string, pageKind: PageKind, faviconDataUrl: string): string {
   const links = [
     { href: withBasePath("/", configuredBasePath), label: "Home", active: pageKind === "home" },
     { href: withBasePath("/explore", configuredBasePath), label: "Explore", active: pageKind === "explore" },
@@ -199,7 +200,10 @@ function renderPrimaryNav(configuredBasePath: string, pageKind: PageKind): strin
   ];
 
   return `<nav class="site-nav" aria-label="Primary">
-    <a class="site-nav-brand" href="${withBasePath("/", configuredBasePath)}">Global Name System</a>
+    <a class="site-nav-brand" href="${withBasePath("/", configuredBasePath)}">
+      <img class="site-nav-brand-mark" src="${faviconDataUrl}" alt="" aria-hidden="true" />
+      <span>Global Name System</span>
+    </a>
     <div class="site-nav-links">
       ${links
         .map(

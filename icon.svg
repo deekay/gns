@@ -1,0 +1,20 @@
+<svg width="512" height="512" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!--
+    GNS icon — name record mark
+    Two stacked records: circle (the name/node) + horizontal bar (the value it points to).
+    Top record is longer than bottom, suggesting distinct entries in a registry.
+    Reads as a list of names at any size.
+  -->
+
+  <!-- Rounded square background -->
+  <rect width="200" height="200" rx="44" fill="#1a1108"/>
+
+  <!-- Top name record (long) -->
+  <circle cx="64" cy="84" r="10" fill="#f5f0eb"/>
+  <line x1="84" y1="84" x2="150" y2="84" stroke="#f5f0eb" stroke-width="13" stroke-linecap="round"/>
+
+  <!-- Bottom name record (shorter — different name, different value) -->
+  <circle cx="64" cy="116" r="10" fill="#f5f0eb"/>
+  <line x1="84" y1="116" x2="128" y2="116" stroke="#f5f0eb" stroke-width="13" stroke-linecap="round"/>
+
+</svg>
