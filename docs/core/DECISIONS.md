@@ -430,7 +430,7 @@ The rewritten draft should explicitly document:
 - open questions where external reviewers should challenge the design
 
 Reviewer-facing trade-offs that should be stated plainly include:
-- the current prototype `TRANSFER` payload exceeds conservative default `OP_RETURN` relay policy
+- the current prototype `TRANSFER` payload exceeds older conservative `OP_RETURN` relay limits; modern Bitcoin Core defaults are more permissive, but broader network relay compatibility still depends on node policy
 - mature names currently remain valid without ongoing bond continuity
 - v1 resolver usage may still concentrate value-record availability around a small number of hosted resolvers
 - a missed reveal does not just fail a claim; it also exposes demand for that specific name before the claimant secures it

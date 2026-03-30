@@ -62,6 +62,29 @@ export interface BitcoinRpcRawTransactionInfo {
   readonly in_active_chain?: boolean;
 }
 
+export interface BitcoinRpcMempoolInfo {
+  readonly loaded: boolean;
+  readonly size: number;
+  readonly bytes: number;
+  readonly usage?: number;
+  readonly maxmempool?: number;
+  readonly mempoolminfee?: number;
+  readonly minrelaytxfee?: number;
+  readonly incrementalrelayfee?: number;
+  readonly fullrbf?: boolean;
+  readonly maxdatacarriersize?: number;
+}
+
+export interface BitcoinRpcTestMempoolAcceptResult {
+  readonly txid?: string;
+  readonly wtxid?: string;
+  readonly allowed: boolean;
+  readonly rejectReason?: string;
+  readonly rejectCode?: number;
+  readonly packageError?: string;
+  readonly vsize?: number;
+}
+
 export interface BitcoinEsploraTransactionStatus {
   readonly confirmed: boolean;
   readonly block_height?: number;
@@ -533,6 +556,21 @@ export async function getBitcoinRpcRawTransactionInfo(
   return parseBitcoinRpcRawTransactionInfo(result);
 }
 
+export async function getBitcoinRpcMempoolInfo(
+  rpc: BitcoinRpcConfig
+): Promise<BitcoinRpcMempoolInfo> {
+  const result = await callBitcoinRpc<unknown>(rpc, "getmempoolinfo", []);
+  return parseBitcoinRpcMempoolInfo(result);
+}
+
+export async function testBitcoinRpcMempoolAccept(
+  rpc: BitcoinRpcConfig,
+  transactionHex: string
+): Promise<BitcoinRpcTestMempoolAcceptResult> {
+  const result = await callBitcoinRpc<unknown>(rpc, "testmempoolaccept", [[transactionHex]]);
+  return parseBitcoinRpcTestMempoolAcceptResult(result);
+}
+
 export async function sendBitcoinRpcRawTransaction(
   rpc: BitcoinRpcConfig,
   transactionHex: string
@@ -963,6 +1001,68 @@ function parseBitcoinRpcRawTransactionInfo(input: unknown): BitcoinRpcRawTransac
   };
 }
 
+function parseBitcoinRpcMempoolInfo(input: unknown): BitcoinRpcMempoolInfo {
+  if (!isRecord(input)) {
+    throw new Error("rpc mempool info must be an object");
+  }
+
+  const loaded = getOptionalBoolean(input, "loaded") ?? true;
+  const size = getRequiredInteger(input, "size");
+  const bytes = getRequiredInteger(input, "bytes");
+  const usage = getOptionalInteger(input, "usage");
+  const maxmempool = getOptionalInteger(input, "maxmempool");
+  const mempoolminfee = getOptionalNumber(input, "mempoolminfee");
+  const minrelaytxfee = getOptionalNumber(input, "minrelaytxfee");
+  const incrementalrelayfee = getOptionalNumber(input, "incrementalrelayfee");
+  const fullrbf = getOptionalBoolean(input, "fullrbf");
+  const maxdatacarriersize = getOptionalInteger(input, "maxdatacarriersize");
+
+  return {
+    loaded,
+    size,
+    bytes,
+    ...(usage === undefined ? {} : { usage }),
+    ...(maxmempool === undefined ? {} : { maxmempool }),
+    ...(mempoolminfee === undefined ? {} : { mempoolminfee }),
+    ...(minrelaytxfee === undefined ? {} : { minrelaytxfee }),
+    ...(incrementalrelayfee === undefined ? {} : { incrementalrelayfee }),
+    ...(fullrbf === undefined ? {} : { fullrbf }),
+    ...(maxdatacarriersize === undefined ? {} : { maxdatacarriersize })
+  };
+}
+
+function parseBitcoinRpcTestMempoolAcceptResult(
+  input: unknown
+): BitcoinRpcTestMempoolAcceptResult {
+  if (!Array.isArray(input) || input.length === 0) {
+    throw new Error("rpc testmempoolaccept result must be a non-empty array");
+  }
+
+  const first = input[0];
+
+  if (!isRecord(first)) {
+    throw new Error("rpc testmempoolaccept entry must be an object");
+  }
+
+  const txid = getOptionalString(first, "txid");
+  const wtxid = getOptionalString(first, "wtxid");
+  const allowed = getRequiredBoolean(first, "allowed");
+  const rejectReason = getOptionalString(first, "reject-reason");
+  const rejectCode = getOptionalInteger(first, "reject-code");
+  const packageError = getOptionalString(first, "package-error");
+  const vsize = getOptionalInteger(first, "vsize");
+
+  return {
+    allowed,
+    ...(txid === undefined ? {} : { txid }),
+    ...(wtxid === undefined ? {} : { wtxid }),
+    ...(rejectReason === undefined ? {} : { rejectReason }),
+    ...(rejectCode === undefined ? {} : { rejectCode }),
+    ...(packageError === undefined ? {} : { packageError }),
+    ...(vsize === undefined ? {} : { vsize })
+  };
+}
+
 function parseBitcoinTransactionOutputFixture(input: unknown): BitcoinTransactionOutput {
   if (!isRecord(input)) {
     throw new Error("transaction output fixture must be an object");
@@ -1223,6 +1323,20 @@ function getOptionalInteger(input: Record<string, unknown>, key: string): number
 
   if (typeof value !== "number" || !Number.isInteger(value)) {
     throw new Error(`${key} must be an integer when present`);
+  }
+
+  return value;
+}
+
+function getOptionalNumber(input: Record<string, unknown>, key: string): number | undefined {
+  const value = input[key];
+
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    throw new Error(`${key} must be a finite number when present`);
   }
 
   return value;

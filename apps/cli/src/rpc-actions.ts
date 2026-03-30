@@ -9,14 +9,19 @@ import {
   getBitcoinEsploraTransactionStatus,
   getBitcoinRpcBlockCount,
   getBitcoinRpcBlockchainInfo,
+  getBitcoinRpcMempoolInfo,
   getBitcoinRpcRawTransactionInfo,
   sendBitcoinEsploraRawTransaction,
   sendBitcoinRpcRawTransaction,
+  testBitcoinRpcMempoolAccept,
   type BitcoinEsploraConfig,
   type BitcoinRpcConfig
 } from "@gns/bitcoin";
+import { Transaction } from "bitcoinjs-lib";
 
 import { parseSignedArtifactsEnvelope, type SignedArtifactsEnvelope } from "./signer.js";
+
+const LEGACY_CONSERVATIVE_OP_RETURN_SCRIPT_BYTES = 83;
 
 export interface RpcConnectionOptions {
   readonly url: string | undefined;
@@ -231,6 +236,8 @@ export async function broadcastSignedArtifacts(options: {
   readonly expectedChain: RpcConnectionOptions["expectedChain"];
   readonly signedArtifacts: SignedArtifactsEnvelope;
 }): Promise<{ readonly broadcastedTxid: string }> {
+  await maybeInspectTransferRelayCompatibility(options);
+
   const { broadcastedTxid } = await broadcastSignedTransactionHex({
     rpc: options.rpc,
     esplora: options.esplora,
@@ -439,4 +446,120 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => {
     setTimeout(resolve, ms);
   });
+}
+
+async function maybeInspectTransferRelayCompatibility(options: {
+  readonly rpc: BitcoinRpcConfig | undefined;
+  readonly esplora: BitcoinEsploraConfig | undefined;
+  readonly signedArtifacts: SignedArtifactsEnvelope;
+}): Promise<void> {
+  if (options.signedArtifacts.kind !== "gns-signed-transfer-artifacts") {
+    return;
+  }
+
+  const transaction = Transaction.fromHex(options.signedArtifacts.signedTransactionHex);
+  const largestOpReturnScriptBytes = getLargestOpReturnScriptBytes(transaction);
+
+  if (largestOpReturnScriptBytes === 0) {
+    return;
+  }
+
+  if (options.rpc !== undefined) {
+    await maybeInspectTransferRelayCompatibilityWithRpc({
+      rpc: options.rpc,
+      transactionHex: options.signedArtifacts.signedTransactionHex,
+      largestOpReturnScriptBytes
+    });
+    return;
+  }
+
+  if (
+    options.esplora !== undefined &&
+    largestOpReturnScriptBytes > LEGACY_CONSERVATIVE_OP_RETURN_SCRIPT_BYTES
+  ) {
+    console.warn(
+      `warning: transfer OP_RETURN script is ${largestOpReturnScriptBytes} bytes. ` +
+        "Esplora cannot report the upstream node relay policy before broadcast, so " +
+        "older or stricter nodes may still reject this transfer."
+    );
+  }
+}
+
+async function maybeInspectTransferRelayCompatibilityWithRpc(options: {
+  readonly rpc: BitcoinRpcConfig;
+  readonly transactionHex: string;
+  readonly largestOpReturnScriptBytes: number;
+}): Promise<void> {
+  let mempoolInfo: Awaited<ReturnType<typeof getBitcoinRpcMempoolInfo>> | null = null;
+
+  try {
+    mempoolInfo = await getBitcoinRpcMempoolInfo(options.rpc);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.warn(
+      "warning: unable to inspect Bitcoin Core mempool policy before broadcasting transfer: " +
+        message
+    );
+  }
+
+  if (
+    mempoolInfo?.maxdatacarriersize !== undefined &&
+    options.largestOpReturnScriptBytes > mempoolInfo.maxdatacarriersize
+  ) {
+    throw new Error(
+      `transfer OP_RETURN script is ${options.largestOpReturnScriptBytes} bytes, ` +
+        `but connected node reports maxdatacarriersize=${mempoolInfo.maxdatacarriersize}; ` +
+        "broadcast is unlikely to relay from this node"
+    );
+  }
+
+  let acceptance: Awaited<ReturnType<typeof testBitcoinRpcMempoolAccept>> | null = null;
+
+  try {
+    acceptance = await testBitcoinRpcMempoolAccept(options.rpc, options.transactionHex);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.warn(
+      "warning: unable to run Bitcoin Core testmempoolaccept before broadcasting transfer: " +
+        message
+    );
+  }
+
+  if (acceptance !== null && !acceptance.allowed) {
+    const reasons = [
+      acceptance.rejectReason,
+      acceptance.packageError
+    ].filter((value): value is string => value !== undefined);
+    const suffix = reasons.length === 0 ? "" : `: ${reasons.join(" / ")}`;
+
+    throw new Error(
+      "connected node rejected the transfer during testmempoolaccept" +
+        suffix +
+        ". This transfer is unlikely to relay from this node."
+    );
+  }
+
+  if (options.largestOpReturnScriptBytes > LEGACY_CONSERVATIVE_OP_RETURN_SCRIPT_BYTES) {
+    console.warn(
+      `warning: transfer OP_RETURN script is ${options.largestOpReturnScriptBytes} bytes. ` +
+        "Modern Bitcoin Core defaults may relay it, but older or stricter nodes may not. " +
+        "Direct-node broadcast or self-hosted relay remains the safest path."
+    );
+  }
+}
+
+function getLargestOpReturnScriptBytes(transaction: Transaction): number {
+  let largest = 0;
+
+  for (const output of transaction.outs) {
+    const firstOpcode = output.script[0];
+
+    if (firstOpcode !== 0x6a) {
+      continue;
+    }
+
+    largest = Math.max(largest, output.script.length);
+  }
+
+  return largest;
 }

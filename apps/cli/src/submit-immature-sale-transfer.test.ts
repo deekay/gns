@@ -55,6 +55,7 @@ describe("submitImmatureSaleTransfer", () => {
     const seller = createFundingAddress(40);
     const buyer = createFundingAddress(41);
     const sellerPayoutAddress = createFundingAddress(42).address;
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
 
     globalThis.fetch = vi.fn(async (_input, init) => {
       const request = JSON.parse(String(init?.body)) as {
@@ -71,6 +72,42 @@ describe("submitImmatureSaleTransfer", () => {
               headers: 100,
               bestblockhash: "hash100"
             },
+            error: null,
+            id: "gns"
+          }),
+          { status: 200, headers: { "content-type": "application/json" } }
+        );
+      }
+
+      if (request.method === "getmempoolinfo") {
+        return new Response(
+          JSON.stringify({
+            result: {
+              loaded: true,
+              size: 1,
+              bytes: 300,
+              maxdatacarriersize: 100000
+            },
+            error: null,
+            id: "gns"
+          }),
+          { status: 200, headers: { "content-type": "application/json" } }
+        );
+      }
+
+      if (request.method === "testmempoolaccept") {
+        const transactionHex = String((request.params[0] as unknown[] | undefined)?.[0] ?? "");
+        const txid = Transaction.fromHex(transactionHex).getId();
+
+        return new Response(
+          JSON.stringify({
+            result: [
+              {
+                txid,
+                allowed: true,
+                vsize: 180
+              }
+            ],
             error: null,
             id: "gns"
           }),
@@ -149,5 +186,8 @@ describe("submitImmatureSaleTransfer", () => {
       await readFile(join(outDir, "signed-immature-sale-transfer-artifacts.json"), "utf8")
     ) as { signedTransactionId: string };
     expect(signedTransferArtifacts.signedTransactionId).toBe(result.transferTxid);
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining("Modern Bitcoin Core defaults may relay it")
+    );
   });
 });

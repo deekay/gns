@@ -390,7 +390,7 @@ It is useful for local, regtest, signet, and private-signet experimentation, but
 
 Important known issues and tradeoffs include:
 
-- the current transfer payload shape exceeds conservative default `OP_RETURN` relay policy
+- the current transfer payload shape exceeds older conservative `OP_RETURN` relay limits, so relay compatibility still depends on node policy even though modern Bitcoin Core defaults are more permissive
 - mature-name permanence makes long-name holding cheap after settlement
 - value-record availability can still concentrate around a small number of resolvers in v1
 
