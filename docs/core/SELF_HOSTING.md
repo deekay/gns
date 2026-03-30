@@ -22,11 +22,17 @@ This guide covers `2` directly and makes `3` straightforward by letting you poin
 
 ## Quick Start
 
+Prerequisites:
+
+- Docker Desktop or Docker Engine with Docker Compose
+- a local checkout of this repo
+
 From the repo root:
 
 ```bash
 cp .env.example .env
-docker compose up --build
+npm run selfhost:doctor
+npm run selfhost:up
 ```
 
 Then open:
@@ -41,6 +47,8 @@ That default mode uses the bundled fixture chain, so you get:
 - your own resolver state
 - your own local detail/explorer experience
 - no dependency on the hosted product
+
+If the doctor step fails, fix the reported item and rerun it. The most common first-time issue is simply not having Docker installed yet.
 
 ## Services
 
@@ -75,7 +83,7 @@ This is optional and disabled by default.
 Use it when you want a one-shot indexed dump:
 
 ```bash
-docker compose run --rm indexer
+npm run selfhost:indexer
 ```
 
 ## Switching To A Live Chain
@@ -96,7 +104,7 @@ GNS_WEB_NETWORK_LABEL=Self-Hosted Signet
 Then restart:
 
 ```bash
-docker compose up --build
+npm run selfhost:up
 ```
 
 Notes:
@@ -106,7 +114,7 @@ Notes:
 - If you switch chain backends or want to rebuild state from scratch, reset the local volume:
 
 ```bash
-docker compose down -v
+npm run selfhost:reset
 ```
 
 ## Using Esplora Instead
@@ -169,23 +177,29 @@ If you want the full VPS layout, including running the node yourself on a server
 Start:
 
 ```bash
-docker compose up --build
+npm run selfhost:up
 ```
 
 Stop:
 
 ```bash
-docker compose down
+npm run selfhost:down
+```
+
+Preflight:
+
+```bash
+npm run selfhost:doctor
 ```
 
 Reset state:
 
 ```bash
-docker compose down -v
+npm run selfhost:reset
 ```
 
 One-shot indexer dump:
 
 ```bash
-docker compose run --rm indexer
+npm run selfhost:indexer
 ```

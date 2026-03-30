@@ -256,14 +256,15 @@ Then open:
 
 ```bash
 cp .env.example .env
-docker compose up --build
+npm run selfhost:doctor
+npm run selfhost:up
 ```
 
 Then open:
 
 - `http://127.0.0.1:3000`
 
-That default path runs against the bundled fixture chain so you can use your own site and resolver immediately. To point the stack at your own Bitcoin backend later, use [SELF_HOSTING.md](./docs/core/SELF_HOSTING.md).
+That default path runs against the bundled fixture chain so you can use your own site and resolver immediately. If the doctor step says Docker is missing, install Docker Desktop or Docker Engine first. To point the stack at your own Bitcoin backend later, use [SELF_HOSTING.md](./docs/core/SELF_HOSTING.md).
 
 ### Run the controlled-chain suite
 
