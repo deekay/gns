@@ -399,16 +399,15 @@ function renderHomeExampleSection(configuredBasePath: string): string {
     )}
     <div class="guide-grid">
       <article class="guide-card">
-        <h3>Illustrative Example</h3>
-        <p>One owner-signed bundle might carry entries like these:</p>
+        <h3>Try These Live Examples</h3>
+        <p>The hosted demo now has three clean example names you can inspect right away:</p>
         <ul class="guide-list">
-          <li><strong>website</strong> → <code>https://example.com</code></li>
-          <li><strong>payment</strong> → <code>bitcoin:bc1qexample...</code></li>
-          <li><strong>profile</strong> → <code>https://social.example/alice</code></li>
-          <li><strong>endpoint</strong> → <code>https://api.example.com</code></li>
+          <li><strong><a class="detail-link" href="${withBasePath("/names/simpledemo", configuredBasePath)}">simpledemo</a></strong> → plain claimed name with no current value.</li>
+          <li><strong><a class="detail-link" href="${withBasePath("/names/bundledemo", configuredBasePath)}">bundledemo</a></strong> → mature name with repeatable key/value pairs.</li>
+          <li><strong><a class="detail-link" href="${withBasePath("/names/transferdemo", configuredBasePath)}">transferdemo</a></strong> → transferred name with a recipient-owned bundle.</li>
         </ul>
         <div class="guide-card-actions">
-          <a class="action-link secondary" href="${withBasePath("/values", configuredBasePath)}">Open values tool</a>
+          <a class="action-link secondary" href="${withBasePath("/explore", configuredBasePath)}">Open explorer</a>
         </div>
       </article>
       <article class="guide-card">
@@ -419,6 +418,9 @@ function renderHomeExampleSection(configuredBasePath: string): string {
           <li>You can repeat a key more than once.</li>
           <li>The protocol does not need to know which services exist.</li>
         </ul>
+        <div class="guide-card-actions">
+          <a class="action-link secondary" href="${withBasePath("/values?name=bundledemo", configuredBasePath)}">Inspect bundledemo in values tool</a>
+        </div>
       </article>
     </div>
   </section>`;
@@ -1265,6 +1267,14 @@ function renderValuesGuideSection(configuredBasePath: string): string {
         <div class="guide-card-actions">
           <a class="action-link secondary" href="${withBasePath("/values", configuredBasePath)}">Open values tool</a>
         </div>
+      </article>
+      <article class="guide-card">
+        <h3>Good Names To Inspect</h3>
+        <ul class="guide-list">
+          <li><strong><a class="detail-link" href="${withBasePath("/names/simpledemo", configuredBasePath)}">simpledemo</a></strong> shows a claimed name before any value is published.</li>
+          <li><strong><a class="detail-link" href="${withBasePath("/names/bundledemo", configuredBasePath)}">bundledemo</a></strong> shows a populated key/value bundle.</li>
+          <li><strong><a class="detail-link" href="${withBasePath("/names/transferdemo", configuredBasePath)}">transferdemo</a></strong> shows a transferred name with new owner authority.</li>
+        </ul>
       </article>
     </div>
   </section>`;
