@@ -475,7 +475,7 @@ function updateValueEditorState(): void {
 
   if (mode === "bundle") {
     elements.payloadHint.textContent =
-      "The key/value bundle is encoded as UTF-8 JSON inside a 0xff app-defined value record.";
+      "List as many ordered key/value pairs as you want here. Keys are app-defined and repeatable.";
     return;
   }
 
@@ -516,10 +516,10 @@ function applyValueDefaults(valueRecord: ValueRecord | null): void {
     }
 
     if (elements.valueTypeInput) {
-      elements.valueTypeInput.value = VALUE_MODE_RAW;
+      elements.valueTypeInput.value = VALUE_MODE_PROFILE_BUNDLE;
     }
     if (elements.payloadInput) {
-      elements.payloadInput.value = valueRecord.payloadHex;
+      elements.payloadInput.value = "";
     }
     writeBundleDraft(emptyProfileBundleDraft());
     updateValueEditorState();
@@ -888,7 +888,7 @@ function formatValueType(valueType: number, payloadHex = ""): string {
       return "0x02 (https target)";
     case 255:
       return decodeProfileBundlePayloadHex(payloadHex) !== null
-        ? "0xff (key/value bundle)"
+        ? "0xff (key/value pairs)"
         : "0xff (raw/app-defined)";
     default:
       return `0x${Number(valueType).toString(16).padStart(2, "0")}`;

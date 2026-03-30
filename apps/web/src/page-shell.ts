@@ -1138,7 +1138,7 @@ function renderValuesToolSection(): string {
           <span id="valueStepSignState" class="summary-chip wizard-step-state">After step 1</span>
         </summary>
         <div class="wizard-step-body">
-          <p class="field-note">Use the same owner key that controls the name. This is not the funding wallet key unless you intentionally made them the same.</p>
+          <p class="field-note">Use the same owner key that controls the name. This is not the funding wallet key unless you intentionally made them the same. For most names, keep the value format on key/value pairs. Raw hex is only for custom app-defined data.</p>
           <form id="valueSignForm" class="claim-draft-form">
             <div class="draft-grid">
               <label class="draft-field">
@@ -1172,7 +1172,7 @@ function renderValuesToolSection(): string {
               <label class="draft-field">
                 <span class="field-label">Value Format</span>
                 <select id="valueTypeInput" name="valueType">
-                  <option value="255:bundle" selected>0xff (key/value bundle)</option>
+                  <option value="255:bundle" selected>0xff (key/value pairs)</option>
                   <option value="2">0x02 (single https target)</option>
                   <option value="1">0x01 (bitcoin payment target)</option>
                   <option value="255:raw">0xff (raw / app-defined hex)</option>
@@ -1191,9 +1191,9 @@ function renderValuesToolSection(): string {
               <div id="valueBundleEditor" class="value-bundle-editor draft-field-full" hidden>
                 <div id="valueBundleRows" class="value-bundle-rows"></div>
                 <div class="draft-actions">
-                  <button id="addValueBundleEntryButton" type="button" class="secondary-button">Add entry</button>
+                  <button id="addValueBundleEntryButton" type="button" class="secondary-button">Add pair</button>
                 </div>
-                <span class="field-hint">Use an ordered list of repeatable key/value entries. It is encoded as JSON inside a 0xff app-defined value record.</span>
+                <span class="field-hint">List as many ordered key/value pairs as you want. Keys are app-defined and repeatable.</span>
               </div>
             </div>
             <div class="draft-actions claim-step-actions">
