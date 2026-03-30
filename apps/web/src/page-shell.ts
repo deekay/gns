@@ -374,7 +374,7 @@ function renderHomeModelSection(): string {
         <p>Your owner key signs the current value record after the claim succeeds.</p>
         <ul class="guide-list">
           <li><strong>Owner key:</strong> controls updates and transfers later.</li>
-          <li><strong>Profile bundle:</strong> one current record can carry several destinations.</li>
+          <li><strong>Key/value bundle:</strong> one current record can carry several destinations.</li>
           <li><strong>Values:</strong> stay off-chain and can change over time.</li>
         </ul>
       </article>
@@ -395,16 +395,16 @@ function renderHomeExampleSection(configuredBasePath: string): string {
   return `<section id="bundle-example" class="panel panel-guide panel-home">
     ${renderPanelHead(
       "One Name, Several Destinations",
-      "A single current value record can act like a compact profile bundle."
+      "A single current value record can act like a compact key/value bundle."
     )}
     <div class="guide-grid">
       <article class="guide-card">
         <h3>Live Example: presidiobitcoin</h3>
-        <p>The live demo name currently resolves to a bundled record.</p>
+        <p>The live demo name currently resolves to one owner-signed bundle with several entries.</p>
         <ul class="guide-list">
-          <li><strong>Website:</strong> <code>https://presidiobitcoin.com</code></li>
-          <li><strong>YouTube:</strong> <code>https://youtube.com/@presidiobitcoin</code></li>
-          <li><strong>Note:</strong> a short owner-signed bundle message</li>
+          <li><strong>website</strong> → <code>https://presidiobitcoin.com</code></li>
+          <li><strong>youtube</strong> → <code>https://youtube.com/@presidiobitcoin</code></li>
+          <li><strong>notes</strong> → a short owner-signed bundle message</li>
         </ul>
         <div class="guide-card-actions">
           <a class="action-link secondary" href="${withBasePath("/names/presidiobitcoin", configuredBasePath)}">Open detail page</a>
@@ -412,15 +412,12 @@ function renderHomeExampleSection(configuredBasePath: string): string {
         </div>
       </article>
       <article class="guide-card">
-        <h3>Bundle Fields Supported Today</h3>
-        <p>The values tool can publish one signed record with several destinations at once.</p>
+        <h3>Bundle Shape</h3>
+        <p>The values tool publishes an ordered list of key/value entries. Keys are repeatable and app-defined.</p>
         <ul class="guide-list">
-          <li><strong>Website</strong></li>
-          <li><strong>Bitcoin payment target</strong></li>
-          <li><strong>YouTube</strong></li>
-          <li><strong>Social link</strong></li>
-          <li><strong>Service or API endpoint</strong></li>
-          <li><strong>Notes</strong></li>
+          <li>You can use whatever keys make sense to you.</li>
+          <li>You can repeat a key more than once.</li>
+          <li>The protocol does not need to know which services exist.</li>
         </ul>
       </article>
     </div>
@@ -439,7 +436,7 @@ function renderHomeStatusSection(): string {
         <ul class="guide-list">
           <li>Hosted private demo claims</li>
           <li>Self-hosted website + resolver</li>
-          <li>Browser value publishing and profile bundles</li>
+          <li>Browser value publishing and key/value bundles</li>
         </ul>
       </article>
       <article class="guide-card">
@@ -1175,7 +1172,7 @@ function renderValuesToolSection(): string {
               <label class="draft-field">
                 <span class="field-label">Value Format</span>
                 <select id="valueTypeInput" name="valueType">
-                  <option value="255:bundle" selected>0xff (profile bundle: website, payments, channels, services)</option>
+                  <option value="255:bundle" selected>0xff (key/value bundle)</option>
                   <option value="2">0x02 (single https target)</option>
                   <option value="1">0x01 (bitcoin payment target)</option>
                   <option value="255:raw">0xff (raw / app-defined hex)</option>
@@ -1192,33 +1189,11 @@ function renderValuesToolSection(): string {
                 <span id="valuePayloadHint" class="field-hint">HTTPS and payment targets are encoded as UTF-8 text. Raw/app-defined values expect hex.</span>
               </label>
               <div id="valueBundleEditor" class="value-bundle-editor draft-field-full" hidden>
-                <div class="value-bundle-grid">
-                  <label class="draft-field">
-                    <span class="field-label">Website</span>
-                    <input id="valueBundleWebsiteInput" name="valueBundleWebsite" type="url" placeholder="https://presidiobitcoin.com" autocomplete="off" spellcheck="false" />
-                  </label>
-                  <label class="draft-field">
-                    <span class="field-label">Bitcoin Payment Target</span>
-                    <input id="valueBundleBitcoinInput" name="valueBundleBitcoin" type="text" placeholder="bitcoin:bc1..." autocomplete="off" spellcheck="false" />
-                  </label>
-                  <label class="draft-field">
-                    <span class="field-label">YouTube</span>
-                    <input id="valueBundleYoutubeInput" name="valueBundleYoutube" type="url" placeholder="https://youtube.com/@presidiobitcoin" autocomplete="off" spellcheck="false" />
-                  </label>
-                  <label class="draft-field">
-                    <span class="field-label">X / Social</span>
-                    <input id="valueBundleXInput" name="valueBundleX" type="url" placeholder="https://x.com/presidiobitcoin" autocomplete="off" spellcheck="false" />
-                  </label>
-                  <label class="draft-field draft-field-full">
-                    <span class="field-label">Service / API</span>
-                    <input id="valueBundleServiceInput" name="valueBundleService" type="url" placeholder="https://api.presidiobitcoin.com" autocomplete="off" spellcheck="false" />
-                  </label>
-                  <label class="draft-field draft-field-full">
-                    <span class="field-label">Notes</span>
-                    <textarea id="valueBundleNotesInput" name="valueBundleNotes" placeholder="Optional human-readable note or short description." spellcheck="false"></textarea>
-                  </label>
+                <div id="valueBundleRows" class="value-bundle-rows"></div>
+                <div class="draft-actions">
+                  <button id="addValueBundleEntryButton" type="button" class="secondary-button">Add entry</button>
                 </div>
-                <span class="field-hint">One signed profile bundle can carry several destinations at once. It is encoded as JSON inside a 0xff app-defined value record.</span>
+                <span class="field-hint">Use an ordered list of repeatable key/value entries. It is encoded as JSON inside a 0xff app-defined value record.</span>
               </div>
             </div>
             <div class="draft-actions claim-step-actions">
@@ -1285,7 +1260,7 @@ function renderValuesGuideSection(configuredBasePath: string): string {
         <ul class="guide-list">
           <li>A single HTTPS target</li>
           <li>A single Bitcoin payment target</li>
-          <li>A bundled profile with website, payments, channels, services, and notes</li>
+          <li>A bundled list of repeatable key/value entries</li>
         </ul>
         <div class="guide-card-actions">
           <a class="action-link secondary" href="${withBasePath("/names/presidiobitcoin", configuredBasePath)}">See live example</a>

@@ -2799,7 +2799,7 @@ function detailValueValue(valueRecord) {
     ? decodeProfileBundlePayloadHex(valueRecord.payloadHex)
     : null;
   if (bundle !== null) {
-    return truncateMiddle(listProfileBundleEntries(bundle).map((entry) => entry.label).join(", "), 26, 18);
+    return truncateMiddle(listProfileBundleEntries(bundle).map((entry) => entry.key).join(", "), 26, 18);
   }
 
   const utf8Preview = decodeValuePayloadUtf8(valueRecord.payloadHex);
@@ -2821,7 +2821,7 @@ function detailValueCopy(valueRecord) {
   if (bundle !== null) {
     const destinationCount = listProfileBundleEntries(bundle).length;
     return (
-      "Signed off-chain by the current owner. This profile bundle currently points to " +
+      "Signed off-chain by the current owner. This key/value bundle currently points to " +
       String(destinationCount) +
       " destination" +
       (destinationCount === 1 ? "" : "s") +
@@ -2846,7 +2846,7 @@ function renderOffChainDataSection(valueRecord) {
     : null;
   const explanatoryCopy = valueRecord
     ? bundle !== null
-      ? "This name currently resolves through one signed profile bundle. Ownership stays on-chain; the bundle carries several off-chain destinations at once."
+      ? "This name currently resolves through one signed key/value bundle. Ownership stays on-chain; the bundle carries several off-chain destinations at once."
       : "This is the current signed value record for the name. Ownership stays on-chain; the resolution target is stored and updated off-chain."
     : "No signed off-chain value record has been published yet. The name exists, but it does not currently point anywhere.";
   const destinationCountValue = bundle !== null ? String(listProfileBundleEntries(bundle).length) : null;
@@ -4198,7 +4198,7 @@ function formatValueType(valueType, payloadHex) {
       return "0x02 (https target)";
     case 255:
       return decodeProfileBundlePayloadHex(payloadHex) !== null
-        ? "0xff (profile bundle)"
+        ? "0xff (key/value bundle)"
         : "0xff (raw/app-defined)";
     default:
       return "0x" + Number(valueType).toString(16).padStart(2, "0");
@@ -4210,7 +4210,7 @@ function renderProfileBundlePreview(bundle) {
     .map((entry) => {
       return (
         '<div class="value-bundle-preview-row">' +
-        '<label>' + escapeHtml(entry.label) + "</label>" +
+        '<label>' + escapeHtml(entry.key) + "</label>" +
         '<p class="field-value">' + renderBundleValue(entry.value) + "</p>" +
         "</div>"
       );
@@ -4221,23 +4221,19 @@ function renderProfileBundlePreview(bundle) {
 }
 
 function listProfileBundleEntries(bundle) {
-  const fieldMap = [
-    ["website", "Website"],
-    ["bitcoin", "Bitcoin"],
-    ["youtube", "YouTube"],
-    ["x", "X"],
-    ["service", "Service"],
-    ["notes", "Notes"]
-  ];
+  return Array.isArray(bundle.entries)
+    ? bundle.entries
+        .map((entry) => {
+          if (!entry || typeof entry !== "object" || Array.isArray(entry)) {
+            return null;
+          }
 
-  return fieldMap
-    .map(([key, label]) => {
-      const value = bundle[key];
-      return typeof value === "string" && value.trim() !== ""
-        ? { label, value: value.trim() }
-        : null;
-    })
-    .filter(Boolean);
+          const key = typeof entry.key === "string" ? entry.key.trim() : "";
+          const value = typeof entry.value === "string" ? entry.value.trim() : "";
+          return key !== "" && value !== "" ? { key, value } : null;
+        })
+        .filter(Boolean)
+    : [];
 }
 
 function renderBundleValue(value) {
@@ -4266,7 +4262,41 @@ function decodeProfileBundlePayloadHex(payloadHex) {
       return null;
     }
 
-    return payload.kind === "gns-profile-bundle" && payload.version === 1 ? payload : null;
+    if (payload.kind !== "gns-profile-bundle") {
+      return null;
+    }
+
+    if (payload.version === 2 && Array.isArray(payload.entries)) {
+      return {
+        kind: payload.kind,
+        version: 2,
+        entries: listProfileBundleEntries(payload)
+      };
+    }
+
+    if (payload.version === 1) {
+      const entries = [
+        ["website", payload.website],
+        ["bitcoin", payload.bitcoin],
+        ["youtube", payload.youtube],
+        ["x", payload.x],
+        ["service", payload.service],
+        ["notes", payload.notes]
+      ]
+        .map(([key, value]) => {
+          const normalizedValue = typeof value === "string" ? value.trim() : "";
+          return normalizedValue === "" ? null : { key, value: normalizedValue };
+        })
+        .filter(Boolean);
+
+      return {
+        kind: payload.kind,
+        version: 1,
+        entries
+      };
+    }
+
+    return null;
   } catch {
     return null;
   }

@@ -1,58 +1,42 @@
 export const PROFILE_BUNDLE_KIND = "gns-profile-bundle";
-export const PROFILE_BUNDLE_VERSION = 1;
+export const PROFILE_BUNDLE_VERSION = 2;
+
+const LEGACY_PROFILE_BUNDLE_VERSION = 1;
+
+export interface ProfileBundleEntry {
+  readonly key: string;
+  readonly value: string;
+}
 
 export interface ProfileBundleDraft {
-  readonly website: string;
-  readonly bitcoin: string;
-  readonly youtube: string;
-  readonly x: string;
-  readonly service: string;
-  readonly notes: string;
+  readonly entries: readonly ProfileBundleEntry[];
 }
 
 export interface ProfileBundlePayload {
   readonly kind: typeof PROFILE_BUNDLE_KIND;
-  readonly version: typeof PROFILE_BUNDLE_VERSION;
-  readonly website?: string;
-  readonly bitcoin?: string;
-  readonly youtube?: string;
-  readonly x?: string;
-  readonly service?: string;
-  readonly notes?: string;
+  readonly version: number;
+  readonly entries: readonly ProfileBundleEntry[];
 }
 
 export function emptyProfileBundleDraft(): ProfileBundleDraft {
   return {
-    website: "",
-    bitcoin: "",
-    youtube: "",
-    x: "",
-    service: "",
-    notes: ""
+    entries: [{ key: "", value: "" }]
   };
 }
 
-export function createProfileBundlePayload(input: Partial<ProfileBundleDraft>): ProfileBundlePayload {
-  const payload: Record<string, unknown> = {
+export function createProfileBundlePayload(input: ProfileBundleDraft): ProfileBundlePayload {
+  return {
     kind: PROFILE_BUNDLE_KIND,
-    version: PROFILE_BUNDLE_VERSION
+    version: PROFILE_BUNDLE_VERSION,
+    entries: normalizeDraftEntries(input.entries)
   };
-
-  for (const field of profileBundleFieldNames()) {
-    const value = normalizeOptionalString(input[field]);
-    if (value !== null) {
-      payload[field] = value;
-    }
-  }
-
-  return payload as unknown as ProfileBundlePayload;
 }
 
-export function encodeProfileBundlePayloadHex(input: Partial<ProfileBundleDraft>): string {
+export function encodeProfileBundlePayloadHex(input: ProfileBundleDraft): string {
   const payload = createProfileBundlePayload(input);
 
-  if (countProfileBundleEntries(payload) === 0) {
-    throw new Error("Add at least one destination or note to the profile bundle.");
+  if (payload.entries.length === 0) {
+    throw new Error("Add at least one key/value entry to the bundle.");
   }
 
   return utf8ToHex(JSON.stringify(payload, null, 2));
@@ -71,48 +55,62 @@ export function decodeProfileBundlePayloadHex(payloadHex: string): ProfileBundle
     }
 
     const record = parsed as Record<string, unknown>;
-    if (record.kind !== PROFILE_BUNDLE_KIND || record.version !== PROFILE_BUNDLE_VERSION) {
+    if (record.kind !== PROFILE_BUNDLE_KIND) {
       return null;
     }
 
-    return createProfileBundlePayload({
-      website: stringOrEmpty(record.website),
-      bitcoin: stringOrEmpty(record.bitcoin),
-      youtube: stringOrEmpty(record.youtube),
-      x: stringOrEmpty(record.x),
-      service: stringOrEmpty(record.service),
-      notes: stringOrEmpty(record.notes)
-    });
+    if (record.version === PROFILE_BUNDLE_VERSION) {
+      const entries = parseBundleEntries(record.entries);
+      return entries === null
+        ? null
+        : {
+            kind: PROFILE_BUNDLE_KIND,
+            version: PROFILE_BUNDLE_VERSION,
+            entries
+          };
+    }
+
+    if (record.version === LEGACY_PROFILE_BUNDLE_VERSION) {
+      return {
+        kind: PROFILE_BUNDLE_KIND,
+        version: LEGACY_PROFILE_BUNDLE_VERSION,
+        entries: legacyEntriesFromRecord(record)
+      };
+    }
+
+    return null;
   } catch {
     return null;
   }
 }
 
 export function profileBundleDraftFromPayload(payload: ProfileBundlePayload | null): ProfileBundleDraft {
+  if (payload === null || payload.entries.length === 0) {
+    return emptyProfileBundleDraft();
+  }
+
   return {
-    website: payload?.website ?? "",
-    bitcoin: payload?.bitcoin ?? "",
-    youtube: payload?.youtube ?? "",
-    x: payload?.x ?? "",
-    service: payload?.service ?? "",
-    notes: payload?.notes ?? ""
+    entries: payload.entries.map((entry) => ({ key: entry.key, value: entry.value }))
   };
 }
 
 export function describeProfileBundle(payload: ProfileBundlePayload): string {
-  const labels = listProfileBundleLabels(payload);
-  return labels.length === 0 ? "Profile bundle" : `Profile bundle · ${labels.join(", ")}`;
+  const entries = listProfileBundleEntries(payload);
+
+  if (entries.length === 0) {
+    return "Profile bundle";
+  }
+
+  const keys = entries.slice(0, 3).map((entry) => entry.key);
+  const suffix = entries.length > 3 ? ` +${entries.length - 3} more` : "";
+  return `Profile bundle · ${keys.join(", ")}${suffix}`;
 }
 
-export function listProfileBundleEntries(payload: ProfileBundlePayload): Array<{ label: string; value: string }> {
-  return profileBundleFieldMeta()
-    .map((field) => {
-      const value = payload[field.name];
-      return typeof value === "string" && value.trim() !== ""
-        ? { label: field.label, value }
-        : null;
-    })
-    .filter((entry): entry is { label: string; value: string } => entry !== null);
+export function listProfileBundleEntries(payload: ProfileBundlePayload): Array<{ key: string; value: string }> {
+  return payload.entries.map((entry) => ({
+    key: entry.key,
+    value: entry.value
+  }));
 }
 
 export function decodeHexUtf8(payloadHex: string): string | null {
@@ -133,12 +131,65 @@ export function utf8ToHex(text: string): string {
   return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
-function listProfileBundleLabels(payload: ProfileBundlePayload): string[] {
-  return listProfileBundleEntries(payload).map((entry) => entry.label.toLowerCase());
+function normalizeDraftEntries(entries: readonly ProfileBundleEntry[]): ProfileBundleEntry[] {
+  const normalized: ProfileBundleEntry[] = [];
+
+  for (const [index, entry] of entries.entries()) {
+    const key = normalizeOptionalString(entry?.key);
+    const value = normalizeOptionalString(entry?.value);
+
+    if (key === null && value === null) {
+      continue;
+    }
+
+    if (key === null || value === null) {
+      throw new Error(`Profile bundle entry ${index + 1} needs both a key and a value.`);
+    }
+
+    normalized.push({ key, value });
+  }
+
+  return normalized;
 }
 
-function countProfileBundleEntries(payload: ProfileBundlePayload): number {
-  return listProfileBundleEntries(payload).length;
+function parseBundleEntries(value: unknown): ProfileBundleEntry[] | null {
+  if (!Array.isArray(value)) {
+    return null;
+  }
+
+  try {
+    return normalizeDraftEntries(
+      value.map((entry) => {
+        if (typeof entry !== "object" || entry === null || Array.isArray(entry)) {
+          throw new Error("invalid key/value bundle entry");
+        }
+
+        const record = entry as Record<string, unknown>;
+        return {
+          key: typeof record.key === "string" ? record.key : "",
+          value: typeof record.value === "string" ? record.value : ""
+        };
+      })
+    );
+  } catch {
+    return null;
+  }
+}
+
+function legacyEntriesFromRecord(record: Record<string, unknown>): ProfileBundleEntry[] {
+  return [
+    ["website", record.website],
+    ["bitcoin", record.bitcoin],
+    ["youtube", record.youtube],
+    ["x", record.x],
+    ["service", record.service],
+    ["notes", record.notes]
+  ]
+    .map(([key, value]) => {
+      const normalizedValue = normalizeOptionalString(value);
+      return normalizedValue === null ? null : { key, value: normalizedValue };
+    })
+    .filter((entry): entry is ProfileBundleEntry => entry !== null);
 }
 
 function normalizeOptionalString(value: unknown): string | null {
@@ -150,29 +201,10 @@ function normalizeOptionalString(value: unknown): string | null {
   return trimmed === "" ? null : trimmed;
 }
 
-function stringOrEmpty(value: unknown): string {
-  return typeof value === "string" ? value : "";
-}
-
 function normalizeHex(payloadHex: string): string {
   const normalized = String(payloadHex).trim().toLowerCase();
   if (normalized.length % 2 !== 0 || /[^0-9a-f]/.test(normalized)) {
     throw new Error("invalid hex");
   }
   return normalized;
-}
-
-function profileBundleFieldNames(): Array<keyof ProfileBundleDraft> {
-  return profileBundleFieldMeta().map((field) => field.name);
-}
-
-function profileBundleFieldMeta(): Array<{ name: keyof ProfileBundleDraft; label: string }> {
-  return [
-    { name: "website", label: "Website" },
-    { name: "bitcoin", label: "Bitcoin" },
-    { name: "youtube", label: "YouTube" },
-    { name: "x", label: "X" },
-    { name: "service", label: "Service" },
-    { name: "notes", label: "Notes" }
-  ];
 }

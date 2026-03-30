@@ -13,7 +13,9 @@ import {
   emptyProfileBundleDraft,
   encodeProfileBundlePayloadHex,
   listProfileBundleEntries,
-  profileBundleDraftFromPayload
+  profileBundleDraftFromPayload,
+  type ProfileBundleDraft,
+  type ProfileBundleEntry
 } from "./value-bundle.js";
 
 type NameRecord = {
@@ -58,12 +60,8 @@ const elements = {
   payloadInput: document.getElementById("valuePayloadInput") as HTMLTextAreaElement | null,
   payloadHint: document.getElementById("valuePayloadHint"),
   bundleEditor: document.getElementById("valueBundleEditor"),
-  bundleWebsiteInput: document.getElementById("valueBundleWebsiteInput") as HTMLInputElement | null,
-  bundleBitcoinInput: document.getElementById("valueBundleBitcoinInput") as HTMLInputElement | null,
-  bundleYoutubeInput: document.getElementById("valueBundleYoutubeInput") as HTMLInputElement | null,
-  bundleXInput: document.getElementById("valueBundleXInput") as HTMLInputElement | null,
-  bundleServiceInput: document.getElementById("valueBundleServiceInput") as HTMLInputElement | null,
-  bundleNotesInput: document.getElementById("valueBundleNotesInput") as HTMLTextAreaElement | null,
+  bundleRows: document.getElementById("valueBundleRows"),
+  addBundleEntryButton: document.getElementById("addValueBundleEntryButton") as HTMLButtonElement | null,
   signResult: document.getElementById("valueSignResult"),
   publishResult: document.getElementById("valuePublishResult"),
   downloadSignedValueButton: document.getElementById("downloadSignedValueButton") as HTMLButtonElement | null,
@@ -137,18 +135,36 @@ async function bootstrap(): Promise<void> {
     invalidateSignedRecord("Payload changed. Sign again before publishing.");
   });
 
-  for (const input of [
-    elements.bundleWebsiteInput,
-    elements.bundleBitcoinInput,
-    elements.bundleYoutubeInput,
-    elements.bundleXInput,
-    elements.bundleServiceInput,
-    elements.bundleNotesInput
-  ]) {
-    input?.addEventListener("input", () => {
-      invalidateSignedRecord("Profile bundle changed. Sign again before publishing.");
-    });
-  }
+  elements.bundleRows?.addEventListener("input", (event) => {
+    const target = event.target;
+    if (
+      target instanceof HTMLInputElement &&
+      (target.classList.contains("value-bundle-key-input")
+        || target.classList.contains("value-bundle-value-input"))
+    ) {
+      invalidateSignedRecord("Bundle changed. Sign again before publishing.");
+    }
+  });
+
+  elements.bundleRows?.addEventListener("click", (event) => {
+    const target = event.target;
+    if (
+      target instanceof HTMLElement &&
+      target.classList.contains("value-bundle-remove-button")
+    ) {
+      const row = target.closest(".value-bundle-row");
+      if (row instanceof HTMLElement) {
+        row.remove();
+        ensureBundleEditorHasRow();
+        invalidateSignedRecord("Bundle changed. Sign again before publishing.");
+      }
+    }
+  });
+
+  elements.addBundleEntryButton?.addEventListener("click", () => {
+    appendBundleRow({ key: "", value: "" });
+    invalidateSignedRecord("Bundle changed. Sign again before publishing.");
+  });
 
   elements.downloadSignedValueButton?.addEventListener("click", () => {
     if (state.signedRecord === null) {
@@ -459,7 +475,7 @@ function updateValueEditorState(): void {
 
   if (mode === "bundle") {
     elements.payloadHint.textContent =
-      "The profile bundle is encoded as UTF-8 JSON inside a 0xff app-defined value record.";
+      "The key/value bundle is encoded as UTF-8 JSON inside a 0xff app-defined value record.";
     return;
   }
 
@@ -531,36 +547,85 @@ function resetValueInputs(): void {
   updateValueEditorState();
 }
 
-function writeBundleDraft(draft: ReturnType<typeof emptyProfileBundleDraft>): void {
-  if (elements.bundleWebsiteInput) {
-    elements.bundleWebsiteInput.value = draft.website;
+function writeBundleDraft(draft: ProfileBundleDraft): void {
+  if (!(elements.bundleRows instanceof HTMLElement)) {
+    return;
   }
-  if (elements.bundleBitcoinInput) {
-    elements.bundleBitcoinInput.value = draft.bitcoin;
+
+  const entries = draft.entries.length === 0 ? emptyProfileBundleDraft().entries : draft.entries;
+  elements.bundleRows.innerHTML = entries
+    .map((entry, index) => renderBundleRow(entry, index))
+    .join("");
+}
+
+function readBundleDraft(): ProfileBundleDraft {
+  if (!(elements.bundleRows instanceof HTMLElement)) {
+    return emptyProfileBundleDraft();
   }
-  if (elements.bundleYoutubeInput) {
-    elements.bundleYoutubeInput.value = draft.youtube;
+
+  const rows = Array.from(elements.bundleRows.querySelectorAll(".value-bundle-row"));
+  return {
+    entries: rows.map((row) => {
+      const keyInput = row.querySelector(".value-bundle-key-input");
+      const valueInput = row.querySelector(".value-bundle-value-input");
+
+      return {
+        key: keyInput instanceof HTMLInputElement ? keyInput.value : "",
+        value: valueInput instanceof HTMLInputElement ? valueInput.value : ""
+      };
+    })
+  };
+}
+
+function appendBundleRow(entry: ProfileBundleEntry): void {
+  if (!(elements.bundleRows instanceof HTMLElement)) {
+    return;
   }
-  if (elements.bundleXInput) {
-    elements.bundleXInput.value = draft.x;
+
+  const index = elements.bundleRows.querySelectorAll(".value-bundle-row").length;
+  elements.bundleRows.insertAdjacentHTML("beforeend", renderBundleRow(entry, index));
+}
+
+function ensureBundleEditorHasRow(): void {
+  if (!(elements.bundleRows instanceof HTMLElement)) {
+    return;
   }
-  if (elements.bundleServiceInput) {
-    elements.bundleServiceInput.value = draft.service;
-  }
-  if (elements.bundleNotesInput) {
-    elements.bundleNotesInput.value = draft.notes;
+
+  if (elements.bundleRows.querySelector(".value-bundle-row") === null) {
+    writeBundleDraft(emptyProfileBundleDraft());
   }
 }
 
-function readBundleDraft(): ReturnType<typeof emptyProfileBundleDraft> {
-  return {
-    website: elements.bundleWebsiteInput?.value ?? "",
-    bitcoin: elements.bundleBitcoinInput?.value ?? "",
-    youtube: elements.bundleYoutubeInput?.value ?? "",
-    x: elements.bundleXInput?.value ?? "",
-    service: elements.bundleServiceInput?.value ?? "",
-    notes: elements.bundleNotesInput?.value ?? ""
-  };
+function renderBundleRow(entry: ProfileBundleEntry, index: number): string {
+  return `
+    <div class="value-bundle-row" data-index="${index}">
+      <label class="draft-field">
+        <span class="field-label">Key</span>
+        <input
+          class="value-bundle-key-input"
+          type="text"
+          placeholder="website"
+          autocomplete="off"
+          spellcheck="false"
+          value="${escapeHtmlAttribute(entry.key)}"
+        />
+      </label>
+      <label class="draft-field">
+        <span class="field-label">Value</span>
+        <input
+          class="value-bundle-value-input"
+          type="text"
+          placeholder="https://example.com"
+          autocomplete="off"
+          spellcheck="false"
+          value="${escapeHtmlAttribute(entry.value)}"
+        />
+      </label>
+      <div class="value-bundle-row-actions">
+        <button type="button" class="secondary-button value-bundle-remove-button">Remove</button>
+      </div>
+    </div>
+  `;
 }
 
 function applySuggestedSequence(nextSequence: number): void {
@@ -759,7 +824,7 @@ function renderPayloadPreview(valueType: number, payloadHex: string): string {
       .map((entry) => {
         return `
           <div class="value-bundle-preview-row">
-            <label>${escapeHtml(entry.label)}</label>
+            <label>${escapeHtml(entry.key)}</label>
             <p class="field-value">${renderBundleValue(entry.value)}</p>
           </div>
         `;
@@ -823,7 +888,7 @@ function formatValueType(valueType: number, payloadHex = ""): string {
       return "0x02 (https target)";
     case 255:
       return decodeProfileBundlePayloadHex(payloadHex) !== null
-        ? "0xff (profile bundle)"
+        ? "0xff (key/value bundle)"
         : "0xff (raw/app-defined)";
     default:
       return `0x${Number(valueType).toString(16).padStart(2, "0")}`;
@@ -878,4 +943,8 @@ function escapeHtml(value: string): string {
     .replaceAll(">", "&gt;")
     .replaceAll("\"", "&quot;")
     .replaceAll("'", "&#39;");
+}
+
+function escapeHtmlAttribute(value: string): string {
+  return escapeHtml(value);
 }

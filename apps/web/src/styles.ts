@@ -700,10 +700,29 @@ h2 {
   background: rgba(255, 255, 255, 0.54);
 }
 
-.value-bundle-grid {
+.value-bundle-rows {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 18px;
+}
+
+.value-bundle-row {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.6fr) auto;
+  gap: 14px;
+  align-items: end;
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(31, 29, 26, 0.08);
+  background: rgba(244, 239, 232, 0.56);
+}
+
+.value-bundle-row-actions {
+  display: flex;
+  align-items: end;
+}
+
+.value-bundle-remove-button {
+  white-space: nowrap;
 }
 
 .value-bundle-preview {
@@ -2074,7 +2093,7 @@ button:disabled {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .value-bundle-grid {
+  .value-bundle-row {
     grid-template-columns: minmax(0, 1fr);
   }
 

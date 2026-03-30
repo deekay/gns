@@ -95,7 +95,7 @@ Offline / higher-trust claim prep:
 | `Commit Broadcast` | The hidden claim transaction is on-chain | Wait for confirmation |
 | `Reveal Broadcast` | The name is published within the reveal window | Watch the name move into settlement |
 | `Settling` | The claim succeeded and bond continuity still matters | Keep the bond intact until maturity |
-| `Active` | The name is fully settled | Publish values, update the profile bundle, or transfer later |
+| `Active` | The name is fully settled | Publish values, update the key/value bundle, or transfer later |
 | `Released` | The name returned to the pool | Start a fresh claim if you still want it |
 
 ## Hosted Demo Walkthrough
