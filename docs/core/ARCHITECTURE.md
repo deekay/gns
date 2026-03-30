@@ -117,7 +117,7 @@ Resolver federation or relay-based distribution may still make sense later, but 
 
 These are the main issues we already understand and want reviewers to keep pushing on:
 
-- **Transfer relay policy:** the current prototype transfer payload is larger than the conservative default `OP_RETURN` relay policy most Bitcoin nodes use. Claims fit comfortably; transfers do not yet.
+- **Transfer relay policy:** the current prototype transfer payload exceeds older conservative `OP_RETURN` relay limits. Modern Bitcoin Core defaults are more permissive, but transfer relay is still policy-dependent and broad compatibility is not yet guaranteed.
 - **Post-maturity holding cost:** mature names no longer require bond continuity. That reduces permanent UTXO pressure, but it also means long names become cheap to hold indefinitely after the maturity period.
 - **Resolver concentration:** ownership is chain-derived, but value-record availability is still vulnerable to concentration if only one or a few resolvers matter in practice.
 - **Reveal-window exposure:** a failed reveal is not just a failed claim. It also exposes which name somebody wanted, which can make the next attempt more competitive. That makes the reveal window a market-structure question, not only a wallet UX question.
