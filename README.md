@@ -378,6 +378,7 @@ Start here:
 - [docs/core/ARCHITECTURE.md](./docs/core/ARCHITECTURE.md): system structure, trust boundaries, and runtime modes
 - [docs/core/DECISIONS.md](./docs/core/DECISIONS.md): design decisions and open tradeoffs
 - [docs/core/TESTING.md](./docs/core/TESTING.md): fixture, regtest, public signet, and private signet testing paths
+- [docs/research/TRANSFER_RELAY_OPTIONS.md](./docs/research/TRANSFER_RELAY_OPTIONS.md): why transfers are still policy-sensitive and what the real redesign options are
 - [CONTRIBUTING.md](./CONTRIBUTING.md): local setup and contribution workflow
 
 More exploratory and draft-oriented material lives under [`docs/research/`](./docs/research/).

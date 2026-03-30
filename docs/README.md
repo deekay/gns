@@ -34,5 +34,6 @@ These documents are useful, but they are more speculative, essay-like, or draft-
 - [GNS_EXPLAINER.md](./research/GNS_EXPLAINER.md)
 - [GNS-v2-draft.md](./research/GNS-v2-draft.md)
 - [IMPLEMENTATION_PLAN.md](./research/IMPLEMENTATION_PLAN.md)
+- [TRANSFER_RELAY_OPTIONS.md](./research/TRANSFER_RELAY_OPTIONS.md)
 - [FUTURE_EXPLORATIONS.md](./research/FUTURE_EXPLORATIONS.md)
 - [NOSTR_STRATEGY.md](./research/NOSTR_STRATEGY.md)
