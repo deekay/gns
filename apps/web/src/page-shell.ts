@@ -270,7 +270,8 @@ function renderHomePageSections(configuredBasePath: string): string {
   return `${renderSearchSection()}
     ${renderHomeActionsSection(configuredBasePath)}
     ${renderHomeModelSection()}
-    ${renderHomeExampleSection(configuredBasePath)}`;
+    ${renderHomeExampleSection(configuredBasePath)}
+    ${renderHomeStatusSection()}`;
 }
 
 function renderExplorePageSections(configuredBasePath: string, includeLiveSmoke: boolean): string {
@@ -300,6 +301,7 @@ function renderTransferPageSections(configuredBasePath: string): string {
 
 function renderValuesPageSections(configuredBasePath: string): string {
   return `${renderValuesToolSection()}
+    ${renderValuesGuideSection(configuredBasePath)}
     ${renderValuesSupportStrip(configuredBasePath)}`;
 }
 
@@ -419,6 +421,41 @@ function renderHomeExampleSection(configuredBasePath: string): string {
           <li><strong>Social link</strong></li>
           <li><strong>Service or API endpoint</strong></li>
           <li><strong>Notes</strong></li>
+        </ul>
+      </article>
+    </div>
+  </section>`;
+}
+
+function renderHomeStatusSection(): string {
+  return `<section id="prototype-status" class="panel panel-guide panel-home">
+    ${renderPanelHead(
+      "Current Status",
+      "The hosted demo and self-host path are real. Some parts of the protocol are still prototype-stage."
+    )}
+    <div class="guide-grid">
+      <article class="guide-card">
+        <h3>Works Well Today</h3>
+        <ul class="guide-list">
+          <li>Hosted private demo claims</li>
+          <li>Self-hosted website + resolver</li>
+          <li>Browser value publishing and profile bundles</li>
+        </ul>
+      </article>
+      <article class="guide-card">
+        <h3>Still Prototype</h3>
+        <ul class="guide-list">
+          <li>Transfers still lean on CLI and signer flow.</li>
+          <li>Resolver availability is only partly decentralized in v1.</li>
+          <li>Mainnet-ready usage is not the current claim.</li>
+        </ul>
+      </article>
+      <article class="guide-card">
+        <h3>Fast Rule Of Thumb</h3>
+        <ul class="guide-list">
+          <li>Use the website to try the model.</li>
+          <li>Use GitHub to understand the protocol and self-host it.</li>
+          <li>Use the offline architect when you want less trust in the hosted site.</li>
         </ul>
       </article>
     </div>
@@ -1215,6 +1252,45 @@ function renderValuesToolSection(): string {
           </div>
         </div>
       </details>
+    </div>
+  </section>`;
+}
+
+function renderValuesGuideSection(configuredBasePath: string): string {
+  return `<section id="values-guide" class="panel panel-guide">
+    ${renderPanelHead(
+      "How Value Publishing Fits Together",
+      "Load the claimed name, sign locally with the owner key, then publish only the signed record.",
+      `<p>The resolver stores the latest owner-authorized value, but ownership itself still comes from the chain.</p>`
+    )}
+    <div class="guide-grid">
+      <article class="guide-card">
+        <h3>What This Page Actually Does</h3>
+        <ul class="guide-list">
+          <li>Reads the current name state from the resolver.</li>
+          <li>Signs the next value record locally in your browser.</li>
+          <li>Uploads only the signed JSON record.</li>
+        </ul>
+      </article>
+      <article class="guide-card">
+        <h3>Which Key You Need</h3>
+        <ul class="guide-list">
+          <li>Use the <strong>owner key</strong>, not the funding wallet key.</li>
+          <li>If the owner key no longer matches the current owner, publish will fail.</li>
+          <li>After a transfer, only the new owner can publish fresh values.</li>
+        </ul>
+      </article>
+      <article class="guide-card">
+        <h3>What A Value Can Carry</h3>
+        <ul class="guide-list">
+          <li>A single HTTPS target</li>
+          <li>A single Bitcoin payment target</li>
+          <li>A bundled profile with website, payments, channels, services, and notes</li>
+        </ul>
+        <div class="guide-card-actions">
+          <a class="action-link secondary" href="${withBasePath("/names/presidiobitcoin", configuredBasePath)}">See live example</a>
+        </div>
+      </article>
     </div>
   </section>`;
 }
