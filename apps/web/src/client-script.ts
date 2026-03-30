@@ -4262,37 +4262,15 @@ function decodeProfileBundlePayloadHex(payloadHex) {
       return null;
     }
 
-    if (payload.kind !== "gns-profile-bundle") {
+    if (payload.kind !== "gns-key-value-bundle") {
       return null;
     }
 
-    if (payload.version === 2 && Array.isArray(payload.entries)) {
-      return {
-        kind: payload.kind,
-        version: 2,
-        entries: listProfileBundleEntries(payload)
-      };
-    }
-
-    if (payload.version === 1) {
-      const entries = [
-        ["website", payload.website],
-        ["bitcoin", payload.bitcoin],
-        ["youtube", payload.youtube],
-        ["x", payload.x],
-        ["service", payload.service],
-        ["notes", payload.notes]
-      ]
-        .map(([key, value]) => {
-          const normalizedValue = typeof value === "string" ? value.trim() : "";
-          return normalizedValue === "" ? null : { key, value: normalizedValue };
-        })
-        .filter(Boolean);
-
+    if (payload.version === 1 && Array.isArray(payload.entries)) {
       return {
         kind: payload.kind,
         version: 1,
-        entries
+        entries: listProfileBundleEntries(payload)
       };
     }
 

@@ -1,7 +1,5 @@
-export const PROFILE_BUNDLE_KIND = "gns-profile-bundle";
-export const PROFILE_BUNDLE_VERSION = 2;
-
-const LEGACY_PROFILE_BUNDLE_VERSION = 1;
+export const PROFILE_BUNDLE_KIND = "gns-key-value-bundle";
+export const PROFILE_BUNDLE_VERSION = 1;
 
 export interface ProfileBundleEntry {
   readonly key: string;
@@ -59,26 +57,18 @@ export function decodeProfileBundlePayloadHex(payloadHex: string): ProfileBundle
       return null;
     }
 
-    if (record.version === PROFILE_BUNDLE_VERSION) {
-      const entries = parseBundleEntries(record.entries);
-      return entries === null
-        ? null
-        : {
-            kind: PROFILE_BUNDLE_KIND,
-            version: PROFILE_BUNDLE_VERSION,
-            entries
-          };
+    if (record.version !== PROFILE_BUNDLE_VERSION) {
+      return null;
     }
 
-    if (record.version === LEGACY_PROFILE_BUNDLE_VERSION) {
-      return {
-        kind: PROFILE_BUNDLE_KIND,
-        version: LEGACY_PROFILE_BUNDLE_VERSION,
-        entries: legacyEntriesFromRecord(record)
-      };
-    }
-
-    return null;
+    const entries = parseBundleEntries(record.entries);
+    return entries === null
+      ? null
+      : {
+          kind: PROFILE_BUNDLE_KIND,
+          version: PROFILE_BUNDLE_VERSION,
+          entries
+        };
   } catch {
     return null;
   }
@@ -98,12 +88,12 @@ export function describeProfileBundle(payload: ProfileBundlePayload): string {
   const entries = listProfileBundleEntries(payload);
 
   if (entries.length === 0) {
-    return "Profile bundle";
+    return "Key/value bundle";
   }
 
   const keys = entries.slice(0, 3).map((entry) => entry.key);
   const suffix = entries.length > 3 ? ` +${entries.length - 3} more` : "";
-  return `Profile bundle · ${keys.join(", ")}${suffix}`;
+  return `Key/value bundle · ${keys.join(", ")}${suffix}`;
 }
 
 export function listProfileBundleEntries(payload: ProfileBundlePayload): Array<{ key: string; value: string }> {
@@ -143,7 +133,7 @@ function normalizeDraftEntries(entries: readonly ProfileBundleEntry[]): ProfileB
     }
 
     if (key === null || value === null) {
-      throw new Error(`Profile bundle entry ${index + 1} needs both a key and a value.`);
+      throw new Error(`Key/value bundle entry ${index + 1} needs both a key and a value.`);
     }
 
     normalized.push({ key, value });
@@ -174,22 +164,6 @@ function parseBundleEntries(value: unknown): ProfileBundleEntry[] | null {
   } catch {
     return null;
   }
-}
-
-function legacyEntriesFromRecord(record: Record<string, unknown>): ProfileBundleEntry[] {
-  return [
-    ["website", record.website],
-    ["bitcoin", record.bitcoin],
-    ["youtube", record.youtube],
-    ["x", record.x],
-    ["service", record.service],
-    ["notes", record.notes]
-  ]
-    .map(([key, value]) => {
-      const normalizedValue = normalizeOptionalString(value);
-      return normalizedValue === null ? null : { key, value: normalizedValue };
-    })
-    .filter((entry): entry is ProfileBundleEntry => entry !== null);
 }
 
 function normalizeOptionalString(value: unknown): string | null {

@@ -399,16 +399,16 @@ function renderHomeExampleSection(configuredBasePath: string): string {
     )}
     <div class="guide-grid">
       <article class="guide-card">
-        <h3>Live Example: presidiobitcoin</h3>
-        <p>The live demo name currently resolves to one owner-signed bundle with several entries.</p>
+        <h3>Illustrative Example</h3>
+        <p>One owner-signed bundle might carry entries like these:</p>
         <ul class="guide-list">
-          <li><strong>website</strong> → <code>https://presidiobitcoin.com</code></li>
-          <li><strong>youtube</strong> → <code>https://youtube.com/@presidiobitcoin</code></li>
-          <li><strong>notes</strong> → a short owner-signed bundle message</li>
+          <li><strong>website</strong> → <code>https://example.com</code></li>
+          <li><strong>payment</strong> → <code>bitcoin:bc1qexample...</code></li>
+          <li><strong>profile</strong> → <code>https://social.example/alice</code></li>
+          <li><strong>endpoint</strong> → <code>https://api.example.com</code></li>
         </ul>
         <div class="guide-card-actions">
-          <a class="action-link secondary" href="${withBasePath("/names/presidiobitcoin", configuredBasePath)}">Open detail page</a>
-          <a class="action-link secondary" href="${withBasePath("/values?name=presidiobitcoin", configuredBasePath)}">Open values tool</a>
+          <a class="action-link secondary" href="${withBasePath("/values", configuredBasePath)}">Open values tool</a>
         </div>
       </article>
       <article class="guide-card">
@@ -1263,7 +1263,7 @@ function renderValuesGuideSection(configuredBasePath: string): string {
           <li>A bundled list of repeatable key/value entries</li>
         </ul>
         <div class="guide-card-actions">
-          <a class="action-link secondary" href="${withBasePath("/names/presidiobitcoin", configuredBasePath)}">See live example</a>
+          <a class="action-link secondary" href="${withBasePath("/values", configuredBasePath)}">Open values tool</a>
         </div>
       </article>
     </div>
