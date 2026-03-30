@@ -128,7 +128,7 @@ function renderHeroSection(
         <p class="eyebrow"><a class="eyebrow-link" href="${withBasePath("/", configuredBasePath)}">Global Name System</a> · ${escapeHtml(configuredNetworkLabel)}</p>
         <h1>Prepare A Global Name System Transfer</h1>
         <p class="lede">
-          Current name, new owner, and transfer handoff.
+          Move owner authority to a new pubkey, then finish the handoff in your signer and CLI flow.
         </p>
         <p id="chainSummary" class="hero-status">
           ${escapeHtml(configuredNetworkLabel)} · Height - · 0 names · 0 pending
@@ -294,6 +294,7 @@ function renderClaimPageSections(
 
 function renderTransferPageSections(configuredBasePath: string): string {
   return `${renderTransferPrepSection()}
+    ${renderTransferGuideSection()}
     ${renderTransferSupportStrip(configuredBasePath)}`;
 }
 
@@ -1277,11 +1278,19 @@ function renderWalletCompatibilityFaqSection(configuredBasePath: string, collaps
 function renderTransferGuideSection(): string {
   return `<section id="transfer-guide" class="panel panel-guide">
     ${renderPanelHead(
-      "How Transfers Work",
-      "The current name state determines the right path.",
-      `<p>Settling names still depend on bond continuity. Active names are simpler.</p>`
+      "How Transfer Fits Together",
+      "A transfer moves owner authority to a new pubkey. The current name state determines the handoff path.",
+      `<p>After a transfer, the old owner can no longer publish new values for that name.</p>`
     )}
     <div class="guide-grid">
+      <article class="guide-card">
+        <h3>What Actually Changes</h3>
+        <ul class="guide-list">
+          <li>The name keeps the same string.</li>
+          <li>The <strong>new owner pubkey</strong> becomes the future authority.</li>
+          <li>The <strong>old owner key</strong> stops being able to publish new value records.</li>
+        </ul>
+      </article>
       <article class="guide-card">
         <h3>Settling Names</h3>
         <ul class="guide-list">
@@ -1296,6 +1305,14 @@ function renderTransferGuideSection(): string {
           <li>The name is already settled.</li>
           <li>Use a gift handoff or cooperative active sale.</li>
           <li>The transfer plan focuses on ownership change and optional seller payment.</li>
+        </ul>
+      </article>
+      <article class="guide-card">
+        <h3>Current Prototype Status</h3>
+        <ul class="guide-list">
+          <li>The site prepares the handoff and exports the package.</li>
+          <li>Signing and broadcast still happen in the CLI and your signer flow.</li>
+          <li>This works in the prototype, but it is not yet mainnet-ready.</li>
         </ul>
       </article>
     </div>
@@ -1405,6 +1422,7 @@ function renderTransferSupportStrip(configuredBasePath: string): string {
   return `<section id="transfer-support" class="panel panel-support-strip">
     <p class="support-strip-label">Utility links</p>
     <div class="hero-cta-row support-strip-actions">
+      <a class="action-link secondary" href="${withBasePath("/claim", configuredBasePath)}">Open claim prep</a>
       <a class="action-link secondary" href="${withBasePath("/values", configuredBasePath)}">Publish value</a>
       <a class="action-link secondary" href="${withBasePath("/explore", configuredBasePath)}">Open explorer</a>
       <a class="action-link secondary" href="${GITHUB_REPO_URL}" target="_blank" rel="noreferrer noopener">GitHub docs</a>
