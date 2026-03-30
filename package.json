@@ -25,6 +25,7 @@
     "sparrow:private-signet:start": "bash ./scripts/start-private-signet-sparrow-session.sh",
     "sparrow:private-signet:tunnel": "bash ./scripts/open-private-signet-sparrow-tunnel.sh",
     "reset:private-signet-demo": "bash ./scripts/reset-private-signet-demo.sh",
+    "reseed:private-signet-demo": "node ./scripts/private-signet-reseed-demo.mjs",
     "selfhost:doctor": "bash ./scripts/selfhost-doctor.sh",
     "selfhost:down": "docker compose down",
     "selfhost:indexer": "docker compose run --rm indexer",

@@ -15,7 +15,7 @@ Examples:
 Environment:
   GNS_SSH_TARGET                       Default SSH target when the first argument is omitted.
   GNS_SSH_KEY                          Optional SSH key path when the second argument is omitted.
-  GNS_PRIVATE_SIGNET_RESET_BLOCKS        Initial blocks to mine after reset. Default: 220
+  GNS_PRIVATE_SIGNET_RESET_BLOCKS        Initial blocks to mine after reset. Default: 110
   GNS_PRIVATE_SIGNET_RESET_DELETE_LOCAL  Delete local demo wallets/artifacts too. Default: 1
 EOF
 }
@@ -32,7 +32,7 @@ fi
 
 REMOTE="${1:-${GNS_SSH_TARGET:-}}"
 SSH_KEY_PATH="${2:-${GNS_SSH_KEY:-}}"
-BOOTSTRAP_BLOCKS="${GNS_PRIVATE_SIGNET_RESET_BLOCKS:-220}"
+BOOTSTRAP_BLOCKS="${GNS_PRIVATE_SIGNET_RESET_BLOCKS:-110}"
 DELETE_LOCAL="${GNS_PRIVATE_SIGNET_RESET_DELETE_LOCAL:-1}"
 
 if [[ -z "$REMOTE" ]]; then
@@ -83,7 +83,7 @@ wait_for_http() {
 }
 
 echo "[stop services]"
-systemctl stop gns-web.service gns-resolver.service gns-private-web.service gns-private-resolver.service || true
+systemctl stop gns-domain-web.service gns-web.service gns-resolver.service gns-private-web.service gns-private-resolver.service || true
 systemctl stop bitcoind-private-signet.service || true
 
 echo
@@ -149,12 +149,13 @@ fi
 
 echo
 echo "[restart gns services]"
-systemctl restart gns-private-resolver.service gns-private-web.service gns-resolver.service gns-web.service
+systemctl restart gns-private-resolver.service gns-private-web.service gns-resolver.service gns-web.service gns-domain-web.service
 
 wait_for_http "http://127.0.0.1:8788/health" "private resolver health" 45
 wait_for_http "http://127.0.0.1:3001/gns-private/api/health" "private web health" 30
 wait_for_http "http://127.0.0.1:8787/health" "main resolver health" 45
 wait_for_http "http://127.0.0.1:3000/gns/api/health" "main web health" 30
+wait_for_http "http://127.0.0.1:3002/api/health" "root domain web health" 30
 EOF
 
 if [[ "$DELETE_LOCAL" == "1" ]]; then

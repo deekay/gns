@@ -22,7 +22,7 @@ Environment:
   GNS_PRIVATE_SIGNET_P2P_PORT         P2P port for the private signet node. Default: 39333
   GNS_PRIVATE_SIGNET_CHALLENGE        Signet challenge hex. Default: 51
   GNS_PRIVATE_SIGNET_BASE_PATH        Web base path. Default: /gns-private
-  GNS_PRIVATE_SIGNET_BOOTSTRAP_BLOCKS Initial blocks to mine for mature demo funds. Default: 220
+  GNS_PRIVATE_SIGNET_BOOTSTRAP_BLOCKS Initial blocks to mine for mature demo funds. Default: 110
 EOF
 }
 
@@ -57,7 +57,7 @@ RPC_PORT="${GNS_PRIVATE_SIGNET_RPC_PORT:-39332}"
 P2P_PORT="${GNS_PRIVATE_SIGNET_P2P_PORT:-39333}"
 CHALLENGE="${GNS_PRIVATE_SIGNET_CHALLENGE:-51}"
 BASE_PATH="${GNS_PRIVATE_SIGNET_BASE_PATH:-/gns-private}"
-BOOTSTRAP_BLOCKS="${GNS_PRIVATE_SIGNET_BOOTSTRAP_BLOCKS:-220}"
+BOOTSTRAP_BLOCKS="${GNS_PRIVATE_SIGNET_BOOTSTRAP_BLOCKS:-110}"
 
 SSH_ARGS=(
   -o StrictHostKeyChecking=accept-new
