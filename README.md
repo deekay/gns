@@ -98,17 +98,31 @@ Offline / higher-trust claim prep:
 | `Active` | The name is fully settled | Publish values, update the profile bundle, or transfer later |
 | `Released` | The name returned to the pool | Start a fresh claim if you still want it |
 
-## Screenshots
+## Hosted Demo Walkthrough
 
-The hosted site is intentionally more tool-oriented than explanatory. A new user usually moves through:
+If you are brand new, this is the shortest path through the hosted product.
 
-1. the homepage and name lookup
-2. setup for the hosted private demo
-3. claim prep or value publishing
+### 1. Start at the homepage
+
+Use the homepage to look up a name, see the quick model, and choose whether you want `Setup`, `Claim`, or `Explore`.
 
 ![GNS homepage](./docs/assets/website-home.png)
 
+### 2. Set up Sparrow and request demo coins
+
+Run the helper shown on the setup page, confirm Sparrow is pointed at the private signet demo, then fund the same wallet you plan to spend from.
+
 ![GNS setup](./docs/assets/website-setup.png)
+
+### 3. Prepare the claim
+
+On claim prep, pick the name, generate or paste the owner key, save the backup package, and build the commit/reveal signer handoff.
+
+![GNS claim prep](./docs/assets/website-claim.png)
+
+### 4. Publish what the name points to
+
+Once the name is active, use the values tool to publish a single target or a bundled profile with several destinations.
 
 ![GNS value bundle](./docs/assets/website-values-bundle.png)
 
