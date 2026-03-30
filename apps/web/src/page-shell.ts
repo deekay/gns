@@ -268,7 +268,9 @@ function renderPanelHead(title: string, summary: string, infoBody?: string): str
 
 function renderHomePageSections(configuredBasePath: string): string {
   return `${renderSearchSection()}
-    ${renderHomeActionsSection(configuredBasePath)}`;
+    ${renderHomeActionsSection(configuredBasePath)}
+    ${renderHomeModelSection()}
+    ${renderHomeExampleSection(configuredBasePath)}`;
 }
 
 function renderExplorePageSections(configuredBasePath: string, includeLiveSmoke: boolean): string {
@@ -345,6 +347,80 @@ function renderHomeActionsSection(configuredBasePath: string): string {
       </article>
     </div>
     <p class="tool-handoff-note">Project background and deeper documentation live on <a href="${GITHUB_REPO_URL}" target="_blank" rel="noreferrer noopener">GitHub</a>.</p>
+  </section>`;
+}
+
+function renderHomeModelSection(): string {
+  return `<section id="how-gns-works" class="panel panel-guide panel-home">
+    ${renderPanelHead(
+      "How It Fits Together",
+      "Ownership is recorded on-chain. What the name points to is signed off-chain by the current owner."
+    )}
+    <div class="guide-grid">
+      <article class="guide-card">
+        <h3>1. Claim On-Chain</h3>
+        <p>Your wallet key signs the Bitcoin transactions that claim or transfer the name.</p>
+        <ul class="guide-list">
+          <li><strong>Commit:</strong> hide the intended name.</li>
+          <li><strong>Reveal:</strong> publish it within the reveal window.</li>
+          <li><strong>Settling:</strong> keep bond continuity until the name becomes active.</li>
+        </ul>
+      </article>
+      <article class="guide-card">
+        <h3>2. Point It Somewhere</h3>
+        <p>Your owner key signs the current value record after the claim succeeds.</p>
+        <ul class="guide-list">
+          <li><strong>Owner key:</strong> controls updates and transfers later.</li>
+          <li><strong>Profile bundle:</strong> one current record can carry several destinations.</li>
+          <li><strong>Values:</strong> stay off-chain and can change over time.</li>
+        </ul>
+      </article>
+      <article class="guide-card">
+        <h3>3. Resolve It</h3>
+        <p>Resolvers and clients combine chain ownership with the latest owner-signed value.</p>
+        <ul class="guide-list">
+          <li><strong>Wallet key:</strong> controls Bitcoin transactions.</li>
+          <li><strong>Owner key:</strong> controls what the name points to.</li>
+          <li><strong>Released:</strong> if settlement fails, the name returns to the pool.</li>
+        </ul>
+      </article>
+    </div>
+  </section>`;
+}
+
+function renderHomeExampleSection(configuredBasePath: string): string {
+  return `<section id="bundle-example" class="panel panel-guide panel-home">
+    ${renderPanelHead(
+      "One Name, Several Destinations",
+      "A single current value record can act like a compact profile bundle."
+    )}
+    <div class="guide-grid">
+      <article class="guide-card">
+        <h3>Live Example: presidiobitcoin</h3>
+        <p>The live demo name currently resolves to a bundled record.</p>
+        <ul class="guide-list">
+          <li><strong>Website:</strong> <code>https://presidiobitcoin.com</code></li>
+          <li><strong>YouTube:</strong> <code>https://youtube.com/@presidiobitcoin</code></li>
+          <li><strong>Note:</strong> a short owner-signed bundle message</li>
+        </ul>
+        <div class="guide-card-actions">
+          <a class="action-link secondary" href="${withBasePath("/names/presidiobitcoin", configuredBasePath)}">Open detail page</a>
+          <a class="action-link secondary" href="${withBasePath("/values?name=presidiobitcoin", configuredBasePath)}">Open values tool</a>
+        </div>
+      </article>
+      <article class="guide-card">
+        <h3>Bundle Fields Supported Today</h3>
+        <p>The values tool can publish one signed record with several destinations at once.</p>
+        <ul class="guide-list">
+          <li><strong>Website</strong></li>
+          <li><strong>Bitcoin payment target</strong></li>
+          <li><strong>YouTube</strong></li>
+          <li><strong>Social link</strong></li>
+          <li><strong>Service or API endpoint</strong></li>
+          <li><strong>Notes</strong></li>
+        </ul>
+      </article>
+    </div>
   </section>`;
 }
 

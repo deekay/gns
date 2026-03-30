@@ -1247,6 +1247,13 @@ button:disabled {
   line-height: 1.55;
 }
 
+.guide-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 4px;
+}
+
 .path-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
