@@ -32,23 +32,71 @@ Keep these distinctions in mind:
 - the hosted site prepares the flow, but your wallet still signs and broadcasts it
 - in v1, losing the **owner key** means losing update and transfer authority for that name
 
-### Pick The Path That Fits
+## Quick Map
+
+```mermaid
+flowchart LR
+  A["Wallet Key"] -->|"signs"| B["Claim / Transfer Bitcoin Transactions"]
+  B -->|"records ownership on"| C["Bitcoin Chain"]
+  C -->|"canonical state for"| D["Resolver / Website"]
+  E["Owner Key"] -->|"signs"| F["Value Record / Profile Bundle"]
+  F -->|"published to"| D
+```
+
+GNS has two different authority layers:
+
+- the **wallet key** signs Bitcoin transactions that establish or transfer ownership
+- the **owner key** signs the off-chain value record that says what the name points to
+
+## Pick The Path That Fits
 
 There are three practical ways to use GNS today:
 
-- `Hosted Private Demo`
-  Fastest first walkthrough.
-  Website: [https://globalnamesystem.org](https://globalnamesystem.org)
-  Setup: [https://globalnamesystem.org/setup](https://globalnamesystem.org/setup)
-  Claim prep: [https://globalnamesystem.org/claim](https://globalnamesystem.org/claim)
+| Path | Best for | What you trust | Works today |
+| --- | --- | --- | --- |
+| `Hosted Private Demo` | Fastest first walkthrough | Hosted site, hosted resolver, private demo chain | Yes |
+| `Self-Hosted Website + Resolver` | Running your own browsing and resolution surface | Your own web stack and resolver; optionally your own Bitcoin backend | Yes |
+| `Offline / Higher-Trust Claim Prep` | Preparing claims without depending on the hosted site UI | Local browser bundle plus your own signer | Yes |
 
-- `Self-Hosted Website + Resolver`
-  Best if you do not want to depend on the hosted website or hosted resolver.
-  Quick guide: [SELF_HOSTING.md](./docs/core/SELF_HOSTING.md)
+Hosted private demo:
+- website: [https://globalnamesystem.org](https://globalnamesystem.org)
+- setup: [https://globalnamesystem.org/setup](https://globalnamesystem.org/setup)
+- claim prep: [https://globalnamesystem.org/claim](https://globalnamesystem.org/claim)
 
-- `Offline / Higher-Trust Claim Prep`
-  Best if you want the hosted site to matter as little as possible during claim preparation.
-  Offline architect: [https://globalnamesystem.org/claim/offline](https://globalnamesystem.org/claim/offline)
+Self-hosted website + resolver:
+- quick guide: [SELF_HOSTING.md](./docs/core/SELF_HOSTING.md)
+
+Offline / higher-trust claim prep:
+- offline architect: [https://globalnamesystem.org/claim/offline](https://globalnamesystem.org/claim/offline)
+
+## What Works Today
+
+| Capability | Status | Notes |
+| --- | --- | --- |
+| Hosted private demo claims | Yes | Best first walkthrough today |
+| Self-hosted website + resolver | Yes | Fixture-backed by default; can point at your own backend later |
+| Browser value publishing | Yes | Owner-signed in the browser |
+| Profile bundle value records | Yes | One record can point to several destinations |
+| Transfers | Prototype | Works in the prototype, but not yet mainnet-ready |
+| Mainnet-ready usage | Not yet | Still an active prototype |
+
+## Which Key Does What
+
+| Key | What it controls | Used for | If lost |
+| --- | --- | --- | --- |
+| `Wallet key` | Bitcoin UTXOs | Signing claim and transfer transactions | You lose control of the bitcoin and cannot complete those transactions |
+| `Owner key` | Name authority after claim | Signing value updates and authorizing transfers | In v1, you lose update and transfer authority for that name |
+
+## Claim Lifecycle At A Glance
+
+| Phase | What it means | What you do next |
+| --- | --- | --- |
+| `Prepare` | Pick the name, create or paste the owner key, and build the claim plan | Save the owner key and backup package |
+| `Commit Broadcast` | The hidden claim transaction is on-chain | Wait for confirmation |
+| `Reveal Broadcast` | The name is published within the reveal window | Watch the name move into settlement |
+| `Settling` | The claim succeeded and bond continuity still matters | Keep the bond intact until maturity |
+| `Active` | The name is fully settled | Publish values, update the profile bundle, or transfer later |
+| `Released` | The name returned to the pool | Start a fresh claim if you still want it |
 
 ## Screenshots
 
