@@ -48,7 +48,11 @@ section "GNS self-host preflight"
 if command -v docker >/dev/null 2>&1; then
   pass "$(docker --version | head -n 1)"
 else
-  todo "Docker is not installed or not on PATH. Install Docker Desktop or Docker Engine first."
+  if [[ "$(uname -s)" == "Darwin" ]]; then
+    todo "Docker is not installed or not on PATH. Install Docker Desktop for Mac first."
+  else
+    todo "Docker is not installed or not on PATH. Install Docker Desktop or Docker Engine first."
+  fi
 fi
 
 if command -v docker >/dev/null 2>&1; then
@@ -62,7 +66,7 @@ fi
 if [[ -f .env ]]; then
   pass ".env exists."
 else
-  todo ".env is missing. Run: cp .env.example .env"
+  todo ".env is missing. Run: npm run selfhost:init"
 fi
 
 if [[ -f docker-compose.yml ]]; then
@@ -100,6 +104,11 @@ section "Next step"
 if [[ "$failures" -eq 0 ]]; then
   info "Run: npm run selfhost:up"
   exit 0
+fi
+
+if ! command -v docker >/dev/null 2>&1; then
+  info "Install Docker first, then run: npm run selfhost:init"
+  exit 1
 fi
 
 info "Fix the items marked TODO, then rerun: npm run selfhost:doctor"

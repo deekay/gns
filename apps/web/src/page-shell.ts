@@ -49,7 +49,7 @@ export function renderPageHtml(options: PageShellOptions): string {
       : pageKind === "transfer"
         ? "Prepare a Global Name System transfer handoff, then finish the gift or sale flow in the CLI and your signer."
       : pageKind === "setup"
-          ? "Set up Sparrow, connect to the hosted private Electrum endpoint, request demo coins, and complete the private signet walkthrough."
+          ? "Set up Sparrow, connect to the hosted demo wallet endpoint, request demo coins, and complete the private signet walkthrough."
         : pageKind === "explainer"
           ? "Quick orientation for using the hosted Global Name System tools."
         : "Explorer for browsing claimed names and resolver status in Global Name System.";
@@ -172,7 +172,7 @@ function renderHeroSection(
         <p class="eyebrow"><a class="eyebrow-link" href="${withBasePath("/", configuredBasePath)}">Global Name System</a> · ${escapeHtml(configuredNetworkLabel)}</p>
         <h1>Set Up Your Wallet</h1>
         <p class="lede">
-          Sparrow, the hosted private Electrum endpoint, demo coins, and automatic confirmations for the private signet flow.
+          Sparrow, the hosted demo wallet endpoint, demo coins, and automatic confirmations for the private signet flow.
         </p>
       </div>
     </header>`;
@@ -332,7 +332,7 @@ function renderHomeActionsSection(configuredBasePath: string): string {
     <div class="path-grid">
       <article class="path-card">
         <h3>Setup</h3>
-        <p>Get Sparrow ready, connect to the hosted demo wallet endpoint, and fund a wallet for the private signet walkthrough.</p>
+        <p>Get Sparrow ready, connect to the hosted demo wallet endpoint, and fund the same wallet you will use to sign the claim.</p>
         <div class="path-card-actions">
           <a class="action-link secondary" href="${withBasePath("/setup", configuredBasePath)}">Open setup</a>
         </div>
@@ -502,7 +502,7 @@ function renderUsingGnsSection(configuredBasePath: string): string {
     <div class="guide-grid">
       <article class="guide-card">
         <h3>Setup</h3>
-        <p>Get Sparrow ready, connect to the hosted demo wallet endpoint, and fund a wallet for the private signet demo.</p>
+        <p>Get Sparrow ready, connect to the hosted demo wallet endpoint, and fund the same wallet you will use to sign the claim.</p>
       </article>
       <article class="guide-card">
         <h3>Claim</h3>
@@ -768,14 +768,14 @@ function renderClaimPrepSection(configuredBasePath: string): string {
             <span class="claim-step-badge">Step 1</span>
             <div class="wizard-step-copy">
               <h3>Enter Claim Details</h3>
-              <p>Choose the name, paste or generate the owner key, and prepare the draft. The advanced fields only matter if you want to override the default bond flow.</p>
+              <p>Use the same funded Sparrow wallet from setup, choose the name, paste or generate the owner key, and prepare the draft. The advanced fields only matter if you want to override the default bond flow.</p>
             </div>
           </div>
           <span id="claimStepInputsState" class="summary-chip wizard-step-state">Start here</span>
         </summary>
         <div class="wizard-step-body">
         <div class="tool-callout-row">
-          <p class="field-note">Need wallet setup first? Connect Sparrow to the hosted private signet wallet endpoint, then come back here to prepare the draft.</p>
+          <p class="field-note">Need wallet setup or funding first? Finish setup, fund the same Sparrow wallet you will spend from, then come back here to prepare the draft.</p>
           <a class="action-link secondary" href="${withBasePath("/setup", configuredBasePath)}">Open setup</a>
         </div>
         <form id="claimDraftForm" class="claim-draft-form">
@@ -864,7 +864,7 @@ function renderClaimPrepSection(configuredBasePath: string): string {
           <div class="wizard-step-heading">
             <span class="claim-step-badge">Step 2</span>
             <div class="wizard-step-copy">
-              <h3>Save The Key And Backup</h3>
+              <h3>Save Recovery Files Now</h3>
               <p>If you generated a demo owner key, save it now. These files help you resume later and do not belong in Sparrow.</p>
             </div>
           </div>
@@ -889,14 +889,14 @@ function renderClaimPrepSection(configuredBasePath: string): string {
           <div class="wizard-step-heading">
             <span class="claim-step-badge">Step 3</span>
             <div class="wizard-step-copy">
-              <h3>Build Sparrow PSBTs</h3>
-              <p>Only the <code>.psbt</code> files from this step belong in Sparrow. The hosted demo confirms pending claim transactions automatically after broadcast.</p>
+              <h3>Build The Signer Files</h3>
+              <p>Use the same funded Sparrow account from setup. Only the <code>.psbt</code> files from this step belong in Sparrow, and the hosted demo confirms pending claim transactions automatically after broadcast.</p>
             </div>
           </div>
           <span id="claimStepPsbtsState" class="summary-chip wizard-step-state">After step 2</span>
         </summary>
         <div class="wizard-step-body">
-        <p class="field-note">Paste the account metadata from Sparrow and the site will generate ready-to-sign commit and reveal PSBTs. Import them through Sparrow’s transaction flow, not by dropping backup files onto the app window.</p>
+        <p class="field-note">Paste three values from Sparrow: the master fingerprint, the account xpub, and the account derivation path. Then the site will generate ready-to-sign commit and reveal PSBTs. Import those through Sparrow’s transaction flow, not by dropping backup files onto the app window.</p>
         <div class="draft-grid">
           <label class="draft-field">
             <span class="field-label">Master Fingerprint</span>
@@ -1011,31 +1011,32 @@ function renderSetupQuickstartSection(configuredBasePath: string, privateSignetE
   return `<section id="setup-start" class="panel panel-guide">
     ${renderPanelHead(
       "Private Demo Setup",
-      "Open Sparrow in signet mode, point it at the hosted private Electrum endpoint, then return to claim."
+      "Open Sparrow in signet mode, point it at the hosted demo wallet endpoint, then return to claim."
     )}
-    <p class="tool-handoff-note">No SSH access is required for this hosted path. The wallet talks to the demo chain through a public Electrum-compatible endpoint while the underlying Bitcoin Core RPC stays private on the server.</p>
+    <p class="tool-handoff-note">No SSH access is required for this hosted path. Sparrow talks to the demo chain through a public wallet endpoint while the underlying Bitcoin Core RPC stays private on the server.</p>
     <div class="guide-grid">
       <article class="guide-card">
         <h3>1. Open Sparrow In Signet Mode</h3>
         <ul class="guide-list">
+          <li>Use Sparrow for this hosted walkthrough.</li>
           <li>Launch Sparrow in <code>signet</code> mode.</li>
           <li>Use the same wallet you plan to spend from when you claim.</li>
           <li>Keep that wallet open for funding, signing, and broadcast.</li>
         </ul>
       </article>
       <article class="guide-card">
-        <h3>2. Connect To The Demo Wallet Server</h3>
+        <h3>2. Point Sparrow At The Demo Wallet Server</h3>
         <ul class="guide-list">
           <li>Open <code>Settings</code> then <code>Server</code>.</li>
           <li>Turn <code>Public Server</code> off.</li>
-          <li>Choose a private Electrum server connection.</li>
+          <li>Choose Sparrow's private server connection option.</li>
           <li>Use server string <code>${escapeHtml(endpoint.serverString)}</code>.</li>
           <li>If Sparrow asks for separate fields, use host <code>${escapeHtml(endpoint.host)}</code>, port <code>${escapeHtml(endpoint.port)}</code>, and ${escapeHtml(transportNote)}.</li>
           <li>Once connected, stay on that same wallet for the rest of the walkthrough.</li>
         </ul>
       </article>
       <article class="guide-card">
-        <h3>3. Confirm Balance And Continue</h3>
+        <h3>3. Confirm Balance, Then Go To Claim</h3>
         <ul class="guide-list">
           <li>Use the funding form below to request demo coins.</li>
           <li>Refresh Sparrow and confirm the balance appears in the same wallet.</li>
@@ -1068,7 +1069,7 @@ function renderSetupFundingSection(privateSignetFundingAmountSats: bigint): stri
             placeholder="Paste a signet receive address from Sparrow"
             autocomplete="off"
           />
-          <span class="field-hint">Use the same wallet you plan to spend from when you build the claim transaction. If Sparrow cannot see the funds afterward, the private Electrum server settings are usually the missing step.</span>
+          <span class="field-hint">Use the same wallet you plan to spend from when you build the claim transaction. If Sparrow cannot see the funds afterward, the hosted demo server settings are usually the missing step.</span>
         </label>
       </div>
       <div class="draft-actions">
@@ -1317,7 +1318,7 @@ function renderWalletCompatibilityFaqSection(configuredBasePath: string, collaps
       </article>
       <article class="guide-card">
         <h3>Does Electrum work?</h3>
-        <p>The hosted demo now exposes an Electrum-compatible endpoint, so Electrum should be closer to working. But until we run a real end-to-end smoke, Sparrow is still the supported path.</p>
+        <p>Not for this hosted private demo. The official Electrum app reaches the endpoint, but then rejects the chain because this small private signet sits below Electrum’s built-in public signet checkpoint height. Sparrow is still the supported path.</p>
       </article>
       <article class="guide-card">
         <h3>Why doesn’t a normal public signet server show my demo coins?</h3>
@@ -1325,7 +1326,7 @@ function renderWalletCompatibilityFaqSection(configuredBasePath: string, collaps
       </article>
       <article class="guide-card">
         <h3>What about other wallets later?</h3>
-        <p>Broader wallet support should be much easier now that the hosted demo exposes a public Electrum-compatible wallet endpoint instead of requiring SSH access to Bitcoin Core RPC.</p>
+        <p>Broader wallet support should still be easier now that the hosted demo exposes a public wallet endpoint instead of requiring SSH access to Bitcoin Core RPC. But official Electrum still needs a different answer for this private signet design.</p>
         <div class="hero-cta-row">
           <a class="action-link secondary" href="${withBasePath("/claim/offline", configuredBasePath)}">Offline architect</a>
         </div>
@@ -1336,7 +1337,7 @@ function renderWalletCompatibilityFaqSection(configuredBasePath: string, collaps
     return `<section id="wallet-compatibility" class="panel panel-guide">
       ${renderPanelHead(
         "Wallet Compatibility",
-        "Sparrow is the supported path today. Other wallets may work, but are not yet validated end to end."
+        "Sparrow is the supported path today. Official Electrum still does not work against this hosted private signet."
       )}
       ${body}
     </section>`;
@@ -1346,7 +1347,7 @@ function renderWalletCompatibilityFaqSection(configuredBasePath: string, collaps
     <summary class="panel-summary">
       <div class="panel-summary-copy">
         <h2>Wallet Compatibility</h2>
-        <p>Sparrow is the supported path today. Other wallets may work, but are not yet validated end to end.</p>
+        <p>Sparrow is the supported path today. Official Electrum still does not work against this hosted private signet.</p>
       </div>
       <span class="summary-chip">FAQ</span>
     </summary>

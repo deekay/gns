@@ -20,7 +20,7 @@ Human-facing amounts in GNS use integer bitcoin notation alongside the conventio
 
 If you want the fastest first walkthrough, use the hosted private demo:
 
-1. Open [setup](https://globalnamesystem.org/setup) and point Sparrow at the hosted private Electrum endpoint shown there.
+1. Open [setup](https://globalnamesystem.org/setup) and point Sparrow at the hosted demo wallet endpoint shown there.
 2. Request demo coins into the same Sparrow wallet you plan to spend from.
 3. Open [claim prep](https://globalnamesystem.org/claim), choose the name, and save the owner key + backup package.
 4. Build the commit and reveal PSBTs, sign them in Sparrow, and watch the name appear in [explore](https://globalnamesystem.org/explore).
@@ -292,15 +292,16 @@ The website is intentionally becoming more tool-oriented over time. The deeper e
 For the hosted private signet demo today:
 
 - `Sparrow`: supported path
-- `Electrum`: closer now that the hosted demo exposes an Electrum-compatible endpoint, but not yet validated end to end
-- `Other PSBT wallets`: more plausible now, but still not yet validated end to end
+- `Electrum`: not for this hosted private demo; the official app disconnects because the demo chain sits below Electrum's built-in public signet checkpoint height
+- `Other PSBT wallets`: more plausible now that the wallet endpoint is public, but still not yet validated end to end
 
 Why:
 
-- the hosted private demo now exposes a public Electrum-compatible wallet endpoint
+- the hosted private demo now exposes a public wallet endpoint that Sparrow can use directly
 - Bitcoin Core RPC stays private on the server
 - Sparrow is the first wallet path we support end to end on top of that endpoint
-- broader wallet support should get easier from here
+- official Electrum still rejects this small private signet because it expects the shared public signet checkpoint height
+- broader wallet support should still get easier from here, but not every signet wallet will accept a low-height private chain
 
 ## Quick Start
 

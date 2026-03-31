@@ -9,7 +9,7 @@ This is not a protocol test. It is a product-usability test for the current host
 Learn where a technically capable new user gets stuck when they:
 
 - land in the repo or website for the first time
-- set up the private demo wallet flow
+- set up the private demo wallet flow in Sparrow
 - try to claim one name
 - try to understand what to save and what to do next
 
@@ -42,7 +42,7 @@ Keep the session as cold as possible.
 
 Ask the tester to do this:
 
-> Claim a demo name from scratch using the hosted private demo.
+> Claim a demo name from scratch using the hosted private demo and Sparrow.
 
 What success looks like:
 
@@ -72,6 +72,7 @@ Capture the first point where they hesitate on each of these:
 - understanding what GNS is
 - choosing between website vs GitHub vs self-hosting
 - wallet setup
+- understanding that Sparrow is the supported hosted-demo wallet path
 - requesting demo coins
 - understanding what to save
 - understanding which files belong in Sparrow
@@ -82,6 +83,7 @@ Also capture:
 
 - what they clicked first
 - what they ignored completely
+- whether the term `Electrum` made them think they should use the official Electrum app
 - what wording they repeated back incorrectly
 - any place where they expected the site to do more than it currently does
 

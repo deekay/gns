@@ -31,6 +31,11 @@ What was the first real place they stalled?
 2.
 3.
 
+## Wallet-path confusion
+
+- Did they understand that Sparrow is the supported hosted-demo wallet path?
+- Did the term `Electrum` make them try the official Electrum app?
+
 ## Misunderstandings
 
 - What did they believe that was wrong or incomplete?

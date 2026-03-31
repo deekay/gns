@@ -30,7 +30,7 @@ Prerequisites:
 From the repo root:
 
 ```bash
-cp .env.example .env
+npm run selfhost:init
 npm run selfhost:doctor
 npm run selfhost:up
 ```
@@ -49,6 +49,14 @@ That default mode uses the bundled fixture chain, so you get:
 - no dependency on the hosted product
 
 If the doctor step fails, fix the reported item and rerun it. The most common first-time issue is simply not having Docker installed yet.
+
+For a brand-new machine, the normal first pass is:
+
+1. `npm run selfhost:init`
+2. `npm run selfhost:doctor`
+3. install Docker if the doctor says it is missing
+4. rerun the doctor
+5. `npm run selfhost:up`
 
 ## Services
 

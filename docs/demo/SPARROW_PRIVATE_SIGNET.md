@@ -8,14 +8,14 @@ For the private demo:
 
 - Sparrow should run in `signet` mode
 - `Public Server` should be `off`
-- Sparrow should connect to a **private Electrum server**
+- Sparrow should connect to the hosted demo's **private server**
 - the server string should match the one shown on the hosted setup page
 
 Why:
 
 - the hosted GNS demo uses a **private signet**, not the shared public signet
 - public Sparrow servers will not know about our private chain
-- the hosted demo now exposes an Electrum-compatible endpoint while keeping Bitcoin Core RPC private on the server
+- the hosted demo now exposes a public wallet endpoint while keeping Bitcoin Core RPC private on the server
 
 ## Wallet Compatibility FAQ
 
@@ -25,7 +25,7 @@ No. Global Name System uses PSBT-based handoffs and is not conceptually tied to 
 
 ### Does Electrum work?
 
-The hosted demo now exposes an Electrum-compatible endpoint. That makes Electrum much more plausible than before, but Sparrow is still the wallet we actively support and test end to end.
+Not for this hosted private demo. The official Electrum app reaches the endpoint and completes the initial handshake, but then disconnects because this private signet chain sits below Electrum's built-in public signet checkpoint height. Sparrow is still the wallet we actively support and test end to end.
 
 ### What about other wallets?
 
@@ -37,7 +37,7 @@ Because the hosted demo uses a private signet, not the shared public signet. Pub
 
 ### Will broader wallet support come later?
 
-Probably. The biggest blocker used to be the SSH-only Bitcoin Core RPC path. Now that the hosted demo exposes an Electrum-compatible endpoint, validating additional wallets should be much easier.
+Probably. The biggest blocker used to be the SSH-only Bitcoin Core RPC path. Now that the hosted demo exposes a public wallet endpoint, validating additional wallets should be much easier, but the official Electrum app still needs a different answer for this low-height private signet design.
 
 ## One-Time Mental Model
 
@@ -45,7 +45,7 @@ Think of the setup like this:
 
 - `globalnamesystem.org` is the public website and resolver convenience layer
 - the private signet `bitcoind` still stays on the VPS
-- the hosted demo also runs a public Electrum-compatible wallet endpoint
+- the hosted demo also runs a public wallet endpoint
 - Sparrow talks to that endpoint over the normal Electrum protocol
 
 That keeps the node private without making each demo user depend on SSH access.
@@ -72,8 +72,13 @@ Open:
 Use these values:
 
 - `Public Server`: `off`
-- `Server Type`: the private Electrum server option
+- `Server Type`: Sparrow's private server option
 - `Server String`: use the value shown on the hosted setup page
+
+Important:
+
+- use Sparrow for this hosted walkthrough
+- do not switch to the official Electrum app for this private demo path yet
 
 As of March 31, 2026, the hosted root-domain walkthrough uses:
 
@@ -124,14 +129,14 @@ Once Sparrow is connected:
 Usually one of these:
 
 - Sparrow is not in `signet` mode
-- the private Electrum server string is wrong
+- the hosted demo server string is wrong
 - `Public Server` is still enabled
-- Sparrow is not set to the private Electrum server
+- Sparrow is not set to the hosted demo server
 - the wallet needs a refresh/rescan
 
 ### “The website says funded, but Sparrow is empty”
 
-Check the private Electrum server settings first. The funding step is on the private signet chain, so a public shared signet server will never see those coins.
+Check the hosted demo server settings first. The funding step is on the private signet chain, so a public shared signet server will never see those coins.
 
 ### “Connection test fails”
 
@@ -139,7 +144,7 @@ Make sure:
 
 - Sparrow is in `signet` mode
 - `Public Server` is off
-- the private Electrum server string matches the hosted setup page
+- the hosted demo server string matches the hosted setup page
 - you are not accidentally pointing Sparrow at a shared public signet server
 
 ## Legacy SSH Path
