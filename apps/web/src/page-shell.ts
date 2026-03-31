@@ -9,6 +9,7 @@ export interface PageShellOptions {
   includeLiveSmoke: boolean,
   networkLabel: string,
   pageKind: PageKind,
+  privateSignetElectrumEndpoint: string | null,
   privateSignetFundingAmountSats: bigint,
   privateSignetFundingEnabled: boolean,
 }
@@ -20,6 +21,7 @@ export function renderPageHtml(options: PageShellOptions): string {
     includeLiveSmoke,
     networkLabel,
     pageKind,
+    privateSignetElectrumEndpoint,
     privateSignetFundingAmountSats,
     privateSignetFundingEnabled
   } = options;
@@ -47,7 +49,7 @@ export function renderPageHtml(options: PageShellOptions): string {
       : pageKind === "transfer"
         ? "Prepare a Global Name System transfer handoff, then finish the gift or sale flow in the CLI and your signer."
       : pageKind === "setup"
-          ? "Set up Sparrow, granted demo access, demo funding, and automatic confirmations for the Global Name System private signet flow."
+          ? "Set up Sparrow, connect to the hosted private Electrum endpoint, request demo coins, and complete the private signet walkthrough."
         : pageKind === "explainer"
           ? "Quick orientation for using the hosted Global Name System tools."
         : "Explorer for browsing claimed names and resolver status in Global Name System.";
@@ -90,7 +92,7 @@ export function renderPageHtml(options: PageShellOptions): string {
             : pageKind === "transfer"
               ? renderTransferPageSections(basePath)
               : pageKind === "setup"
-                ? renderSetupPageSections(basePath, privateSignetFundingEnabled, privateSignetFundingAmountSats)
+                ? renderSetupPageSections(basePath, privateSignetElectrumEndpoint, privateSignetFundingEnabled, privateSignetFundingAmountSats)
               : pageKind === "explainer"
                 ? renderExplainerPageSections(basePath)
               : renderExplorePageSections(basePath, includeLiveSmoke)
@@ -170,7 +172,7 @@ function renderHeroSection(
         <p class="eyebrow"><a class="eyebrow-link" href="${withBasePath("/", configuredBasePath)}">Global Name System</a> · ${escapeHtml(configuredNetworkLabel)}</p>
         <h1>Set Up Your Wallet</h1>
         <p class="lede">
-          Sparrow, the local helper, granted demo access, and automatic confirmations for the private signet flow.
+          Sparrow, the hosted private Electrum endpoint, demo coins, and automatic confirmations for the private signet flow.
         </p>
       </div>
     </header>`;
@@ -307,10 +309,11 @@ function renderValuesPageSections(configuredBasePath: string): string {
 
 function renderSetupPageSections(
   configuredBasePath: string,
+  privateSignetElectrumEndpoint: string | null,
   privateSignetFundingEnabled: boolean,
   privateSignetFundingAmountSats: bigint
 ): string {
-  return `${renderSetupQuickstartSection(configuredBasePath)}
+  return `${renderSetupQuickstartSection(configuredBasePath, privateSignetElectrumEndpoint)}
     ${privateSignetFundingEnabled ? renderSetupFundingSection(privateSignetFundingAmountSats) : ""}
     ${renderSetupSupportStrip(configuredBasePath)}`;
 }
@@ -329,7 +332,7 @@ function renderHomeActionsSection(configuredBasePath: string): string {
     <div class="path-grid">
       <article class="path-card">
         <h3>Setup</h3>
-        <p>Get Sparrow ready, open the local helper, and fund a wallet for the private signet demo if you already have demo access.</p>
+        <p>Get Sparrow ready, connect to the hosted demo wallet endpoint, and fund a wallet for the private signet walkthrough.</p>
         <div class="path-card-actions">
           <a class="action-link secondary" href="${withBasePath("/setup", configuredBasePath)}">Open setup</a>
         </div>
@@ -499,7 +502,7 @@ function renderUsingGnsSection(configuredBasePath: string): string {
     <div class="guide-grid">
       <article class="guide-card">
         <h3>Setup</h3>
-        <p>Get Sparrow ready, open the local helper, and fund a wallet for the private signet demo.</p>
+        <p>Get Sparrow ready, connect to the hosted demo wallet endpoint, and fund a wallet for the private signet demo.</p>
       </article>
       <article class="guide-card">
         <h3>Claim</h3>
@@ -772,7 +775,7 @@ function renderClaimPrepSection(configuredBasePath: string): string {
         </summary>
         <div class="wizard-step-body">
         <div class="tool-callout-row">
-          <p class="field-note">Need wallet setup first? Use the private signet helper, then come back here to prepare the draft.</p>
+          <p class="field-note">Need wallet setup first? Connect Sparrow to the hosted private signet wallet endpoint, then come back here to prepare the draft.</p>
           <a class="action-link secondary" href="${withBasePath("/setup", configuredBasePath)}">Open setup</a>
         </div>
         <form id="claimDraftForm" class="claim-draft-form">
@@ -1002,27 +1005,41 @@ function renderSignerWorkflowSection(collapsible: boolean): string {
   </details>`;
 }
 
-function renderSetupQuickstartSection(configuredBasePath: string): string {
+function renderSetupQuickstartSection(configuredBasePath: string, privateSignetElectrumEndpoint: string | null): string {
+  const endpoint = parseElectrumEndpoint(privateSignetElectrumEndpoint ?? "globalnamesystem.org:50001:t");
+  const transportNote = endpoint.transport === "s" ? "SSL on" : "SSL off";
   return `<section id="setup-start" class="panel panel-guide">
     ${renderPanelHead(
       "Private Demo Setup",
-      "If you already have SSH access to the hosted demo node, start the helper once, confirm Sparrow is pointed at the demo chain, then return to claim."
+      "Open Sparrow in signet mode, point it at the hosted private Electrum endpoint, then return to claim."
     )}
-    <p class="tool-handoff-note">Current limitation: this hosted wallet path is not fully hands-off yet. The helper below still requires granted SSH access to the demo VPS. If you do not have that access, use the self-host path or the offline architect instead.</p>
+    <p class="tool-handoff-note">No SSH access is required for this hosted path. The wallet talks to the demo chain through a public Electrum-compatible endpoint while the underlying Bitcoin Core RPC stays private on the server.</p>
     <div class="guide-grid">
       <article class="guide-card">
-        <h3>1. Start The Helper</h3>
-        <p>From your local clone, run:</p>
-        <pre class="command-block"><code>npm run sparrow:private-signet:start</code></pre>
-        <p class="tool-handoff-note">This configures Sparrow, opens the SSH tunnel, and keeps the connection pointed at the hosted private signet node. It only works if you have already been granted SSH access to that demo server.</p>
+        <h3>1. Open Sparrow In Signet Mode</h3>
+        <ul class="guide-list">
+          <li>Launch Sparrow in <code>signet</code> mode.</li>
+          <li>Use the same wallet you plan to spend from when you claim.</li>
+          <li>Keep that wallet open for funding, signing, and broadcast.</li>
+        </ul>
       </article>
       <article class="guide-card">
-        <h3>2. Confirm Sparrow</h3>
+        <h3>2. Connect To The Demo Wallet Server</h3>
         <ul class="guide-list">
-          <li>Sparrow is open in <code>signet</code> mode.</li>
-          <li>The server type is <code>Bitcoin Core</code>.</li>
-          <li>The helper / tunnel is still running.</li>
-          <li>Demo coins are visible in the same wallet you plan to spend from.</li>
+          <li>Open <code>Settings</code> then <code>Server</code>.</li>
+          <li>Turn <code>Public Server</code> off.</li>
+          <li>Choose a private Electrum server connection.</li>
+          <li>Use server string <code>${escapeHtml(endpoint.serverString)}</code>.</li>
+          <li>If Sparrow asks for separate fields, use host <code>${escapeHtml(endpoint.host)}</code>, port <code>${escapeHtml(endpoint.port)}</code>, and ${escapeHtml(transportNote)}.</li>
+          <li>Once connected, stay on that same wallet for the rest of the walkthrough.</li>
+        </ul>
+      </article>
+      <article class="guide-card">
+        <h3>3. Confirm Balance And Continue</h3>
+        <ul class="guide-list">
+          <li>Use the funding form below to request demo coins.</li>
+          <li>Refresh Sparrow and confirm the balance appears in the same wallet.</li>
+          <li>Then return to claim prep and build the signer handoff.</li>
         </ul>
       </article>
     </div>
@@ -1051,7 +1068,7 @@ function renderSetupFundingSection(privateSignetFundingAmountSats: bigint): stri
             placeholder="Paste a signet receive address from Sparrow"
             autocomplete="off"
           />
-          <span class="field-hint">Use the same wallet you plan to spend from when you build the claim transaction. If Sparrow cannot see the funds afterward, the helper / tunnel is usually the missing step.</span>
+          <span class="field-hint">Use the same wallet you plan to spend from when you build the claim transaction. If Sparrow cannot see the funds afterward, the private Electrum server settings are usually the missing step.</span>
         </label>
       </div>
       <div class="draft-actions">
@@ -1296,11 +1313,11 @@ function renderWalletCompatibilityFaqSection(configuredBasePath: string, collaps
   const body = `<div class="guide-grid">
       <article class="guide-card">
         <h3>Do I have to use Sparrow?</h3>
-        <p>No, but the current private demo flow is only fully supported and tested with Sparrow.</p>
+        <p>No, but the hosted private demo is only fully supported and tested end to end with Sparrow right now.</p>
       </article>
       <article class="guide-card">
         <h3>Does Electrum work?</h3>
-        <p>Not in this hosted private-signet setup. Electrum expects an Electrum server, while this demo exposes Bitcoin Core RPC over SSH.</p>
+        <p>The hosted demo now exposes an Electrum-compatible endpoint, so Electrum should be closer to working. But until we run a real end-to-end smoke, Sparrow is still the supported path.</p>
       </article>
       <article class="guide-card">
         <h3>Why doesn’t a normal public signet server show my demo coins?</h3>
@@ -1308,7 +1325,7 @@ function renderWalletCompatibilityFaqSection(configuredBasePath: string, collaps
       </article>
       <article class="guide-card">
         <h3>What about other wallets later?</h3>
-        <p>Broader wallet support is possible, but the most likely path is adding a public Electrum-compatible wallet endpoint for the private signet flow so users no longer need SSH access.</p>
+        <p>Broader wallet support should be much easier now that the hosted demo exposes a public Electrum-compatible wallet endpoint instead of requiring SSH access to Bitcoin Core RPC.</p>
         <div class="hero-cta-row">
           <a class="action-link secondary" href="${withBasePath("/claim/offline", configuredBasePath)}">Offline architect</a>
         </div>
@@ -1335,6 +1352,49 @@ function renderWalletCompatibilityFaqSection(configuredBasePath: string, collaps
     </summary>
     <div class="collapsible-panel-body">${body}</div>
   </details>`;
+}
+
+function parseElectrumEndpoint(endpoint: string): { host: string, port: string, serverString: string, transport: string } {
+  const trimmed = endpoint.trim();
+  const hostPortModeMatch = /^(.*):([0-9]+):([a-z])$/i.exec(trimmed);
+  if (hostPortModeMatch) {
+    const [, host = trimmed, port = "50001", transport = "t"] = hostPortModeMatch;
+    return {
+      host,
+      port,
+      transport: transport.toLowerCase(),
+      serverString: trimmed
+    };
+  }
+
+  const tcpMatch = /^tcp:\/\/([^:]+):([0-9]+)$/i.exec(trimmed);
+  if (tcpMatch) {
+    const [, host = trimmed, port = "50001"] = tcpMatch;
+    return {
+      host,
+      port,
+      transport: "t",
+      serverString: trimmed
+    };
+  }
+
+  const sslMatch = /^ssl:\/\/([^:]+):([0-9]+)$/i.exec(trimmed);
+  if (sslMatch) {
+    const [, host = trimmed, port = "50001"] = sslMatch;
+    return {
+      host,
+      port,
+      transport: "s",
+      serverString: trimmed
+    };
+  }
+
+  return {
+    host: trimmed,
+    port: "50001",
+    transport: "t",
+    serverString: trimmed
+  };
 }
 
 function renderTransferGuideSection(): string {

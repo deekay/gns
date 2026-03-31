@@ -1,13 +1,6 @@
 # Sparrow Setup For The Private Signet Demo
 
-This is the cleanest way to make Sparrow talk to the private GNS demo network behind [https://globalnamesystem.org](https://globalnamesystem.org) if you already have granted SSH access to the demo VPS.
-
-Important current limitation:
-
-- this hosted wallet path is **not hands-off yet**
-- it still requires granted SSH access to the demo VPS
-- if you do not have that access, use the self-host path instead of the hosted private demo wallet flow
-- the planned fix is a public Electrum-compatible wallet endpoint; see [HANDSOFF_DEMO_WALLET_PLAN.md](../research/HANDSOFF_DEMO_WALLET_PLAN.md)
+This is the cleanest way to make Sparrow talk to the hosted private GNS demo network behind [https://globalnamesystem.org](https://globalnamesystem.org).
 
 ## The Short Version
 
@@ -15,14 +8,14 @@ For the private demo:
 
 - Sparrow should run in `signet` mode
 - `Public Server` should be `off`
-- Sparrow should connect to `Bitcoin Core`, not Electrum
-- the connection should go through a local SSH tunnel to the VPS
+- Sparrow should connect to a **private Electrum server**
+- the server string should match the one shown on the hosted setup page
 
 Why:
 
 - the hosted GNS demo uses a **private signet**, not the shared public signet
 - public Sparrow servers will not know about our private chain
-- we keep the Bitcoin RPC private on loopback, so the safe path is an SSH tunnel
+- the hosted demo now exposes an Electrum-compatible endpoint while keeping Bitcoin Core RPC private on the server
 
 ## Wallet Compatibility FAQ
 
@@ -32,7 +25,7 @@ No. Global Name System uses PSBT-based handoffs and is not conceptually tied to 
 
 ### Does Electrum work?
 
-Not in the current hosted private-signet setup. Electrum expects an Electrum server, while this demo exposes Bitcoin Core RPC over a local SSH tunnel. We do not currently run an Electrum-compatible server for the private demo network.
+The hosted demo now exposes an Electrum-compatible endpoint. That makes Electrum much more plausible than before, but Sparrow is still the wallet we actively support and test end to end.
 
 ### What about other wallets?
 
@@ -44,69 +37,22 @@ Because the hosted demo uses a private signet, not the shared public signet. Pub
 
 ### Will broader wallet support come later?
 
-Probably, but it will require either validating more wallet-specific PSBT flows or adding an Electrum-compatible server for the private signet environment.
+Probably. The biggest blocker used to be the SSH-only Bitcoin Core RPC path. Now that the hosted demo exposes an Electrum-compatible endpoint, validating additional wallets should be much easier.
 
 ## One-Time Mental Model
 
 Think of the setup like this:
 
 - `globalnamesystem.org` is the public website and resolver convenience layer
-- the private signet `bitcoind` stays on the VPS
-- Sparrow talks to that node over:
-  - `your Mac -> SSH tunnel -> VPS loopback Bitcoin RPC`
+- the private signet `bitcoind` still stays on the VPS
+- the hosted demo also runs a public Electrum-compatible wallet endpoint
+- Sparrow talks to that endpoint over the normal Electrum protocol
 
-That keeps the node private, but it also means the hosted wallet flow still depends on per-user SSH access today.
+That keeps the node private without making each demo user depend on SSH access.
 
 ## Quick Start
 
-These scripts can be run from anywhere. They do not require you to `cd` into the repo first.
-
-If you want to avoid passing host/key arguments repeatedly, set:
-
-```bash
-export GNS_PRIVATE_SIGNET_SSH_TARGET=root@<server-ip>
-export GNS_PRIVATE_SIGNET_SSH_KEY=~/.ssh/<your-key>
-```
-
-### 1. Recommended: one command for the full local setup
-
-From anywhere:
-
-```bash
-/path/to/gns/scripts/start-private-signet-sparrow-session.sh
-```
-
-That helper:
-
-- updates Sparrow's local `~/.sparrow/signet/config` with the live private signet Bitcoin Core settings
-- attempts to launch Sparrow in `signet` mode
-- opens the SSH tunnel and keeps the terminal attached
-
-If Sparrow is already open, quit it fully first so it reloads the updated signet config.
-
-### 2. If you want the pieces separately
-
-From anywhere:
-
-```bash
-/path/to/gns/scripts/open-private-signet-sparrow-tunnel.sh
-```
-
-Keep that terminal window open while Sparrow is connected.
-
-If you only want to rewrite Sparrow's local signet profile:
-
-```bash
-/path/to/gns/scripts/configure-sparrow-private-signet.sh
-```
-
-If you want the script to print the current live settings first:
-
-```bash
-/path/to/gns/scripts/print-private-signet-sparrow-config.sh
-```
-
-### 3. Start Sparrow in signet mode
+### 1. Start Sparrow in signet mode
 
 On macOS:
 
@@ -116,7 +62,7 @@ On macOS:
 
 If Sparrow is already running in another network mode, quit it fully first.
 
-### 4. Manual Sparrow settings, if you want to verify them
+### 2. Connect Sparrow to the hosted demo wallet server
 
 Open:
 
@@ -126,14 +72,20 @@ Open:
 Use these values:
 
 - `Public Server`: `off`
-- `Server Type`: `Bitcoin Core`
-- `Host`: `127.0.0.1`
-- `Port`: `39332`
-- `Auth`: `User / Pass`
-- `Username`: `gnsrpcprivate`
-- `Password`: use `./scripts/print-private-signet-sparrow-config.sh` to print the current live password
+- `Server Type`: the private Electrum server option
+- `Server String`: use the value shown on the hosted setup page
 
-The startup helper writes these values for you automatically. This section is mainly here so you can verify what was set.
+As of March 31, 2026, the hosted root-domain walkthrough uses:
+
+```text
+globalnamesystem.org:50001:t
+```
+
+If Sparrow asks for separate fields instead of a single server string, use:
+
+- `Host`: `globalnamesystem.org`
+- `Port`: `50001`
+- `SSL`: `off`
 
 Then click the connect toggle and test the connection.
 
@@ -172,35 +124,33 @@ Once Sparrow is connected:
 Usually one of these:
 
 - Sparrow is not in `signet` mode
-- the SSH tunnel is not running
+- the private Electrum server string is wrong
 - `Public Server` is still enabled
-- Sparrow is not set to `Bitcoin Core`
+- Sparrow is not set to the private Electrum server
 - the wallet needs a refresh/rescan
 
 ### “The website says funded, but Sparrow is empty”
 
-Check the tunnel first. The funding step is on the private signet chain, so a public server will never see those coins.
+Check the private Electrum server settings first. The funding step is on the private signet chain, so a public shared signet server will never see those coins.
 
 ### “Connection test fails”
 
 Make sure:
 
-- the tunnel terminal is still open
-- host is `127.0.0.1`
-- port is `39332`
-- username is `gnsrpcprivate`
-- password matches the current value from:
+- Sparrow is in `signet` mode
+- `Public Server` is off
+- the private Electrum server string matches the hosted setup page
+- you are not accidentally pointing Sparrow at a shared public signet server
 
-```bash
-./scripts/print-private-signet-sparrow-config.sh
-```
+## Legacy SSH Path
 
-## Why We Still Use A Tunnel
+The old SSH-based Bitcoin Core path still exists for internal/operator use, but it is no longer the primary newcomer path.
 
-Right now the simplest safe design is:
+Those helper scripts are:
 
-- website and resolver are public
-- Bitcoin RPC is private
-- Sparrow reaches the node through SSH
+- `/path/to/gns/scripts/start-private-signet-sparrow-session.sh`
+- `/path/to/gns/scripts/open-private-signet-sparrow-tunnel.sh`
+- `/path/to/gns/scripts/configure-sparrow-private-signet.sh`
+- `/path/to/gns/scripts/print-private-signet-sparrow-config.sh`
 
-That avoids exposing wallet-sensitive RPC to the internet while keeping the demo flow workable.
+They are still useful if you are operating the demo stack directly, but a normal hosted-demo user should not need them anymore.

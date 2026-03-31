@@ -18,18 +18,12 @@ Human-facing amounts in GNS use integer bitcoin notation alongside the conventio
 
 ## Start Here
 
-If you already have granted SSH access to the hosted private demo, this is the fastest first walkthrough:
+If you want the fastest first walkthrough, use the hosted private demo:
 
-1. Open [setup](https://globalnamesystem.org/setup) and run the Sparrow helper shown there.
+1. Open [setup](https://globalnamesystem.org/setup) and point Sparrow at the hosted private Electrum endpoint shown there.
 2. Request demo coins into the same Sparrow wallet you plan to spend from.
 3. Open [claim prep](https://globalnamesystem.org/claim), choose the name, and save the owner key + backup package.
 4. Build the commit and reveal PSBTs, sign them in Sparrow, and watch the name appear in [explore](https://globalnamesystem.org/explore).
-
-Important current limitation:
-
-- the hosted private demo wallet path is **not hands-off yet**
-- the Sparrow helper currently needs granted SSH access to the demo VPS
-- if you do not have that access, use the self-host path or the offline architect instead
 
 Keep these distinctions in mind:
 
@@ -60,7 +54,7 @@ There are three practical ways to use GNS today:
 
 | Path | Best for | What you trust | Works today |
 | --- | --- | --- | --- |
-| `Hosted Private Demo` | Fastest first walkthrough if you already have demo access | Hosted site, hosted resolver, private demo chain | Yes, but the wallet path still requires granted SSH access |
+| `Hosted Private Demo` | Fastest first walkthrough | Hosted site, hosted resolver, private demo chain | Yes |
 | `Self-Hosted Website + Resolver` | Running your own browsing and resolution surface | Your own web stack and resolver; optionally your own Bitcoin backend | Yes |
 | `Offline / Higher-Trust Claim Prep` | Preparing claims without depending on the hosted site UI | Local browser bundle plus your own signer | Yes |
 
@@ -116,7 +110,7 @@ Use the homepage to look up a name, see the quick model, and choose whether you 
 
 ### 2. Set up Sparrow and request demo coins
 
-Run the helper shown on the setup page, confirm Sparrow is pointed at the private signet demo, then fund the same wallet you plan to spend from.
+Use the setup page to point Sparrow at the hosted private signet wallet endpoint, confirm it sees the demo chain, then fund the same wallet you plan to spend from.
 
 ![GNS setup](./docs/assets/website-setup.png)
 
@@ -128,7 +122,7 @@ On claim prep, pick the name, generate or paste the owner key, save the backup p
 
 ### 4. Publish what the name points to
 
-Once the name is active, use the values tool to publish a single target or a bundled profile with several destinations.
+Once the name is active, use the values tool to publish ordered key/value pairs that describe where the name should resolve.
 
 ![GNS value bundle](./docs/assets/website-values-bundle.png)
 
@@ -298,21 +292,15 @@ The website is intentionally becoming more tool-oriented over time. The deeper e
 For the hosted private signet demo today:
 
 - `Sparrow`: supported path
-- `Electrum`: not supported in the hosted private-signet flow
-- `Other PSBT wallets`: plausible, but not yet validated end to end
+- `Electrum`: closer now that the hosted demo exposes an Electrum-compatible endpoint, but not yet validated end to end
+- `Other PSBT wallets`: more plausible now, but still not yet validated end to end
 
 Why:
 
-- the current private demo exposes Bitcoin Core RPC over an SSH tunnel
-- Sparrow works cleanly with that path
-- Electrum expects an Electrum server, which this demo does not currently run
-
-Current hosted-demo limitation:
-
-- the Sparrow helper still requires granted SSH access to the demo VPS
-- this is why the hosted private demo is not yet a fully hands-off public walkthrough
-- the intended fix is a public Electrum-compatible wallet endpoint while keeping Bitcoin Core RPC private
-- implementation plan: [HANDSOFF_DEMO_WALLET_PLAN.md](./docs/research/HANDSOFF_DEMO_WALLET_PLAN.md)
+- the hosted private demo now exposes a public Electrum-compatible wallet endpoint
+- Bitcoin Core RPC stays private on the server
+- Sparrow is the first wallet path we support end to end on top of that endpoint
+- broader wallet support should get easier from here
 
 ## Quick Start
 

@@ -20,6 +20,7 @@ Environment:
   GNS_PRIVATE_SIGNET_RESOLVER_PORT    Private resolver port. Default: 8788
   GNS_PRIVATE_SIGNET_RPC_PORT         Local Bitcoin RPC port. Default: 39332
   GNS_PRIVATE_SIGNET_P2P_PORT         P2P port for the private signet node. Default: 39333
+  GNS_PRIVATE_SIGNET_ELECTRUM_PORT    Public Electrum port for the private signet demo. Default: 50001
   GNS_PRIVATE_SIGNET_CHALLENGE        Signet challenge hex. Default: 51
   GNS_PRIVATE_SIGNET_BASE_PATH        Web base path. Default: /gns-private
   GNS_PRIVATE_SIGNET_BOOTSTRAP_BLOCKS Initial blocks to mine for mature demo funds. Default: 110
@@ -55,9 +56,11 @@ WEB_PORT="${GNS_PRIVATE_SIGNET_WEB_PORT:-3001}"
 RESOLVER_PORT="${GNS_PRIVATE_SIGNET_RESOLVER_PORT:-8788}"
 RPC_PORT="${GNS_PRIVATE_SIGNET_RPC_PORT:-39332}"
 P2P_PORT="${GNS_PRIVATE_SIGNET_P2P_PORT:-39333}"
+ELECTRUM_PORT="${GNS_PRIVATE_SIGNET_ELECTRUM_PORT:-50001}"
 CHALLENGE="${GNS_PRIVATE_SIGNET_CHALLENGE:-51}"
 BASE_PATH="${GNS_PRIVATE_SIGNET_BASE_PATH:-/gns-private}"
 BOOTSTRAP_BLOCKS="${GNS_PRIVATE_SIGNET_BOOTSTRAP_BLOCKS:-110}"
+PUBLIC_HOST="${REMOTE#*@}"
 
 SSH_ARGS=(
   -o StrictHostKeyChecking=accept-new
@@ -83,7 +86,7 @@ rsync -az --delete \
   "$ROOT_DIR/" \
   "$REMOTE:/opt/gns/app/"
 
-ssh "${SSH_ARGS[@]}" "$REMOTE" "BITCOIN_VERSION='$BITCOIN_VERSION' WEB_PORT='$WEB_PORT' RESOLVER_PORT='$RESOLVER_PORT' RPC_PORT='$RPC_PORT' P2P_PORT='$P2P_PORT' CHALLENGE='$CHALLENGE' BASE_PATH='$BASE_PATH' BOOTSTRAP_BLOCKS='$BOOTSTRAP_BLOCKS' bash -s" <<'EOF'
+ssh "${SSH_ARGS[@]}" "$REMOTE" "BITCOIN_VERSION='$BITCOIN_VERSION' WEB_PORT='$WEB_PORT' RESOLVER_PORT='$RESOLVER_PORT' RPC_PORT='$RPC_PORT' P2P_PORT='$P2P_PORT' ELECTRUM_PORT='$ELECTRUM_PORT' CHALLENGE='$CHALLENGE' BASE_PATH='$BASE_PATH' BOOTSTRAP_BLOCKS='$BOOTSTRAP_BLOCKS' PUBLIC_HOST='$PUBLIC_HOST' bash -s" <<'EOF'
 set -euo pipefail
 
 export DEBIAN_FRONTEND=noninteractive
@@ -279,6 +282,7 @@ GNS_WEB_SHOW_LIVE_SMOKE=false
 GNS_TEST_OVERRIDE_INITIAL_MATURITY_BLOCKS=12
 GNS_TEST_OVERRIDE_EPOCH_LENGTH_BLOCKS=12
 GNS_TEST_OVERRIDE_MIN_MATURITY_BLOCKS=4
+GNS_WEB_PRIVATE_SIGNET_ELECTRUM_ENDPOINT=${PUBLIC_HOST}:${ELECTRUM_PORT}:t
 GNS_SNAPSHOT_PATH=/var/lib/gns/private-signet-resolver-snapshot.json
 GNS_VALUE_STORE_PATH=/var/lib/gns/private-signet-value-records.json
 ENVFILE
@@ -357,6 +361,12 @@ if [[ "$CURRENT_BLOCKS" -lt "${BOOTSTRAP_BLOCKS}" ]]; then
 fi
 
 su -s /bin/bash gns -c 'cd /opt/gns/app && npm ci --no-audit --no-fund'
+GNS_PRIVATE_SIGNET_RPC_PORT="${RPC_PORT}" \
+GNS_PRIVATE_SIGNET_P2P_PORT="${P2P_PORT}" \
+GNS_PRIVATE_SIGNET_ELECTRUM_PORT="${ELECTRUM_PORT}" \
+GNS_PRIVATE_SIGNET_RPC_USERNAME="gnsrpcprivate" \
+GNS_PRIVATE_SIGNET_RPC_PASSWORD="${RPC_PASSWORD}" \
+  /opt/gns/app/scripts/install-private-signet-electrum.sh
 systemctl enable --now gns-private-signet-auto-mine.service
 systemctl enable --now gns-private-resolver.service
 systemctl enable --now gns-private-web.service
@@ -397,7 +407,11 @@ systemctl --no-pager --full status gns-private-web.service | sed -n '1,30p'
 echo
 echo "[private auto-miner service]"
 systemctl --no-pager --full status gns-private-signet-auto-mine.service | sed -n '1,30p'
+echo
+echo "[private electrum service]"
+systemctl --no-pager --full status electrs-private-signet.service | sed -n '1,30p'
 EOF
 
 echo
 echo "Private signet web URL: http://${REMOTE#*@}:${WEB_PORT}${BASE_PATH}"
+echo "Private signet Electrum endpoint: ${PUBLIC_HOST}:${ELECTRUM_PORT}:t"

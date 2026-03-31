@@ -30,6 +30,8 @@ fi
 
 REMOTE="${1:-${GNS_SSH_TARGET:-}}"
 SSH_KEY_PATH="${2:-${GNS_SSH_KEY:-}}"
+ELECTRUM_PORT="${GNS_PRIVATE_SIGNET_ELECTRUM_PORT:-50001}"
+PUBLIC_HOST="${REMOTE#*@}"
 
 if [[ -z "$REMOTE" ]]; then
   echo "Missing SSH target. Pass <user@host> or set GNS_SSH_TARGET." >&2
@@ -68,7 +70,7 @@ rsync -az --delete \
   "$ROOT_DIR/" \
   "$REMOTE:${RELEASE_DIR}/"
 
-ssh "${SSH_ARGS[@]}" "$REMOTE" "RELEASE_DIR='$RELEASE_DIR' bash -s" <<'EOF'
+ssh "${SSH_ARGS[@]}" "$REMOTE" "RELEASE_DIR='$RELEASE_DIR' ELECTRUM_PORT='$ELECTRUM_PORT' PUBLIC_HOST='$PUBLIC_HOST' bash -s" <<'EOF'
 set -euo pipefail
 
 env_value() {
@@ -89,6 +91,18 @@ env_value() {
   printf '%s\n' "${value:-}"
 }
 
+upsert_env() {
+  local file="$1"
+  local key="$2"
+  local value="$3"
+
+  if grep -q "^${key}=" "$file" 2>/dev/null; then
+    sed -i "s#^${key}=.*#${key}=${value}#" "$file"
+  else
+    printf '%s=%s\n' "$key" "$value" >>"$file"
+  fi
+}
+
 cleanup() {
   rm -rf "${RELEASE_DIR:?}"
 }
@@ -107,6 +121,7 @@ su -s /bin/bash gns -c 'cd /opt/gns/app && npm ci --no-audit --no-fund'
 
 if [[ -f /etc/bitcoin-private-signet.conf ]]; then
   install -m 755 /opt/gns/app/scripts/private-signet-auto-mine.sh /usr/local/bin/gns-private-signet-auto-mine
+  install -m 755 /opt/gns/app/scripts/install-private-signet-electrum.sh /usr/local/bin/install-private-signet-electrum
   cat >/etc/default/gns-private-signet-auto-mine <<'ENVFILE'
 GNS_PRIVATE_SIGNET_AUTO_MINE_INTERVAL_SECONDS=30
 ENVFILE
@@ -137,6 +152,11 @@ SERVICE
   systemctl daemon-reload
   systemctl enable --now gns-private-signet-auto-mine.service
   systemctl restart gns-private-signet-auto-mine.service
+  GNS_PRIVATE_SIGNET_ELECTRUM_PORT="${ELECTRUM_PORT}" /usr/local/bin/install-private-signet-electrum
+
+  if [[ -f /etc/gns/gns-private.env ]]; then
+    upsert_env /etc/gns/gns-private.env GNS_WEB_PRIVATE_SIGNET_ELECTRUM_ENDPOINT "${PUBLIC_HOST}:${ELECTRUM_PORT}:t"
+  fi
 fi
 
 systemctl restart gns-private-resolver.service gns-private-web.service

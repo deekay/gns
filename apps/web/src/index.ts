@@ -76,6 +76,9 @@ const privateSignetFundingEnabled =
     process.env.GNS_WEB_PRIVATE_SIGNET_FUNDING_ENABLED,
     networkLabel.toLowerCase().includes("private signet")
   ) && existsSync(privateSignetFundingCommand);
+const privateSignetElectrumEndpoint =
+  normalizeOptionalText(process.env.GNS_WEB_PRIVATE_SIGNET_ELECTRUM_ENDPOINT)
+  ?? (networkLabel.toLowerCase().includes("private signet") ? "globalnamesystem.org:50001:t" : null);
 const privateSignetClaimPsbtBuilderEnabled =
   networkLabel.toLowerCase().includes("private signet") && existsSync(privateSignetBitcoinCliPath);
 const privateSignetFundingRequestTimes = new Map<string, number>();
@@ -319,6 +322,7 @@ const server = createServer(async (request, response) => {
             : isExplainerPath(pathname)
               ? "explainer"
               : "explore",
+        privateSignetElectrumEndpoint,
         privateSignetFundingAmountSats,
         privateSignetFundingEnabled
       })
@@ -364,6 +368,7 @@ const server = createServer(async (request, response) => {
         enabled: privateSignetFundingEnabled,
         amountSats: privateSignetFundingAmountSats.toString(),
         amountBtc: privateSignetFundingAmountBtc,
+        electrumEndpoint: privateSignetElectrumEndpoint,
         claimPsbtBuilderEnabled: privateSignetClaimPsbtBuilderEnabled
       }
     });
