@@ -119,20 +119,20 @@ async function bootstrap(): Promise<void> {
 
   elements.ownerPrivateKeyInput?.addEventListener("input", () => {
     updateDerivedOwnerState();
-    invalidateSignedRecord("Owner key changed. Sign again before publishing.");
+    invalidateSignedRecord("Owner key changed. Sign again before publishing.", { keepSignStepOpen: true });
   });
 
   elements.sequenceInput?.addEventListener("input", () => {
-    invalidateSignedRecord("Sequence changed. Sign again before publishing.");
+    invalidateSignedRecord("Sequence changed. Sign again before publishing.", { keepSignStepOpen: true });
   });
 
   elements.valueTypeInput?.addEventListener("change", () => {
     updateValueEditorState();
-    invalidateSignedRecord("Value type changed. Sign again before publishing.");
+    invalidateSignedRecord("Value type changed. Sign again before publishing.", { keepSignStepOpen: true });
   });
 
   elements.payloadInput?.addEventListener("input", () => {
-    invalidateSignedRecord("Payload changed. Sign again before publishing.");
+    invalidateSignedRecord("Payload changed. Sign again before publishing.", { keepSignStepOpen: true });
   });
 
   elements.bundleRows?.addEventListener("input", (event) => {
@@ -142,7 +142,7 @@ async function bootstrap(): Promise<void> {
       (target.classList.contains("value-bundle-key-input")
         || target.classList.contains("value-bundle-value-input"))
     ) {
-      invalidateSignedRecord("Bundle changed. Sign again before publishing.");
+      invalidateSignedRecord("Bundle changed. Sign again before publishing.", { keepSignStepOpen: true });
     }
   });
 
@@ -156,14 +156,14 @@ async function bootstrap(): Promise<void> {
       if (row instanceof HTMLElement) {
         row.remove();
         ensureBundleEditorHasRow();
-        invalidateSignedRecord("Bundle changed. Sign again before publishing.");
+        invalidateSignedRecord("Bundle changed. Sign again before publishing.", { keepSignStepOpen: true });
       }
     }
   });
 
   elements.addBundleEntryButton?.addEventListener("click", () => {
     appendBundleRow({ key: "", value: "" });
-    invalidateSignedRecord("Bundle changed. Sign again before publishing.");
+    invalidateSignedRecord("Bundle changed. Sign again before publishing.", { keepSignStepOpen: true });
   });
 
   elements.downloadSignedValueButton?.addEventListener("click", () => {
@@ -289,7 +289,10 @@ async function publishSignedRecord(): Promise<void> {
   }
 }
 
-function invalidateSignedRecord(message: string): void {
+function invalidateSignedRecord(
+  message: string,
+  options: { keepSignStepOpen?: boolean } = {}
+): void {
   state.signedRecord = null;
   if (elements.downloadSignedValueButton) {
     elements.downloadSignedValueButton.disabled = true;
@@ -300,6 +303,9 @@ function invalidateSignedRecord(message: string): void {
   renderSignMessage(message);
   renderPublishMessage("Sign a value record first. Then publish the signed JSON to the resolver.");
   syncWizard();
+  if (options.keepSignStepOpen && state.currentName !== null) {
+    setDetailsOpen(elements.signStep, true);
+  }
 }
 
 function renderLookupMessage(message: string): void {
