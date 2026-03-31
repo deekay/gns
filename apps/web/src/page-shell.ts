@@ -46,8 +46,8 @@ export function renderPageHtml(options: PageShellOptions): string {
         ? "Sign a Global Name System value record locally in the browser, then publish the signed record to the resolver."
       : pageKind === "transfer"
         ? "Prepare a Global Name System transfer handoff, then finish the gift or sale flow in the CLI and your signer."
-        : pageKind === "setup"
-          ? "Set up Sparrow, the local helper, demo funding, and automatic confirmations for the Global Name System private signet flow."
+      : pageKind === "setup"
+          ? "Set up Sparrow, granted demo access, demo funding, and automatic confirmations for the Global Name System private signet flow."
         : pageKind === "explainer"
           ? "Quick orientation for using the hosted Global Name System tools."
         : "Explorer for browsing claimed names and resolver status in Global Name System.";
@@ -170,7 +170,7 @@ function renderHeroSection(
         <p class="eyebrow"><a class="eyebrow-link" href="${withBasePath("/", configuredBasePath)}">Global Name System</a> · ${escapeHtml(configuredNetworkLabel)}</p>
         <h1>Set Up Your Wallet</h1>
         <p class="lede">
-          Sparrow, the local helper, demo coins, and automatic confirmations for the private signet flow.
+          Sparrow, the local helper, granted demo access, and automatic confirmations for the private signet flow.
         </p>
       </div>
     </header>`;
@@ -329,7 +329,7 @@ function renderHomeActionsSection(configuredBasePath: string): string {
     <div class="path-grid">
       <article class="path-card">
         <h3>Setup</h3>
-        <p>Get Sparrow ready, open the local helper, and fund a wallet for the private signet demo.</p>
+        <p>Get Sparrow ready, open the local helper, and fund a wallet for the private signet demo if you already have demo access.</p>
         <div class="path-card-actions">
           <a class="action-link secondary" href="${withBasePath("/setup", configuredBasePath)}">Open setup</a>
         </div>
@@ -1006,14 +1006,15 @@ function renderSetupQuickstartSection(configuredBasePath: string): string {
   return `<section id="setup-start" class="panel panel-guide">
     ${renderPanelHead(
       "Private Demo Setup",
-      "Start the helper once, confirm Sparrow is pointed at the demo chain, then return to claim."
+      "If you already have SSH access to the hosted demo node, start the helper once, confirm Sparrow is pointed at the demo chain, then return to claim."
     )}
+    <p class="tool-handoff-note">Current limitation: this hosted wallet path is not fully hands-off yet. The helper below still requires granted SSH access to the demo VPS. If you do not have that access, use the self-host path or the offline architect instead.</p>
     <div class="guide-grid">
       <article class="guide-card">
         <h3>1. Start The Helper</h3>
         <p>From your local clone, run:</p>
         <pre class="command-block"><code>npm run sparrow:private-signet:start</code></pre>
-        <p class="tool-handoff-note">This configures Sparrow, opens the SSH tunnel, and keeps the connection pointed at the hosted private signet node.</p>
+        <p class="tool-handoff-note">This configures Sparrow, opens the SSH tunnel, and keeps the connection pointed at the hosted private signet node. It only works if you have already been granted SSH access to that demo server.</p>
       </article>
       <article class="guide-card">
         <h3>2. Confirm Sparrow</h3>
@@ -1307,7 +1308,7 @@ function renderWalletCompatibilityFaqSection(configuredBasePath: string, collaps
       </article>
       <article class="guide-card">
         <h3>What about other wallets later?</h3>
-        <p>Broader wallet support is possible, but it requires validating more PSBT workflows or adding an Electrum-compatible server for the private signet flow.</p>
+        <p>Broader wallet support is possible, but the most likely path is adding a public Electrum-compatible wallet endpoint for the private signet flow so users no longer need SSH access.</p>
         <div class="hero-cta-row">
           <a class="action-link secondary" href="${withBasePath("/claim/offline", configuredBasePath)}">Offline architect</a>
         </div>

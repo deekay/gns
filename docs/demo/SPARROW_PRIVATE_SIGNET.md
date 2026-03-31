@@ -1,6 +1,13 @@
 # Sparrow Setup For The Private Signet Demo
 
-This is the cleanest way to make Sparrow talk to the private GNS demo network behind [https://globalnamesystem.org](https://globalnamesystem.org).
+This is the cleanest way to make Sparrow talk to the private GNS demo network behind [https://globalnamesystem.org](https://globalnamesystem.org) if you already have granted SSH access to the demo VPS.
+
+Important current limitation:
+
+- this hosted wallet path is **not hands-off yet**
+- it still requires granted SSH access to the demo VPS
+- if you do not have that access, use the self-host path instead of the hosted private demo wallet flow
+- the planned fix is a public Electrum-compatible wallet endpoint; see [HANDSOFF_DEMO_WALLET_PLAN.md](../research/HANDSOFF_DEMO_WALLET_PLAN.md)
 
 ## The Short Version
 
@@ -48,7 +55,7 @@ Think of the setup like this:
 - Sparrow talks to that node over:
   - `your Mac -> SSH tunnel -> VPS loopback Bitcoin RPC`
 
-That keeps the node private without making the workflow complicated.
+That keeps the node private, but it also means the hosted wallet flow still depends on per-user SSH access today.
 
 ## Quick Start
 

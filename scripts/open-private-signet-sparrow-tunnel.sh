@@ -7,6 +7,10 @@ usage() {
 Usage:
   ./scripts/open-private-signet-sparrow-tunnel.sh [user@host] [ssh-key-path]
 
+Note:
+  This hosted private-signet helper currently requires granted SSH access to the
+  demo VPS. If you do not have that access yet, use the self-host path instead.
+
 Environment:
   GNS_PRIVATE_SIGNET_SSH_TARGET        Preferred SSH target for the private signet demo.
   GNS_PRIVATE_SIGNET_SSH_KEY           Optional SSH key path.
@@ -28,7 +32,8 @@ LOCAL_PORT="${GNS_PRIVATE_SIGNET_LOCAL_RPC_PORT:-39332}"
 REMOTE_PORT="${GNS_PRIVATE_SIGNET_REMOTE_RPC_PORT:-39332}"
 
 if [[ -z "$REMOTE" ]]; then
-  echo "Missing SSH target. Pass [user@host] or set GNS_PRIVATE_SIGNET_SSH_TARGET." >&2
+  echo "Missing SSH target. This hosted private-signet path currently requires granted SSH access." >&2
+  echo "Pass [user@host] or set GNS_PRIVATE_SIGNET_SSH_TARGET. If you do not have demo SSH access, use the self-host path instead." >&2
   usage
   exit 1
 fi
