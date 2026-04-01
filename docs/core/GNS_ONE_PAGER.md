@@ -85,6 +85,12 @@ After settlement, names remain valid without ongoing bond continuity.
 
 That keeps the UTXO footprint more self-cleaning, but it also means long names can become inexpensive to hold indefinitely after the settlement period. That is a deliberate v1 tradeoff.
 
+### Launch Fairness
+
+The fairness story is not only about the bond curve. It is also about how launch happens.
+
+A mainnet launch should only happen once the signet and private-demo paths are well tested and the activation block height is widely announced in advance. The goal is that everyone knows the exact starting rules, the exact starting height, and the exact claim mechanics before names open, so access is as open and simultaneous as possible on day one.
+
 ## Blockspace Footprint
 
 GNS keeps its pure naming payload relatively small, but it still consumes real Bitcoin blockspace because each successful claim is a pair of ordinary Bitcoin transactions.
@@ -132,6 +138,12 @@ What a name points to is off-chain in v1.
 - availability depends on one or more resolvers retaining a copy
 
 That means GNS is decentralized for ownership, but only partly decentralized for value availability in v1. That is the main infrastructure tradeoff in the current design.
+
+### Why Resolver Decentralization Is Still Strong
+
+Resolvers do not get to invent ownership, and they cannot fake completeness against a client that knows the chain. Because the canonical name set is derivable from Bitcoin, any client can sample names that should exist, query a resolver, and score how complete and up to date it is against ground truth.
+
+That creates a decentralized path forward that is stronger than a generic off-chain directory. Resolver quality is auditable. Multi-resolver publish and multi-resolver read can improve availability over time, while the chain remains the authority for which names exist and who owns them.
 
 ## The Vision For GNS
 
