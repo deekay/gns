@@ -370,7 +370,7 @@ function renderHomeModelSection(): string {
         <ul class="guide-list">
           <li><strong>Commit:</strong> hide the intended name.</li>
           <li><strong>Reveal:</strong> publish it within the reveal window.</li>
-          <li><strong>Settling:</strong> keep bond continuity until the name becomes active.</li>
+          <li><strong>Settling:</strong> the name is already claimed, but bond continuity still matters until maturity.</li>
         </ul>
       </article>
       <article class="guide-card">

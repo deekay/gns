@@ -97,9 +97,9 @@ Offline / higher-trust claim prep:
 | --- | --- | --- |
 | `Prepare` | Pick the name, create or paste the owner key, and build the claim plan | Save the owner key and backup package |
 | `Commit Broadcast` | The hidden claim transaction is on-chain | Wait for confirmation |
-| `Reveal Broadcast` | The name is published within the reveal window | Watch the name move into settlement |
-| `Settling` | The claim succeeded and bond continuity still matters | Keep the bond intact until maturity |
-| `Active` | The name is fully settled | Publish values, update the key/value bundle, or transfer later |
+| `Reveal Broadcast` | The name is published within the reveal window and becomes claimed | Watch the name move into settlement |
+| `Settling` | The name is already owned and usable, but bond continuity still matters | Keep the bond intact until maturity |
+| `Active` | The name is mature, so ongoing bond continuity no longer matters | Publish values, update the key/value bundle, or transfer later |
 | `Released` | The name returned to the pool | Start a fresh claim if you still want it |
 
 ## Hosted Demo Walkthrough
