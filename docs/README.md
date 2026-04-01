@@ -6,6 +6,7 @@ This repository has four documentation buckets:
 
 These are the best places to start if you want to understand the current prototype.
 
+- [GNS_ONE_PAGER.md](./core/GNS_ONE_PAGER.md): short overview of the design, economics, and blockspace footprint
 - [SELF_HOSTING.md](./core/SELF_HOSTING.md): easiest path for running your own GNS website + resolver stack
 - [ARCHITECTURE.md](./core/ARCHITECTURE.md): system structure, trust boundaries, and runtime modes
 - [DECISIONS.md](./core/DECISIONS.md): protocol decisions and tradeoffs that are already explicit

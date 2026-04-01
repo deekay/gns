@@ -381,6 +381,7 @@ This is a TypeScript monorepo using `npm` workspaces.
 
 Start here:
 
+- [docs/core/GNS_ONE_PAGER.md](./docs/core/GNS_ONE_PAGER.md): short overview of the design, economics, and blockspace footprint
 - [docs/README.md](./docs/README.md): documentation index
 - [docs/core/SELF_HOSTING.md](./docs/core/SELF_HOSTING.md): run your own website + resolver stack
 - [docs/core/ARCHITECTURE.md](./docs/core/ARCHITECTURE.md): system structure, trust boundaries, and runtime modes
