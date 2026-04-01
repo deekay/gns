@@ -73,9 +73,9 @@ This is meant to make short premium names expensive to monopolize while keeping 
 
 Using the current v1 alphabet (`a-z0-9`), there are about **2.18 billion** possible 6-character names.
 
-At the current 6-character bond of `₿3,125,000 (0.03125 BTC)`, claiming all of them would require about **68 million BTC**, which is more than three times Bitcoin's total **21 million BTC** supply.
+At the current 6-character bond of `₿3,125,000 (0.03125 BTC)`, claiming all possible 6-character names would require about **68 million BTC**, which is more than three times Bitcoin's total **21 million BTC** supply.
 
-Even if every bitcoin in existence were somehow devoted to 6-character names, only about **672 million** of them could be bonded. The majority of that namespace would still remain open.
+Even if every bitcoin in existence were somehow devoted to 6-character claims, it would only be enough to bond about **672 million names** out of roughly **2.18 billion** possible 6-character names. The majority of that namespace would still remain open.
 
 That does not make allocation perfectly neutral. Early participants, wealthy claimants, and fee conditions will matter. But it does mean the namespace becomes structurally hard to corner at scale once names are long enough that combinatorial supply outgrows available capital.
 
