@@ -352,6 +352,7 @@ function renderHomeActionsSection(configuredBasePath: string): string {
         </div>
       </article>
     </div>
+    <p class="tool-handoff-note">Fastest loop: <a href="${withBasePath("/setup", configuredBasePath)}">Setup</a> → <a href="${withBasePath("/claim", configuredBasePath)}">Claim</a> → <a href="${withBasePath("/values?name=bundledemo", configuredBasePath)}">Values</a>.</p>
     <p class="tool-handoff-note">Project background and deeper documentation live on <a href="${GITHUB_REPO_URL}" target="_blank" rel="noreferrer noopener">GitHub</a>.</p>
   </section>`;
 }

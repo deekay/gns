@@ -25,6 +25,10 @@ If you want the fastest first walkthrough, use the hosted private demo:
 3. Open [claim prep](https://globalnamesystem.org/claim), choose the name, and save the owner key + backup package.
 4. Build the commit and reveal PSBTs, sign them in Sparrow, and watch the name appear in [explore](https://globalnamesystem.org/explore).
 
+If you want the tightest possible product demo instead of the full docs path, use:
+
+- [docs/demo/FLINT_DEMO.md](./docs/demo/FLINT_DEMO.md)
+
 Keep these distinctions in mind:
 
 - the **wallet key** signs Bitcoin transactions
@@ -101,6 +105,8 @@ Offline / higher-trust claim prep:
 ## Hosted Demo Walkthrough
 
 If you are brand new, this is the shortest path through the hosted product.
+
+For the shortest presenter-friendly version, use [docs/demo/FLINT_DEMO.md](./docs/demo/FLINT_DEMO.md).
 
 ### 1. Start at the homepage
 
