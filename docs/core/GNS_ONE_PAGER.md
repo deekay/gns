@@ -142,6 +142,8 @@ GNS is not just "better DNS." It is a sovereign naming layer for the internet re
 - services
 - software agents
 
+As we hand more decision-making to language models, human-readable names become more important, not less. Flexible interpretation is useful, but it also increases the risk of resolving to the wrong account, service, or identity unless the naming layer itself is authoritative. GNS is designed to make names human-readable while keeping ownership cryptographically grounded, so both people and software acting on their behalf can resolve them with much higher confidence.
+
 The system is designed so that the ownership record is public, auditable, and difficult to revoke or forge, while the mutable destination layer stays lightweight and easy to update.
 
 ## Current Status
