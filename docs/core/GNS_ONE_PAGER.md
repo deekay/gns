@@ -133,9 +133,9 @@ What a name points to is off-chain in v1.
 
 That means GNS is decentralized for ownership, but only partly decentralized for value availability in v1. That is the main infrastructure tradeoff in the current design.
 
-## What GNS Is Trying To Be
+## The Vision For GNS
 
-GNS is not just "better DNS." The broader idea is a sovereign naming layer for the internet resources humans and software actually want to access:
+GNS is not just "better DNS." It is a sovereign naming layer for the internet resources humans and software actually want to access:
 
 - identities
 - payment endpoints
