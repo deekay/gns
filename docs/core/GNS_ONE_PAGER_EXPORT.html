@@ -318,13 +318,13 @@
 
               <h3>Values</h3>
               <ul class="compact-list">
-                <li>What a name points to is off-chain in v1.</li>
+                <li>What a name points to is intentionally off-chain.</li>
                 <li>Values are signed by the current owner.</li>
                 <li>Authenticity is cryptographic.</li>
                 <li>Availability depends on one or more resolvers retaining a copy.</li>
               </ul>
 
-              <p>That means GNS is decentralized for ownership, but only partly decentralized for value availability in v1.</p>
+              <p>That means GNS is decentralized for ownership, but only partly decentralized for value availability in v1. The intended direction is stronger distribution and better resolver availability, not moving normal value updates on-chain.</p>
 
               <h3>Why Resolver Decentralization Is Still Strong</h3>
               <p>Resolvers do not get to invent ownership, and they cannot fake completeness against a client that knows the chain. Because the canonical name set is derivable from Bitcoin, any client can sample names that should exist, query a resolver, and score how complete and up to date it is against ground truth.</p>

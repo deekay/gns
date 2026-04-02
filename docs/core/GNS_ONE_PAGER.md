@@ -131,13 +131,13 @@ Ownership is chain-derived.
 
 ### Values
 
-What a name points to is off-chain in v1.
+What a name points to is intentionally off-chain.
 
 - values are signed by the current owner
 - authenticity is cryptographic
 - availability depends on one or more resolvers retaining a copy
 
-That means GNS is decentralized for ownership, but only partly decentralized for value availability in v1. That is the main infrastructure tradeoff in the current design.
+That means GNS is decentralized for ownership, but only partly decentralized for value availability in v1. The intended direction is stronger distribution and better resolver availability, not moving normal value updates on-chain.
 
 ### Why Resolver Decentralization Is Still Strong
 

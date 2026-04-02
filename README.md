@@ -195,7 +195,7 @@ Transfers move owner authority from one pubkey to another.
 
 ### Values
 
-What a name points to is off-chain by default.
+What a name points to is intentionally off-chain.
 
 - values are signed by the current owner
 - authenticity is cryptographic
