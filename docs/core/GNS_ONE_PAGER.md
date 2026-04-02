@@ -69,7 +69,7 @@ Examples:
 
 This is meant to make short premium names expensive to monopolize while keeping the long tail accessible.
 
-### Why The Namespace Stays Broad
+### Why The Namespace Remains Open
 
 Using the current v1 alphabet (`a-z0-9`), there are about **2.18 billion** possible 6-character names.
 
