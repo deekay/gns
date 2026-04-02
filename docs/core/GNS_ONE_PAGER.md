@@ -79,11 +79,11 @@ Even if every bitcoin in existence were somehow devoted to 6-character claims, i
 
 That does not make allocation perfectly neutral. Early participants, wealthy claimants, and fee conditions will matter. But under the current v1 alphabet and bond curve, it does mean that from 6-character names onward, fully cornering the namespace becomes economically impossible: combinatorial supply outgrows the total capital that can exist.
 
-### Important v1 Tradeoff
+### Why The Bond Ends At Maturity
 
 After settlement, names remain valid without ongoing bond continuity.
 
-That keeps the UTXO footprint more self-cleaning, but it also means long names can become inexpensive to hold indefinitely after the settlement period. That is a deliberate v1 tradeoff.
+This is intentional. The fairness mechanism is the opportunity cost of locking capital through settlement, not perpetual rent. Once a claimer has committed bitcoin for the full maturity period, the protocol has already observed a meaningful economic signal that they value the name and gave up the chance to use that capital elsewhere. Requiring the bond to remain parked indefinitely would add ongoing carrying cost without materially improving initial allocation fairness, while also increasing permanent UTXO pressure.
 
 ### Launch Fairness
 
