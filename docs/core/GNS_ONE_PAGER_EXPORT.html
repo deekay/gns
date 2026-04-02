@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>GNS One-Pager</title>
+    <style>
+      @page {
+        size: Letter;
+        margin: 0.46in 0.54in;
+      }
+
+      :root {
+        --ink: #1f1b17;
+        --muted: #5d544d;
+        --line: #d8d0c8;
+        --panel: #fcfaf7;
+        --accent: #b56a36;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: white;
+        font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
+        line-height: 1.29;
+        font-size: 9.35pt;
+      }
+
+      .page {
+        max-width: 7.35in;
+        margin: 0 auto;
+      }
+
+      .eyebrow {
+        margin: 0 0 7px;
+        color: var(--accent);
+        font-family: "Helvetica Neue", Arial, sans-serif;
+        font-size: 8.1pt;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 0 0 10px;
+        font-size: 21pt;
+        line-height: 1;
+      }
+
+      h2 {
+        margin: 11px 0 6px;
+        font-size: 11.8pt;
+        line-height: 1.1;
+        page-break-after: avoid;
+      }
+
+      h3 {
+        margin: 7px 0 4px;
+        font-size: 9.7pt;
+        line-height: 1.15;
+        page-break-after: avoid;
+      }
+
+      p {
+        margin: 0 0 6px;
+      }
+
+      ul, ol {
+        margin: 0 0 7px 14px;
+        padding: 0;
+      }
+
+      li {
+        margin: 0 0 2px;
+      }
+
+      .lead {
+        font-size: 10.1pt;
+        color: var(--muted);
+      }
+
+      .content {
+        column-count: 2;
+        column-gap: 0.36in;
+        column-fill: auto;
+      }
+
+      .section {
+        break-inside: auto;
+        margin: 0 0 9px;
+      }
+
+      .grid {
+        display: block;
+        margin: 5px 0 7px;
+      }
+
+      .card {
+        border-left: 2px solid var(--line);
+        background: transparent;
+        border-radius: 0;
+        padding: 1px 0 1px 8px;
+        break-inside: avoid-column;
+        margin-bottom: 7px;
+      }
+
+      .compact-list {
+        margin-left: 12px;
+      }
+
+      .table-wrap {
+        margin: 5px 0 7px;
+        break-inside: avoid-column;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 8.35pt;
+      }
+
+      th, td {
+        border: 1px solid var(--line);
+        padding: 4px 5px;
+        vertical-align: top;
+      }
+
+      th {
+        text-align: left;
+        background: #f7f2ec;
+        font-family: "Helvetica Neue", Arial, sans-serif;
+        font-size: 7.6pt;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+      }
+
+      code {
+        font-family: "SFMono-Regular", Menlo, Consolas, monospace;
+        font-size: 0.92em;
+      }
+
+      .footer-note {
+        margin-top: 9px;
+        padding-top: 7px;
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 7.9pt;
+      }
+
+      .tight p:last-child,
+      .tight ul:last-child,
+      .tight ol:last-child {
+        margin-bottom: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <p class="eyebrow">Global Name System</p>
+      <h1>GNS One-Pager</h1>
+      <p class="lead">GNS is a human-readable naming system anchored to Bitcoin. It gives people, projects, agents, payment flows, and services a name they control directly, without depending on a registrar, a platform handle, or a rented suffix.</p>
+
+      <div class="content">
+      <section class="section tight">
+        <h2>What The System Does</h2>
+        <p>GNS separates two things:</p>
+        <ul class="compact-list">
+          <li><strong>ownership</strong>, which is recorded on-chain</li>
+          <li><strong>what the name points to</strong>, which is signed off-chain by the current owner</li>
+        </ul>
+        <p>That means Bitcoin is used as a notary for ownership and state transitions, not as a general-purpose data store. A name can point to identities, payment destinations, APIs, services, agent endpoints, and other ordered key/value pairs.</p>
+      </section>
+
+      <section class="section">
+        <h2>Core Design</h2>
+        <div class="grid">
+          <div class="card tight">
+            <h3>Claim Flow</h3>
+            <ol>
+              <li><code>COMMIT</code> hides the intended name while establishing the claim attempt.</li>
+              <li><code>REVEAL</code> publishes the plaintext name and must confirm within <strong>24 blocks</strong> after the commit confirms.</li>
+              <li>Once reveal confirms, the name is claimed and usable, but it enters a settlement period.</li>
+              <li>In the launch epoch that period is <strong>52,000 blocks</strong>. Later epochs halve the maturity duration until the <strong>4,000-block</strong> floor is reached. During settlement, bond continuity matters. After maturity, the name remains valid without ongoing bond continuity.</li>
+            </ol>
+          </div>
+          <div class="card tight">
+            <h3>Authority Model</h3>
+            <ul class="compact-list">
+              <li>The <strong>wallet key</strong> signs Bitcoin transactions.</li>
+              <li>The <strong>owner key</strong> controls later updates and transfers.</li>
+              <li>Off-chain value updates are only valid if signed by the current owner key.</li>
+              <li>In v1, losing the owner key means losing update and transfer authority for that name.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>Economic Model</h2>
+        <p>GNS allocates names through <strong>bonded capital</strong>, not rent, private allocation, or protocol sales. The bond is not paid to GNS, not burned, and not annual rent. It is bitcoin the claimer still owns, temporarily locked as economic commitment during settlement.</p>
+
+        <h3>Bond Curve</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Name length</th>
+                <th>Required bond</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td><code>1</code></td><td><code>₿100,000,000 (1 BTC)</code></td></tr>
+              <tr><td><code>2</code></td><td><code>₿50,000,000 (0.5 BTC)</code></td></tr>
+              <tr><td><code>3</code></td><td><code>₿25,000,000 (0.25 BTC)</code></td></tr>
+              <tr><td><code>6</code></td><td><code>₿3,125,000 (0.03125 BTC)</code></td></tr>
+              <tr><td><code>12+</code></td><td><code>₿50,000 (0.0005 BTC)</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Why The Namespace Stays Broad</h3>
+        <p>Using the current v1 alphabet (<code>a-z0-9</code>), there are about <strong>2.18 billion</strong> possible 6-character names. At the current 6-character bond of <code>₿3,125,000 (0.03125 BTC)</code>, claiming all possible 6-character names would require about <strong>68 million BTC</strong>, which is more than three times Bitcoin’s total <strong>21 million BTC</strong> supply.</p>
+        <p>Even if every bitcoin in existence were devoted to 6-character claims, it would only be enough to bond about <strong>672 million names</strong> out of roughly <strong>2.18 billion</strong> possible 6-character names. The majority of that namespace would still remain open.</p>
+        <p>That does not make allocation perfectly neutral. Early participants, wealthy claimants, and fee conditions will matter. But it does mean the namespace becomes structurally hard to corner at scale once names are long enough that combinatorial supply outgrows available capital.</p>
+
+        <h3>Important v1 Tradeoff</h3>
+        <p>After settlement, names remain valid without ongoing bond continuity. That keeps the UTXO footprint more self-cleaning, but it also means long names can become inexpensive to hold indefinitely after the settlement period.</p>
+
+        <h3>Launch Fairness</h3>
+        <p>The fairness story is not only about the bond curve. It is also about how launch happens. A mainnet launch should only happen once the signet and private-demo paths are well tested and the activation block height is widely announced in advance, so everyone knows the exact starting rules, the exact starting height, and the exact claim mechanics before names open.</p>
+      </section>
+
+      <section class="section">
+        <h2>Blockspace Footprint</h2>
+        <p>GNS keeps its pure naming payload relatively small, but it still consumes real Bitcoin blockspace because each successful claim is a pair of ordinary Bitcoin transactions.</p>
+        <ul class="compact-list">
+          <li>pure naming payload per completed claim: about <code>117–148 bytes</code></li>
+          <li>observed full claim footprint: about <code>404 vbytes</code></li>
+          <li>observed full serialized footprint: about <code>566 raw bytes</code></li>
+        </ul>
+        <p>At the current transaction shape, a full block could theoretically fit about <strong>2,475</strong> completed claims, or about <strong>356,000 claims per day</strong> at the extreme upper bound. At <code>50 sat/vB</code>, one completed claim costs about <code>₿20,200 (0.000202 BTC)</code> in transaction fees alone.</p>
+        <p>In practice, usage is constrained by fee pressure, bond capital lockup, and temporary UTXO pressure during settlement.</p>
+      </section>
+
+      <section class="section">
+        <h2>Trust Model</h2>
+        <div class="grid">
+          <div class="card tight">
+            <h3>Ownership</h3>
+            <ul class="compact-list">
+              <li>Ownership is chain-derived.</li>
+              <li>Any operator with chain data can reconstruct the canonical name set.</li>
+              <li>A resolver does not get to invent ownership.</li>
+              <li>A resolver going offline does not destroy the registry.</li>
+            </ul>
+          </div>
+          <div class="card tight">
+            <h3>Values</h3>
+            <ul class="compact-list">
+              <li>What a name points to is off-chain in v1.</li>
+              <li>Values are signed by the current owner.</li>
+              <li>Authenticity is cryptographic.</li>
+              <li>Availability depends on one or more resolvers retaining a copy.</li>
+            </ul>
+          </div>
+        </div>
+        <p>That means GNS is decentralized for ownership, but only partly decentralized for value availability in v1.</p>
+
+        <h3>Why Resolver Decentralization Is Still Strong</h3>
+        <p>Resolvers do not get to invent ownership, and they cannot fake completeness against a client that knows the chain. Because the canonical name set is derivable from Bitcoin, any client can sample names that should exist, query a resolver, and score how complete and up to date it is against ground truth.</p>
+        <p>That creates a decentralized path forward that is stronger than a generic off-chain directory. Resolver quality is auditable. Multi-resolver publish and multi-resolver read can improve availability over time, while the chain remains the authority for which names exist and who owns them.</p>
+      </section>
+
+      <section class="section">
+        <h2>The Vision For GNS</h2>
+        <p>GNS is not just “better DNS.” It is a sovereign naming layer for the internet resources humans and software actually want to access: identities, payment endpoints, services, and software agents.</p>
+        <p>As we hand more decision-making to language models, human-readable names become more important, not less. Software can interpret intent flexibly, but the final payment, API call, or identity lookup should not rest on a probabilistic guess about which account, service, or counterparty is the right one. GNS is designed to make names human-readable while keeping ownership cryptographically grounded, so both people and software acting on their behalf can resolve them with much higher confidence.</p>
+        <p>The system is designed so that the ownership record is public, auditable, and difficult to revoke or forge, while the mutable destination layer stays lightweight and easy to update.</p>
+      </section>
+
+      <section class="section tight">
+        <h2>Current Status</h2>
+        <ul class="compact-list">
+          <li>hosted private demo claim flow: working</li>
+          <li>browser value publishing: working</li>
+          <li>self-hosted website + resolver stack: working</li>
+          <li>transfers: prototype</li>
+          <li>mainnet readiness: not yet</li>
+        </ul>
+      </section>
+
+      <p class="footer-note">Current product surface: https://globalnamesystem.org · Public repository: https://github.com/deekay/gns</p>
+      </div>
+    </main>
+  </body>
+</html>

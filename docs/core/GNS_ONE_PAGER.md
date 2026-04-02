@@ -25,8 +25,8 @@ GNS claims use a **commit / reveal** flow plus a **bitcoin bond**.
 
 1. `COMMIT` hides the intended name while establishing the claim attempt.
 2. `REVEAL` publishes the plaintext name and must confirm within **24 blocks** after the commit confirms.
-3. Once the reveal confirms, the name is claimed and usable, but it enters a settlement period of **52,000 blocks**.
-4. During settlement, bond continuity still matters. After maturity, the name remains valid without ongoing bond continuity.
+3. Once the reveal confirms, the name is claimed and usable, but it enters a settlement period.
+4. In the launch epoch that period is **52,000 blocks**. Later epochs halve the maturity duration until the **4,000-block** floor is reached. During settlement, bond continuity still matters. After maturity, the name remains valid without ongoing bond continuity.
 
 Transfers move ownership from one pubkey to another. Off-chain value updates are only valid if signed by the name's **current owner key**.
 
