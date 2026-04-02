@@ -77,7 +77,7 @@ At the current 6-character bond of `₿3,125,000 (0.03125 BTC)`, claiming all po
 
 Even if every bitcoin in existence were somehow devoted to 6-character claims, it would only be enough to bond about **672 million names** out of roughly **2.18 billion** possible 6-character names. The majority of that namespace would still remain open.
 
-That does not make allocation perfectly neutral. Early participants, wealthy claimants, and fee conditions will matter. But it does mean that, beyond a certain name length, fully cornering the namespace becomes economically impossible: combinatorial supply outgrows the total capital that can exist.
+That does not make allocation perfectly neutral. Early participants, wealthy claimants, and fee conditions will matter. But under the current v1 alphabet and bond curve, it does mean that from 6-character names onward, fully cornering the namespace becomes economically impossible: combinatorial supply outgrows the total capital that can exist.
 
 ### Important v1 Tradeoff
 
