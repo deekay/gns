@@ -33,6 +33,8 @@ These are mainly useful if you are self-hosting or running the prototype infrast
 
 These documents are useful, but they are more speculative, essay-like, or draft-oriented than the core docs above.
 
+- [REVIEW_FEEDBACK_BACKLOG.md](./research/REVIEW_FEEDBACK_BACKLOG.md)
+- [CLAIM_ALLOCATION_AND_BATCHING_OPTIONS.md](./research/CLAIM_ALLOCATION_AND_BATCHING_OPTIONS.md)
 - [HANDSOFF_DEMO_WALLET_PLAN.md](./research/HANDSOFF_DEMO_WALLET_PLAN.md)
 - [GNS_EXPLAINER.md](./research/GNS_EXPLAINER.md)
 - [GNS-v2-draft.md](./research/GNS-v2-draft.md)
