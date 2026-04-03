@@ -220,6 +220,18 @@ This is close to the spirit of the current design, but it needs stronger justifi
 
 This appears to solve the criticism while actually introducing a much deeper governance problem. It is probably the least aligned with the current GNS philosophy.
 
+### Narrower Variant Worth Exploring
+
+There is one bounded version of this that may still be worth serious review:
+
+- keep the ordinary protocol objective and length-based
+- add a frozen, launch-only premium overlay for a bounded set of already-salient existing names
+- derive that list from public datasets, deterministic scoring, and coarse tiers rather than bespoke per-name pricing
+
+That is still less neutral than pure fixed bonds, but it is much more defensible than an ongoing semantic pricing system.
+
+See [LAUNCH_PREMIUM_OVERLAY_PIPELINE.md](./LAUNCH_PREMIUM_OVERLAY_PIPELINE.md).
+
 ## Working Comparison
 
 | Mechanism | Best property | Main failure mode |
@@ -370,4 +382,3 @@ Merkle batching may be a strong pre-launch improvement even if the allocation me
 2. Write down the strongest case for fixed bonds and the strongest case for auctions in concrete launch terms.
 3. Decide whether Merkle-based batching is a launch goal, a launch-visible plan, or later work.
 4. Keep the allocation question and the batching question linked, but not conflated.
-

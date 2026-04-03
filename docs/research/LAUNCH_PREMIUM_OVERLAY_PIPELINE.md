@@ -1,0 +1,363 @@
+# Launch Premium Overlay Pipeline
+
+This note explores a bounded version of semantic pricing for GNS:
+
+- not a permanent global name-pricing engine
+- not a live protocol that keeps revaluing names
+- not a claim that we can estimate the "true" value of every important word on earth
+
+Instead, it asks a narrower question:
+
+> If GNS wants a one-time bootstrap mechanism for already-famous names, what would a practical, as-fair-as-possible pipeline look like?
+
+## Why This Exists
+
+The strongest fairness objection so far is not that someone can corner the entire namespace.
+
+It is that someone may be able to lock up a relatively small but economically important slice of already-valuable names:
+
+- global brands
+- major internet services
+- culturally dominant entities
+
+Those names already have off-chain value before GNS exists. That makes launch different from the long-run steady state.
+
+The idea here is to address that one-time bootstrapping problem without turning GNS into an ongoing semantic governance system.
+
+## Core Design Constraint
+
+If GNS explores this path, the cleanest version is:
+
+- a **normal objective base curve** for every name
+- plus a **frozen launch-only premium overlay** for a bounded set of already-salient names
+
+In other words:
+
+`required_bond(name) = max(base_curve(name), launch_premium_floor(name))`
+
+That keeps the ordinary protocol simple while acknowledging that a small set of existing names may need extra launch-era protection.
+
+## What "LLM-Assisted" Should Mean
+
+LLMs can help with:
+
+- gathering candidate names from public datasets
+- deduplicating spelling variants
+- normalizing aliases and punctuation differences
+- flagging likely omissions
+- assigning rough salience buckets based on structured evidence
+
+LLMs should **not** be trusted with:
+
+- live protocol-time pricing decisions
+- exact per-name valuations
+- trademark adjudication
+- final authority over edge cases
+
+The protocol should never depend on "whatever the model says today."
+
+The model is a research and curation helper. The protocol only sees a frozen output table.
+
+## Recommended Shape
+
+The most defensible version of this idea is:
+
+- launch-only
+- frozen before launch
+- based on public source data
+- coarse tiered pricing, not bespoke valuations
+- explicitly limited to existing high-salience entities
+
+This suggests a pipeline like:
+
+1. collect public candidate datasets
+2. normalize them into GNS-legal names
+3. consolidate duplicates and aliases into entity groups
+4. assign rough salience scores from transparent inputs
+5. map scores into a few premium tiers
+6. publish the draft list for review
+7. freeze the final table before launch
+
+## Step 1: Candidate Set Assembly
+
+The goal is not to discover every valuable word. The goal is to assemble a broad, defensible candidate pool of already-salient names that might deserve extra launch protection.
+
+Candidate sources could include:
+
+- major global brand rankings
+- top websites and internet services
+- major app rankings
+- large public-company and product lists
+- large nonprofit, institutional, and government entities
+- high-salience consumer platforms and infrastructure brands
+
+At this stage it is better to over-include than under-include.
+
+The main deliverable from this step is:
+
+- `candidates_raw.csv`
+
+with fields like:
+
+- source
+- source rank
+- raw name
+- country or region
+- category
+- source URL or source identifier
+
+## Step 2: Name Normalization
+
+Every candidate needs to be normalized into the actual v1 GNS namespace:
+
+- lowercase
+- `[a-z0-9]{1,32}`
+- no punctuation or whitespace
+
+Examples:
+
+- `Coca-Cola` -> `cocacola`
+- `AT&T` -> `att`
+- `OpenAI` -> `openai`
+
+This step also needs to record:
+
+- the original string
+- the normalized string
+- any lossy transformation
+- any ambiguity introduced by normalization
+
+The main deliverable from this step is:
+
+- `candidates_normalized.csv`
+
+## Step 3: Entity Consolidation
+
+This is where LLM assistance is useful but should remain auditable.
+
+The pipeline should group multiple source entries that appear to refer to the same entity:
+
+- `Google`
+- `Google Search`
+- `Google LLC`
+
+But it should keep hard evidence for why they were grouped.
+
+Recommended rule:
+
+- keep a stable `entity_id`
+- preserve all source evidence rows
+- do not discard source diversity
+
+The output should still be reviewable by humans.
+
+The main deliverable from this step is:
+
+- `entities_with_aliases.json`
+
+## Step 4: Transparent Salience Scoring
+
+This is the key step, and it should stay deliberately simple.
+
+Avoid trying to estimate "fair market value" directly.
+
+Instead, score salience using transparent, rank-like signals such as:
+
+- how many strong public datasets include the entity
+- how highly it ranks across those datasets
+- whether it appears across multiple categories
+- web/app/user reach proxies
+- market scale proxies
+- search or attention proxies
+
+This is still imperfect, but it is much more defensible than pretending to produce a precise valuation.
+
+### Recommended Scoring Style
+
+Use coarse, rank-derived scores rather than raw-dollar calculations.
+
+For example:
+
+- dataset presence score
+- average percentile rank score
+- cross-category diversity score
+- global breadth score
+
+Then combine them into a single `salience_score`.
+
+### Role Of LLMs Here
+
+LLMs can help:
+
+- classify category
+- detect alias collisions
+- suggest missing entity joins
+- flag suspiciously high or low placements
+
+But the final score should come from deterministic code over frozen input data.
+
+## Step 5: Tiering, Not Bespoke Pricing
+
+Do not assign a custom bond to every name.
+
+Instead, map scores into a few discrete tiers, for example:
+
+- `Tier S`: top ~100 names
+- `Tier A`: next ~1,000 names
+- `Tier B`: next ~10,000 names
+- `Tier C`: optional extended set
+
+Each tier would correspond to a premium floor or multiplier.
+
+Example shape only:
+
+- `Tier S`: at least `10 BTC`
+- `Tier A`: at least `3 BTC`
+- `Tier B`: at least `1 BTC`
+- `Tier C`: at least `0.25 BTC`
+
+Those numbers are placeholders. The important part is the shape:
+
+- few buckets
+- easy to explain
+- easy to freeze
+- less arbitrary than a bespoke table
+
+## Step 6: Public Review Before Launch
+
+If this path is taken, the list should be published before launch with:
+
+- source datasets
+- normalization rules
+- scoring code
+- tier assignments
+- obvious known limitations
+
+This review period matters because some errors will only become visible once outsiders inspect the draft.
+
+Expected review questions:
+
+- missing names
+- bad normalizations
+- duplicate entities
+- regional bias
+- category bias
+- over-inclusion or under-inclusion
+
+## Step 7: Freeze The Output
+
+Before launch, freeze:
+
+- the source snapshot date
+- the normalization rules
+- the deterministic scoring code
+- the final premium table
+- a hash of the final artifact
+
+The protocol should treat that output as immutable launch data.
+
+If later revisions are desired, they should be handled as:
+
+- a new protocol version
+- or a new namespace version
+
+not as ad hoc live updates.
+
+## Recommended Protocol Representation
+
+The consensus-facing representation should be minimal.
+
+For example:
+
+- `normalized_name -> tier_id`
+
+not:
+
+- source evidence
+- explanations
+- exact valuation data
+
+The richer provenance can live in the repository and launch materials. The protocol only needs the frozen result.
+
+## What This Should Not Try To Solve
+
+This should **not** try to solve:
+
+- every valuable dictionary word
+- every culturally important phrase
+- every personal name
+- every future brand
+- trademark legitimacy
+- legal ownership disputes
+
+Those are either too subjective or too large for a credible frozen launch table.
+
+This is why the most plausible scope is:
+
+- existing high-salience brands and entities
+- launch-only bootstrap fairness
+
+## Main Risks
+
+Even the best version of this pipeline has real risks:
+
+### 1. Data-source bias
+
+The output will reflect the worldview of the source datasets.
+
+### 2. Language and geography bias
+
+English-heavy and Western-heavy rankings can distort the table badly if not corrected.
+
+### 3. Incumbent bias
+
+The system may overprotect already-dominant entities and underweight culturally important but smaller names.
+
+### 4. False legitimacy
+
+A premium tier is not proof of rightful ownership. It is only a launch pricing decision.
+
+### 5. Governance creep
+
+If people start asking for updates after launch, the exception can become a permanent governance treadmill.
+
+## How To Keep It As Fair As Possible
+
+If this path is pursued, fairness comes from restraint:
+
+- keep the scope narrow
+- use public datasets
+- freeze a snapshot date
+- make the code reproducible
+- use coarse tiers
+- publish the draft before launch
+- freeze permanently at launch
+
+This does not make the system perfectly neutral.
+
+It makes the exception bounded, inspectable, and less arbitrary than improvising ad hoc premium rules.
+
+## Current Recommendation
+
+If we explore this seriously, the best shape is probably:
+
+- **base protocol**: objective length-based bond curve
+- **launch exception**: frozen premium overlay for a bounded set of existing high-salience entities
+- **LLM role**: candidate discovery, normalization help, and anomaly detection
+- **deterministic role**: final scoring, tiering, and protocol artifact generation
+
+That keeps the LLM in the research pipeline, not in consensus.
+
+## Next Questions
+
+If we want to continue this path, the next concrete design questions are:
+
+1. What exact categories belong in scope for the first draft?
+2. Should this cover only brands, or brands plus a limited class of institutions and infrastructure names?
+3. How many premium tiers should exist?
+4. Should premium tiers set:
+   - a bond floor
+   - a multiplier
+   - or a separate launch-era maturity rule?
+5. What source datasets are diverse enough to avoid an obviously narrow worldview?
+
