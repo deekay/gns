@@ -39,6 +39,30 @@ So this seed should be treated as:
 - a methodology pilot
 - not a final judgment about which names deserve premium treatment
 
+## V1 Script Boundary
+
+This exercise is intentionally scoped to the names GNS v1 can actually represent.
+
+That means:
+
+- lowercase Latin letters
+- digits
+- no punctuation, whitespace, or non-Latin characters
+
+So this seed is **not** trying to rank every globally salient brand in every script.
+
+It is trying to rank:
+
+> already-salient names that can plausibly live inside the current Latin-only v1 namespace
+
+This matters for interpretation:
+
+- a brand primarily expressed in Chinese characters should not be treated as "missing from the list" if GNS v1 cannot represent that name directly
+- if such a brand already has an official and genuinely coordinated Latin-script identity, that Latin identity can still be considered
+- otherwise it should be tracked as future namespace work, not shoehorned into the v1 overlay
+
+This keeps the exercise aligned with the protocol we actually have instead of the broader multilingual system we may eventually want.
+
 ## Tier Definitions Used In This Exercise
 
 This exercise uses the current illustrative premium bands:
@@ -72,6 +96,30 @@ This first pass is still manually smoothed, but it is not meant to be arbitrary.
    If a name looks important but the current pilot sources do not support a higher tier clearly enough, it should stay lower for now and move up only after the source set improves.
 
 This is still less rigorous than the eventual deterministic scoring pipeline. The point is to make the current provisional calls legible enough that later work can replace them with code rather than reinterpret them from scratch.
+
+## Public-Input Adjustments Under V1
+
+Given the current Latin-only namespace, the next round of source expansion should change in two ways.
+
+First:
+
+- broaden beyond U.S.-heavy and platform-heavy sources
+
+Second:
+
+- still prefer sources whose entity names already map to official or widely coordinated Latin-script identities
+
+That suggests:
+
+- add more international consumer-brand rankings
+- add more regional internet/app rankings that publish stable Latin-script brand labels
+- add more global household-brand sources, not just technology/platform lists
+- separately log high-salience non-Latin-primary names that are out of scope for v1
+
+It does **not** suggest:
+
+- using ad hoc LLM transliterations as if they were already real public identities
+- pretending v1 can solve the full multilingual bootstrapping problem at launch
 
 ## Pricing Read-Through Used Here
 
@@ -156,6 +204,10 @@ A few patterns already show up:
 
    It needs both, plus more international and consumer-brand inputs.
 
+4. The next-source problem is not just "more global."
+   It is "more global within names that already coordinate in Latin script."
+   That is a narrower and more honest target for v1.
+
 ## Current View On Scope
 
 This exercise reinforces the current scope recommendation:
@@ -172,8 +224,9 @@ The most useful next expansions would be:
 
 1. add a broader set of consumer-brand and regional datasets
 2. add more non-English and non-U.S. prominence sources
-3. compute a deterministic draft score rather than this manually smoothed seed
-4. separate:
+3. keep an explicit deferred list of salient non-Latin-primary names that are out of scope for v1
+4. compute a deterministic draft score rather than this manually smoothed seed
+5. separate:
    - mechanical score
    - and review-adjusted score
    so we can see where the current source mix is biasing the result

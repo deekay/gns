@@ -37,6 +37,30 @@ In other words:
 
 That keeps the ordinary protocol simple while acknowledging that a small set of existing names may need extra launch-era protection.
 
+## V1 Namespace Scope
+
+The launch premium overlay should be scoped to the namespace GNS v1 can actually express.
+
+For the current v1 design, that means:
+
+- lowercase Latin letters
+- digits
+- no punctuation, whitespace, or non-Latin characters
+
+So the right claim is **not**:
+
+> this table prices the most important names in every script on earth
+
+It is:
+
+> this table prices the most salient already-existing names that can be represented in the v1 GNS namespace
+
+That has an important consequence:
+
+- brands primarily expressed only in Han, Arabic, Devanagari, Cyrillic, Kana, or other non-Latin scripts are outside the scope of the v1 premium overlay unless they also have an established official Latin-script identity that real users already coordinate around
+
+This is a limitation, but it is also the honest way to keep the methodology aligned with the actual protocol surface.
+
 ## What "LLM-Assisted" Should Mean
 
 LLMs can help with:
@@ -93,6 +117,32 @@ Candidate sources could include:
 
 At this stage it is better to over-include than under-include.
 
+### Public-Input Rule For V1
+
+Because the v1 namespace is Latin-only, candidate sources should be chosen with one additional constraint:
+
+- prefer sources whose entity labels already map to an official or widely coordinated Latin-script name
+
+This does **not** mean using only Western datasets.
+
+It means:
+
+- include global and regional sources where entities are already published under stable Latin-script brand forms
+- include non-Western entities that clearly operate under a Latin-script name users already recognize in practice
+- avoid pretending that machine transliteration of a non-Latin-only brand creates a fair v1 launch artifact
+
+Examples of good v1-fit inputs:
+
+- global brand rankings with stable Latin-script labels
+- website and app rankings where the public service identity is already expressed in Latin script
+- international business and consumer rankings that publish English or official Latin-script brand names
+
+Examples that should be tracked separately:
+
+- high-salience entities whose public identity is primarily non-Latin and not already coordinated around a stable Latin-script form
+
+Those are important for future namespace versions, but they should not be quietly folded into a v1 premium table as if the script problem has already been solved.
+
 The main deliverable from this step is:
 
 - `candidates_raw.csv`
@@ -126,6 +176,14 @@ This step also needs to record:
 - the normalized string
 - any lossy transformation
 - any ambiguity introduced by normalization
+
+It should also classify each candidate into one of three buckets:
+
+- `direct_v1_fit`
+- `official_latin_alias`
+- `out_of_scope_non_v1_script`
+
+That keeps the pipeline honest about which names are genuinely representable in v1 and which ones are being deferred rather than silently excluded.
 
 The main deliverable from this step is:
 
@@ -215,6 +273,10 @@ The actual question is:
 
 > how important is this name, globally, as a thing people already expect to resolve correctly?
 
+Under v1, that should be read more precisely as:
+
+> how important is this name, globally, among the names people already expect to resolve correctly in Latin-script form?
+
 Under that framing, names like:
 
 - `apple`
@@ -292,6 +354,12 @@ rather than:
 - how financially valuable is the underlying enterprise?
 
 That is much closer to the actual bootstrapping problem.
+
+It is also more honest about the current script boundary:
+
+- the launch overlay can aim to be globally aware
+- but only within the representable v1 namespace
+- while maintaining a separately documented backlog of important names that belong to future non-Latin namespace work
 
 ## Step 5: Tiering, Not Bespoke Pricing
 
