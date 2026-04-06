@@ -12,6 +12,25 @@ Human-facing amounts in GNS use integer bitcoin notation alongside the conventio
 
 ---
 
+## Why Bonds Instead Of Fees
+
+Naming is never free. The real question is where the cost goes and what kind of cost it is.
+
+Most naming systems charge you by routing payment to a gatekeeper:
+
+- a registrar
+- a platform
+- a DAO treasury
+- or some other operator with the power to change terms later
+
+GNS uses pricing too, but a different kind. It uses a **bond**. A bond still has a real financial cost because capital has time value and opportunity cost. But the cost does not have to be paid to a third party. You lock bitcoin you still own instead of spending it forever to a provider.
+
+That distinction matters both economically and psychologically. For many people, especially retail users who may simply hold bitcoin in cold storage anyway, locking capital can feel very different from losing it permanently. For larger institutions and brands, the distinction may matter less in practice because both fees and bonds are just balance-sheet decisions. But the protocol stays consistent for everyone: the claimant bears a cost, yet no central operator collects tribute.
+
+GNS claims still pay normal Bitcoin transaction fees. The point is not that naming becomes free. The point is that the protocol's own pricing mechanism is self-sovereign rather than gatekeeper-controlled.
+
+---
+
 ## What GNS Names Are For
 
 A GNS name is a stable, unforgeable pointer to whatever resources you want to be findable by. That includes:
