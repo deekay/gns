@@ -348,6 +348,71 @@ If we explore this seriously, the best shape is probably:
 
 That keeps the LLM in the research pipeline, not in consensus.
 
+## Additional Economic Intuition To Preserve
+
+Recent discussion has clarified a few important points that should shape any premium-tier calibration work.
+
+### 1. BTC-denominated yield assumptions should be conservative
+
+For long-duration premium locks, it is too aggressive to assume that claimants can reliably earn `10%+` BTC-denominated yield for `5-10` years.
+
+A more realistic calibration range is probably closer to:
+
+- `1%` low
+- `3%` medium
+- `5%` high
+
+That matters because long premium lockups may look stronger on paper than they really are if the model assumes unrealistically high BTC hurdle rates.
+
+### 2. Time is a powerful premium lever, but it is not enough by itself
+
+Long premium maturities align incentives better than short ones:
+
+- a real brand may not mind holding a name for `10` years
+- a speculator usually dislikes locking large BTC positions for that long
+
+That makes duration a strong anti-speculation lever.
+
+But duration alone may still be insufficient for the most obvious legacy names if the eventual buyer is extremely patient and the eventual sale value is very large.
+
+### 3. We need both a BTC-native and a fiat-native lens
+
+Premium-name calibration should be evaluated in two ways:
+
+- **BTC-native carrying cost** for the claimant
+- **fiat-upside sanity** for a future buyer who may think in dollars rather than BTC
+
+This matters because even a moderate BTC resale price can become a very large fiat windfall if Bitcoin appreciates substantially between launch and later brand adoption.
+
+### 4. Transfer design matters almost as much as initial pricing
+
+If premium names can transfer freely before maturity, a speculator may still flip the name early and avoid bearing the full intended time cost.
+
+Two important conclusions followed from this:
+
+- simply resetting maturity for the buyer is probably too weak, because the real brand buyer may not care about a long future hold
+- if early-transfer penalties are explored, the most philosophically aligned version is likely one where the original claimant's premium bond remains timelocked until its original maturity, rather than burning BTC or charging protocol fees
+
+### 5. Leasing and option structures remain possible
+
+Even strong pre-maturity transfer restrictions may not eliminate all speculative monetization.
+
+Speculators could still try:
+
+- lease arrangements
+- lease-plus-option contracts
+- operational control deals that stop short of full transfer
+
+So the design goal should be:
+
+- reduce clean, obvious, high-liquidity flips
+
+not:
+
+- assume the protocol can eliminate every off-chain workaround
+
+See [PREMIUM_NAME_CALIBRATION.md](./PREMIUM_NAME_CALIBRATION.md) for a more concrete modeling note.
+
 ## Next Questions
 
 If we want to continue this path, the next concrete design questions are:
@@ -360,4 +425,3 @@ If we want to continue this path, the next concrete design questions are:
    - a multiplier
    - or a separate launch-era maturity rule?
 5. What source datasets are diverse enough to avoid an obviously narrow worldview?
-
