@@ -218,6 +218,123 @@ This exercise reinforces the current scope recommendation:
 
 The present seed list is intentionally much smaller because it is only meant to test the methodology and the pricing intuition.
 
+## Boundary Intuition Sketches
+
+We do not have a computed top-`10,000` table yet, so the sketches below are illustrative rather than authoritative.
+
+The point is to preview the **feel** of the boundary slices so we can sanity-check whether the eventual tiering output seems directionally right.
+
+### Around `95-105`
+
+This slice should feel like:
+
+- globally recognizable names
+- strong consumer or internet coordination value
+- clearly important, but not in the tiny set of most universal brand identities on earth
+
+The kinds of names that plausibly live here are things like:
+
+- `nike`
+- `disney`
+- `paypal`
+- `spotify`
+- `uber`
+- `adidas`
+- `airbnb`
+- `mastercard`
+- `pepsi`
+- `ikea`
+- `nintendo`
+
+These are names that many people across regions already expect to resolve correctly, but they are one step below the absolute top handful of global identities like `google`, `apple`, or `amazon`.
+
+### Around `995-1005`
+
+This slice should feel like:
+
+- still very real brands
+- category leaders, strong regional champions, or widely used internet/software services
+- important enough that a claim would not feel frivolous
+- but no longer near the globally dominant salience bucket
+
+The kinds of names that plausibly live here are things like:
+
+- `doordash`
+- `canva`
+- `cloudflare`
+- `shopify`
+- `xiaomi`
+- `discord`
+- `atlassian`
+- `garmin`
+- `expedia`
+- `roblox`
+- `tripadvisor`
+
+The common pattern here is:
+
+- real user coordination value
+- but thinner cross-dataset presence, weaker persistence, narrower geography, or more category-specific salience than the names clustered near rank `100`
+
+### Around `9990-10000`
+
+The very bottom of a top-`10,000` premium table should still not feel trivial.
+
+It should feel like:
+
+- names with clear existing coordination value
+- but only modest evidence compared with the stronger buckets
+- often major national or regional brands, or category-specific services with meaningful but not universal recognition
+
+Illustrative examples could look more like:
+
+- `asana`
+- `digitalocean`
+- `miro`
+- `wise`
+- `zendesk`
+- `mercari`
+- `monzo`
+- `squarespace`
+- `typeform`
+- `kayak`
+- `brex`
+
+If names in this band start feeling tiny, obscure, or purely niche, the premium table has probably extended too far into the long tail.
+
+### The First `10` That Did Not Make The List
+
+The first names outside the top `10,000` should feel **almost the same** as the bottom ten that made it.
+
+The difference should usually be something small but defensible, such as:
+
+- one fewer strong public-source appearances
+- weaker persistence over time
+- less cross-region evidence
+- weaker Latin-script coordination
+- or narrower category salience
+
+The first ten names out would likely look something like:
+
+- `box`
+- `basecamp`
+- `deepl`
+- `eventbrite`
+- `vrbo`
+- `weebly`
+- `monese`
+- `bunq`
+- `xero`
+- `mixpanel`
+
+This is exactly why a final launch artifact needs:
+
+- deterministic scoring
+- explicit source rules
+- and a visible review pass
+
+Once we get this far down the table, tiny changes in methodology will move names across the line very easily.
+
 ## What To Do Next
 
 The most useful next expansions would be:
