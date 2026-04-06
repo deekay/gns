@@ -196,6 +196,103 @@ LLMs can help:
 
 But the final score should come from deterministic code over frozen input data.
 
+## A More Explicit Salience Methodology
+
+The most important methodological choice is this:
+
+**tier names by public salience and coordination importance, not by company fundamentals.**
+
+That means the goal is not to ask:
+
+- how much revenue does this company make?
+- what is its profit margin?
+- what is its market cap?
+- how old is the brand?
+
+Those may correlate loosely with importance, but they are not the real thing we care about.
+
+The actual question is:
+
+> how important is this name, globally, as a thing people already expect to resolve correctly?
+
+Under that framing, names like:
+
+- `apple`
+- `google`
+- `nvidia`
+- `cocacola`
+
+can naturally land in the same top tier even though the underlying businesses are economically very different.
+
+### What Should Drive The Score
+
+The cleanest scoring methodology is to use public evidence of name salience across independent contexts.
+
+Recommended score dimensions:
+
+1. **Cross-dataset presence**
+   How many strong independent datasets include the entity at all?
+
+2. **Rank strength**
+   How highly does the entity rank within those datasets?
+
+3. **Geographic breadth**
+   Does the entity show up across multiple regions, countries, or language contexts?
+
+4. **Cross-context importance**
+   Does the name matter in more than one domain, such as brand ranking, website prominence, app usage, public-company prominence, institutional importance, or infrastructure presence?
+
+5. **Persistence**
+   Does the name appear repeatedly across time rather than only in one transient snapshot?
+
+### Recommended Weighting
+
+The exact weights can be tuned, but a good starting point is:
+
+- `35%` cross-dataset presence
+- `25%` rank strength
+- `20%` geographic breadth
+- `10%` cross-context importance
+- `10%` persistence
+
+These weights intentionally favor:
+
+- broad recognition
+- repeated appearance
+- global coordination value
+
+over:
+
+- raw business size
+- accounting outcomes
+- or one-source prestige
+
+### What Should Not Be Primary Inputs
+
+The following should not be primary drivers of tier placement:
+
+- total revenue
+- profitability
+- market capitalization
+- enterprise value
+- company age
+
+Those can be weak supporting signals in some source datasets, but using them directly would push the methodology toward valuing corporations rather than valuing names.
+
+### Why This Is More Neutral
+
+This approach is still not perfectly neutral, but it is more defensible because it asks:
+
+- how visible is the name?
+- how globally expected is it?
+- how often does it show up as something people coordinate around?
+
+rather than:
+
+- how financially valuable is the underlying enterprise?
+
+That is much closer to the actual bootstrapping problem.
+
 ## Step 5: Tiering, Not Bespoke Pricing
 
 Do not assign a custom bond to every name.
@@ -222,6 +319,137 @@ Those numbers are placeholders. The important part is the shape:
 - easy to explain
 - easy to freeze
 - less arbitrary than a bespoke table
+
+## Recommended Scope And Size
+
+There are really three different set sizes to think about:
+
+1. the **raw candidate universe**
+2. the **ranked shortlist worth reviewing carefully**
+3. the **final frozen premium table**
+
+These should not all be the same size.
+
+### Raw Candidate Universe
+
+This should be broad.
+
+Recommended target:
+
+- roughly `25,000-100,000` candidate names
+
+Why:
+
+- over-inclusion is useful at this stage
+- it gives the scoring model room to work
+- and it reduces the risk that obvious global names are missing before ranking starts
+
+### Ranked Review Set
+
+This is the set that deserves careful human inspection for:
+
+- normalization problems
+- duplicate entities
+- regional bias
+- obvious omissions
+
+Recommended target:
+
+- roughly `5,000-20,000` names
+
+### Final Frozen Premium Table
+
+For an initial launch artifact, the most plausible scale is probably:
+
+- around `10,000` names
+
+That is large enough to cover:
+
+- top global brands
+- large internet services
+- major institutions and infrastructure names
+- a much broader international set than a `1,000`-name table would allow
+
+while still being small enough to remain:
+
+- reviewable
+- explainable
+- and not obviously overextended into the long tail
+
+### Why Not `1,000`?
+
+`1,000` is probably too small for a credible global launch exception.
+
+It would likely:
+
+- overfit to a narrow Western / English / large-cap worldview
+- miss too many names that are globally obvious in other regions
+- make the omissions debate feel arbitrary very quickly
+
+### Why Not `100,000`?
+
+`100,000` is probably too large for an initial frozen premium table.
+
+At that point the system starts to feel like it is trying to classify:
+
+- the whole world of generic words
+- a huge long tail of arguable entities
+- and many names whose premium status is much more debatable
+
+That is exactly where neutrality and fairness become harder to defend.
+
+### Best Current Recommendation
+
+So the best phased answer right now is probably:
+
+- build a raw candidate pool in the `25,000-100,000` range
+- score and review the top `5,000-20,000`
+- freeze an initial launch premium table around `10,000`
+
+with internal structure like:
+
+- top `100`
+- top `1,000`
+- top `10,000`
+
+mapping naturally to `S`, `A`, and `B` style premium tiers.
+
+## How Hard This Is
+
+There are two different difficulty levels here.
+
+### Rough first draft
+
+This is not especially hard.
+
+If we gather enough public datasets, a rough first-pass pipeline that:
+
+- assembles candidates
+- normalizes names
+- consolidates obvious aliases
+- and produces a ranked draft
+
+is very feasible.
+
+### Defensible global launch artifact
+
+This is materially harder.
+
+The hard part is not computing the score. The hard part is making the output feel:
+
+- geographically fair
+- language-aware
+- source-diverse
+- and not embarrassingly narrow or arbitrary
+
+So the real difficulty lies in:
+
+- source selection
+- normalization quality
+- duplicate/entity handling
+- and reviewing the top slice carefully enough that the launch table feels defensible
+
+That is still doable. It just means the challenge is more curation and methodology than pure code.
 
 ## Step 6: Public Review Before Launch
 
