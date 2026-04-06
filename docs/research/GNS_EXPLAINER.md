@@ -37,6 +37,8 @@ GNS uses a **capital bond** rather than an annual fee to establish and protect n
 
 Scarcity comes from locked capital and time, not from fees paid to a registrar or burned into nothing. You keep your bitcoin.
 
+That said, a GNS claim is not costless. In addition to posting the bond, the claimant also pays ordinary on-chain transaction fees for the commit and reveal transactions. At low fee levels those costs may be small relative to the bond. At higher fee levels they may become comparable to, or even exceed, the smallest bond tiers. That is not a payment to a centralized operator or registry. It is payment into Bitcoin's normal fee market, which is consistent with the system's decentralization story even if it makes claiming more expensive in absolute terms.
+
 ---
 
 ## Claiming A Name
