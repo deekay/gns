@@ -37,6 +37,7 @@ These documents are useful, but they are more speculative, essay-like, or draft-
 - [CLAIM_ALLOCATION_AND_BATCHING_OPTIONS.md](./research/CLAIM_ALLOCATION_AND_BATCHING_OPTIONS.md)
 - [LAUNCH_PREMIUM_OVERLAY_PIPELINE.md](./research/LAUNCH_PREMIUM_OVERLAY_PIPELINE.md)
 - [PREMIUM_NAME_CALIBRATION.md](./research/PREMIUM_NAME_CALIBRATION.md)
+- [POST_QUANTUM_AND_SIGNATURE_AGILITY.md](./research/POST_QUANTUM_AND_SIGNATURE_AGILITY.md)
 - [HANDSOFF_DEMO_WALLET_PLAN.md](./research/HANDSOFF_DEMO_WALLET_PLAN.md)
 - [GNS_EXPLAINER.md](./research/GNS_EXPLAINER.md)
 - [GNS-v2-draft.md](./research/GNS-v2-draft.md)

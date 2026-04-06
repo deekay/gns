@@ -314,6 +314,26 @@ We want broader review to create signal, not avoidable confusion.
 
 Open. This backlog is part of getting to that point.
 
+## 16. Post-Quantum Migration And Signature Agility
+
+### Concern
+
+If GNS contemplates long-lived names and premium lock periods measured in many years, reviewers may reasonably ask what happens if Bitcoin's current signature assumptions become vulnerable before those timelines finish.
+
+The concern is not that GNS must solve post-quantum migration by itself. The concern is that long-duration commitments make it harder to ignore.
+
+### Why It Matters
+
+For decade-scale names or bonds, "we'll think about it later" is not a satisfying answer. We should have an explicit position on:
+
+- what GNS can and cannot promise
+- whether owner-key migration is part of the design story
+- and how dependent the answer is on Bitcoin's own future path
+
+### Current Status
+
+Open. See [POST_QUANTUM_AND_SIGNATURE_AGILITY.md](./POST_QUANTUM_AND_SIGNATURE_AGILITY.md).
+
 ## Suggested Discussion Order
 
 If we work through these one by one, the most leveraged order is probably:
@@ -324,4 +344,3 @@ If we work through these one by one, the most leveraged order is probably:
 4. why GNS over DNS + ranking signals in the agentic age
 5. resolver decentralization and discovery
 6. owner-key loss and possible future recovery
-
