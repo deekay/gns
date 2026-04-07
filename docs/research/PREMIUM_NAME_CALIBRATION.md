@@ -191,6 +191,50 @@ So far, the most useful high-level takeaways seem to be:
 5. A premium-transfer design that lets the original seller's bond remain timelocked is much more useful than simply resetting maturity for the buyer.
 6. The strongest trust story for existing brands is not just "large bond" but "real operator can comfortably hold the long lock, while a speculator cannot exit cleanly without still bearing the time cost."
 
+## Public-Operator Full-Name Rubric
+
+One useful extension of the same logic is a **public-operator full-name** lane:
+
+- founders
+- CEOs
+- investors
+- public intellectuals
+- other durable public operators whose full-name token already functions like a stable identity
+
+The right question here is usually not:
+
+> what exact dollar amount would this person pay for their name?
+
+It is:
+
+> how much hostage-risk and likely resale asymmetry does cheap launch capture create for this class of full-name identity?
+
+That suggests a class-based rubric rather than bespoke per-name pricing.
+
+### Suggested Operator Bands
+
+| Operator band | Typical pattern | Example names | Likely tier | Illustrative commitment |
+| --- | --- | --- | --- | --- |
+| `Global operator / platform founder` | globally obvious public operator, very clear referent, very high likely buyer firepower, obvious hostage-risk if captured | `markzuckerberg`, `jensenhuang`, `samaltman` | `A` | `100 BTC` for `10 years` |
+| `Strong public operator` | clear full-name referent, durable public identity, meaningful buyer firepower, but not the same strategic magnitude as top global platform names | `patrickcollison`, `parkerconrad`, `garrytan`, `brianarmstrong` | `B` | `50 BTC` for `5 years` |
+| `Narrower intellectual / operator boundary` | real durable referent and some trust benefit, but lower likely monetizable upside and less obvious ransom economics | `tylercowen`, `paulgraham`, `morganhousel` | `review edge of B` | usually `B` only if other evidence is strong; otherwise remain watchlist / review-only |
+
+This framing matters because it keeps the protocol from trying to infer exact willingness-to-pay for each name while still recognizing that:
+
+- `markzuckerberg`
+
+probably sits in a meaningfully different capture-risk class than:
+
+- `tylercowen`
+
+even though both are real full-name public identities.
+
+The practical implication is:
+
+- use full-name public operators broadly for trust-building review
+- but assign them to coarse capital-time buckets based on hostage-risk and likely buyer firepower
+- not on hand-wavy bespoke guesses about exact future sale price
+
 ## What This Still Does Not Solve
 
 Even a strong premium tier may not eliminate all speculation.

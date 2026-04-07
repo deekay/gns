@@ -17,6 +17,7 @@ This note should be read alongside:
 - [SALIENCE_INSTITUTIONAL_NATURAL_BUYER_SET.md](./SALIENCE_INSTITUTIONAL_NATURAL_BUYER_SET.md)
 - [SALIENCE_METEORIC_NAME_SET.md](./SALIENCE_METEORIC_NAME_SET.md)
 - [SALIENCE_PUBLIC_FIGURE_SET.md](./SALIENCE_PUBLIC_FIGURE_SET.md)
+- [SALIENCE_PUBLIC_OPERATOR_SET.md](./SALIENCE_PUBLIC_OPERATOR_SET.md)
 - [SALIENCE_SOURCE_REGISTRY.md](./SALIENCE_SOURCE_REGISTRY.md)
 
 ## Build Goal
@@ -69,6 +70,10 @@ A companion meteoric-name slice now lives at:
 A companion public-figure and personal-name slice now lives at:
 
 - [salience_public_figure_set.csv](./salience_public_figure_set.csv)
+
+A companion public-operator full-name slice now lives at:
+
+- [salience_public_operator_set.csv](./salience_public_operator_set.csv)
 
 ## Recommended Columns
 
@@ -237,6 +242,16 @@ For this lane in particular, it is reasonable to expect:
 
 That is a feature, not a failure.
 
+### `salience_public_operator_set.csv`
+
+Contains:
+
+- founder, executive, investor, and public-intellectual full-name cases
+- provisional expectations such as `likely_selected`, `arguable`, and `likely_not_selected`
+- stress-pattern labels for global platform founders, strong public operators, narrower public intellectuals, and common-name collision cases
+
+This file exists so the overlay can test names like `markzuckerberg`, `patrickcollison`, or `tylercowen` without forcing them awkwardly into either the celebrity lane or the institutional-brand lane.
+
 ## Suggested Row Lifecycle
 
 Each candidate should move through a simple lifecycle:
@@ -339,6 +354,26 @@ Desired outcome:
 - better handling of names like `kanyewest`, `taylorswift`, `elonmusk`, or `mrbeast`
 - a cleaner methodology for deciding when full-name specificity or a highly distinctive stage name is strong enough to justify overlay treatment
 - a conservative policy that does not force an exhaustive launch-time list of celebrities, politicians, podcasters, or executives
+
+## Wave 3b: Public-Operator Full Names
+
+Why:
+
+- some names are neither classic brands nor celebrity-stage identities
+- the trust benefit comes from a clean full-name token with one durable public operator behind it
+- and the real calibration question is whether cheap capture creates meaningful hostage-risk or only weak resale opportunity
+
+What to ingest:
+
+- founder and CEO prominence sources
+- investor and venture prominence sources
+- durable public-intellectual and writer prominence sources
+- public-company leadership and operator-identity sources where names already function as stable public tokens
+
+Desired outcome:
+
+- better handling of names like `markzuckerberg`, `patrickcollison`, `parkerconrad`, `garrytan`, or `tylercowen`
+- a cleaner split between strong public-operator full names that should likely be selected and narrower full-name identities that should stay review-only
 
 ## Wave 3: Payments, Financial, And Public-Service Coordination Names
 

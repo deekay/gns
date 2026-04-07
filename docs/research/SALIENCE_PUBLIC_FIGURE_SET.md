@@ -9,6 +9,7 @@ This slice should be read alongside:
 - [SALIENCE_OVERLAY_RATIONALE.md](./SALIENCE_OVERLAY_RATIONALE.md)
 - [LAUNCH_PREMIUM_OVERLAY_PIPELINE.md](./LAUNCH_PREMIUM_OVERLAY_PIPELINE.md)
 - [SALIENCE_DATA_BUILD_PLAN.md](./SALIENCE_DATA_BUILD_PLAN.md)
+- [SALIENCE_PUBLIC_OPERATOR_SET.md](./SALIENCE_PUBLIC_OPERATOR_SET.md)
 
 The working CSV for this slice now lives at:
 
@@ -171,6 +172,18 @@ Typical examples:
 The point is not that these names are unimportant.
 
 The point is that the launch artifact should be more conservative than the watchlist.
+
+For founder, executive, investor, and public-intellectual full names, see the sibling slice:
+
+- [SALIENCE_PUBLIC_OPERATOR_SET.md](./SALIENCE_PUBLIC_OPERATOR_SET.md)
+
+That lane is usually better for names like:
+
+- `markzuckerberg`
+- `patrickcollison`
+- `parkerconrad`
+- `garrytan`
+- `tylercowen`
 
 ## Current Buckets
 

@@ -281,6 +281,15 @@ The current practical stance should be:
 
 That helps keep the public-figure lane useful without turning launch into an editorial catalog of every notable musician, politician, podcaster, or executive.
 
+There is also a narrower but important sibling lane for:
+
+- founder names
+- executive full names
+- investor names
+- public intellectual full names
+
+These are not always mass-celebrity identities, but they can still create obvious hostage dynamics if the full-name token is already a durable public operator identity with one clear long-run claimant.
+
 ## Why Market Cap Is Not The Main Scoring Engine
 
 We explicitly moved away from using:
