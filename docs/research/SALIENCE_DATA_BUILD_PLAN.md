@@ -79,6 +79,8 @@ These fields help us reason about what kind of name this is.
 | `region_scope` | `global`, `multi_region`, `national`, `regional` |
 | `household_facing` | `yes` or `no` |
 | `public_coordination_value` | Short note on why misallocation would matter publicly |
+| `natural_buyer_clarity` | `high`, `medium`, or `low` confidence that an obvious existing entity naturally owns the name |
+| `capture_risk_notes` | Short note on why cheap launch capture would or would not create an obvious resale trade |
 
 ### Source Evidence
 
@@ -121,7 +123,7 @@ These fields let the methodology stay honest once we get into gray areas.
 | `proposed_tier` | `S+`, `S`, `A`, `B`, or blank |
 | `selection_status` | `selected`, `near_miss`, `considered_not_selected`, or `out_of_scope` |
 | `review_reason` | Short statement of why it was selected or not |
-| `review_flags` | Delimited flags such as `alias_risk`, `source_bias`, `regional_gap`, `enterprise_only`, `non_latin_primary` |
+| `review_flags` | Delimited flags such as `alias_risk`, `source_bias`, `regional_gap`, `capture_risk_high`, `non_latin_primary` |
 | `reviewer_notes` | Free-form notes for difficult cases |
 
 ## Derived Output Tables
@@ -145,6 +147,8 @@ Contains:
 - but did not clearly clear the bar
 
 This file is important because it keeps the lower edge honest.
+
+However, for very prestige-heavy pilot sets, the near-miss file may legitimately be tiny or even empty. That is a sign the candidate set is not yet stressing the boundary, not necessarily that the methodology is failing.
 
 ### `considered_not_selected.csv`
 
@@ -283,12 +287,12 @@ For lower-tier names, we should probably require more than raw score alone.
 For example, a plausible `B`-tier gate might require:
 
 - stable Latin-script identity
-- public-facing coordination value
+- either strong public-facing coordination value or high natural-buyer clarity
 - at least regional or national obviousness
 - at least `2` independent supporting signals, or `1` extremely strong public-coordination signal plus a second supporting source
 - no major review flag suggesting the apparent salience is just source bias
 
-This is how we avoid "random mid-tier SaaS with decent visibility" becoming protocol special cases.
+This is how we avoid "random mid-tier SaaS with decent visibility" becoming protocol special cases while still allowing obvious capture-risk names like `datadog`-type examples to qualify.
 
 ## A Good First Real Build Pass
 
@@ -297,6 +301,7 @@ The next real build pass should try to produce:
 - `250-500` manually reviewable candidates
 - from `6-10` source buckets
 - with enough diversity to stress-test `S+`, `S`, `A`, and especially `B`
+- and with a dedicated boundary challenge set containing names that are real brands but not obviously selected
 
 That is enough to reveal:
 

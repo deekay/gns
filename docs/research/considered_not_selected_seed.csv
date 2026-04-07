@@ -1,7 +1,1 @@
 candidate_id,normalized_name,display_name,proposed_tier,review_confidence,sources_present,review_reason,review_flags
-cand_0026,cisco,Cisco,B,low,IB24,too_enterprise_specific_for_current_overlay_bar,enterprise_only
-cand_0028,bmw,BMW,B,low,IB24,category_specific_brand_below_current_bar,category_specific
-cand_0029,mercedesbenz,Mercedes-Benz,B,low,IB24,category_specific_brand_below_current_bar,category_specific
-cand_0030,jpmorgan,J.P. Morgan,B,low,IB24,institutional_salience_is_not_enough_here,institution_only
-cand_0031,ibm,IBM,B,low,IB24,durable_but_too_enterprise_weighted,enterprise_only
-cand_0032,sap,SAP,B,low,IB24,too_enterprise_specific_for_current_overlay_bar,enterprise_only

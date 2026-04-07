@@ -132,7 +132,7 @@ The current read-through from salience to pricing is:
 | `S+` | globally unavoidable | globally ubiquitous, repeatedly top-ranked, often both household brand and major coordination endpoint | `500 BTC` for `10 years` |
 | `S` | globally obvious | clear global names with strong multi-context salience | `250 BTC` for `10 years` |
 | `A` | internationally important | strong international or category-defining names that matter widely but are less universal | `100 BTC` for `10 years` |
-| `B` | regionally obvious with clear public coordination value | names that are at least nationally or regionally obvious and not merely lower-ranked long-tail brands | `50 BTC` for `5 years` |
+| `B` | regionally obvious or clearly high capture-risk | names that are at least nationally or regionally obvious, or obvious existing brands that would be too easy to capture cheaply | `50 BTC` for `5 years` |
 
 These bars are still working intuition, not settled protocol policy. They are included here because a salience methodology is only useful if it eventually maps to concrete capital-time commitments.
 
@@ -234,11 +234,6 @@ Within this small pilot set, the names that seem to clear the bar **right now** 
 - `tesla`
 - `toyota`
 - `disney`
-
-That is `20` selected names out of the current `33`-name pilot seed.
-
-The names that were **considered in the pilot but do not clearly make the overlay yet** are:
-
 - `oracle`
 - `chatgpt`
 - `linkedin`
@@ -253,20 +248,20 @@ The names that were **considered in the pilot but do not clearly make the overla
 - `sap`
 - `github`
 
-That is `13` near-miss or not-selected names from the current seed.
+That is effectively `33` selected names out of the current `33`-name pilot seed.
 
-The main reasons these fall short in the current pilot are:
+That does **not** mean the overlay should be this broad in final form.
 
-- more category-specific or enterprise-specific salience
-- thinner persistence
-- weaker evidence of broad public coordination
-- or incomplete regional/source coverage in the current input set
+It means the current pilot set is:
+
+- too prestige-heavy
+- too biased toward already-famous names
+- and not yet a real boundary-testing set
 
 This is a much better fit for how the lower edge of the overlay probably needs to work:
 
-- names either clear a defensible bar
-- or they remain visible as near-misses / research-only names
-- without forcing a brittle protocol line deep into the long tail
+- names in this prestige seed mostly do clear the bar once capture-risk is taken seriously
+- and the actual exclusion work now needs to happen in a dedicated challenge set of less obviously protected names
 
 ## Current View On Scope
 
@@ -337,6 +332,10 @@ Examples that could plausibly belong in this kind of `B` tier, once better regio
 - `timhortons`
 - `mercadolibre`
 - `flipkart`
+- `datadog`
+- `cisco`
+- `sap`
+- `jpmorgan`
 
 The current pilot source mix is not yet good enough to populate this tier credibly, which is itself a useful result.
 
@@ -359,6 +358,10 @@ should generally be read as:
 
 - plausible candidates considered during review
 - but not clearly selected unless stronger evidence emerges
+
+That is the kind of set we still need to build on purpose.
+
+The current `33`-name prestige pilot is no longer a good near-miss set, because under the revised capture-risk lens it is mostly composed of names that should already be selected.
 
 That is exactly why the final pipeline should publish:
 

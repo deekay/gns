@@ -378,6 +378,16 @@ That suggests threshold-style tier definitions such as:
 - `A`: internationally important names
 - `B`: at least regionally obvious names with clear public coordination value
 
+A name should be able to clear these bars through **either** of two rationales:
+
+1. **Public-coordination rationale**
+   The name is something large numbers of people already expect software or agents to resolve correctly.
+
+2. **Capture-risk rationale**
+   The name is an obvious pre-existing brand or institution with a clear natural buyer, such that cheap launch capture would create an overly easy speculative resale trade.
+
+This matters because some names are not maximally household-facing, but still feel clearly wrong to leave cheap at launch. A name like `datadog` can be less universal than `google` and still be an obvious capture-risk name if the natural end buyer is clear and well-capitalized.
+
 The core principle is:
 
 - score and ranking help order evidence
@@ -412,6 +422,11 @@ not forced into materially different rules just to satisfy a quota.
 - strong evidence across countries, sectors, or major public coordination contexts
 - still clearly worthy of protection, but not in the most universal set
 
+An `A`-tier name may qualify because it is:
+
+- strongly public-facing
+- or because it is an internationally important existing brand with a very obvious natural buyer and high asymmetric resale risk
+
 `B` should feel like:
 
 - at least nationally or regionally obvious names
@@ -419,6 +434,14 @@ not forced into materially different rules just to satisfy a quota.
 - not merely lower-ranked SaaS or category-specific brands that happen to appear in a long tail of data
 
 That last point matters. `B` only makes sense if it represents a **different kind of obviousness**, not just the tail end of a single scalar ranking.
+
+A `B`-tier name can also qualify through capture risk if it is:
+
+- an already-established regional or sector-leading brand
+- clearly tied to an obvious natural buyer
+- and likely to create a too-easy speculative resale path if left on the plain base curve
+
+So lower-tier enterprise or institutional names should not be excluded merely because they are not household brands. The real question is whether cheap capture would feel like an obvious launch giveaway.
 
 ### Illustrative Commitment Shape
 
