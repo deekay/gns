@@ -2,6 +2,10 @@
 
 This note explores a bounded version of semantic pricing for GNS:
 
+For the higher-level rationale behind this direction, see:
+
+- [SALIENCE_OVERLAY_RATIONALE.md](./SALIENCE_OVERLAY_RATIONALE.md)
+
 - not a permanent global name-pricing engine
 - not a live protocol that keeps revaluing names
 - not a claim that we can estimate the "true" value of every important word on earth

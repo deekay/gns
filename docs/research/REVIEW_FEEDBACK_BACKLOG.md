@@ -95,7 +95,16 @@ This is currently the most serious challenge to the fairness story.
 
 ### Current Status
 
-Open. Needs explicit design work, not just wording changes.
+Active design path now exists.
+
+Current working direction:
+
+- keep the objective base curve
+- add a bounded, frozen, launch-only premium overlay for already-salient names
+- score that overlay from public salience and coordination evidence
+- allow a second inclusion path for clear natural-buyer capture-risk cases
+
+Still open, but no longer structurally vague.
 
 ## 5. Bond Curve Justification
 
