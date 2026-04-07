@@ -12,6 +12,7 @@ This note should be read alongside:
 
 - [LAUNCH_PREMIUM_OVERLAY_PIPELINE.md](./LAUNCH_PREMIUM_OVERLAY_PIPELINE.md)
 - [INITIAL_SALIENCE_TIERING_EXERCISE.md](./INITIAL_SALIENCE_TIERING_EXERCISE.md)
+- [SALIENCE_SOURCE_REGISTRY.md](./SALIENCE_SOURCE_REGISTRY.md)
 
 ## Build Goal
 
@@ -40,6 +41,13 @@ This is the table we sort, score, review, and classify.
 A starter header template now lives at:
 
 - [salience_candidates_considered_template.csv](./salience_candidates_considered_template.csv)
+
+An initial pilot population derived from the current `33`-name seed now lives at:
+
+- [candidates_considered_seed.csv](./candidates_considered_seed.csv)
+- [overlay_selected_seed.csv](./overlay_selected_seed.csv)
+- [overlay_near_miss_seed.csv](./overlay_near_miss_seed.csv)
+- [considered_not_selected_seed.csv](./considered_not_selected_seed.csv)
 
 ## Recommended Columns
 
