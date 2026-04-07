@@ -12,6 +12,7 @@ This note should be read alongside:
 
 - [LAUNCH_PREMIUM_OVERLAY_PIPELINE.md](./LAUNCH_PREMIUM_OVERLAY_PIPELINE.md)
 - [INITIAL_SALIENCE_TIERING_EXERCISE.md](./INITIAL_SALIENCE_TIERING_EXERCISE.md)
+- [SALIENCE_BOUNDARY_CHALLENGE_SET.md](./SALIENCE_BOUNDARY_CHALLENGE_SET.md)
 - [SALIENCE_SOURCE_REGISTRY.md](./SALIENCE_SOURCE_REGISTRY.md)
 
 ## Build Goal
@@ -48,6 +49,10 @@ An initial pilot population derived from the current `33`-name seed now lives at
 - [overlay_selected_seed.csv](./overlay_selected_seed.csv)
 - [overlay_near_miss_seed.csv](./overlay_near_miss_seed.csv)
 - [considered_not_selected_seed.csv](./considered_not_selected_seed.csv)
+
+A dedicated lower-edge pressure-test slice now lives at:
+
+- [salience_boundary_challenge_set.csv](./salience_boundary_challenge_set.csv)
 
 ## Recommended Columns
 
@@ -166,6 +171,18 @@ Contains:
 - salient names intentionally deferred because they are not representable in the current v1 namespace
 
 This is how we stay honest about the multilingual gap.
+
+### `salience_boundary_challenge_set.csv`
+
+Contains:
+
+- a deliberately non-obvious slice of names
+- provisional expectations such as `likely_selected`, `arguable`, and `likely_not_selected`
+- stress-pattern labels that explain why each name is useful for calibration
+
+This file should not be confused with the final overlay output.
+
+Its job is to make the lower edge reviewable and repeatable.
 
 ## Suggested Row Lifecycle
 

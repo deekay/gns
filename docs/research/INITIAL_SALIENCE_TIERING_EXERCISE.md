@@ -39,6 +39,10 @@ So this seed should be treated as:
 - a methodology pilot
 - not a final judgment about which names deserve premium treatment
 
+For the current lower-edge pressure-test slice, see:
+
+- [SALIENCE_BOUNDARY_CHALLENGE_SET.md](./SALIENCE_BOUNDARY_CHALLENGE_SET.md)
+
 ## V1 Script Boundary
 
 This exercise is intentionally scoped to the names GNS v1 can actually represent.
