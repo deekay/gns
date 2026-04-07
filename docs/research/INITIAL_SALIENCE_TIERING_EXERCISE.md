@@ -302,6 +302,18 @@ Illustrative examples could look more like:
 
 If names in this band start feeling tiny, obscure, or purely niche, the premium table has probably extended too far into the long tail.
 
+Importantly, the exact ordering down here should be treated as very fragile.
+
+At this boundary, names like:
+
+- `digitalocean`
+- `eventbrite`
+- `box`
+- `deepl`
+- `xero`
+
+should be read as part of the same near-cutoff neighborhood, not as a confident claim that one obviously deserves premium treatment while another obviously does not.
+
 ### The First `10` That Did Not Make The List
 
 The first names outside the top `10,000` should feel **almost the same** as the bottom ten that made it.
@@ -326,6 +338,17 @@ The first ten names out would likely look something like:
 - `bunq`
 - `xero`
 - `mixpanel`
+
+The intended meaning is:
+
+- these names are plausible examples of the first slice outside the line
+- not that the current note has enough evidence to argue `digitalocean > eventbrite` or `box < monzo`
+
+If the methodology is working, the cutoff at this depth should be understood as:
+
+- mechanically necessary
+- but substantively narrow
+- with many names near the line behaving like peers until better source coverage and deterministic scoring separate them
 
 This is exactly why a final launch artifact needs:
 
