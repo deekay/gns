@@ -13,6 +13,7 @@ This note should be read alongside:
 - [LAUNCH_PREMIUM_OVERLAY_PIPELINE.md](./LAUNCH_PREMIUM_OVERLAY_PIPELINE.md)
 - [INITIAL_SALIENCE_TIERING_EXERCISE.md](./INITIAL_SALIENCE_TIERING_EXERCISE.md)
 - [SALIENCE_BOUNDARY_CHALLENGE_SET.md](./SALIENCE_BOUNDARY_CHALLENGE_SET.md)
+- [SALIENCE_INSTITUTIONAL_NATURAL_BUYER_SET.md](./SALIENCE_INSTITUTIONAL_NATURAL_BUYER_SET.md)
 - [SALIENCE_SOURCE_REGISTRY.md](./SALIENCE_SOURCE_REGISTRY.md)
 
 ## Build Goal
@@ -53,6 +54,10 @@ An initial pilot population derived from the current `33`-name seed now lives at
 A dedicated lower-edge pressure-test slice now lives at:
 
 - [salience_boundary_challenge_set.csv](./salience_boundary_challenge_set.csv)
+
+A companion institutional/professional natural-buyer slice now lives at:
+
+- [salience_institutional_natural_buyer_set.csv](./salience_institutional_natural_buyer_set.csv)
 
 ## Recommended Columns
 
@@ -183,6 +188,16 @@ Contains:
 This file should not be confused with the final overlay output.
 
 Its job is to make the lower edge reviewable and repeatable.
+
+### `salience_institutional_natural_buyer_set.csv`
+
+Contains:
+
+- institutional and professional names that may deserve overlay treatment even when they are not household-facing
+- provisional expectations such as `likely_selected`, `arguable`, and `likely_not_selected`
+- stress-pattern labels for elite education, professional services, pharma, market infrastructure, media, and developer infrastructure
+
+This file exists to keep the `natural buyer with real firepower` lane from being discussed only in the abstract.
 
 ## Suggested Row Lifecycle
 

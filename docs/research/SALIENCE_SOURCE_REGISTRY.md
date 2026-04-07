@@ -28,6 +28,11 @@ These are not individual sources yet. They are the missing evidence classes the 
 | `PUB_COORD` | Travel delivery logistics telecom and public-service coordination sources | `wave_3` | captures names people actively coordinate around in everyday life |
 | `PUB_EQTY` | Public-company scale and liquidity sources | `wave_3` | useful as a secondary capture-risk amplifier for names like `asana` where cheap launch capture could still be an obvious resale trade |
 | `FIN_BRAND` | Hedge fund asset manager venture capital and private equity rankings | `wave_3` | needed for finance-circle names like `citadel` or `foundersfund` that may have weaker household salience but strong natural-buyer pressure |
+| `EDU_BRAND` | University and elite-school prestige or prominence sources | `wave_3` | needed for names like `harvard` or `stanford` where buyer clarity may matter more than household usage |
+| `PRO_SERV` | Consulting accounting legal and advisory prestige sources | `wave_3` | useful for names like `mckinsey` or `deloitte` that are high-value but not primarily consumer-facing |
+| `HEALTH_BRAND` | Pharma biotech and healthcare-brand prominence sources | `wave_3` | helps evaluate names like `pfizer` or `moderna` where real-world coordination stakes may exceed pure household salience |
+| `MEDIA_INFO` | Institutional media and information-brand sources | `wave_3` | useful for names like `bloomberg`, `reuters`, or `economist` that sit between brand, utility, and generic-word risk |
+| `DEV_INFRA` | Developer infrastructure and cloud-platform prominence sources | `wave_4` | needed for names like `mongodb`, `databricks`, or `vercel` where buyer clarity and public-company scale may matter more than mass-market usage |
 | `ENT_SOFT` | Enterprise software and B2B cloud rankings | `wave_4` | useful for considered and near-miss sets but should not dominate lower overlay tiers |
 | `DEV_PLAT` | Developer and software-platform rankings | `wave_4` | useful where a name is genuinely coordination-critical for software ecosystems |
 

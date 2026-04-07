@@ -269,6 +269,18 @@ So:
 - `foundersfund` can score well on both buyer clarity and capture risk
 - while `sequoia` or `rentech` may still be harder because the exact short token is more ambiguous than the institution behind it
 
+The same logic may extend beyond finance to other institutional categories such as:
+
+- elite education brands like `harvard` or `stanford`
+- professional-services firms like `mckinsey` or `accenture`
+- pharma and biotech names like `pfizer`
+- market-infrastructure and data brands like `nasdaq` or `bloomberg`
+- developer-infrastructure brands like `mongodb`
+
+These should not be auto-included.
+
+But they are important examples of why `natural buyer with real firepower` is a real category in the launch-fairness discussion.
+
 ### Recommended Scoring Style
 
 Use coarse, rank-derived scores rather than raw-dollar calculations.
