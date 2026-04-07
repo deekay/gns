@@ -230,6 +230,45 @@ Instead, score salience using transparent, rank-like signals such as:
 
 This is still imperfect, but it is much more defensible than pretending to produce a precise valuation.
 
+### Capital And Buyer-Firepower Signals
+
+One thing the early salience work understated is that some names may deserve launch protection even when they are not especially household-facing.
+
+Why:
+
+- the name has a clear natural buyer
+- the buyer is already well-capitalized
+- and cheap launch capture would create an unusually obvious resale trade
+
+That means inputs like these should matter as **secondary capture-risk amplifiers**:
+
+- public-company market capitalization
+- investment capital or AUM for major financial firms
+- durable committed capital for large venture, private-equity, or hedge-fund brands
+- major-category rank within a public market or finance list
+
+These should **not** become the main pricing engine.
+
+They are better used this way:
+
+- first establish that the name is a real coordinated brand or institution
+- then use capital scale to decide whether cheap capture would be too easy to monetize
+
+This helps explain why names like `asana` may deserve overlay treatment even if they are weaker on household salience than `nike` or `disney`.
+
+It also helps with finance-circle names like `citadel` or `foundersfund`, where:
+
+- broad public coordination may be thinner
+- but the natural buyer is obvious
+- and the financial upside from cheap capture may still be too easy
+
+The important guardrail is that capital scale should amplify a clear name-claim story, not override ambiguity.
+
+So:
+
+- `foundersfund` can score well on both buyer clarity and capture risk
+- while `sequoia` or `rentech` may still be harder because the exact short token is more ambiguous than the institution behind it
+
 ### Recommended Scoring Style
 
 Use coarse, rank-derived scores rather than raw-dollar calculations.

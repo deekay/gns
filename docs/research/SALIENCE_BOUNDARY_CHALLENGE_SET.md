@@ -73,11 +73,11 @@ The challenge CSV groups names into three provisional expectations:
 
 These are not final answers. They are starting hypotheses for stress-testing.
 
-The current first-pass slice contains `36` names:
+The current first-pass slice contains `41` names:
 
-- `12` `likely_selected`
-- `12` `arguable`
-- `12` `likely_not_selected`
+- `14` `likely_selected`
+- `14` `arguable`
+- `13` `likely_not_selected`
 
 ## How To Read The Buckets
 
@@ -97,6 +97,7 @@ This bucket now intentionally includes some:
 - mid-tier public-company names
 - strong regional household brands
 - important internet/service brands that are not necessarily `S`-tier famous
+- capital-rich finance or investment brands when buyer clarity is strong enough
 
 ### `arguable`
 
@@ -136,6 +137,7 @@ This bucket is intentionally useful for two different stress patterns:
 
 - smaller or more replaceable SaaS brands like `mixpanel` or `pendo`
 - generic-word brand claims like `toast`, `wise`, `bolt`, or `scale`, where there may be a real company but not an obvious social consensus that the protocol should specially privilege that claimant
+- finance shorthand or common-word cases where the institution may be powerful but the exact short token is still too ambiguous
 
 If many of these start feeling like obvious overlay names, the bar is probably still too low or `capture risk` is being defined too broadly.
 
@@ -149,6 +151,7 @@ The initial challenge slice is trying to cover all of these:
 | `regional_household_brand` | Tests whether a real `B` tier can capture nationally obvious names | `chickfila`, `traderjoes`, `timhortons`, `mercadolibre` |
 | `consumer_service_midband` | Tests whether meaningful consumer internet names clear the bar | `eventbrite`, `tripadvisor`, `vrbo`, `squarespace` |
 | `enterprise_saas_boundary` | Forces us to decide when enterprise identity becomes important enough for protocol special-casing | `digitalocean`, `asana`, `miro`, `typeform` |
+| `finance_circle_brand` | Tests whether capital-rich but less household-facing brands should still be protected from obvious capture | `citadel`, `foundersfund`, `sequoia`, `accel` |
 | `generic_word_brand` | Tests whether natural-buyer clarity and fairness break down when a company brand is also a broad common word | `toast`, `wise`, `bolt`, `scale` |
 | `replaceable_vertical_software` | Helps identify where the bar should remain high even if there is a real company behind the name | `mixpanel`, `heap`, `pendo`, `mural` |
 

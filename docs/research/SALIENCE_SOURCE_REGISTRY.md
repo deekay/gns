@@ -26,6 +26,8 @@ These are not individual sources yet. They are the missing evidence classes the 
 | `REG_WEB` | Regional top-site and top-app rankings | `wave_2` | improves evidence for regionally dominant coordination names that are not globally top-ranked |
 | `PAY_COORD` | Payments and consumer-finance coordination sources | `wave_3` | captures names whose misrouting is socially costly even when they are not glamorous brands |
 | `PUB_COORD` | Travel delivery logistics telecom and public-service coordination sources | `wave_3` | captures names people actively coordinate around in everyday life |
+| `PUB_EQTY` | Public-company scale and liquidity sources | `wave_3` | useful as a secondary capture-risk amplifier for names like `asana` where cheap launch capture could still be an obvious resale trade |
+| `FIN_BRAND` | Hedge fund asset manager venture capital and private equity rankings | `wave_3` | needed for finance-circle names like `citadel` or `foundersfund` that may have weaker household salience but strong natural-buyer pressure |
 | `ENT_SOFT` | Enterprise software and B2B cloud rankings | `wave_4` | useful for considered and near-miss sets but should not dominate lower overlay tiers |
 | `DEV_PLAT` | Developer and software-platform rankings | `wave_4` | useful where a name is genuinely coordination-critical for software ecosystems |
 
@@ -44,3 +46,7 @@ It is **not** enough yet to:
 - or support strong judgments on many national consumer names
 
 That is why the next additions should start with regional household and consumer sources rather than more software or B2B inputs.
+
+The next most important correction after that is:
+
+- finance and public-company scale sources that can sharpen the `capture risk` side of the methodology without turning the overlay into a pure market-cap table

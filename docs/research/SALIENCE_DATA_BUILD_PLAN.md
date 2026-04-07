@@ -251,17 +251,21 @@ Desired outcome:
 Why:
 
 - some names matter because misrouting is expensive, not because they are glamorous brands
+- some names also matter because cheap launch capture would create an overly easy resale trade to a well-capitalized natural buyer
 
 What to ingest:
 
 - payment network rankings
 - major fintech and consumer-bank rankings
+- public-company size and liquidity screens as secondary capture-risk evidence
+- hedge fund, asset-manager, venture-capital, and private-equity prestige or scale lists
 - publicly visible logistics / travel / booking / delivery services
 - large institutional or infrastructure-facing names people already coordinate around
 
 Desired outcome:
 
 - stronger handling of names where incorrect resolution would create obvious coordination harm
+- better handling of names like `asana`, `citadel`, or `foundersfund`, where buyer firepower matters even if the name is not broadly household-facing
 
 ## Wave 4: Enterprise / Software / Developer Names
 
@@ -308,6 +312,11 @@ For example, a plausible `B`-tier gate might require:
 - at least regional or national obviousness
 - at least `2` independent supporting signals, or `1` extremely strong public-coordination signal plus a second supporting source
 - no major review flag suggesting the apparent salience is just source bias
+
+And where the case is mostly about `capture risk`, a lower-tier name should usually also have:
+
+- evidence that the buyer is already substantial enough for cheap capture to feel like an obvious windfall
+- and no major ambiguity that would make the exact token feel socially contested
 
 This is how we avoid "random mid-tier SaaS with decent visibility" becoming protocol special cases while still allowing obvious capture-risk names like `datadog`-type examples to qualify.
 
