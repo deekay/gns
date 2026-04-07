@@ -361,32 +361,94 @@ It is also more honest about the current script boundary:
 - but only within the representable v1 namespace
 - while maintaining a separately documented backlog of important names that belong to future non-Latin namespace work
 
-## Step 5: Tiering, Not Bespoke Pricing
+## Step 5: Threshold-Based Tiering, Not Quotas Or Bespoke Pricing
 
 Do not assign a custom bond to every name.
 
-Instead, map scores into a few discrete tiers, for example:
+Instead, map names into a few discrete tiers based on **characteristics they clearly satisfy**, not on a target count the protocol feels obligated to fill.
 
-- `Tier S`: top ~100 names
-- `Tier A`: next ~1,000 names
-- `Tier B`: next ~10,000 names
-- `Tier C`: optional extended set
+The better question is:
 
-Each tier would correspond to a premium floor or multiplier.
+> what makes a name important enough to justify launch-era special treatment at all?
 
-Example shape only:
+That suggests threshold-style tier definitions such as:
 
-- `Tier S`: at least `10 BTC`
-- `Tier A`: at least `3 BTC`
-- `Tier B`: at least `1 BTC`
-- `Tier C`: at least `0.25 BTC`
+- `S+`: globally unavoidable names
+- `S`: globally obvious names
+- `A`: internationally important names
+- `B`: at least regionally obvious names with clear public coordination value
 
-Those numbers are placeholders. The important part is the shape:
+The core principle is:
 
-- few buckets
-- easy to explain
-- easy to freeze
-- less arbitrary than a bespoke table
+- score and ranking help order evidence
+- but protocol inclusion should depend on whether a name clearly clears a characteristic bar with enough confidence
+- not on whether it happened to land above an arbitrary line like `#10,000`
+
+This is especially important at the lower end of the overlay:
+
+- if two names feel like near peers
+- and the evidence difference between them is fragile
+- they should usually be treated the same
+
+not forced into materially different rules just to satisfy a quota.
+
+### Suggested Characteristic Bars
+
+`S+` should feel like:
+
+- universally recognizable household or infrastructure identities
+- repeated top placement across major global sources
+- names large numbers of people already expect to resolve correctly without explanation
+
+`S` should feel like:
+
+- clearly global names
+- strong cross-context salience
+- obvious enough that most reasonable reviewers would say "yes, that belongs in a special bucket"
+
+`A` should feel like:
+
+- internationally important names
+- strong evidence across countries, sectors, or major public coordination contexts
+- still clearly worthy of protection, but not in the most universal set
+
+`B` should feel like:
+
+- at least nationally or regionally obvious names
+- clear public coordination value in one or more major countries or regions
+- not merely lower-ranked SaaS or category-specific brands that happen to appear in a long tail of data
+
+That last point matters. `B` only makes sense if it represents a **different kind of obviousness**, not just the tail end of a single scalar ranking.
+
+### Illustrative Commitment Shape
+
+The current calibration still points to something like:
+
+- `S+`: `500 BTC` for `10 years`
+- `S`: `250 BTC` for `10 years`
+- `A`: `100 BTC` for `10 years`
+- `B`: `50 BTC` for `5 years`
+
+These are still only working intuition, but they line up better with characteristic tiers than with quota-driven slices.
+
+### Required Outputs
+
+If the pipeline is working well, it should produce at least four artifacts:
+
+- `candidates_considered.csv`
+  Every candidate reviewed, with evidence and a selected / not-selected outcome.
+- `overlay_selected.csv`
+  The names that clearly cleared a tier bar.
+- `overlay_near_miss.csv`
+  Names that came close enough to deserve visible review but did not clearly clear the bar.
+- `out_of_scope_non_v1_script.csv`
+  Salient names deferred because they are not representable in the current v1 namespace.
+
+This makes the final artifact much easier to audit:
+
+- which names were selected
+- which names were considered and rejected
+- and which names were never eligible for v1 in the first place
 
 ## Recommended Scope And Size
 
@@ -427,44 +489,21 @@ Recommended target:
 
 ### Final Frozen Premium Table
 
-For an initial launch artifact, the most plausible scale is probably:
+The final protocol-facing overlay should **not** target a fixed count.
 
-- around `10,000` names
+Instead:
 
-That is large enough to cover:
+- build a large candidate universe
+- rank it for review
+- then let the number of selected names fall out of the characteristic bars and confidence thresholds
 
-- top global brands
-- large internet services
-- major institutions and infrastructure names
-- a much broader international set than a `1,000`-name table would allow
+That means the final count might be:
 
-while still being small enough to remain:
+- a few hundred
+- a few thousand
+- or something else entirely
 
-- reviewable
-- explainable
-- and not obviously overextended into the long tail
-
-### Why Not `1,000`?
-
-`1,000` is probably too small for a credible global launch exception.
-
-It would likely:
-
-- overfit to a narrow Western / English / large-cap worldview
-- miss too many names that are globally obvious in other regions
-- make the omissions debate feel arbitrary very quickly
-
-### Why Not `100,000`?
-
-`100,000` is probably too large for an initial frozen premium table.
-
-At that point the system starts to feel like it is trying to classify:
-
-- the whole world of generic words
-- a huge long tail of arguable entities
-- and many names whose premium status is much more debatable
-
-That is exactly where neutrality and fairness become harder to defend.
+The count is an output of the methodology, not an input to optimize toward.
 
 ### Best Current Recommendation
 
@@ -472,15 +511,10 @@ So the best phased answer right now is probably:
 
 - build a raw candidate pool in the `25,000-100,000` range
 - score and review the top `5,000-20,000`
-- freeze an initial launch premium table around `10,000`
+- select whatever names clearly satisfy the overlay bars
+- publish a visible near-miss set alongside the selected set
 
-with internal structure like:
-
-- top `100`
-- top `1,000`
-- top `10,000`
-
-mapping naturally to `S`, `A`, and `B` style premium tiers.
+This keeps the protocol-facing artifact smaller and more defensible while still allowing research to range much more broadly.
 
 ## How Hard This Is
 

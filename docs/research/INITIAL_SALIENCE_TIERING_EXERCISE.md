@@ -127,14 +127,14 @@ This exercise is not just ranking names. It is trying to connect salience to act
 
 The current read-through from salience to pricing is:
 
-| Tier | Rough slice | Salience shape | Illustrative commitment |
+| Tier | Characteristic bar | Salience shape | Illustrative commitment |
 | --- | --- | --- | --- |
-| `S+` | top `10-25` names | globally ubiquitous, repeatedly top-ranked, often both household brand and major coordination endpoint | `500 BTC` for `10 years` |
-| `S` | top `25-250` names | globally expected brand or platform identity with clear multi-context salience | `250 BTC` for `10 years` |
-| `A` | top `250-2,500` names | strong international or category-defining names that matter widely but are less universal | `100 BTC` for `10 years` |
-| `B` | top `2,500-10,000` names | important names worth protecting, but not at the most globally obvious level | `50 BTC` for `5 years` |
+| `S+` | globally unavoidable | globally ubiquitous, repeatedly top-ranked, often both household brand and major coordination endpoint | `500 BTC` for `10 years` |
+| `S` | globally obvious | clear global names with strong multi-context salience | `250 BTC` for `10 years` |
+| `A` | internationally important | strong international or category-defining names that matter widely but are less universal | `100 BTC` for `10 years` |
+| `B` | regionally obvious with clear public coordination value | names that are at least nationally or regionally obvious and not merely lower-ranked long-tail brands | `50 BTC` for `5 years` |
 
-These slices are still working intuition, not settled protocol policy. They are included here because a salience methodology is only useful if it eventually maps to concrete capital-time commitments.
+These bars are still working intuition, not settled protocol policy. They are included here because a salience methodology is only useful if it eventually maps to concrete capital-time commitments.
 
 ## Seed Ranking Table
 
@@ -208,155 +208,165 @@ A few patterns already show up:
    It is "more global within names that already coordinate in Latin script."
    That is a narrower and more honest target for v1.
 
+## Threshold-Based Trial From The Current Seed
+
+If we switch from "target a count" to "select names that clearly clear a characteristic bar," then this current seed reads differently.
+
+Within this small pilot set, the names that seem to clear the bar **right now** are:
+
+- `apple`
+- `google`
+- `microsoft`
+- `amazon`
+- `facebook`
+- `instagram`
+- `youtube`
+- `nvidia`
+- `cocacola`
+- `mcdonalds`
+- `samsung`
+- `walmart`
+- `visa`
+- `tiktok`
+- `whatsapp`
+- `netflix`
+- `nike`
+- `toyota`
+- `disney`
+
+That is `19` selected names out of the current `33`-name pilot seed.
+
+The names that were **considered in the pilot but do not clearly make the overlay yet** are:
+
+- `oracle`
+- `chatgpt`
+- `linkedin`
+- `baidu`
+- `naver`
+- `adobe`
+- `cisco`
+- `tesla`
+- `bmw`
+- `mercedesbenz`
+- `jpmorgan`
+- `ibm`
+- `sap`
+- `github`
+
+That is `14` near-miss or not-selected names from the current seed.
+
+The main reasons these fall short in the current pilot are:
+
+- more category-specific or enterprise-specific salience
+- thinner persistence
+- weaker evidence of broad public coordination
+- or incomplete regional/source coverage in the current input set
+
+This is a much better fit for how the lower edge of the overlay probably needs to work:
+
+- names either clear a defensible bar
+- or they remain visible as near-misses / research-only names
+- without forcing a brittle protocol line deep into the long tail
+
 ## Current View On Scope
 
 This exercise reinforces the current scope recommendation:
 
 - raw candidate universe in the `25,000-100,000` range
 - careful review set in the `5,000-20,000` range
-- initial frozen premium table around `10,000`
+- final selected overlay count should fall out of the tier bars rather than be pre-targeted
 
 The present seed list is intentionally much smaller because it is only meant to test the methodology and the pricing intuition.
 
-## Boundary Intuition Sketches
+## Characteristic Intuition Sketches
 
-We do not have a computed top-`10,000` table yet, so the sketches below are illustrative rather than authoritative.
+If the threshold-based methodology is working, the tiers should feel roughly like this:
 
-The point is to preview the **feel** of the boundary slices so we can sanity-check whether the eventual tiering output seems directionally right.
+### `S+` Should Feel Like
 
-### Around `95-105`
+- `apple`
+- `google`
+- `microsoft`
+- `amazon`
 
-This slice should feel like:
+These are names almost everyone would agree deserve exceptional treatment.
 
-- globally recognizable names
-- strong consumer or internet coordination value
-- clearly important, but not in the tiny set of most universal brand identities on earth
+### `S` Should Feel Like
 
-The kinds of names that plausibly live here are things like:
+- `facebook`
+- `instagram`
+- `youtube`
+- `cocacola`
+- `mcdonalds`
+- `nvidia`
+
+These are still obviously special, but a little less universal than the smallest top bucket.
+
+### `A` Should Feel Like
 
 - `nike`
 - `disney`
-- `paypal`
-- `spotify`
-- `uber`
-- `adidas`
-- `airbnb`
-- `mastercard`
-- `pepsi`
-- `ikea`
-- `nintendo`
+- `netflix`
+- `whatsapp`
+- `tiktok`
+- `toyota`
+- `visa`
+- `samsung`
 
-These are names that many people across regions already expect to resolve correctly, but they are one step below the absolute top handful of global identities like `google`, `apple`, or `amazon`.
+These are internationally important names where most reasonable reviewers would still say "yes, special-casing that seems about right."
 
-### Around `995-1005`
+### `B` Should Feel Like
 
-This slice should feel like:
+This is the most sensitive tier.
 
-- still very real brands
-- category leaders, strong regional champions, or widely used internet/software services
-- important enough that a claim would not feel frivolous
-- but no longer near the globally dominant salience bucket
+It should **not** feel like:
 
-The kinds of names that plausibly live here are things like:
+- random lower-ranked SaaS
+- or the tail of a long global spreadsheet
 
-- `doordash`
-- `canva`
-- `cloudflare`
-- `shopify`
-- `xiaomi`
-- `discord`
-- `atlassian`
-- `garmin`
-- `expedia`
-- `roblox`
-- `tripadvisor`
+It should feel more like:
 
-The common pattern here is:
+- names that are at least nationally or regionally obvious
+- names ordinary people in a major country or region already coordinate around
+- names whose misallocation would feel socially costly even if they are not global super-brands
 
-- real user coordination value
-- but thinner cross-dataset presence, weaker persistence, narrower geography, or more category-specific salience than the names clustered near rank `100`
+Examples that could plausibly belong in this kind of `B` tier, once better regional sources are added, are names more like:
 
-### Around `9990-10000`
+- `chickfila`
+- `traderjoes`
+- `timhortons`
+- `mercadolibre`
+- `flipkart`
 
-The very bottom of a top-`10,000` premium table should still not feel trivial.
+The current pilot source mix is not yet good enough to populate this tier credibly, which is itself a useful result.
 
-It should feel like:
+## Near-Miss Neighborhood Intuition
 
-- names with clear existing coordination value
-- but only modest evidence compared with the stronger buckets
-- often major national or regional brands, or category-specific services with meaningful but not universal recognition
+Near-miss names should usually behave like peers rather than like sharply ordered winners and losers.
 
-Illustrative examples could look more like:
+That means names more like:
 
+- `digitalocean`
+- `eventbrite`
+- `box`
+- `deepl`
+- `xero`
 - `asana`
-- `digitalocean`
 - `miro`
-- `wise`
-- `zendesk`
-- `mercari`
-- `monzo`
-- `squarespace`
-- `typeform`
-- `kayak`
-- `brex`
-
-If names in this band start feeling tiny, obscure, or purely niche, the premium table has probably extended too far into the long tail.
-
-Importantly, the exact ordering down here should be treated as very fragile.
-
-At this boundary, names like:
-
-- `digitalocean`
-- `eventbrite`
-- `box`
-- `deepl`
-- `xero`
-
-should be read as part of the same near-cutoff neighborhood, not as a confident claim that one obviously deserves premium treatment while another obviously does not.
-
-### The First `10` That Did Not Make The List
-
-The first names outside the top `10,000` should feel **almost the same** as the bottom ten that made it.
-
-The difference should usually be something small but defensible, such as:
-
-- one fewer strong public-source appearances
-- weaker persistence over time
-- less cross-region evidence
-- weaker Latin-script coordination
-- or narrower category salience
-
-The first ten names out would likely look something like:
-
-- `box`
-- `basecamp`
-- `deepl`
-- `eventbrite`
-- `vrbo`
-- `weebly`
-- `monese`
-- `bunq`
-- `xero`
 - `mixpanel`
 
-The intended meaning is:
+should generally be read as:
 
-- these names are plausible examples of the first slice outside the line
-- not that the current note has enough evidence to argue `digitalocean > eventbrite` or `box < monzo`
+- plausible candidates considered during review
+- but not clearly selected unless stronger evidence emerges
 
-If the methodology is working, the cutoff at this depth should be understood as:
+That is exactly why the final pipeline should publish:
 
-- mechanically necessary
-- but substantively narrow
-- with many names near the line behaving like peers until better source coverage and deterministic scoring separate them
+- the selected overlay set
+- the considered-but-not-selected set
+- and the near-miss set
 
-This is exactly why a final launch artifact needs:
-
-- deterministic scoring
-- explicit source rules
-- and a visible review pass
-
-Once we get this far down the table, tiny changes in methodology will move names across the line very easily.
+instead of pretending the lower boundary is ever deeply self-justifying.
 
 ## What To Do Next
 
@@ -366,7 +376,11 @@ The most useful next expansions would be:
 2. add more non-English and non-U.S. prominence sources
 3. keep an explicit deferred list of salient non-Latin-primary names that are out of scope for v1
 4. compute a deterministic draft score rather than this manually smoothed seed
-5. separate:
+5. publish explicit:
+   - selected
+   - near-miss
+   - and considered-but-not-selected outputs
+6. separate:
    - mechanical score
    - and review-adjusted score
    so we can see where the current source mix is biasing the result
