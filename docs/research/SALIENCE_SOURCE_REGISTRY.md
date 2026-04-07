@@ -24,6 +24,9 @@ These are not individual sources yet. They are the missing evidence classes the 
 | `REG_BRAND` | Regional and national consumer brand rankings | `wave_1` | needed to populate a credible regionally obvious `B` tier |
 | `REG_RETAIL` | Grocery retail restaurant and household-facing rankings | `wave_1` | needed for names like `chickfila`-type examples that matter to ordinary people but do not show up in global brand lists |
 | `REG_WEB` | Regional top-site and top-app rankings | `wave_2` | improves evidence for regionally dominant coordination names that are not globally top-ranked |
+| `EMERGENT_WEB` | Current AI and breakout-product web-traffic sources | `wave_2` | needed for names like `chatgpt`, `perplexity`, or `claude` whose salience can outrun legacy brand lists |
+| `EMERGENT_APP` | App-store and consumer app momentum sources | `wave_2` | captures newer brands whose user coordination shows up in app usage before traditional brand rankings |
+| `PRIVATE_BREAKOUT` | Breakout private-company and startup prominence sources | `wave_2` | helps surface fast-rising names like `anthropic` or `cursor` that may matter before they become legacy-brand fixtures |
 | `PAY_COORD` | Payments and consumer-finance coordination sources | `wave_3` | captures names whose misrouting is socially costly even when they are not glamorous brands |
 | `PUB_COORD` | Travel delivery logistics telecom and public-service coordination sources | `wave_3` | captures names people actively coordinate around in everyday life |
 | `PUB_EQTY` | Public-company scale and liquidity sources | `wave_3` | useful as a secondary capture-risk amplifier for names like `asana` where cheap launch capture could still be an obvious resale trade |
@@ -49,6 +52,7 @@ It is **not** enough yet to:
 - populate a serious regional `B` tier
 - confidently separate regionally obvious names from merely visible long-tail brands
 - or support strong judgments on many national consumer names
+- or reliably surface meteoric names whose salience is obvious now but undercounted by slower legacy brand lists
 
 That is why the next additions should start with regional household and consumer sources rather than more software or B2B inputs.
 

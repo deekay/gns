@@ -43,6 +43,10 @@ For the current lower-edge pressure-test slice, see:
 
 - [SALIENCE_BOUNDARY_CHALLENGE_SET.md](./SALIENCE_BOUNDARY_CHALLENGE_SET.md)
 
+For a companion slice focused on newer breakout names that the original seed undercounts, see:
+
+- [SALIENCE_METEORIC_NAME_SET.md](./SALIENCE_METEORIC_NAME_SET.md)
+
 ## V1 Script Boundary
 
 This exercise is intentionally scoped to the names GNS v1 can actually represent.
@@ -66,6 +70,30 @@ This matters for interpretation:
 - otherwise it should be tracked as future namespace work, not shoehorned into the v1 overlay
 
 This keeps the exercise aligned with the protocol we actually have instead of the broader multilingual system we may eventually want.
+
+## What This Seed Misses
+
+The original `33`-name prestige seed was useful for obvious legacy names, but it is not a full picture of current salience.
+
+In particular:
+
+- `chatgpt` is in the seed
+- but `openai`, `anthropic`, and `claude` are not
+
+That is mainly a source-mix artifact, not a settled judgment that those names do not matter.
+
+The seed leans on:
+
+- durable global brand rankings
+- and broad website visibility
+
+So it naturally sees a meteoric product like `chatgpt` sooner than:
+
+- the company name `openai`
+- the lab/company name `anthropic`
+- or the product brand `claude`
+
+That is one reason the new meteoric-name slice exists.
 
 ## Tier Definitions Used In This Exercise
 

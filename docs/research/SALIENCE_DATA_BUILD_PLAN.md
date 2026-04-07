@@ -15,6 +15,7 @@ This note should be read alongside:
 - [INITIAL_SALIENCE_TIERING_EXERCISE.md](./INITIAL_SALIENCE_TIERING_EXERCISE.md)
 - [SALIENCE_BOUNDARY_CHALLENGE_SET.md](./SALIENCE_BOUNDARY_CHALLENGE_SET.md)
 - [SALIENCE_INSTITUTIONAL_NATURAL_BUYER_SET.md](./SALIENCE_INSTITUTIONAL_NATURAL_BUYER_SET.md)
+- [SALIENCE_METEORIC_NAME_SET.md](./SALIENCE_METEORIC_NAME_SET.md)
 - [SALIENCE_SOURCE_REGISTRY.md](./SALIENCE_SOURCE_REGISTRY.md)
 
 ## Build Goal
@@ -59,6 +60,10 @@ A dedicated lower-edge pressure-test slice now lives at:
 A companion institutional/professional natural-buyer slice now lives at:
 
 - [salience_institutional_natural_buyer_set.csv](./salience_institutional_natural_buyer_set.csv)
+
+A companion meteoric-name slice now lives at:
+
+- [salience_meteoric_name_set.csv](./salience_meteoric_name_set.csv)
 
 ## Recommended Columns
 
@@ -200,6 +205,16 @@ Contains:
 
 This file exists to keep the `natural buyer with real firepower` lane from being discussed only in the abstract.
 
+### `salience_meteoric_name_set.csv`
+
+Contains:
+
+- newer breakout names whose salience may outrun durable brand rankings
+- provisional expectations such as `likely_selected`, `arguable`, and `likely_not_selected`
+- stress-pattern labels for AI companies, AI products, consumer AI services, developer tools, and generic-token meteoric brands
+
+This file exists so the overlay does not systematically miss names like `openai`, `anthropic`, or `claude` just because the original seed leaned on slower-moving brand sources.
+
 ## Suggested Row Lifecycle
 
 Each candidate should move through a simple lifecycle:
@@ -261,6 +276,26 @@ What to ingest:
 Desired outcome:
 
 - better treatment of names like `mercadolibre`, `flipkart`, or regionally dominant comms / transport / commerce platforms
+
+## Wave 2b: Meteoric And Breakout Product Names
+
+Why:
+
+- some names become obviously important before legacy brand lists catch up
+- the current prestige seed only partially sees this through broad website traffic
+- product brands can become more salient than their company names very quickly
+
+What to ingest:
+
+- AI/chat web-traffic sources
+- app-store or consumer-app momentum sources
+- breakout private-company lists
+- developer-tool momentum or visibility sources
+
+Desired outcome:
+
+- stronger handling of names like `openai`, `anthropic`, `claude`, `perplexity`, or `cursor`
+- a cleaner methodology for deciding when recent momentum is real enough to matter without overfitting to hype cycles
 
 ## Wave 3: Payments, Financial, And Public-Service Coordination Names
 
