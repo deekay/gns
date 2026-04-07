@@ -27,6 +27,7 @@ These are not individual sources yet. They are the missing evidence classes the 
 | `EMERGENT_WEB` | Current AI and breakout-product web-traffic sources | `wave_2` | needed for names like `chatgpt`, `perplexity`, or `claude` whose salience can outrun legacy brand lists |
 | `EMERGENT_APP` | App-store and consumer app momentum sources | `wave_2` | captures newer brands whose user coordination shows up in app usage before traditional brand rankings |
 | `PRIVATE_BREAKOUT` | Breakout private-company and startup prominence sources | `wave_2` | helps surface fast-rising names like `anthropic` or `cursor` that may matter before they become legacy-brand fixtures |
+| `PUB_FIG` | Public-figure creator athlete and entertainment prominence sources | `wave_3a` | needed for names like `taylorswift`, `kanyewest`, or `elonmusk` where one dominant referent matters more than company fundamentals |
 | `PAY_COORD` | Payments and consumer-finance coordination sources | `wave_3` | captures names whose misrouting is socially costly even when they are not glamorous brands |
 | `PUB_COORD` | Travel delivery logistics telecom and public-service coordination sources | `wave_3` | captures names people actively coordinate around in everyday life |
 | `PUB_EQTY` | Public-company scale and liquidity sources | `wave_3` | useful as a secondary capture-risk amplifier for names like `asana` where cheap launch capture could still be an obvious resale trade |

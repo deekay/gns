@@ -14,6 +14,7 @@ This should be read alongside:
 - [SALIENCE_DATA_BUILD_PLAN.md](./SALIENCE_DATA_BUILD_PLAN.md)
 - [SALIENCE_BOUNDARY_CHALLENGE_SET.md](./SALIENCE_BOUNDARY_CHALLENGE_SET.md)
 - [SALIENCE_INSTITUTIONAL_NATURAL_BUYER_SET.md](./SALIENCE_INSTITUTIONAL_NATURAL_BUYER_SET.md)
+- [SALIENCE_PUBLIC_FIGURE_SET.md](./SALIENCE_PUBLIC_FIGURE_SET.md)
 - [CLAIM_ALLOCATION_AND_BATCHING_OPTIONS.md](./CLAIM_ALLOCATION_AND_BATCHING_OPTIONS.md)
 
 ## Executive Summary
@@ -23,7 +24,7 @@ The current direction is:
 - keep a simple, objective base bond curve for the general namespace
 - add a **bounded, frozen, launch-only premium overlay** for already-salient names
 - determine that overlay from public evidence of salience and coordination importance
-- allow a second path for names where cheap capture would create an overly easy resale trade to one obvious, well-capitalized natural buyer
+- allow a second path for names where cheap capture would create an overly easy resale trade to one obvious, well-capitalized natural buyer or one dominant real-world referent
 
 This is not a claim that GNS can neutrally price every important word on earth.
 
@@ -232,6 +233,46 @@ may score well, while names like:
 - `wise`
 
 remain more arguable or likely excluded.
+
+### Public-Figure And Personal-Name Variant
+
+Some cases are not best described as "natural buyer" cases at all.
+
+For public figures, creators, athletes, and other person-linked identities, the better question is:
+
+> is there one dominant existing real-world referent such that cheap launch capture would create obviously bad hostage dynamics around that name?
+
+This is the same family of problem as brand squatting, but with a slightly different lens:
+
+- the long-run operator may be the person
+- or their management company
+- or their estate
+- or another clearly authorized operating entity
+
+The core working default should be:
+
+- names with an obvious dominant existing buyer or dominant real-world referent should generally be selected
+- unless the token is too generic, too socially contested, or too structurally special to privilege one claimant cleanly
+
+That is why:
+
+- `kanyewest`
+- `taylorswift`
+- `elonmusk`
+
+can look much stronger than:
+
+- `kanye`
+- `prince`
+- `future`
+
+The main additional guardrail for personal names is token clarity.
+
+Full names and highly distinctive public identities can often clear the bar.
+
+Single first names, titles, generic mononyms, and broad surnames should face a much stricter standard.
+
+That is why this lane should be evaluated separately rather than folded loosely into either the institutional set or the meteoric-name set.
 
 ## Why Market Cap Is Not The Main Scoring Engine
 

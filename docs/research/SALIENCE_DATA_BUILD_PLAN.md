@@ -16,6 +16,7 @@ This note should be read alongside:
 - [SALIENCE_BOUNDARY_CHALLENGE_SET.md](./SALIENCE_BOUNDARY_CHALLENGE_SET.md)
 - [SALIENCE_INSTITUTIONAL_NATURAL_BUYER_SET.md](./SALIENCE_INSTITUTIONAL_NATURAL_BUYER_SET.md)
 - [SALIENCE_METEORIC_NAME_SET.md](./SALIENCE_METEORIC_NAME_SET.md)
+- [SALIENCE_PUBLIC_FIGURE_SET.md](./SALIENCE_PUBLIC_FIGURE_SET.md)
 - [SALIENCE_SOURCE_REGISTRY.md](./SALIENCE_SOURCE_REGISTRY.md)
 
 ## Build Goal
@@ -65,6 +66,10 @@ A companion meteoric-name slice now lives at:
 
 - [salience_meteoric_name_set.csv](./salience_meteoric_name_set.csv)
 
+A companion public-figure and personal-name slice now lives at:
+
+- [salience_public_figure_set.csv](./salience_public_figure_set.csv)
+
 ## Recommended Columns
 
 ### Identity
@@ -95,7 +100,7 @@ These fields help us reason about what kind of name this is.
 | `region_scope` | `global`, `multi_region`, `national`, `regional` |
 | `household_facing` | `yes` or `no` |
 | `public_coordination_value` | Short note on why misallocation would matter publicly |
-| `natural_buyer_clarity` | `high`, `medium`, or `low` confidence that an obvious existing entity naturally owns the name |
+| `natural_buyer_clarity` | `high`, `medium`, or `low` confidence that an obvious existing entity or dominant real-world referent naturally owns the name |
 | `capture_risk_notes` | Short note on why cheap launch capture would or would not create an obvious resale trade |
 
 ### Source Evidence
@@ -215,6 +220,16 @@ Contains:
 
 This file exists so the overlay does not systematically miss names like `openai`, `anthropic`, or `claude` just because the original seed leaned on slower-moving brand sources.
 
+### `salience_public_figure_set.csv`
+
+Contains:
+
+- public-figure, creator, athlete, and other personal-name cases where the relevant question is dominant referent rather than only natural buyer
+- provisional expectations such as `likely_selected`, `arguable`, and `likely_not_selected`
+- stress-pattern labels for full names, distinctive mononyms, creator-native identities, first-name shorthand, and generic stage names
+
+This file exists so the overlay can test names like `kanyewest`, `taylorswift`, or `elonmusk` without pretending that personal-name identity coordination works exactly like ordinary company branding.
+
 ## Suggested Row Lifecycle
 
 Each candidate should move through a simple lifecycle:
@@ -297,6 +312,26 @@ Desired outcome:
 - stronger handling of names like `openai`, `anthropic`, `claude`, `perplexity`, or `cursor`
 - a cleaner methodology for deciding when recent momentum is real enough to matter without overfitting to hype cycles
 
+## Wave 3a: Public-Figure And Creator Identity Names
+
+Why:
+
+- some names matter because people already expect them to refer to one public person rather than to one company
+- the real trust question is often dominant referent and long-run operator fit, not only household-brand metrics
+- cheap launch capture of a clear personal-name identity can create the same hostage dynamics as obvious brand squatting
+
+What to ingest:
+
+- public-figure and creator prominence lists
+- athlete and entertainment ranking sources
+- widely coordinated audience or followership sources
+- media or culture rankings that already publish stable Latin-script public identities
+
+Desired outcome:
+
+- better handling of names like `kanyewest`, `taylorswift`, `elonmusk`, or `mrbeast`
+- a cleaner methodology for deciding when full-name specificity or a highly distinctive stage name is strong enough to justify overlay treatment
+
 ## Wave 3: Payments, Financial, And Public-Service Coordination Names
 
 Why:
@@ -359,7 +394,7 @@ For lower-tier names, we should probably require more than raw score alone.
 For example, a plausible `B`-tier gate might require:
 
 - stable Latin-script identity
-- either strong public-facing coordination value or high natural-buyer clarity
+- either strong public-facing coordination value or high natural-buyer / dominant-referent clarity
 - at least regional or national obviousness
 - at least `2` independent supporting signals, or `1` extremely strong public-coordination signal plus a second supporting source
 - no major review flag suggesting the apparent salience is just source bias
@@ -369,6 +404,11 @@ And where the case is mostly about `capture risk`, a lower-tier name should usua
 - evidence that the buyer is already substantial enough for cheap capture to feel like an obvious windfall
 - and no major ambiguity that would make the exact token feel socially contested
 - and a believable story that long-duration commitment plus early-exit constraints would actually favor the real operator over a speculator
+
+For public-figure names in particular, lower-tier inclusion should usually also require:
+
+- a full-name form or highly distinctive public identity
+- or unusually strong evidence that a mononym or creator handle functions as a singular coordinated referent in practice
 
 This is how we avoid "random mid-tier SaaS with decent visibility" becoming protocol special cases while still allowing obvious capture-risk names like `datadog`-type examples to qualify.
 

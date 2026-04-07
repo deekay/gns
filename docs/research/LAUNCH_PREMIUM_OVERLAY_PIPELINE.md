@@ -285,6 +285,40 @@ These should not be auto-included.
 
 But they are important examples of why `natural buyer with real firepower` is a real category in the launch-fairness discussion.
 
+### Dominant Existing Referent Cases
+
+There is a closely related class of names where the right question is not "who is the buyer?" but "who is the dominant existing referent?"
+
+This shows up most clearly with:
+
+- public figures
+- creators
+- athletes
+- other person-linked identities
+
+For those names, the relevant trust question is usually:
+
+- would cheap capture create obviously bad hostage dynamics around a name that people already expect to point to one real person or tightly related operating entity?
+
+The working default should be:
+
+- if there is an obvious dominant existing buyer or dominant existing referent, the name should usually be selected
+- unless the token is too generic, too contested, or too structurally special to privilege one claimant cleanly
+
+This is why:
+
+- `kanyewest`
+- `taylorswift`
+- `elonmusk`
+
+look much stronger than:
+
+- `kanye`
+- `prince`
+- `future`
+
+The public-figure lane should therefore be treated as a sibling to the institutional natural-buyer lane, not as a totally separate theory.
+
 ### Recommended Scoring Style
 
 Use coarse, rank-derived scores rather than raw-dollar calculations.
@@ -439,7 +473,7 @@ A name should be able to clear these bars through **either** of two rationales:
    The name is something large numbers of people already expect software or agents to resolve correctly.
 
 2. **Capture-risk rationale**
-   The name is an obvious pre-existing brand or institution with a clear natural buyer, such that cheap launch capture would create an overly easy speculative resale trade.
+   The name is an obvious pre-existing brand, institution, or person-linked identity with a clear natural buyer or dominant real-world referent, such that cheap launch capture would create an overly easy speculative resale trade or hostage dynamic.
 
 This matters because some names are not maximally household-facing, but still feel clearly wrong to leave cheap at launch. A name like `datadog` can be less universal than `google` and still be an obvious capture-risk name if the natural end buyer is clear and well-capitalized.
 
@@ -480,7 +514,7 @@ not forced into materially different rules just to satisfy a quota.
 An `A`-tier name may qualify because it is:
 
 - strongly public-facing
-- or because it is an internationally important existing brand with a very obvious natural buyer and high asymmetric resale risk
+- or because it is an internationally important existing brand, institution, or person-linked identity with a very obvious natural buyer or dominant referent and high asymmetric resale risk
 
 `B` should feel like:
 
@@ -493,7 +527,7 @@ That last point matters. `B` only makes sense if it represents a **different kin
 A `B`-tier name can also qualify through capture risk if it is:
 
 - an already-established regional or sector-leading brand
-- clearly tied to an obvious natural buyer
+- clearly tied to an obvious natural buyer or dominant referent
 - and likely to create a too-easy speculative resale path if left on the plain base curve
 
 So lower-tier enterprise or institutional names should not be excluded merely because they are not household brands. The real question is whether cheap capture would feel like an obvious launch giveaway.
