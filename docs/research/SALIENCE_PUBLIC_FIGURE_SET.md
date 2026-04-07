@@ -67,6 +67,111 @@ versus:
 
 - `the public figure is real, but the token is too generic, too contested, or too structurally weak to privilege one claimant cleanly`
 
+## Launch-Time Scope Policy
+
+The public-figure lane should probably be **broad in research** but **narrow in the actual launch overlay**.
+
+In practice that means:
+
+- yes, we should prepare a serious review universe spanning musicians, athletes, creators, politicians, founders, CEOs, and other public figures
+- no, we should not aim to freeze a giant exhaustive public-figure protocol list at launch
+
+The right structure is probably:
+
+- a large public-figure watchlist for candidate review
+- and a much smaller protocol overlay subset containing only the clearest, highest-confidence names
+
+This is important because the public-figure lane can become governance-heavy faster than the brand and institution lanes.
+
+There are simply too many plausible names, and the edge cases get messy quickly:
+
+- stage names
+- family names
+- officeholders
+- management-controlled identities
+- estate-controlled identities
+- rebrands and aliases
+- highly current but not clearly durable internet fame
+
+So the launch artifact should be intentionally conservative.
+
+## Convergence Rule
+
+The practical convergence rule should be:
+
+> the public-figure overlay should include only the names for which a broad set of reasonable reviewers would say "yes, cheap capture would obviously create the wrong incentive, and this token is specific enough to privilege one claimant cleanly"
+
+That means the public-figure lane should not be optimized for count.
+
+It should be optimized for:
+
+- low embarrassment risk
+- high durability
+- high token clarity
+- and obvious trust benefit
+
+## In Scope By Default
+
+Names should generally be **in scope for serious review** if they look like one of these:
+
+- full public names of globally or strongly regionally salient figures
+- highly distinctive creator-native identities
+- highly distinctive mononyms that already function like singular coordinated names
+- athlete or entertainer full-name identities that already behave like durable public brands
+
+Typical examples:
+
+- `taylorswift`
+- `kanyewest`
+- `elonmusk`
+- `cristianoronaldo`
+- `mrbeast`
+
+## Out Of Scope By Default
+
+Names should generally be **out of scope by default for launch overlay treatment** if they look like one of these:
+
+- common first names
+- broad surnames
+- titles or honorific-like words
+- ordinary nouns or adjectives used as stage names
+- office names rather than person-linked identities
+- weak aliases or recent rebrands whose token is much less stable than the underlying person
+
+Typical examples:
+
+- `michael`
+- `jordan`
+- `prince`
+- `future`
+- `president`
+- `ye`
+
+These can still be tracked in research, but they should not be presumed to belong in the launch artifact.
+
+## Review-Only High-Bar Cases
+
+Some categories should probably remain **review-only unless they clear a very high bar**:
+
+- mononyms that are famous but still socially broad
+- politicians whose names blur with offices, families, or dynasties
+- CEOs and executives whose public salience may be real but still less durable than brand-like creator identities
+- podcasters and internet-native personalities whose fame may be large but still time-sensitive
+- family-brand surnames where multiple claimants or entities have a plausible story
+
+Typical examples:
+
+- `kanye`
+- `beyonce`
+- `drake`
+- `trump`
+- `lexfridman`
+- `joerogan`
+
+The point is not that these names are unimportant.
+
+The point is that the launch artifact should be more conservative than the watchlist.
+
 ## Current Buckets
 
 The CSV uses the same three provisional expectations as the other challenge slices:
@@ -159,6 +264,8 @@ My current intuition is:
 - public-figure names belong in the same broad fairness discussion as brand and institutional names
 - but they need stricter token-clarity rules
 - full names should generally be much stronger than first names, surnames, titles, or generic mononyms
+- the review watchlist may end up quite extensive
+- but the actual launch overlay subset should stay small and high-confidence
 - and the public-figure lane should not quietly inherit company-brand logic without making the `dominant referent` concept explicit
 
 That is why:
@@ -184,3 +291,8 @@ That means the public-figure lane should usually require:
 - a full-name form
 - or a highly distinctive stage name / creator identity
 - and a much stricter standard for first names, surnames, titles, or broad common words
+
+It also means that public-figure work should likely produce two different artifacts over time:
+
+- a broad `considered` or watchlist universe
+- and a much smaller selected subset that is actually frozen into the launch overlay

@@ -274,6 +274,13 @@ Single first names, titles, generic mononyms, and broad surnames should face a m
 
 That is why this lane should be evaluated separately rather than folded loosely into either the institutional set or the meteoric-name set.
 
+The current practical stance should be:
+
+- keep a broad public-figure watchlist for research
+- but only freeze a much smaller, high-confidence public-figure subset into the launch overlay
+
+That helps keep the public-figure lane useful without turning launch into an editorial catalog of every notable musician, politician, podcaster, or executive.
+
 ## Why Market Cap Is Not The Main Scoring Engine
 
 We explicitly moved away from using:

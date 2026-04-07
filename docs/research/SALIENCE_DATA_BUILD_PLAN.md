@@ -230,6 +230,13 @@ Contains:
 
 This file exists so the overlay can test names like `kanyewest`, `taylorswift`, or `elonmusk` without pretending that personal-name identity coordination works exactly like ordinary company branding.
 
+For this lane in particular, it is reasonable to expect:
+
+- a relatively broad research watchlist
+- and a much smaller selected launch subset
+
+That is a feature, not a failure.
+
 ## Suggested Row Lifecycle
 
 Each candidate should move through a simple lifecycle:
@@ -331,6 +338,7 @@ Desired outcome:
 
 - better handling of names like `kanyewest`, `taylorswift`, `elonmusk`, or `mrbeast`
 - a cleaner methodology for deciding when full-name specificity or a highly distinctive stage name is strong enough to justify overlay treatment
+- a conservative policy that does not force an exhaustive launch-time list of celebrities, politicians, podcasters, or executives
 
 ## Wave 3: Payments, Financial, And Public-Service Coordination Names
 
