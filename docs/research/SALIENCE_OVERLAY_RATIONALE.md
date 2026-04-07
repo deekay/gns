@@ -194,6 +194,30 @@ The important caveat is:
 
 - buyer firepower alone is not enough
 
+There is a second caveat too:
+
+- this trust story is strongest only if the protocol makes the claimant actually bear meaningful time cost
+
+That means the natural-buyer path should be thought of as:
+
+- obvious buyer
+- real resale asymmetry
+- and enough long-duration / early-exit friction that the real operator is favored over the short-horizon speculator
+
+This is why long premium locks matter.
+
+A real long-term operator may be happy to hold:
+
+- `cooley`
+- `mckinsey`
+- `harvard`
+
+for `10+` years.
+
+A speculator usually is not.
+
+That asymmetry is one of the main non-legal tools GNS has for pushing existing brands toward their real operators over time.
+
 The token itself still has to be reasonably clear and defensible.
 
 That is why names like:

@@ -189,6 +189,7 @@ So far, the most useful high-level takeaways seem to be:
 3. `250-500 BTC for 10 years` starts to feel closer to the zone where obvious top-tier squatting is no longer a trivial trade.
 4. Time is a strong lever, but probably not sufficient by itself for the most obvious names.
 5. A premium-transfer design that lets the original seller's bond remain timelocked is much more useful than simply resetting maturity for the buyer.
+6. The strongest trust story for existing brands is not just "large bond" but "real operator can comfortably hold the long lock, while a speculator cannot exit cleanly without still bearing the time cost."
 
 ## What This Still Does Not Solve
 
@@ -203,6 +204,7 @@ Off-chain structures could still exist:
 So the design goal should remain:
 
 - make obvious premium-name squatting slower, less liquid, and less easy to underwrite
+- make long-hold alignment genuinely favor real operators over fast flippers
 
 not:
 
@@ -225,4 +227,3 @@ not:
    - or allowed under some other premium-specific rule?
 
 4. Which names are important enough to justify a `Tier S` or `Tier S+` burden at all?
-

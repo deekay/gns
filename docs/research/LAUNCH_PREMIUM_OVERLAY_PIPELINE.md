@@ -783,6 +783,17 @@ That makes duration a strong anti-speculation lever.
 
 But duration alone may still be insufficient for the most obvious legacy names if the eventual buyer is extremely patient and the eventual sale value is very large.
 
+The practical takeaway is:
+
+- long-duration commitment is still one of the best trust-building tools the protocol has for existing brands
+- because it favors the real long-term operator over the short-horizon speculator
+
+That matters not only for household brands like `google`, but also for narrower professional names like `cooley` where:
+
+- the natural buyer may be obvious
+- the long-run operator is likely willing to hold indefinitely
+- and the real policy question is whether the protocol should make speculative warehousing materially less attractive
+
 ### 3. We need both a BTC-native and a fiat-native lens
 
 Premium-name calibration should be evaluated in two ways:
@@ -800,6 +811,16 @@ Two important conclusions followed from this:
 
 - simply resetting maturity for the buyer is probably too weak, because the real brand buyer may not care about a long future hold
 - if early-transfer penalties are explored, the most philosophically aligned version is likely one where the original claimant's premium bond remains timelocked until its original maturity, rather than burning BTC or charging protocol fees
+
+So the current methodological stance should be:
+
+> long premium duration only builds trust around existing brands if the protocol also constrains clean early speculative exit
+
+In other words:
+
+- duration alone is helpful
+- duration plus a seller-side locked-bond rule is much stronger
+- duration without meaningful early-exit friction is not enough to support the full fairness story
 
 ### 5. Leasing and option structures remain possible
 

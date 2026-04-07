@@ -74,8 +74,8 @@ The CSV uses the same three provisional expectations as the broader boundary sli
 The current first pass contains `36` names:
 
 - `12` `likely_selected`
-- `12` `arguable`
-- `12` `likely_not_selected`
+- `13` `arguable`
+- `11` `likely_not_selected`
 
 These are not final judgments. They are stress-test hypotheses.
 
@@ -105,6 +105,7 @@ Typical pattern:
 - but the exact token is weaker than the institution behind it
 - or the audience is narrower
 - or the name is more acronym-like, geographically broad, or semantically loaded
+- or the buyer is obvious but the methodology still needs to decide how much long-hold alignment should outweigh token ambiguity
 
 Good examples:
 
@@ -114,6 +115,7 @@ Good examples:
 - `merck`
 - `cme`
 - `vercel`
+- `cooley`
 
 ### `likely_not_selected`
 
@@ -163,7 +165,7 @@ That is why:
 - `harvard` and `stanford` can plausibly clear the bar
 - while `cambridge` and `wharton` are much harder
 - `mckinsey` and `deloitte` may clear
-- while `bain` is more arguable
+- while `bain` and `cooley` are more arguable
 - `bloomberg` and `nasdaq` may clear
 - while `economist` and `apollo` are much harder
 

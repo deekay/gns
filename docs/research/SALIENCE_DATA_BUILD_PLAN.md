@@ -333,6 +333,7 @@ And where the case is mostly about `capture risk`, a lower-tier name should usua
 
 - evidence that the buyer is already substantial enough for cheap capture to feel like an obvious windfall
 - and no major ambiguity that would make the exact token feel socially contested
+- and a believable story that long-duration commitment plus early-exit constraints would actually favor the real operator over a speculator
 
 This is how we avoid "random mid-tier SaaS with decent visibility" becoming protocol special cases while still allowing obvious capture-risk names like `datadog`-type examples to qualify.
 
