@@ -168,7 +168,7 @@ These bars are still working intuition, not settled protocol policy. They are in
 | Naver | `naver` | — | — | — | `20` | `1` | `B` | Same rationale as Baidu; good test case for geographic breadth weighting |
 | Adobe | `adobe` | — | `17` | — | — | `1` | `B` | Strong enterprise/creative brand, but likely below the highest public-coordination tier |
 | Cisco | `cisco` | — | `13` | — | — | `1` | `B` | High enterprise salience, lower mainstream household salience |
-| Tesla | `tesla` | — | `12` | — | — | `1` | `B` | Strong public brand, but less universally coordination-critical than top platform/household names |
+| Tesla | `tesla` | — | `12` | — | — | `1` | `A` | Strong internationally visible consumer brand; closer to the selected household-brand set than to the near-miss bucket |
 | BMW | `bmw` | — | `10` | — | — | `1` | `B` | High salience, but more category-specific than the very top consumer names |
 | Mercedes-Benz | `mercedesbenz` | — | `8` | — | — | `1` | `B` | Similar rationale to BMW |
 | J.P. Morgan | `jpmorgan` | — | `25` | — | — | `1` | `B` | Important institutional brand, but less universal public coordination pressure than the top tiers |
@@ -231,10 +231,11 @@ Within this small pilot set, the names that seem to clear the bar **right now** 
 - `whatsapp`
 - `netflix`
 - `nike`
+- `tesla`
 - `toyota`
 - `disney`
 
-That is `19` selected names out of the current `33`-name pilot seed.
+That is `20` selected names out of the current `33`-name pilot seed.
 
 The names that were **considered in the pilot but do not clearly make the overlay yet** are:
 
@@ -245,7 +246,6 @@ The names that were **considered in the pilot but do not clearly make the overla
 - `naver`
 - `adobe`
 - `cisco`
-- `tesla`
 - `bmw`
 - `mercedesbenz`
 - `jpmorgan`
@@ -253,7 +253,7 @@ The names that were **considered in the pilot but do not clearly make the overla
 - `sap`
 - `github`
 
-That is `14` near-miss or not-selected names from the current seed.
+That is `13` near-miss or not-selected names from the current seed.
 
 The main reasons these fall short in the current pilot are:
 

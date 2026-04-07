@@ -16,5 +16,6 @@ cand_0015,tiktok,TikTok,A,medium,SW26,internationally_important_live_consumer_pl
 cand_0017,whatsapp,WhatsApp,A,medium,SW26,internationally_important_communications_name,source_thin
 cand_0018,netflix,Netflix,A,medium,SW26,internationally_important_media_service,source_thin
 cand_0019,nike,Nike,A,medium,IB24,internationally_important_consumer_brand,source_bias|digital_heavy
+cand_0027,tesla,Tesla,A,medium,IB24,internationally_important_consumer_brand,category_specific
 cand_0020,toyota,Toyota,A,medium,IB24,internationally_important_consumer_brand,
 cand_0021,disney,Disney,A,medium,IB24,internationally_important_household_name,source_bias|digital_heavy
