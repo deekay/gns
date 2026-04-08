@@ -215,6 +215,135 @@ Possible shapes worth exploring:
 
 The exact number is still open.
 
+## Auction Principles
+
+Before specifying mechanics, the reserved lane should probably commit to a few principles:
+
+1. **Reserved-lane auctions only**
+   Ordinary names should stay on the simpler claim path. Auctions are for the deferred reserved lane, not for every name in the namespace.
+
+2. **Auction discovers amount, protocol fixes time**
+   Bidders should compete on BTC amount, while the protocol fixes the lock duration for the reserved lane.
+
+3. **No hard-close sniping**
+   The auction should not end in a way that rewards hidden miner coordination or mempool timing tricks near a single final block.
+
+4. **Bid capital must be real**
+   Every standing bid should be backed by an actual on-chain bonded commitment, not just an off-chain signal of intent.
+
+5. **Capital should be reusable within the same auction, not across many auctions**
+   A bidder should be able to improve their own bid on one name without being punished for bidding early, but should not be able to cheaply spray the same capital across many hot names at once.
+
+6. **The mechanism should stay understandable**
+   A reviewer should be able to understand the auction as: reserved name unlocks, bonded bids compete, late bids extend the clock, highest valid bond wins.
+
+## First-Pass Auction Flow
+
+The current best starting point looks like an **open ascending bonded auction with a soft close**.
+
+### Step 1: Auction Eligibility
+
+- each reserved name becomes auction-eligible at a pre-announced block height
+- the first valid bid starts the auction clock for that specific name
+
+### Step 2: Base Auction Window
+
+- once the first bid lands, the auction remains open for a long window
+- something like `30 days` in blocks currently feels more credible than a window measured in hours
+
+This is still only a working intuition, not a chosen parameter.
+
+### Step 3: Soft Close
+
+- if a valid higher bid appears near the end of the auction window, the auction extends
+- a reasonable first shape is:
+  - any valid higher bid in the final `1 day` extends the auction by another `1 day`
+
+That makes the ending feel more like:
+
+- "going, going, gone"
+
+and less like:
+
+- "who got the last hidden transaction to a miner first"
+
+### Step 4: Winner
+
+- once a full extension window passes with no new valid higher bid, the highest bonded bid wins
+- the winner receives the name and the long reserved-lane lock begins or continues under the protocol rule
+
+## Bid-Capital Rule
+
+One important refinement is:
+
+> standing bid capital should remain auction-bound, but a bidder must be able to roll their own prior bid upward within the same auction
+
+This avoids two bad outcomes at once:
+
+- bidders should not lose flexibility just because they bid early
+- but they also should not be able to withdraw capital freely and reuse it across many still-live auctions
+
+The cleanest current formulation is:
+
+### One Active Bid Per Bidder Per Auction
+
+- each bidder has at most one active bid on a given auctioned name
+
+### Upward Replacement Is Allowed
+
+- a bidder may replace their own standing bid with a higher bid for the same name
+- the new bid spends the old bid output and adds only the incremental extra BTC needed
+
+So if a bidder has:
+
+- `1 BTC` already standing on `markzuckerberg`
+
+and wants to move to:
+
+- `15 BTC`
+
+they should only need:
+
+- the original `1 BTC` bid output
+- plus `14 BTC` of fresh capital
+
+not:
+
+- `16 BTC` total locked because the old `1 BTC` is trapped separately
+
+### No Mid-Auction Withdrawal
+
+- capital should not be withdrawable from a live auction unless it is being rolled into a higher bid on that same auction
+
+### Losers Unlock After Close
+
+- when the auction ends, losing bidders recover their final standing bonded outputs
+- the winner's final standing bid becomes the winning long-duration reserved-lane commitment
+
+## Why This Capital Rule Matters
+
+If losing bids were fully frozen in place with no upward replacement, bidders could be punished for bidding early.
+
+That would distort price discovery by making participants artificially conservative.
+
+If capital were fully withdrawable during the auction, bidders could recycle the same bankroll cheaply across many hot names, weakening the seriousness of live bids.
+
+The current middle path is meant to preserve both:
+
+- real commitment
+- and credible upward price discovery
+
+## Minimum Increment Principle
+
+The auction likely also wants a meaningful minimum increment rule.
+
+Otherwise:
+
+- tiny last-minute raises could keep the auction alive cheaply
+- and the soft-close extension could become a griefing tool
+
+The exact increment rule is still open, but the principle should be explicit.
+
 ## What This Model Solves Better
 
 Compared with a fixed premium overlay, this model may do a better job of:
