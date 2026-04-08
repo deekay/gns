@@ -344,6 +344,119 @@ Otherwise:
 
 The exact increment rule is still open, but the principle should be explicit.
 
+## Runaway-Extension Pressure Test
+
+One obvious concern with soft close is:
+
+> could a hot reserved name keep extending indefinitely?
+
+In principle, yes.
+
+But the right protection is probably **not** to force a hard stop at an arbitrary final block.
+
+The better protection is:
+
+- make extensions expensive enough that only genuine continuing price discovery survives
+
+That means the real question is not:
+
+- "can an auction extend for a long time?"
+
+It is:
+
+- "can it extend for a long time **cheaply**?"
+
+### The Bad Version
+
+If the extension rule is too weak, for example:
+
+- any higher bid extends by `1 day`
+- minimum increment is only `+1 BTC`
+
+then a hot auction can drag on for a long time without meaningfully changing the price.
+
+That is a real problem.
+
+### The Better Version
+
+A better rule is:
+
+- any higher bid in the final extension window extends the auction
+- but the higher bid must beat the current high bid by the greater of:
+  - an absolute BTC floor
+  - and a percentage increment
+
+Conceptually:
+
+`next_bid >= max(current_bid + abs_floor, current_bid * (1 + pct_floor))`
+
+That makes late extensions materially more expensive as the auction gets larger.
+
+### Why Percentage Matters
+
+Flat increments become too weak for large auctions.
+
+If the current high bid entering soft close is `100 BTC`:
+
+- a fixed `+1 BTC` rule means `30` extra days of extensions only moves the price to `130 BTC`
+
+That is much too cheap for something people still care enough to keep bidding on.
+
+By contrast, if the same auction requires a percentage increment:
+
+- `5%` minimum gets to about `432 BTC` after `30` extension bids
+- `8%` minimum gets to about `1,006 BTC`
+- `10%` minimum gets to about `1,745 BTC`
+
+Even at a smaller starting point like `10 BTC`:
+
+- `+1 BTC` for `30` extra days only gets to `40 BTC`
+- `5%` minimum gets to about `43 BTC`
+- `8%` minimum gets to about `101 BTC`
+- `10%` minimum gets to about `174 BTC`
+
+The point is not that these exact numbers are right.
+
+The point is that:
+
+- a flat increment allows cheap delay
+- a percentage increment makes continued delay increasingly expensive
+
+### Current Working Intuition
+
+The best first defense against runaway extension is probably:
+
+- a `1 day` soft-close extension window
+- plus a meaningful minimum increment
+- plus auction-bound capital that cannot be freely recycled across many auctions
+
+Under those rules, a very long auction may still happen.
+
+But if it does, it is more likely because:
+
+- real new commitment keeps showing up
+
+not because:
+
+- people can keep the auction alive almost for free
+
+### Hard Cap Caution
+
+A hard cap on the number of extensions may sound attractive, but it risks recreating the very sniping problem soft close is meant to avoid.
+
+If everyone knows:
+
+- "this is the last possible extension"
+
+then the final-extension boundary can become another miner-collusion or timing game.
+
+So the current bias should be:
+
+- prefer economic anti-griefing
+- over arbitrary time caps
+
+unless later testing shows the tail-risk is still unacceptable.
+
 ## What This Model Solves Better
 
 Compared with a fixed premium overlay, this model may do a better job of:
