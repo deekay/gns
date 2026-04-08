@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>GNS Two-Lane Launch One-Pager</title>
+    <style>
+      @page {
+        size: Letter;
+        margin: 0.4in 0.42in;
+      }
+
+      :root {
+        --ink: #1c1916;
+        --muted: #5f5951;
+        --line: #d8cec3;
+        --panel: #faf6f1;
+        --accent: #ad6031;
+        --heading: "Helvetica Neue", Arial, sans-serif;
+        --body: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: #fff;
+        font-family: var(--body);
+        font-size: 8pt;
+        line-height: 1.2;
+      }
+
+      main {
+        width: 7.46in;
+        margin: 0 auto;
+      }
+
+      .sheet {
+        min-height: 10.15in;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .eyebrow {
+        margin: 0 0 4px;
+        color: var(--accent);
+        font-family: var(--heading);
+        font-size: 8pt;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 0 0 6px;
+        font-family: var(--heading);
+        font-size: 18.5pt;
+        font-weight: 700;
+        line-height: 0.98;
+        letter-spacing: -0.02em;
+      }
+
+      .lead {
+        margin: 0 0 8px;
+        color: var(--muted);
+        font-size: 8.8pt;
+        line-height: 1.22;
+        max-width: 7.1in;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: 1.03fr 0.97fr;
+        gap: 0.2in;
+        align-items: start;
+      }
+
+      .column {
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+      }
+
+      .section {
+        padding-top: 6px;
+        border-top: 2px solid var(--line);
+        break-inside: avoid;
+      }
+
+      h2 {
+        margin: 0 0 4px;
+        font-family: var(--heading);
+        font-size: 11.3pt;
+        font-weight: 700;
+        line-height: 1.05;
+        letter-spacing: -0.01em;
+      }
+
+      h3 {
+        margin: 0 0 3px;
+        color: var(--accent);
+        font-family: var(--heading);
+        font-size: 6.9pt;
+        font-weight: 700;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+      }
+
+      p {
+        margin: 0 0 4px;
+      }
+
+      ul, ol {
+        margin: 0 0 4px 13px;
+        padding: 0;
+      }
+
+      li {
+        margin: 0 0 2px;
+      }
+
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 6px 7px;
+      }
+
+      .subgrid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 7.3pt;
+      }
+
+      th, td {
+        border: 1px solid var(--line);
+        padding: 3px 4px;
+        vertical-align: top;
+      }
+
+      th {
+        background: #f5eee6;
+        color: #3f3730;
+        font-family: var(--heading);
+        font-size: 6.7pt;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-align: left;
+        text-transform: uppercase;
+      }
+
+      code {
+        font-family: "SFMono-Regular", Menlo, Consolas, monospace;
+        font-size: 0.92em;
+      }
+
+      .foot {
+        margin-top: auto;
+        padding-top: 5px;
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 7pt;
+      }
+
+      .tight p:last-child,
+      .tight ul:last-child,
+      .tight ol:last-child {
+        margin-bottom: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section class="sheet">
+        <p class="eyebrow">Global Name System</p>
+        <h1>Two-Lane Launch Option</h1>
+        <p class="lead">A launch structure now under active exploration: keep ordinary names simple, while deferring salient existing names into a separate auction lane where the market discovers required BTC commitment under fixed long lock rules.</p>
+
+        <div class="grid">
+          <div class="column">
+            <section class="section tight">
+              <h2>Core Idea</h2>
+              <p>Split launch into two lanes:</p>
+              <div class="subgrid">
+                <div class="panel tight">
+                  <h3>Ordinary Lane</h3>
+                  <ul>
+                    <li>Names not on a reserved list</li>
+                    <li>Simple commit / reveal</li>
+                    <li>Objective floor table</li>
+                    <li>Standardized lock period</li>
+                  </ul>
+                </div>
+                <div class="panel tight">
+                  <h3>Reserved Lane</h3>
+                  <ul>
+                    <li>Broad deferred list of salient names</li>
+                    <li>Unavailable on launch day</li>
+                    <li>Unlock later at pre-announced heights</li>
+                    <li>BTC amount discovered by auction</li>
+                  </ul>
+                </div>
+              </div>
+              <p>The key shift is that the reserved list decides <strong>which names are special</strong> and <strong>when they unlock</strong>, not <strong>what each one should cost</strong>.</p>
+            </section>
+
+            <section class="section tight">
+              <h2>Why Explore This</h2>
+              <p>The main fairness objection is not whether someone can corner the whole namespace. It is whether obvious existing names can be acquired too cheaply.</p>
+              <p>This model treats speculative competition as part of the solution: speculators can bid away easy upside even if the natural operator is absent at first, as long as the winning commitment carries real capital-time cost.</p>
+              <p>The system does not need to guarantee the real operator wins day one. It needs to avoid obvious cheap giveaways and underpriced hostage opportunities.</p>
+            </section>
+
+            <section class="section tight">
+              <h2>Ordinary Lane</h2>
+              <ul>
+                <li>Preserves DNS-like “I saw it and can try to get it now” UX.</li>
+                <li>Keeps long-tail and personal names tractable under a simpler standardized ordinary lock, such as <code>1 year</code>.</li>
+              </ul>
+            </section>
+
+            <section class="section tight">
+              <h2>Reserved Lane</h2>
+              <ul>
+                <li>Reserved list announced before launch.</li>
+                <li>Names withheld from ordinary commit / reveal.</li>
+                <li>Auctions begin later at known block heights.</li>
+                <li>Protocol fixes duration; auction discovers BTC amount.</li>
+              </ul>
+              <p>This lets the reserved list be broader than a hand-priced premium table, because inclusion no longer implies “we custom-priced this name.”</p>
+            </section>
+          </div>
+
+          <div class="column">
+            <section class="section tight">
+              <h2>Auction Dynamics</h2>
+              <ul>
+                <li>Reserved names only.</li>
+                <li>Likely fixed long lock, e.g. <code>10 years</code>.</li>
+                <li>Bids compete on <strong>BTC amount only</strong>, not arbitrary BTC-time pairs.</li>
+                <li>First valid bid starts that name’s auction clock.</li>
+                <li>Long base window, likely weeks rather than hours, with soft close so late bids extend the clock.</li>
+                <li>One active bid per bidder per auction.</li>
+                <li>Your own earlier bid can be rolled upward by spending the old bid output and adding only the difference.</li>
+              </ul>
+            </section>
+
+            <section class="section tight">
+              <h2>Why Soft Close</h2>
+              <p>A hard final block invites end-sniping and miner-timing games. A soft close is closer to a live auction: if a higher bid arrives late, the auction extends and others get time to answer.</p>
+              <p>The protection is not forcing auctions to stop at all costs. It is making continued extension <strong>economically meaningful</strong>.</p>
+            </section>
+
+            <section class="section tight">
+              <h2>Capital-Time Anchors</h2>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Bucket</th>
+                    <th>Starting Point</th>
+                    <th>Use</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Ordinary</td>
+                    <td><code>~1 BTC / 1 year</code><br />at the top of the ordinary table</td>
+                    <td>Simple objective pricing for non-reserved names</td>
+                  </tr>
+                  <tr>
+                    <td>Reserved B</td>
+                    <td><code>50 BTC / 5 years</code></td>
+                    <td>Meaningful but still accessible reserved-name commitment</td>
+                  </tr>
+                  <tr>
+                    <td>Reserved A</td>
+                    <td><code>100 BTC / 10 years</code></td>
+                    <td>Strong commitment for serious existing names</td>
+                  </tr>
+                  <tr>
+                    <td>Reserved S</td>
+                    <td><code>250 BTC / 10 years</code></td>
+                    <td>Starts to feel genuinely painful for a squatter</td>
+                  </tr>
+                  <tr>
+                    <td>Reserved S+</td>
+                    <td><code>500 BTC / 10 years</code></td>
+                    <td>Only for a very small top bucket, if needed</td>
+                  </tr>
+                </tbody>
+              </table>
+            </section>
+
+            <section class="section tight">
+              <h2>Public-Operator Intuition</h2>
+              <ul>
+                <li><code>markzuckerberg</code>, <code>jensenhuang</code>, <code>samaltman</code> feel closer to an <strong>A</strong>-style bucket.</li>
+                <li><code>patrickcollison</code>, <code>parkerconrad</code>, <code>garrytan</code> feel closer to a <strong>B</strong>-style bucket.</li>
+                <li><code>tylercowen</code>, <code>paulgraham</code> look more like lighter public-identity or review-edge cases.</li>
+              </ul>
+            </section>
+
+            <section class="section tight">
+              <h2>Open Questions</h2>
+              <ul>
+                <li>How broad should the reserved list be, and should it unlock in waves?</li>
+                <li>What fixed long duration should the reserved lane use?</li>
+                <li>What minimum increment rule prevents cheap endless extensions while keeping auctions healthy?</li>
+              </ul>
+            </section>
+          </div>
+        </div>
+
+        <p class="foot">Exploratory design summary for reviewer feedback. Detailed notes live in <code>RESERVED_NAME_AUCTION_LANE.md</code>, <code>CLAIM_ALLOCATION_AND_BATCHING_OPTIONS.md</code>, and <code>PREMIUM_NAME_CALIBRATION.md</code>.</p>
+      </section>
+    </main>
+  </body>
+</html>
