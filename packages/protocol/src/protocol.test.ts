@@ -4,13 +4,17 @@ import * as secp256k1 from "tiny-secp256k1";
 import {
   BOND_FLOOR_SATS,
   BATCH_ANCHOR_PAYLOAD_LENGTH,
+  BATCH_CLAIM_PACKAGE_FORMAT,
+  BATCH_CLAIM_PACKAGE_VERSION,
   BATCH_REVEAL_MIN_PAYLOAD_LENGTH,
   CLAIM_PACKAGE_FORMAT,
   CLAIM_PACKAGE_VERSION,
   computeBatchCommitLeafHash,
+  createBatchClaimPackage,
   createClaimPackage,
   createMerkleProof,
   createTransferPackage,
+  DEFAULT_BATCH_PROOF_CHUNK_BYTES,
   INITIAL_MATURITY_BLOCKS,
   decodeBatchAnchorPayload,
   decodeBatchRevealPayload,
@@ -37,6 +41,7 @@ import {
   getMaturityBlocks,
   computeMerkleRoot,
   normalizeName,
+  parseBatchClaimPackage,
   parseClaimPackage,
   parseMerkleProofHex,
   parseTransferPackage,
@@ -483,6 +488,98 @@ describe("claim packages", () => {
         revealPayloadBytes: null
       })
     ).toThrow(/requiredBondSats/);
+  });
+});
+
+describe("batch claim packages", () => {
+  it("creates a valid reveal-ready batch claim package", () => {
+    const ownerPubkey = "11".repeat(32);
+    const nonceHex = "0102030405060708";
+    const name = "bob";
+    const commitHash = computeCommitHash({
+      name,
+      nonce: BigInt(`0x${nonceHex}`),
+      ownerPubkey
+    });
+    const leafHash = computeBatchCommitLeafHash({
+      bondVout: 1,
+      ownerPubkey,
+      commitHash
+    });
+
+    const created = createBatchClaimPackage({
+      name: "Bob",
+      ownerPubkey,
+      nonceHex,
+      bondVout: 1,
+      bondDestination: " tb1qexamplebond ",
+      changeDestination: "tb1qexamplechange",
+      batchMerkleRoot: leafHash,
+      batchLeafCount: 1,
+      batchProofHex: "",
+      batchAnchorTxid: "aa".repeat(32),
+      proofChunkBytes: DEFAULT_BATCH_PROOF_CHUNK_BYTES,
+      exportedAt: "2026-04-08T18:00:00.000Z"
+    });
+
+    expect(created).toMatchObject({
+      format: BATCH_CLAIM_PACKAGE_FORMAT,
+      packageVersion: BATCH_CLAIM_PACKAGE_VERSION,
+      name: "bob",
+      bondVout: 1,
+      batchLeafHash: leafHash,
+      batchMerkleRoot: leafHash,
+      batchProofHex: "",
+      batchProofBytes: 0,
+      batchAnchorTxid: "aa".repeat(32),
+      revealReady: true,
+      revealProofChunkPayloadsHex: []
+    });
+    expect(created.revealPayloadHex.length).toBe(created.revealPayloadBytes * 2);
+  });
+
+  it("parses and validates a batch claim package with a non-empty proof", () => {
+    const leaves = [
+      computeBatchCommitLeafHash({
+        bondVout: 1,
+        ownerPubkey: "11".repeat(32),
+        commitHash: computeCommitHash({
+          name: "bob",
+          nonce: 0x0102_0304_0506_0708n,
+          ownerPubkey: "11".repeat(32)
+        })
+      }),
+      computeBatchCommitLeafHash({
+        bondVout: 2,
+        ownerPubkey: "22".repeat(32),
+        commitHash: computeCommitHash({
+          name: "alice",
+          nonce: 0x1112_1314_1516_1718n,
+          ownerPubkey: "22".repeat(32)
+        })
+      })
+    ];
+    const proof = createMerkleProof(leaves, 0);
+    const proofHex = Buffer.from(encodeMerkleProof(proof)).toString("hex");
+
+    const parsed = parseBatchClaimPackage(
+      createBatchClaimPackage({
+        name: "bob",
+        ownerPubkey: "11".repeat(32),
+        nonceHex: "0102030405060708",
+        bondVout: 1,
+        bondDestination: "tb1qexamplebond",
+        changeDestination: "tb1qexamplechange",
+        batchMerkleRoot: computeMerkleRoot(leaves),
+        batchLeafCount: 2,
+        batchProofHex: proofHex,
+        batchAnchorTxid: "bb".repeat(32),
+        proofChunkBytes: DEFAULT_BATCH_PROOF_CHUNK_BYTES
+      })
+    );
+
+    expect(parsed.batchProofHex).toBe(proofHex);
+    expect(parsed.revealProofChunkPayloadsHex).toHaveLength(1);
   });
 });
 

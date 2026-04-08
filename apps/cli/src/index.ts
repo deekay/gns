@@ -1,7 +1,8 @@
-import { readFile } from "node:fs/promises";
-import { resolve } from "node:path";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { join, resolve } from "node:path";
 
 import {
+  parseBatchClaimPackage,
   createClaimPackage,
   parseClaimPackage,
   parseTransferPackage,
@@ -10,6 +11,8 @@ import {
 } from "@gns/protocol";
 
 import {
+  buildBatchCommitArtifacts,
+  buildBatchRevealArtifacts,
   buildCommitArtifacts,
   buildImmatureSaleTransferArtifacts,
   buildRevealArtifacts,
@@ -69,6 +72,9 @@ async function main(): Promise<void> {
     case "inspect-claim-package":
       await inspectClaimPackage(args[0]);
       return;
+    case "inspect-batch-claim-package":
+      await inspectBatchClaimPackage(args[0]);
+      return;
     case "inspect-transfer-package":
       await inspectTransferPackage(args[0]);
       return;
@@ -81,8 +87,14 @@ async function main(): Promise<void> {
     case "build-commit-artifacts":
       await buildCommitArtifactsCommand(args);
       return;
+    case "build-batch-commit-artifacts":
+      await buildBatchCommitArtifactsCommand(args);
+      return;
     case "build-reveal-artifacts":
       await buildRevealArtifactsCommand(args);
+      return;
+    case "build-batch-reveal-artifacts":
+      await buildBatchRevealArtifactsCommand(args);
       return;
     case "build-transfer-artifacts":
       await buildTransferArtifactsCommand(args);
@@ -200,6 +212,36 @@ async function inspectClaimPackage(filePath: string | undefined): Promise<void> 
   }
 }
 
+async function inspectBatchClaimPackage(filePath: string | undefined): Promise<void> {
+  if (!filePath) {
+    throw new Error("inspect-batch-claim-package requires a path to a batch claim package JSON file");
+  }
+
+  const resolvedPath = resolve(process.cwd(), filePath);
+  const raw = await readFile(resolvedPath, "utf8");
+  const parsed = parseBatchClaimPackage(JSON.parse(raw));
+
+  console.log(`${PRODUCT_NAME} batch claim package is valid.`);
+  console.log(`File: ${resolvedPath}`);
+  console.log(`Exported: ${parsed.exportedAt}`);
+  console.log("");
+  console.log(`Name: ${parsed.name}`);
+  console.log(`Owner pubkey: ${parsed.ownerPubkey}`);
+  console.log(`Required bond: ${formatSats(parsed.requiredBondSats)}`);
+  console.log(`Bond output: vout ${parsed.bondVout}`);
+  console.log(`Bond destination: ${parsed.bondDestination ?? "(choose in wallet)"}`);
+  console.log(`Change destination: ${parsed.changeDestination ?? "(wallet-selected)"}`);
+  console.log("");
+  console.log(`Batch anchor txid: ${parsed.batchAnchorTxid}`);
+  console.log(`Batch leaf count: ${parsed.batchLeafCount}`);
+  console.log(`Batch merkle root: ${parsed.batchMerkleRoot}`);
+  console.log(`Batch proof bytes: ${parsed.batchProofBytes}`);
+  console.log(`Reveal proof chunks: ${parsed.revealProofChunkPayloadsHex.length}`);
+  console.log("");
+  console.log(`Reveal payload bytes: ${parsed.revealPayloadBytes}`);
+  console.log("Next step: build and sign the batch reveal transaction for this claim.");
+}
+
 async function inspectTransferPackage(filePath: string | undefined): Promise<void> {
   if (!filePath) {
     throw new Error("inspect-transfer-package requires a path to a transfer package JSON file");
@@ -310,6 +352,48 @@ async function buildCommitArtifactsCommand(args: readonly string[]): Promise<voi
   console.log(JSON.stringify(artifacts, null, 2));
 }
 
+async function buildBatchCommitArtifactsCommand(args: readonly string[]): Promise<void> {
+  const parsed = parseOptions(args);
+
+  if (parsed.positionals.length === 0) {
+    throw new Error(
+      "build-batch-commit-artifacts requires one or more claim package JSON file paths"
+    );
+  }
+
+  const claimPackages = await Promise.all(parsed.positionals.map((filePath) => loadClaimPackage(filePath)));
+  const network = parseNetwork(parsed.options.get("network"));
+  const feeSats = parseRequiredBigInt(parsed.options.get("fee-sats"), "fee-sats");
+  const inputSpecs = parsed.multiOptions.get("input") ?? [];
+  const walletDerivation = parseWalletDerivationOptions(parsed);
+
+  const artifacts = buildBatchCommitArtifacts({
+    claimPackages,
+    fundingInputs: inputSpecs.map(parseFundingInputDescriptor),
+    feeSats,
+    network,
+    ...(walletDerivation !== null ? { walletDerivation } : {}),
+    ...(parsed.options.has("change-address")
+      ? { changeAddress: parsed.options.get("change-address") as string }
+      : {}),
+    ...(parsed.options.has("proof-chunk-bytes")
+      ? {
+          proofChunkBytes: parseRequiredInteger(
+            parsed.options.get("proof-chunk-bytes"),
+            "proof-chunk-bytes"
+          )
+        }
+      : {})
+  });
+
+  await maybeWriteJsonFile(parsed.options.get("write"), artifacts);
+  await writeBatchClaimPackagesDir(
+    parsed.options.get("write-packages-dir"),
+    artifacts.updatedClaimPackages
+  );
+  console.log(JSON.stringify(artifacts, null, 2));
+}
+
 async function buildRevealArtifactsCommand(args: readonly string[]): Promise<void> {
   const parsed = parseOptions(args);
   const claimPackagePath = parsed.positionals[0];
@@ -325,6 +409,37 @@ async function buildRevealArtifactsCommand(args: readonly string[]): Promise<voi
   const walletDerivation = parseWalletDerivationOptions(parsed);
 
   const artifacts = buildRevealArtifacts({
+    claimPackage,
+    fundingInputs: inputSpecs.map(parseFundingInputDescriptor),
+    feeSats,
+    network,
+    ...(walletDerivation !== null ? { walletDerivation } : {}),
+    ...(parsed.options.has("change-address")
+      ? { changeAddress: parsed.options.get("change-address") as string }
+      : {})
+  });
+
+  await maybeWriteJsonFile(parsed.options.get("write"), artifacts);
+  console.log(JSON.stringify(artifacts, null, 2));
+}
+
+async function buildBatchRevealArtifactsCommand(args: readonly string[]): Promise<void> {
+  const parsed = parseOptions(args);
+  const claimPackagePath = parsed.positionals[0];
+
+  if (!claimPackagePath) {
+    throw new Error(
+      "build-batch-reveal-artifacts requires a path to a reveal-ready batch claim package JSON file"
+    );
+  }
+
+  const claimPackage = await loadBatchClaimPackage(claimPackagePath);
+  const network = parseNetwork(parsed.options.get("network"));
+  const feeSats = parseRequiredBigInt(parsed.options.get("fee-sats"), "fee-sats");
+  const inputSpecs = parsed.multiOptions.get("input") ?? [];
+  const walletDerivation = parseWalletDerivationOptions(parsed);
+
+  const artifacts = buildBatchRevealArtifacts({
     claimPackage,
     fundingInputs: inputSpecs.map(parseFundingInputDescriptor),
     feeSats,
@@ -1274,10 +1389,40 @@ async function loadClaimPackage(filePath: string): Promise<ReturnType<typeof par
   return parseClaimPackage(JSON.parse(raw));
 }
 
+async function loadBatchClaimPackage(
+  filePath: string
+): Promise<ReturnType<typeof parseBatchClaimPackage>> {
+  const resolvedPath = resolve(process.cwd(), filePath);
+  const raw = await readFile(resolvedPath, "utf8");
+  return parseBatchClaimPackage(JSON.parse(raw));
+}
+
 async function loadSignedArtifacts(filePath: string) {
   const resolvedPath = resolve(process.cwd(), filePath);
   const raw = await readFile(resolvedPath, "utf8");
   return parseSignedArtifactsFile(JSON.parse(raw));
+}
+
+async function writeBatchClaimPackagesDir(
+  directoryPath: string | undefined,
+  claimPackages: ReadonlyArray<ReturnType<typeof parseBatchClaimPackage>>
+): Promise<void> {
+  if (!directoryPath) {
+    return;
+  }
+
+  const resolvedDirectory = resolve(process.cwd(), directoryPath);
+  await mkdir(resolvedDirectory, { recursive: true });
+
+  await Promise.all(
+    claimPackages.map(async (claimPackage, index) => {
+      const filePath = join(
+        resolvedDirectory,
+        `${String(index + 1).padStart(2, "0")}-${claimPackage.name}.json`
+      );
+      await writeFile(filePath, JSON.stringify(claimPackage, null, 2) + "\n", "utf8");
+    })
+  );
 }
 
 function parseOptions(args: readonly string[]): {
@@ -1449,6 +1594,9 @@ function printUsage(): void {
   console.log("  inspect-claim-package <path>");
   console.log("    Validate and summarize a downloaded claim package JSON file");
   console.log("");
+  console.log("  inspect-batch-claim-package <path>");
+  console.log("    Validate and summarize a downloaded reveal-ready batch claim package JSON file");
+  console.log("");
   console.log("  inspect-transfer-package <path>");
   console.log("    Validate and summarize a downloaded transfer package JSON file");
   console.log("");
@@ -1461,8 +1609,14 @@ function printUsage(): void {
   console.log("  build-commit-artifacts <claim-package> --input <txid:vout:valueSats:address[:derivationPath]> [--input ...] --fee-sats <amount> [--network signet|testnet|regtest|main] [--bond-address <addr>] [--change-address <addr>] [--wallet-master-fingerprint <hex8> --wallet-account-xpub <xpub> --wallet-account-path <path> [--wallet-scan-limit <n>]] [--write <path>] [--write-package <path>]");
   console.log("    Build unsigned commit transaction artifacts and emit a reveal-ready claim package");
   console.log("");
+  console.log("  build-batch-commit-artifacts <claim-package> [<claim-package> ...] --input <txid:vout:valueSats:address[:derivationPath]> [--input ...] --fee-sats <amount> [--proof-chunk-bytes <n>] [--network signet|testnet|regtest|main] [--change-address <addr>] [--wallet-master-fingerprint <hex8> --wallet-account-xpub <xpub> --wallet-account-path <path> [--wallet-scan-limit <n>]] [--write <path>] [--write-packages-dir <dir>]");
+  console.log("    Build one batched ordinary-lane anchor transaction from multiple claim packages and emit reveal-ready batch claim packages");
+  console.log("");
   console.log("  build-reveal-artifacts <claim-package> --input <txid:vout:valueSats:address[:derivationPath]> [--input ...] --fee-sats <amount> [--network signet|testnet|regtest|main] [--change-address <addr>] [--wallet-master-fingerprint <hex8> --wallet-account-xpub <xpub> --wallet-account-path <path> [--wallet-scan-limit <n>]] [--write <path>]");
   console.log("    Build unsigned reveal transaction artifacts from a reveal-ready claim package");
+  console.log("");
+  console.log("  build-batch-reveal-artifacts <batch-claim-package> --input <txid:vout:valueSats:address[:derivationPath]> [--input ...] --fee-sats <amount> [--network signet|testnet|regtest|main] [--change-address <addr>] [--wallet-master-fingerprint <hex8> --wallet-account-xpub <xpub> --wallet-account-path <path> [--wallet-scan-limit <n>]] [--write <path>]");
+  console.log("    Build unsigned reveal transaction artifacts from a reveal-ready batch claim package");
   console.log("");
   console.log("  build-transfer-artifacts --prev-state-txid <txid> --new-owner-pubkey <hex32> --owner-private-key-hex <hex32> --bond-input <txid:vout:valueSats:address> [--input ...] --successor-bond-vout <0-255> --successor-bond-sats <amount> --fee-sats <amount> --bond-address <addr> [--change-address <addr>] [--flags <0-255>] [--network signet|testnet|regtest|main] [--write <path>]");
   console.log("    Build unsigned gift-transfer artifacts with embedded owner authorization and successor bond output");

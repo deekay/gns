@@ -9,7 +9,12 @@ initEccLib(tinysecp);
 const ECPair = ECPairFactory(tinysecp);
 
 export interface BuiltArtifactsEnvelope {
-  readonly kind: "gns-commit-artifacts" | "gns-reveal-artifacts" | "gns-transfer-artifacts";
+  readonly kind:
+    | "gns-commit-artifacts"
+    | "gns-reveal-artifacts"
+    | "gns-transfer-artifacts"
+    | "gns-batch-commit-artifacts"
+    | "gns-batch-reveal-artifacts";
   readonly network: GnsCliNetwork;
   readonly psbtBase64: string;
   readonly commitTxid?: string;
@@ -18,7 +23,12 @@ export interface BuiltArtifactsEnvelope {
 }
 
 export interface SignedArtifacts {
-  readonly kind: "gns-signed-commit-artifacts" | "gns-signed-reveal-artifacts" | "gns-signed-transfer-artifacts";
+  readonly kind:
+    | "gns-signed-commit-artifacts"
+    | "gns-signed-reveal-artifacts"
+    | "gns-signed-transfer-artifacts"
+    | "gns-signed-batch-commit-artifacts"
+    | "gns-signed-batch-reveal-artifacts";
   readonly network: GnsCliNetwork;
   readonly signedTransactionHex: string;
   readonly signedTransactionId: string;
@@ -27,7 +37,12 @@ export interface SignedArtifacts {
 }
 
 export interface SignedArtifactsEnvelope {
-  readonly kind: "gns-signed-commit-artifacts" | "gns-signed-reveal-artifacts" | "gns-signed-transfer-artifacts";
+  readonly kind:
+    | "gns-signed-commit-artifacts"
+    | "gns-signed-reveal-artifacts"
+    | "gns-signed-transfer-artifacts"
+    | "gns-signed-batch-commit-artifacts"
+    | "gns-signed-batch-reveal-artifacts";
   readonly network: GnsCliNetwork;
   readonly signedTransactionHex: string;
   readonly signedTransactionId: string;
@@ -42,9 +57,13 @@ export function parseBuiltArtifactsEnvelope(input: unknown): BuiltArtifactsEnvel
   if (
     kind !== "gns-commit-artifacts" &&
     kind !== "gns-reveal-artifacts" &&
-    kind !== "gns-transfer-artifacts"
+    kind !== "gns-transfer-artifacts" &&
+    kind !== "gns-batch-commit-artifacts" &&
+    kind !== "gns-batch-reveal-artifacts"
   ) {
-    throw new Error("artifacts kind must be gns-commit-artifacts, gns-reveal-artifacts, or gns-transfer-artifacts");
+    throw new Error(
+      "artifacts kind must be gns-commit-artifacts, gns-reveal-artifacts, gns-transfer-artifacts, gns-batch-commit-artifacts, or gns-batch-reveal-artifacts"
+    );
   }
 
   const network = parseNetwork(assertString(record.network, "network"));
@@ -113,11 +132,27 @@ export function signArtifacts(options: {
   }
 
   if (
+    options.artifacts.kind === "gns-batch-commit-artifacts" &&
+    options.artifacts.commitTxid &&
+    options.artifacts.commitTxid !== signedTransactionId
+  ) {
+    throw new Error("signed batch commit txid does not match the unsigned batch commit artifact");
+  }
+
+  if (
     options.artifacts.kind === "gns-reveal-artifacts" &&
     options.artifacts.revealTxid &&
     options.artifacts.revealTxid !== signedTransactionId
   ) {
     throw new Error("signed reveal txid does not match the unsigned reveal artifact");
+  }
+
+  if (
+    options.artifacts.kind === "gns-batch-reveal-artifacts" &&
+    options.artifacts.revealTxid &&
+    options.artifacts.revealTxid !== signedTransactionId
+  ) {
+    throw new Error("signed batch reveal txid does not match the unsigned batch reveal artifact");
   }
 
   if (
@@ -132,8 +167,12 @@ export function signArtifacts(options: {
     kind: (
       options.artifacts.kind === "gns-commit-artifacts"
         ? "gns-signed-commit-artifacts"
+        : options.artifacts.kind === "gns-batch-commit-artifacts"
+          ? "gns-signed-batch-commit-artifacts"
         : options.artifacts.kind === "gns-reveal-artifacts"
           ? "gns-signed-reveal-artifacts"
+          : options.artifacts.kind === "gns-batch-reveal-artifacts"
+            ? "gns-signed-batch-reveal-artifacts"
           : "gns-signed-transfer-artifacts"
     ),
     network: options.artifacts.network,
@@ -151,10 +190,12 @@ export function parseSignedArtifactsEnvelope(input: unknown): SignedArtifactsEnv
   if (
     kind !== "gns-signed-commit-artifacts" &&
     kind !== "gns-signed-reveal-artifacts" &&
-    kind !== "gns-signed-transfer-artifacts"
+    kind !== "gns-signed-transfer-artifacts" &&
+    kind !== "gns-signed-batch-commit-artifacts" &&
+    kind !== "gns-signed-batch-reveal-artifacts"
   ) {
     throw new Error(
-      "signed artifacts kind must be gns-signed-commit-artifacts, gns-signed-reveal-artifacts, or gns-signed-transfer-artifacts"
+      "signed artifacts kind must be gns-signed-commit-artifacts, gns-signed-reveal-artifacts, gns-signed-transfer-artifacts, gns-signed-batch-commit-artifacts, or gns-signed-batch-reveal-artifacts"
     );
   }
 

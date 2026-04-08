@@ -12,12 +12,19 @@ import * as tinysecp from "tiny-secp256k1";
 
 import {
   bytesToHex,
+  computeBatchCommitLeafHash,
+  computeMerkleRoot,
+  createBatchClaimPackage,
+  createMerkleProof,
   createClaimPackage,
+  encodeBatchAnchorPayload,
+  encodeMerkleProof,
   encodeRevealPayload,
   encodeTransferPayload,
+  type BatchClaimPackage,
+  type ClaimPackage,
   parseClaimPackage,
-  signTransferAuthorization,
-  type ClaimPackage
+  signTransferAuthorization
 } from "@gns/protocol";
 
 const bip32 = BIP32Factory(tinysecp);
@@ -117,6 +124,25 @@ export interface BuildRevealArtifactsOptions {
   readonly walletDerivation?: WalletDerivationDescriptor;
 }
 
+export interface BuildBatchCommitArtifactsOptions {
+  readonly claimPackages: ReadonlyArray<ClaimPackage>;
+  readonly fundingInputs: ReadonlyArray<FundingInputDescriptor>;
+  readonly feeSats: bigint;
+  readonly network: GnsCliNetwork;
+  readonly changeAddress?: string;
+  readonly walletDerivation?: WalletDerivationDescriptor;
+  readonly proofChunkBytes?: number;
+}
+
+export interface BuildBatchRevealArtifactsOptions {
+  readonly claimPackage: BatchClaimPackage;
+  readonly fundingInputs: ReadonlyArray<FundingInputDescriptor>;
+  readonly feeSats: bigint;
+  readonly network: GnsCliNetwork;
+  readonly changeAddress?: string;
+  readonly walletDerivation?: WalletDerivationDescriptor;
+}
+
 export interface BuildTransferArtifactsOptions {
   readonly prevStateTxid: string;
   readonly ownerPrivateKeyHex: string;
@@ -204,6 +230,49 @@ export interface RevealArtifacts {
   }>;
 }
 
+export interface BatchCommitArtifacts {
+  readonly kind: "gns-batch-commit-artifacts";
+  readonly network: GnsCliNetwork;
+  readonly feeSats: string;
+  readonly totalInputSats: string;
+  readonly changeValueSats: string;
+  readonly unsignedTransactionHex: string;
+  readonly unsignedTransactionVirtualSize: number;
+  readonly commitTxid: string;
+  readonly psbtBase64: string;
+  readonly merkleRoot: string;
+  readonly leafCount: number;
+  readonly proofChunkBytes: number;
+  readonly outputs: ReadonlyArray<{
+    readonly vout: number;
+    readonly role: "gns_batch_anchor" | "bond" | "change";
+    readonly claimName: string | null;
+    readonly valueSats: string;
+    readonly address: string | null;
+    readonly scriptHex: string;
+  }>;
+  readonly updatedClaimPackages: ReadonlyArray<BatchClaimPackage>;
+}
+
+export interface BatchRevealArtifacts {
+  readonly kind: "gns-batch-reveal-artifacts";
+  readonly network: GnsCliNetwork;
+  readonly feeSats: string;
+  readonly totalInputSats: string;
+  readonly changeValueSats: string;
+  readonly unsignedTransactionHex: string;
+  readonly unsignedTransactionVirtualSize: number;
+  readonly revealTxid: string;
+  readonly psbtBase64: string;
+  readonly outputs: ReadonlyArray<{
+    readonly vout: number;
+    readonly role: "gns_batch_reveal" | "gns_reveal_proof_chunk" | "change";
+    readonly valueSats: string;
+    readonly address: string | null;
+    readonly scriptHex: string;
+  }>;
+}
+
 export interface TransferArtifacts {
   readonly kind: "gns-transfer-artifacts";
   readonly mode?: "gift" | "sale" | "immature-sale";
@@ -244,6 +313,21 @@ interface RevealBuilderOutput {
   readonly script: Uint8Array;
 }
 
+interface BatchCommitBuilderOutput {
+  readonly role: "gns_batch_anchor" | "bond" | "change";
+  readonly valueSats: bigint;
+  readonly address: string | null;
+  readonly script: Uint8Array;
+  readonly claimName: string | null;
+}
+
+interface BatchRevealBuilderOutput {
+  readonly role: "gns_batch_reveal" | "gns_reveal_proof_chunk" | "change";
+  readonly valueSats: bigint;
+  readonly address: string | null;
+  readonly script: Uint8Array;
+}
+
 interface TransferBuilderOutput {
   readonly role:
     | "successor_bond"
@@ -259,6 +343,7 @@ interface TransferBuilderOutput {
 
 const DEFAULT_CLAIM_COMMIT_FEE_SATS = 1_000n;
 const DEFAULT_CLAIM_REVEAL_FEE_SATS = 500n;
+const DEFAULT_BATCH_PROOF_CHUNK_BYTES = 66;
 const DEFAULT_WALLET_SCAN_LIMIT = 50;
 
 export function parseFundingInputDescriptor(spec: string): FundingInputDescriptor {
@@ -680,6 +765,275 @@ export function buildRevealArtifacts(options: BuildRevealArtifactsOptions): Reve
 
   return {
     kind: "gns-reveal-artifacts",
+    network: options.network,
+    feeSats: options.feeSats.toString(),
+    totalInputSats: totalInputSats.toString(),
+    changeValueSats: changeValueSats.toString(),
+    unsignedTransactionHex: transaction.toHex(),
+    unsignedTransactionVirtualSize: transaction.virtualSize(),
+    revealTxid: transaction.getId(),
+    psbtBase64: psbt.toBase64(),
+    outputs: outputs.map((output, index) => ({
+      vout: index,
+      role: output.role,
+      valueSats: output.valueSats.toString(),
+      address: output.address,
+      scriptHex: bytesToHex(output.script)
+    }))
+  };
+}
+
+export function buildBatchCommitArtifacts(
+  options: BuildBatchCommitArtifactsOptions
+): BatchCommitArtifacts {
+  if (options.claimPackages.length === 0) {
+    throw new Error("at least one claim package is required");
+  }
+
+  const network = resolveNetwork(options.network);
+  const proofChunkBytes = options.proofChunkBytes ?? DEFAULT_BATCH_PROOF_CHUNK_BYTES;
+  if (!Number.isInteger(proofChunkBytes) || proofChunkBytes <= 0) {
+    throw new Error("proofChunkBytes must be a positive integer");
+  }
+
+  const changeAddress =
+    options.changeAddress ?? options.claimPackages[0]?.changeDestination ?? null;
+  const totalRequiredBondSats = options.claimPackages.reduce(
+    (sum, claimPackage) => sum + BigInt(claimPackage.requiredBondSats),
+    0n
+  );
+  const totalInputSats = sumInputValues(options.fundingInputs);
+  const changeValueSats = totalInputSats - totalRequiredBondSats - options.feeSats;
+
+  if (changeValueSats < 0n) {
+    throw new Error("funding inputs do not cover the required bonds and fee");
+  }
+
+  if (changeValueSats > 0n && changeAddress === null) {
+    throw new Error("a change address is required when the batch commit transaction produces change");
+  }
+
+  const bondOutputs = options.claimPackages.map((claimPackage, index) => {
+    const bondAddress = claimPackage.bondDestination;
+
+    if (!bondAddress) {
+      throw new Error(`claim package ${index} (${claimPackage.name}) is missing bondDestination`);
+    }
+
+    return {
+      claimPackage,
+      bondVout: index + 1,
+      bondAddress,
+      requiredBondSats: BigInt(claimPackage.requiredBondSats),
+      bondScript: toSupportedOutputScript(bondAddress, network, "bond address")
+    };
+  });
+
+  const leafHashes = bondOutputs.map(({ bondVout, claimPackage }) =>
+    computeBatchCommitLeafHash({
+      bondVout,
+      ownerPubkey: claimPackage.ownerPubkey,
+      commitHash: claimPackage.commitHash
+    })
+  );
+  const merkleRoot = computeMerkleRoot(leafHashes);
+  const batchAnchorPayloadHex = bytesToHex(
+    encodeBatchAnchorPayload({
+      flags: 0,
+      leafCount: bondOutputs.length,
+      merkleRoot
+    })
+  );
+  const batchAnchorScript = compileOpReturn(batchAnchorPayloadHex);
+  const changeScript =
+    changeAddress === null ? null : toSupportedOutputScript(changeAddress, network, "change address");
+
+  const outputs: BatchCommitBuilderOutput[] = [
+    {
+      role: "gns_batch_anchor",
+      valueSats: 0n,
+      address: null,
+      script: batchAnchorScript,
+      claimName: null
+    },
+    ...bondOutputs.map((bondOutput) => ({
+      role: "bond" as const,
+      valueSats: bondOutput.requiredBondSats,
+      address: bondOutput.bondAddress,
+      script: bondOutput.bondScript,
+      claimName: bondOutput.claimPackage.name
+    }))
+  ];
+
+  if (changeValueSats > 0n && changeScript !== null) {
+    outputs.push({
+      role: "change",
+      valueSats: changeValueSats,
+      address: changeAddress,
+      script: changeScript,
+      claimName: null
+    });
+  }
+
+  const transaction = new Transaction();
+  const psbt = new Psbt({ network });
+  transaction.version = 2;
+  psbt.setVersion(2);
+
+  for (const input of options.fundingInputs) {
+    const inputScript = toSupportedOutputScript(input.address, network, "input address");
+
+    transaction.addInput(reverseTxid(input.txid), input.vout);
+    psbt.addInput({
+      hash: input.txid,
+      index: input.vout,
+      witnessUtxo: {
+        script: inputScript,
+        value: input.valueSats
+      },
+      ...(buildInputBip32Derivation(input, options.walletDerivation, network) ?? {})
+    });
+  }
+
+  for (const output of outputs) {
+    transaction.addOutput(output.script, output.valueSats);
+
+    if (output.address !== null) {
+      psbt.addOutput({
+        address: output.address,
+        value: output.valueSats
+      });
+    } else {
+      psbt.addOutput({
+        script: output.script,
+        value: output.valueSats
+      });
+    }
+  }
+
+  const commitTxid = transaction.getId();
+  const updatedClaimPackages = bondOutputs.map(({ claimPackage, bondVout }, index) =>
+    createBatchClaimPackage({
+      name: claimPackage.name,
+      ownerPubkey: claimPackage.ownerPubkey,
+      nonceHex: claimPackage.nonceHex,
+      bondVout,
+      bondDestination: claimPackage.bondDestination,
+      changeDestination: claimPackage.changeDestination,
+      batchMerkleRoot: merkleRoot,
+      batchLeafCount: bondOutputs.length,
+      batchProofHex: bytesToHex(createProofBytesForLeaf(leafHashes, index)),
+      batchAnchorTxid: commitTxid,
+      proofChunkBytes
+    })
+  );
+
+  return {
+    kind: "gns-batch-commit-artifacts",
+    network: options.network,
+    feeSats: options.feeSats.toString(),
+    totalInputSats: totalInputSats.toString(),
+    changeValueSats: changeValueSats.toString(),
+    unsignedTransactionHex: transaction.toHex(),
+    unsignedTransactionVirtualSize: transaction.virtualSize(),
+    commitTxid,
+    psbtBase64: psbt.toBase64(),
+    merkleRoot,
+    leafCount: bondOutputs.length,
+    proofChunkBytes,
+    outputs: outputs.map((output, index) => ({
+      vout: index,
+      role: output.role,
+      claimName: output.claimName,
+      valueSats: output.valueSats.toString(),
+      address: output.address,
+      scriptHex: bytesToHex(output.script)
+    })),
+    updatedClaimPackages
+  };
+}
+
+export function buildBatchRevealArtifacts(
+  options: BuildBatchRevealArtifactsOptions
+): BatchRevealArtifacts {
+  const network = resolveNetwork(options.network);
+  const claimPackage = options.claimPackage;
+  const changeAddress = options.changeAddress ?? claimPackage.changeDestination ?? null;
+  const totalInputSats = sumInputValues(options.fundingInputs);
+  const changeValueSats = totalInputSats - options.feeSats;
+
+  if (changeValueSats < 0n) {
+    throw new Error("funding inputs do not cover the batch reveal fee");
+  }
+
+  if (changeValueSats > 0n && changeAddress === null) {
+    throw new Error("a change address is required when the batch reveal transaction produces change");
+  }
+
+  const changeScript =
+    changeAddress === null ? null : toSupportedOutputScript(changeAddress, network, "change address");
+  const outputs: BatchRevealBuilderOutput[] = [
+    {
+      role: "gns_batch_reveal",
+      valueSats: 0n,
+      address: null,
+      script: compileOpReturn(claimPackage.revealPayloadHex)
+    },
+    ...claimPackage.revealProofChunkPayloadsHex.map((payloadHex) => ({
+      role: "gns_reveal_proof_chunk" as const,
+      valueSats: 0n,
+      address: null,
+      script: compileOpReturn(payloadHex)
+    }))
+  ];
+
+  if (changeValueSats > 0n && changeScript !== null) {
+    outputs.push({
+      role: "change",
+      valueSats: changeValueSats,
+      address: changeAddress,
+      script: changeScript
+    });
+  }
+
+  const transaction = new Transaction();
+  const psbt = new Psbt({ network });
+  transaction.version = 2;
+  psbt.setVersion(2);
+
+  for (const input of options.fundingInputs) {
+    const inputScript = toSupportedOutputScript(input.address, network, "input address");
+
+    transaction.addInput(reverseTxid(input.txid), input.vout);
+    psbt.addInput({
+      hash: input.txid,
+      index: input.vout,
+      witnessUtxo: {
+        script: inputScript,
+        value: input.valueSats
+      },
+      ...(buildInputBip32Derivation(input, options.walletDerivation, network) ?? {})
+    });
+  }
+
+  for (const output of outputs) {
+    transaction.addOutput(output.script, output.valueSats);
+
+    if (output.address !== null) {
+      psbt.addOutput({
+        address: output.address,
+        value: output.valueSats
+      });
+    } else {
+      psbt.addOutput({
+        script: output.script,
+        value: output.valueSats
+      });
+    }
+  }
+
+  return {
+    kind: "gns-batch-reveal-artifacts",
     network: options.network,
     feeSats: options.feeSats.toString(),
     totalInputSats: totalInputSats.toString(),
@@ -1370,6 +1724,10 @@ function deriveP2wpkhAddress(pubkey: Uint8Array, network: networks.Network): str
   );
 
   return payment;
+}
+
+function createProofBytesForLeaf(leafHashes: readonly string[], leafIndex: number): Uint8Array {
+  return encodeMerkleProof(createMerkleProof(leafHashes, leafIndex));
 }
 
 function compileOpReturn(dataHex: string): Uint8Array {

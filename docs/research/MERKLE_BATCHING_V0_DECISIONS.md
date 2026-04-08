@@ -98,6 +98,7 @@ Recommended shape:
 - one `BATCH_REVEAL` header output
 - zero or more `REVEAL_PROOF_CHUNK` outputs in the same transaction
 - proof bytes are reconstructed by concatenating chunk payloads in ascending `vout` order
+- current implementation default: `66` proof bytes per chunk, which fits two `33`-byte proof steps cleanly
 
 ### Batched Reveal Header
 
@@ -195,9 +196,8 @@ These decisions imply the first implementation plan should assume:
 
 These are now much smaller and should be handled during protocol implementation planning rather than blocking it:
 
-1. exact max bytes per proof chunk
-2. whether `proof_bytes_len` should remain `u16` or widen later
-3. whether v0 batch cap should be `32`, `64`, or another modest number
+1. whether `proof_bytes_len` should remain `u16` or widen later
+2. whether v0 batch cap should be `32`, `64`, or another modest number
 
 ## Current Recommendation
 

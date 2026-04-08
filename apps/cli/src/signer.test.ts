@@ -12,7 +12,12 @@ import {
   PROTOCOL_NAME
 } from "@gns/protocol";
 
-import { buildCommitArtifacts, buildTransferArtifacts } from "./builder.js";
+import {
+  buildBatchCommitArtifacts,
+  buildBatchRevealArtifacts,
+  buildCommitArtifacts,
+  buildTransferArtifacts
+} from "./builder.js";
 import { signArtifacts } from "./signer.js";
 
 initEccLib(tinysecp);
@@ -82,6 +87,51 @@ function createClaimPackage() {
   };
 }
 
+function createSecondClaimPackage() {
+  const name = "alice";
+  const ownerPubkey = "22".repeat(32);
+  const nonceHex = "1112131415161718";
+  const commitHash = computeCommitHash({
+    name,
+    nonce: BigInt(`0x${nonceHex}`),
+    ownerPubkey
+  });
+
+  return parseClaimPackage({
+    format: CLAIM_PACKAGE_FORMAT,
+    packageVersion: CLAIM_PACKAGE_VERSION,
+    protocol: PROTOCOL_NAME,
+    exportedAt: "2026-03-18T20:00:00.000Z",
+    name,
+    ownerPubkey,
+    nonceHex,
+    nonceDecimal: BigInt(`0x${nonceHex}`).toString(),
+    requiredBondSats: "6250000",
+    bondVout: 0,
+    bondDestination: payments.p2wpkh({
+      hash: Buffer.alloc(20, 5),
+      network: networks.testnet
+    }).address ?? "",
+    changeDestination: payments.p2wpkh({
+      hash: Buffer.alloc(20, 6),
+      network: networks.testnet
+    }).address ?? "",
+    commitHash,
+    commitPayloadHex: Buffer.from(
+      encodeCommitPayload({
+        bondVout: 0,
+        ownerPubkey,
+        commitHash
+      })
+    ).toString("hex"),
+    commitPayloadBytes: 70,
+    commitTxid: null,
+    revealReady: false,
+    revealPayloadHex: null,
+    revealPayloadBytes: null
+  });
+}
+
 describe("signArtifacts", () => {
   it("signs witnesspubkeyhash commit artifacts and preserves txid", () => {
     const { claimPackage, fundingKey, fundingAddress } = createClaimPackage();
@@ -106,6 +156,75 @@ describe("signArtifacts", () => {
 
     expect(signed.kind).toBe("gns-signed-commit-artifacts");
     expect(signed.signedTransactionId).toBe(artifacts.commitTxid);
+
+    const transaction = Transaction.fromHex(signed.signedTransactionHex);
+    expect(transaction.ins[0]?.witness.length).toBeGreaterThan(0);
+  });
+
+  it("signs witnesspubkeyhash batch commit artifacts and preserves txid", () => {
+    const { claimPackage, fundingKey, fundingAddress } = createClaimPackage();
+    const artifacts = buildBatchCommitArtifacts({
+      claimPackages: [claimPackage, createSecondClaimPackage()],
+      fundingInputs: [
+        {
+          txid: "aa".repeat(32),
+          vout: 0,
+          valueSats: 40_000_000n,
+          address: fundingAddress
+        }
+      ],
+      feeSats: 1_500n,
+      network: "signet"
+    });
+
+    const signed = signArtifacts({
+      artifacts,
+      wifs: [fundingKey.toWIF()]
+    });
+
+    expect(signed.kind).toBe("gns-signed-batch-commit-artifacts");
+    expect(signed.signedTransactionId).toBe(artifacts.commitTxid);
+
+    const transaction = Transaction.fromHex(signed.signedTransactionHex);
+    expect(transaction.ins[0]?.witness.length).toBeGreaterThan(0);
+  });
+
+  it("signs witnesspubkeyhash batch reveal artifacts and preserves txid", () => {
+    const { claimPackage, fundingKey, fundingAddress } = createClaimPackage();
+    const batchCommitArtifacts = buildBatchCommitArtifacts({
+      claimPackages: [claimPackage, createSecondClaimPackage()],
+      fundingInputs: [
+        {
+          txid: "aa".repeat(32),
+          vout: 0,
+          valueSats: 40_000_000n,
+          address: fundingAddress
+        }
+      ],
+      feeSats: 1_500n,
+      network: "signet"
+    });
+    const artifacts = buildBatchRevealArtifacts({
+      claimPackage: batchCommitArtifacts.updatedClaimPackages[0]!,
+      fundingInputs: [
+        {
+          txid: "bb".repeat(32),
+          vout: 1,
+          valueSats: 15_000n,
+          address: fundingAddress
+        }
+      ],
+      feeSats: 500n,
+      network: "signet"
+    });
+
+    const signed = signArtifacts({
+      artifacts,
+      wifs: [fundingKey.toWIF()]
+    });
+
+    expect(signed.kind).toBe("gns-signed-batch-reveal-artifacts");
+    expect(signed.signedTransactionId).toBe(artifacts.revealTxid);
 
     const transaction = Transaction.fromHex(signed.signedTransactionHex);
     expect(transaction.ins[0]?.witness.length).toBeGreaterThan(0);

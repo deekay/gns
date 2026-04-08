@@ -7,6 +7,7 @@ import * as tinysecp from "tiny-secp256k1";
 import {
   CLAIM_PACKAGE_FORMAT,
   CLAIM_PACKAGE_VERSION,
+  BATCH_REVEAL_MIN_PAYLOAD_LENGTH,
   computeCommitHash,
   encodeCommitPayload,
   parseClaimPackage,
@@ -14,6 +15,8 @@ import {
 } from "@gns/protocol";
 
 import {
+  buildBatchCommitArtifacts,
+  buildBatchRevealArtifacts,
   buildCommitArtifacts,
   buildImmatureSaleTransferArtifacts,
   buildRevealArtifacts,
@@ -60,6 +63,45 @@ function createClaimPackage() {
     bondVout: 0,
     bondDestination: createTestAddress(1),
     changeDestination: createTestAddress(2),
+    commitHash,
+    commitPayloadHex: Buffer.from(
+      encodeCommitPayload({
+        bondVout: 0,
+        ownerPubkey,
+        commitHash
+      })
+    ).toString("hex"),
+    commitPayloadBytes: 70,
+    commitTxid: null,
+    revealReady: false,
+    revealPayloadHex: null,
+    revealPayloadBytes: null
+  });
+}
+
+function createSecondClaimPackage() {
+  const name = "alice";
+  const ownerPubkey = "22".repeat(32);
+  const nonceHex = "1112131415161718";
+  const commitHash = computeCommitHash({
+    name,
+    nonce: BigInt(`0x${nonceHex}`),
+    ownerPubkey
+  });
+
+  return parseClaimPackage({
+    format: CLAIM_PACKAGE_FORMAT,
+    packageVersion: CLAIM_PACKAGE_VERSION,
+    protocol: PROTOCOL_NAME,
+    exportedAt: "2026-03-18T20:00:00.000Z",
+    name,
+    ownerPubkey,
+    nonceHex,
+    nonceDecimal: BigInt(`0x${nonceHex}`).toString(),
+    requiredBondSats: "6250000",
+    bondVout: 0,
+    bondDestination: createTestAddress(11),
+    changeDestination: createTestAddress(12),
     commitHash,
     commitPayloadHex: Buffer.from(
       encodeCommitPayload({
@@ -216,6 +258,77 @@ describe("buildRevealArtifacts", () => {
 
     const transaction = Transaction.fromHex(revealArtifacts.unsignedTransactionHex);
     expect(transaction.outs[0]?.value).toBe(0n);
+  });
+});
+
+describe("buildBatchCommitArtifacts", () => {
+  it("builds one batch anchor transaction and returns reveal-ready batch packages", () => {
+    const artifacts = buildBatchCommitArtifacts({
+      claimPackages: [createClaimPackage(), createSecondClaimPackage()],
+      fundingInputs: [
+        {
+          txid: "aa".repeat(32),
+          vout: 0,
+          valueSats: 40_000_000n,
+          address: createTestAddress(13)
+        }
+      ],
+      feeSats: 1_500n,
+      network: "signet"
+    });
+
+    expect(artifacts.kind).toBe("gns-batch-commit-artifacts");
+    expect(artifacts.leafCount).toBe(2);
+    expect(artifacts.updatedClaimPackages).toHaveLength(2);
+
+    const transaction = Transaction.fromHex(artifacts.unsignedTransactionHex);
+    expect(transaction.outs).toHaveLength(4);
+    expect(artifacts.outputs[0]?.role).toBe("gns_batch_anchor");
+    expect(artifacts.outputs[1]).toMatchObject({ role: "bond", claimName: "bob" });
+    expect(artifacts.outputs[2]).toMatchObject({ role: "bond", claimName: "alice" });
+    expect(artifacts.updatedClaimPackages[0]?.bondVout).toBe(1);
+    expect(artifacts.updatedClaimPackages[1]?.bondVout).toBe(2);
+  });
+});
+
+describe("buildBatchRevealArtifacts", () => {
+  it("builds a reveal transaction with an explicit batch header and proof chunks", () => {
+    const commitArtifacts = buildBatchCommitArtifacts({
+      claimPackages: [createClaimPackage(), createSecondClaimPackage()],
+      fundingInputs: [
+        {
+          txid: "aa".repeat(32),
+          vout: 0,
+          valueSats: 40_000_000n,
+          address: createTestAddress(14)
+        }
+      ],
+      feeSats: 1_500n,
+      network: "signet"
+    });
+
+    const revealArtifacts = buildBatchRevealArtifacts({
+      claimPackage: commitArtifacts.updatedClaimPackages[0]!,
+      fundingInputs: [
+        {
+          txid: "bb".repeat(32),
+          vout: 1,
+          valueSats: 15_000n,
+          address: createTestAddress(15)
+        }
+      ],
+      feeSats: 500n,
+      network: "signet"
+    });
+
+    expect(revealArtifacts.kind).toBe("gns-batch-reveal-artifacts");
+    const transaction = Transaction.fromHex(revealArtifacts.unsignedTransactionHex);
+    expect(transaction.outs[0]?.value).toBe(0n);
+    expect(revealArtifacts.outputs[0]?.role).toBe("gns_batch_reveal");
+    expect(revealArtifacts.outputs[1]?.role).toBe("gns_reveal_proof_chunk");
+    expect(commitArtifacts.updatedClaimPackages[0]?.revealPayloadBytes).toBeGreaterThanOrEqual(
+      BATCH_REVEAL_MIN_PAYLOAD_LENGTH
+    );
   });
 });
 
