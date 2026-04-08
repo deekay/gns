@@ -1,7 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 import { type BitcoinBlock } from "@gns/bitcoin";
-import { computeCommitHash, encodeCommitPayload, encodeRevealPayload } from "@gns/protocol";
+import {
+  computeBatchCommitLeafHash,
+  computeCommitHash,
+  encodeBatchAnchorPayload,
+  encodeBatchRevealPayload,
+  encodeCommitPayload,
+  encodeRevealPayload
+} from "@gns/protocol";
 
 import { InMemoryGnsIndexer } from "./indexer.js";
 
@@ -206,6 +213,60 @@ describe("InMemoryGnsIndexer", () => {
     expect(indexer.getName("alice")?.claimRevealTxid).toBe("bb".repeat(32));
   });
 
+  it("indexes a batched anchor/reveal flow", () => {
+    const ownerPubkey = "11".repeat(32);
+    const anchorTxid = "aa".repeat(32);
+    const commitHash = computeCommitHash({
+      name: "alice",
+      nonce: 42n,
+      ownerPubkey
+    });
+    const leafHash = computeBatchCommitLeafHash({
+      bondVout: 1,
+      ownerPubkey,
+      commitHash
+    });
+    const indexer = new InMemoryGnsIndexer({ launchHeight: 100 });
+
+    indexer.ingestBlocks([
+      makeBlock(100, [
+        {
+          txid: anchorTxid,
+          paymentOutputs: [6_250_000n],
+          payloadsFirst: true,
+          payloads: [
+            encodeBatchAnchorPayload({
+              flags: 0,
+              leafCount: 1,
+              merkleRoot: leafHash
+            })
+          ]
+        }
+      ]),
+      makeBlock(101, [
+        {
+          txid: "bb".repeat(32),
+          payloads: [
+            encodeBatchRevealPayload({
+              anchorTxid,
+              ownerPubkey,
+              nonce: 42n,
+              bondVout: 1,
+              proofBytesLength: 0,
+              proofChunkCount: 0,
+              name: "alice"
+            })
+          ]
+        }
+      ])
+    ]);
+
+    expect(indexer.getName("alice")?.currentOwnerPubkey).toBe(ownerPubkey);
+    expect(indexer.getName("alice")?.claimCommitTxid).toBe(anchorTxid);
+    expect(indexer.getName("alice")?.currentBondVout).toBe(1);
+    expect(indexer.getStats().pendingCommits).toBe(0);
+  });
+
   it("stores transaction provenance for applied GNS events", () => {
     const ownerPubkey = "11".repeat(32);
     const indexer = new InMemoryGnsIndexer({ launchHeight: 100 });
@@ -266,6 +327,89 @@ describe("InMemoryGnsIndexer", () => {
           payload: {
             name: "alice",
             nonce: "42"
+          }
+        }
+      ]
+    });
+  });
+
+  it("stores transaction provenance for applied batch anchor and batch reveal events", () => {
+    const ownerPubkey = "11".repeat(32);
+    const anchorTxid = "aa".repeat(32);
+    const commitHash = computeCommitHash({
+      name: "alice",
+      nonce: 42n,
+      ownerPubkey
+    });
+    const leafHash = computeBatchCommitLeafHash({
+      bondVout: 1,
+      ownerPubkey,
+      commitHash
+    });
+    const indexer = new InMemoryGnsIndexer({ launchHeight: 100 });
+
+    indexer.ingestBlocks([
+      makeBlock(100, [
+        {
+          txid: anchorTxid,
+          paymentOutputs: [6_250_000n],
+          payloadsFirst: true,
+          payloads: [
+            encodeBatchAnchorPayload({
+              flags: 0,
+              leafCount: 1,
+              merkleRoot: leafHash
+            })
+          ]
+        }
+      ]),
+      makeBlock(101, [
+        {
+          txid: "bb".repeat(32),
+          payloads: [
+            encodeBatchRevealPayload({
+              anchorTxid,
+              ownerPubkey,
+              nonce: 42n,
+              bondVout: 1,
+              proofBytesLength: 0,
+              proofChunkCount: 0,
+              name: "alice"
+            })
+          ]
+        }
+      ])
+    ]);
+
+    expect(indexer.getTransactionProvenance(anchorTxid)).toMatchObject({
+      txid: anchorTxid,
+      blockHeight: 100,
+      events: [
+        {
+          typeName: "BATCH_ANCHOR",
+          validationStatus: "applied",
+          reason: "batch_anchor_registered"
+        }
+      ]
+    });
+
+    expect(indexer.getTransactionProvenance("bb".repeat(32))).toMatchObject({
+      txid: "bb".repeat(32),
+      blockHeight: 101,
+      events: [
+        {
+          typeName: "BATCH_REVEAL",
+          validationStatus: "applied",
+          reason: "batch_reveal_applied",
+          affectedName: "alice",
+          payload: {
+            anchorTxid,
+            ownerPubkey,
+            nonce: "42",
+            bondVout: 1,
+            proofBytesLength: 0,
+            proofChunkCount: 0,
+            name: "alice"
           }
         }
       ]
@@ -470,6 +614,8 @@ function makeBlock(
   transactions: Array<{
     txid: string;
     bondOutputValueSats?: bigint;
+    paymentOutputs?: ReadonlyArray<bigint>;
+    payloadsFirst?: boolean;
     payloads: Uint8Array[];
   }>
 ): BitcoinBlock {
@@ -480,19 +626,48 @@ function makeBlock(
       txid: transaction.txid,
       inputs: [],
       outputs: [
-        ...(transaction.bondOutputValueSats === undefined
-          ? []
-          : [
-              {
-                valueSats: transaction.bondOutputValueSats,
-                scriptType: "payment" as const
-              }
-            ]),
-        ...transaction.payloads.map((payload) => ({
-          valueSats: 0n,
-          scriptType: "op_return" as const,
-          dataHex: Buffer.from(payload).toString("hex")
-        }))
+        ...(
+          transaction.payloadsFirst
+            ? transaction.payloads.map((payload) => ({
+                valueSats: 0n,
+                scriptType: "op_return" as const,
+                dataHex: Buffer.from(payload).toString("hex")
+              }))
+            : transaction.paymentOutputs !== undefined
+              ? transaction.paymentOutputs.map((valueSats) => ({
+                  valueSats,
+                  scriptType: "payment" as const
+                }))
+              : transaction.bondOutputValueSats === undefined
+                ? []
+                : [
+                    {
+                      valueSats: transaction.bondOutputValueSats,
+                      scriptType: "payment" as const
+                    }
+                  ]
+        ),
+        ...(
+          transaction.payloadsFirst
+            ? transaction.paymentOutputs !== undefined
+              ? transaction.paymentOutputs.map((valueSats) => ({
+                  valueSats,
+                  scriptType: "payment" as const
+                }))
+              : transaction.bondOutputValueSats === undefined
+                ? []
+                : [
+                    {
+                      valueSats: transaction.bondOutputValueSats,
+                      scriptType: "payment" as const
+                    }
+                  ]
+            : transaction.payloads.map((payload) => ({
+                valueSats: 0n,
+                scriptType: "op_return" as const,
+                dataHex: Buffer.from(payload).toString("hex")
+              }))
+        )
       ]
     }))
   };

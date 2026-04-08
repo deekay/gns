@@ -33,6 +33,7 @@ export interface BatchAnchorEventPayload {
 
 export interface BatchRevealEventPayload {
   readonly anchorTxid: string;
+  readonly ownerPubkey: string;
   readonly nonce: bigint;
   readonly bondVout: number;
   readonly proofBytesLength: number;
@@ -155,6 +156,7 @@ export function createBatchAnchorPayload(input: {
 
 export function createBatchRevealPayload(input: {
   readonly anchorTxid: string;
+  readonly ownerPubkey: string;
   readonly nonce: bigint;
   readonly bondVout: number;
   readonly proofBytesLength: number;
@@ -187,6 +189,7 @@ export function createBatchRevealPayload(input: {
 
   return {
     anchorTxid: assertHexBytes(input.anchorTxid, 32, "anchorTxid"),
+    ownerPubkey: assertHexBytes(input.ownerPubkey, 32, "ownerPubkey"),
     nonce: input.nonce,
     bondVout: input.bondVout,
     proofBytesLength: input.proofBytesLength,

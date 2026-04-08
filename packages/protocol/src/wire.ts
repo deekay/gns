@@ -21,7 +21,7 @@ export const COMMIT_PAYLOAD_LENGTH = 3 + 1 + 1 + 1 + 32 + 32;
 export const TRANSFER_BODY_LENGTH = 32 + 32 + 1 + 1 + 64;
 export const MAX_REVEAL_NAME_LENGTH = 32;
 export const BATCH_ANCHOR_PAYLOAD_LENGTH = 3 + 1 + 1 + 1 + 1 + 32;
-export const BATCH_REVEAL_MIN_PAYLOAD_LENGTH = 3 + 1 + 1 + 32 + 8 + 1 + 2 + 1 + 1;
+export const BATCH_REVEAL_MIN_PAYLOAD_LENGTH = 3 + 1 + 1 + 32 + 32 + 8 + 1 + 2 + 1 + 1;
 export const REVEAL_PROOF_CHUNK_MIN_PAYLOAD_LENGTH = 3 + 1 + 1 + 1;
 
 export type DecodedGnsPayload =
@@ -132,6 +132,7 @@ export function encodeBatchRevealPayload(payload: BatchRevealEventPayload): Uint
     MAGIC_BYTES,
     Uint8Array.of(PROTOCOL_VERSION, GnsEventType.BatchReveal),
     hexToBytes(normalized.anchorTxid),
+    hexToBytes(normalized.ownerPubkey),
     bigIntToUint64Bytes(normalized.nonce),
     Uint8Array.of(normalized.bondVout),
     uint16ToBytes(normalized.proofBytesLength),
@@ -149,7 +150,7 @@ export function decodeBatchRevealPayload(payload: Uint8Array): BatchRevealEventP
     );
   }
 
-  const nameLength = payload[49];
+  const nameLength = payload[81];
 
   if (nameLength === undefined) {
     throw new Error("batch reveal payload is missing name length");
@@ -165,11 +166,12 @@ export function decodeBatchRevealPayload(payload: Uint8Array): BatchRevealEventP
 
   return createBatchRevealPayload({
     anchorTxid: bytesToHex(payload.slice(5, 37)),
-    nonce: uint64BytesToBigInt(payload.slice(37, 45)),
-    bondVout: payload[45] ?? 0,
-    proofBytesLength: uint16FromBytes(payload.slice(46, 48)),
-    proofChunkCount: payload[48] ?? 0,
-    name: Buffer.from(payload.slice(50)).toString("utf8")
+    ownerPubkey: bytesToHex(payload.slice(37, 69)),
+    nonce: uint64BytesToBigInt(payload.slice(69, 77)),
+    bondVout: payload[77] ?? 0,
+    proofBytesLength: uint16FromBytes(payload.slice(78, 80)),
+    proofChunkCount: payload[80] ?? 0,
+    name: Buffer.from(payload.slice(82)).toString("utf8")
   });
 }
 

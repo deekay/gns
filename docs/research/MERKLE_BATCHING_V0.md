@@ -126,6 +126,7 @@ The exact hash function and domain tag remain a spec item, but the important pro
 The claimant must later reveal:
 
 - the batch anchor transaction id
+- the owner public key bound into the committed leaf
 - the claim nonce and normalized name
 - the bound `bond_vout`
 - the Merkle proof for the corresponding leaf
@@ -134,7 +135,7 @@ The indexer then verifies:
 
 1. the batch anchor exists on-chain
 2. the referenced `bond_vout` exists and satisfies the required ordinary-lane bond amount
-3. the claim leaf reconstructed from reveal data matches the provided proof
+3. the claim leaf reconstructed from reveal data, including `owner_pubkey`, matches the provided proof
 4. the proof resolves to the anchored Merkle root
 
 ## Proof Carrier Recommendation

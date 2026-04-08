@@ -107,6 +107,7 @@ Recommended header payload shape:
 ```text
 magic(3) | version(1) | type(1) |
 anchor_txid(32) |
+owner_pubkey(32) |
 nonce64(8) |
 bond_vout(1) |
 proof_bytes_len(2) |
@@ -114,6 +115,11 @@ proof_chunk_count(1) |
 name_len(1) |
 normalized_name(<=32)
 ```
+
+The explicit `owner_pubkey` is part of the current implementation because the
+leaf hash commits to both `owner_pubkey` and `commit_hash`. Without carrying it
+at reveal time, the indexer cannot reconstruct the claim leaf from on-chain
+data alone.
 
 ### Proof Chunk Payload
 

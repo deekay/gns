@@ -3,10 +3,17 @@ import * as secp256k1 from "tiny-secp256k1";
 
 import { type BitcoinTransactionInBlock } from "@gns/bitcoin";
 import {
+  computeBatchCommitLeafHash,
   computeCommitHash,
+  createMerkleProof,
+  encodeBatchAnchorPayload,
+  encodeBatchRevealPayload,
   encodeCommitPayload,
+  encodeMerkleProof,
   encodeRevealPayload,
+  encodeRevealProofChunkPayload,
   encodeTransferPayload,
+  computeMerkleRoot,
   signTransferAuthorization
 } from "@gns/protocol";
 
@@ -42,6 +49,69 @@ describe("extractGnsEvents", () => {
 
     expect(extractGnsEvents(commit)).toHaveLength(1);
     expect(extractGnsEvents(reveal)).toHaveLength(1);
+  });
+
+  it("parses batch anchor, batch reveal, and proof chunk payloads from OP_RETURN outputs", () => {
+    const ownerPubkey = "11".repeat(32);
+    const leafHashes = [
+      computeBatchCommitLeafHash({
+        bondVout: 1,
+        ownerPubkey,
+        commitHash: computeCommitHash({
+          name: "alice",
+          nonce: 42n,
+          ownerPubkey
+        })
+      }),
+      computeBatchCommitLeafHash({
+        bondVout: 2,
+        ownerPubkey: "22".repeat(32),
+        commitHash: computeCommitHash({
+          name: "bob",
+          nonce: 7n,
+          ownerPubkey: "22".repeat(32)
+        })
+      })
+    ];
+    const proofHex = Buffer.from(encodeMerkleProof(createMerkleProof(leafHashes, 0))).toString("hex");
+
+    const batch = makeTransaction({
+      txid: "aa".repeat(32),
+      blockHeight: 100,
+      txIndex: 0,
+      paymentOutputs: [6_250_000n, 6_250_000n],
+      payloadsFirst: true,
+      payloads: [
+        encodeBatchAnchorPayload({
+          flags: 0,
+          leafCount: 2,
+          merkleRoot: computeMerkleRoot(leafHashes)
+        })
+      ]
+    });
+    const reveal = makeTransaction({
+      txid: "bb".repeat(32),
+      blockHeight: 101,
+      txIndex: 0,
+      payloads: [
+        encodeBatchRevealPayload({
+          anchorTxid: "aa".repeat(32),
+          ownerPubkey,
+          nonce: 42n,
+          bondVout: 1,
+          proofBytesLength: proofHex.length / 2,
+          proofChunkCount: 1,
+          name: "alice"
+        }),
+        encodeRevealProofChunkPayload({
+          chunkIndex: 0,
+          proofBytesHex: proofHex
+        })
+      ]
+    });
+
+    expect(extractGnsEvents(batch)).toHaveLength(1);
+    expect(extractGnsEvents(reveal)).toHaveLength(2);
   });
 });
 
@@ -251,6 +321,127 @@ describe("applyBlockTransactions", () => {
     const record = state.names.get("alice");
     expect(record?.currentOwnerPubkey).toBe(ownerPubkey);
     expect(record?.claimCommitTxid).toBe(commitTxid);
+    expect(record?.claimRevealTxid).toBe("bb".repeat(32));
+    expect(record?.status).toBe("immature");
+  });
+
+  it("accepts a valid batch reveal and materializes a claimed name", () => {
+    const ownerPubkey = "11".repeat(32);
+    const anchorTxid = "aa".repeat(32);
+    const state = createEmptyState();
+    const commitHash = computeCommitHash({
+      name: "alice",
+      nonce: 42n,
+      ownerPubkey
+    });
+    const leafHash = computeBatchCommitLeafHash({
+      bondVout: 1,
+      ownerPubkey,
+      commitHash
+    });
+
+    applyBlockTransactions(
+      state,
+      [
+        makeTransaction({
+          txid: anchorTxid,
+          blockHeight: 100,
+          txIndex: 0,
+          paymentOutputs: [6_250_000n],
+          payloadsFirst: true,
+          payloads: [
+            encodeBatchAnchorPayload({
+              flags: 0,
+              leafCount: 1,
+              merkleRoot: leafHash
+            })
+          ]
+        }),
+        makeTransaction({
+          txid: "bb".repeat(32),
+          blockHeight: 101,
+          txIndex: 0,
+          payloads: [
+            encodeBatchRevealPayload({
+              anchorTxid,
+              ownerPubkey,
+              nonce: 42n,
+              bondVout: 1,
+              proofBytesLength: 0,
+              proofChunkCount: 0,
+              name: "alice"
+            })
+          ]
+        })
+      ],
+      100
+    );
+
+    const record = state.names.get("alice");
+    expect(record).toBeDefined();
+    expect(record?.currentOwnerPubkey).toBe(ownerPubkey);
+    expect(record?.claimCommitTxid).toBe(anchorTxid);
+    expect(record?.currentBondTxid).toBe(anchorTxid);
+    expect(record?.currentBondVout).toBe(1);
+    expect(record?.currentBondValueSats).toBe(6_250_000n);
+    expect(record?.status).toBe("immature");
+  });
+
+  it("accepts a same-block batch reveal even when the reveal appears earlier than the anchor", () => {
+    const ownerPubkey = "11".repeat(32);
+    const anchorTxid = "aa".repeat(32);
+    const state = createEmptyState();
+    const commitHash = computeCommitHash({
+      name: "alice",
+      nonce: 42n,
+      ownerPubkey
+    });
+    const leafHash = computeBatchCommitLeafHash({
+      bondVout: 1,
+      ownerPubkey,
+      commitHash
+    });
+
+    applyBlockTransactions(
+      state,
+      [
+        makeTransaction({
+          txid: "bb".repeat(32),
+          blockHeight: 100,
+          txIndex: 0,
+          payloads: [
+            encodeBatchRevealPayload({
+              anchorTxid,
+              ownerPubkey,
+              nonce: 42n,
+              bondVout: 1,
+              proofBytesLength: 0,
+              proofChunkCount: 0,
+              name: "alice"
+            })
+          ]
+        }),
+        makeTransaction({
+          txid: anchorTxid,
+          blockHeight: 100,
+          txIndex: 1,
+          paymentOutputs: [6_250_000n],
+          payloadsFirst: true,
+          payloads: [
+            encodeBatchAnchorPayload({
+              flags: 0,
+              leafCount: 1,
+              merkleRoot: leafHash
+            })
+          ]
+        })
+      ],
+      100
+    );
+
+    const record = state.names.get("alice");
+    expect(record?.currentOwnerPubkey).toBe(ownerPubkey);
+    expect(record?.claimCommitTxid).toBe(anchorTxid);
     expect(record?.claimRevealTxid).toBe("bb".repeat(32));
     expect(record?.status).toBe("immature");
   });
@@ -478,8 +669,30 @@ function makeTransaction(input: {
     vout: number;
   }>;
   bondOutputValueSats?: bigint;
+  paymentOutputs?: ReadonlyArray<bigint>;
+  payloadsFirst?: boolean;
   payloads: Uint8Array[];
 }): BitcoinTransactionInBlock {
+  const paymentOutputs =
+    input.paymentOutputs !== undefined
+      ? input.paymentOutputs.map((valueSats) => ({
+          valueSats,
+          scriptType: "payment" as const
+        }))
+      : input.bondOutputValueSats === undefined
+        ? []
+        : [
+            {
+              valueSats: input.bondOutputValueSats,
+              scriptType: "payment" as const
+            }
+          ];
+  const payloadOutputs = input.payloads.map((payload) => ({
+    valueSats: 0n,
+    scriptType: "op_return" as const,
+    dataHex: Buffer.from(payload).toString("hex")
+  }));
+
   return {
     blockHeight: input.blockHeight,
     txIndex: input.txIndex,
@@ -491,19 +704,8 @@ function makeTransaction(input: {
         coinbase: false as const
       })),
       outputs: [
-        ...(input.bondOutputValueSats === undefined
-          ? []
-          : [
-              {
-                valueSats: input.bondOutputValueSats,
-                scriptType: "payment" as const
-              }
-            ]),
-        ...input.payloads.map((payload) => ({
-          valueSats: 0n,
-          scriptType: "op_return" as const,
-          dataHex: Buffer.from(payload).toString("hex")
-        }))
+        ...(input.payloadsFirst ? payloadOutputs : paymentOutputs),
+        ...(input.payloadsFirst ? paymentOutputs : payloadOutputs)
       ]
     }
   };

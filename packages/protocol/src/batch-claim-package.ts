@@ -111,6 +111,7 @@ export function createBatchClaimPackage(input: CreateBatchClaimPackageInput): Ba
     encodeBatchRevealPayload(
       createBatchRevealPayload({
         anchorTxid: batchAnchorTxid,
+        ownerPubkey,
         nonce,
         bondVout,
         proofBytesLength: batchProofHex.length / 2,
@@ -274,6 +275,7 @@ export function parseBatchClaimPackage(input: unknown): BatchClaimPackage {
     encodeBatchRevealPayload(
       createBatchRevealPayload({
         anchorTxid: batchAnchorTxid,
+        ownerPubkey,
         nonce,
         bondVout,
         proofBytesLength: batchProofBytes,

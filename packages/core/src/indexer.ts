@@ -20,6 +20,7 @@ import {
   createEmptyState,
   type GnsState,
   type NameRecord,
+  type PendingBatchAnchorRecord,
   type PendingCommitRecord,
   type ProvenanceEventRecord,
   refreshDerivedState
@@ -41,6 +42,14 @@ export interface InMemoryGnsIndexerPersistedState {
   readonly names: readonly NameRecordSnapshot[];
   readonly pendingCommits: ReadonlyArray<
     Omit<PendingCommitRecord, "bondValueSats"> & { readonly bondValueSats: string | null }
+  >;
+  readonly pendingBatchAnchors: ReadonlyArray<
+    Omit<PendingBatchAnchorRecord, "bondOutputs"> & {
+      readonly bondOutputs: ReadonlyArray<{
+        readonly vout: number;
+        readonly bondValueSats: string | null;
+      }>;
+    }
   >;
   readonly transactionProvenance: readonly TransactionProvenanceSnapshot[];
 }
@@ -68,6 +77,7 @@ export type TransactionProvenanceEventPayloadSnapshot =
     }
   | {
       readonly anchorTxid: string;
+      readonly ownerPubkey: string;
       readonly nonce: string;
       readonly bondVout: number;
       readonly proofBytesLength: number;
@@ -286,7 +296,17 @@ export class InMemoryGnsIndexer {
       currentBlockHash: this.currentBlockHash,
       processedBlocks: this.processedBlocks,
       trackedNames: this.state.names.size,
-      pendingCommits: this.state.pendingCommits.size
+      pendingCommits:
+        this.state.pendingCommits.size +
+        [...this.state.pendingBatchAnchors.values()].reduce(
+          (sum, anchor) =>
+            sum +
+            anchor.bondOutputs.filter(
+              (output) =>
+                output.vout > 0 && !anchor.revealedBondVouts.includes(output.vout)
+            ).length,
+          0
+        )
     };
   }
 
@@ -304,6 +324,7 @@ export class InMemoryGnsIndexer {
   private hydrate(snapshot: InMemoryGnsIndexerSnapshot | InMemoryGnsIndexerPersistedState): void {
     this.state.names.clear();
     this.state.pendingCommits.clear();
+    this.state.pendingBatchAnchors.clear();
     this.transactionProvenance.clear();
 
     for (const record of snapshot.names) {
@@ -322,6 +343,16 @@ export class InMemoryGnsIndexer {
       this.state.pendingCommits.set(pending.txid, {
         ...pending,
         bondValueSats: pending.bondValueSats === null ? null : BigInt(pending.bondValueSats)
+      });
+    }
+
+    for (const pending of snapshot.pendingBatchAnchors) {
+      this.state.pendingBatchAnchors.set(pending.txid, {
+        ...pending,
+        bondOutputs: pending.bondOutputs.map((output) => ({
+          ...output,
+          bondValueSats: output.bondValueSats === null ? null : BigInt(output.bondValueSats)
+        }))
       });
     }
 
@@ -356,6 +387,25 @@ export class InMemoryGnsIndexer {
         .map((pending) => ({
           ...pending,
           bondValueSats: pending.bondValueSats === null ? null : pending.bondValueSats.toString()
+        })),
+      pendingBatchAnchors: [...this.state.pendingBatchAnchors.values()]
+        .sort((left, right) => {
+          if (left.blockHeight !== right.blockHeight) {
+            return left.blockHeight - right.blockHeight;
+          }
+
+          if (left.txIndex !== right.txIndex) {
+            return left.txIndex - right.txIndex;
+          }
+
+          return left.txid.localeCompare(right.txid);
+        })
+        .map((pending) => ({
+          ...pending,
+          bondOutputs: pending.bondOutputs.map((output) => ({
+            ...output,
+            bondValueSats: output.bondValueSats === null ? null : output.bondValueSats.toString()
+          }))
         })),
       transactionProvenance: [...this.transactionProvenance.values()].sort((left, right) => {
         if (left.blockHeight !== right.blockHeight) {

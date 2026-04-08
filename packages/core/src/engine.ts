@@ -8,7 +8,9 @@ import {
   type BatchAnchorEventPayload,
   type BatchRevealEventPayload,
   GnsEventType,
+  computeBatchCommitLeafHash,
   computeCommitHash,
+  decodeMerkleProof,
   decodeGnsPayload,
   getEventTypeName,
   type CommitEventPayload,
@@ -16,6 +18,8 @@ import {
   type RevealProofChunkEventPayload,
   type TransferEventPayload,
   getEpochIndex,
+  type MerkleProofStep,
+  verifyMerkleProof,
   verifyTransferAuthorization
 } from "@gns/protocol";
 
@@ -27,6 +31,20 @@ export interface PendingCommitRecord {
   readonly bondValueSats: bigint | null;
   readonly ownerPubkey: string;
   readonly commitHash: string;
+  readonly blockHeight: number;
+  readonly txIndex: number;
+  readonly revealDeadlineHeight: number;
+}
+
+export interface PendingBatchAnchorRecord {
+  readonly txid: string;
+  readonly merkleRoot: string;
+  readonly leafCount: number;
+  readonly bondOutputs: ReadonlyArray<{
+    readonly vout: number;
+    readonly bondValueSats: bigint | null;
+  }>;
+  readonly revealedBondVouts: readonly number[];
   readonly blockHeight: number;
   readonly txIndex: number;
   readonly revealDeadlineHeight: number;
@@ -101,12 +119,14 @@ export interface TransactionProvenanceRecord {
 
 export interface GnsState {
   readonly pendingCommits: Map<string, PendingCommitRecord>;
+  readonly pendingBatchAnchors: Map<string, PendingBatchAnchorRecord>;
   readonly names: Map<string, NameRecord>;
 }
 
 export function createEmptyState(): GnsState {
   return {
     pendingCommits: new Map(),
+    pendingBatchAnchors: new Map(),
     names: new Map()
   };
 }
@@ -215,11 +235,13 @@ function applyEvent(
     case GnsEventType.Transfer:
       return applyTransfer(state, event);
     case GnsEventType.BatchAnchor:
+      return applyBatchAnchor(state, event);
     case GnsEventType.BatchReveal:
+      return normalizeBatchRevealOutcome(applyBatchReveal(state, event, launchHeight), event);
     case GnsEventType.RevealProofChunk:
       return {
         validationStatus: "ignored",
-        reason: "event_type_not_yet_supported_by_core",
+        reason: "proof_chunk_requires_batch_reveal_header",
         affectedName: null
       };
   }
@@ -244,6 +266,7 @@ function applySingleBlockTransactions(
   const deferredReveals: Array<{
     readonly event: ParsedGnsEvent;
     readonly provenanceEvent: ProvenanceEventRecord;
+    readonly kind: "legacy" | "batch";
   }> = [];
   const provenanceRecords = transactions.map(createTransactionProvenanceRecord);
   const provenanceByTxid = new Map(provenanceRecords.map((record) => [record.txid, record]));
@@ -258,14 +281,20 @@ function applySingleBlockTransactions(
     const spentImmatureBonds = collectSpentImmatureBonds(state, transaction);
 
     for (const event of extractGnsEvents(transaction)) {
-      if (event.type === GnsEventType.Reveal) {
-        const result = applyReveal(state, event, launchHeight);
+      if (event.type === GnsEventType.Reveal || event.type === GnsEventType.BatchReveal) {
+        const result =
+          event.type === GnsEventType.Reveal
+            ? applyReveal(state, event, launchHeight)
+            : applyBatchReveal(state, event, launchHeight);
         const provenanceEvent = createProvenanceEventRecord(
           event,
           "deferred" in result
             ? {
                 validationStatus: "ignored",
-                reason: "reveal_waiting_for_same_block_commit",
+                reason:
+                  event.type === GnsEventType.Reveal
+                    ? "reveal_waiting_for_same_block_commit"
+                    : "batch_reveal_waiting_for_same_block_anchor",
                 affectedName: result.affectedName
               }
             : result
@@ -275,7 +304,8 @@ function applySingleBlockTransactions(
         if ("deferred" in result) {
           deferredReveals.push({
             event,
-            provenanceEvent
+            provenanceEvent,
+            kind: event.type === GnsEventType.Reveal ? "legacy" : "batch"
           });
         }
 
@@ -291,13 +321,19 @@ function applySingleBlockTransactions(
   }
 
   for (const deferredReveal of deferredReveals) {
-    const result = applyReveal(state, deferredReveal.event, launchHeight);
+    const result =
+      deferredReveal.kind === "legacy"
+        ? applyReveal(state, deferredReveal.event, launchHeight)
+        : applyBatchReveal(state, deferredReveal.event, launchHeight);
     applyProvenanceOutcome(
       deferredReveal.provenanceEvent,
       "deferred" in result
         ? {
             validationStatus: "ignored",
-            reason: "reveal_missing_commit",
+            reason:
+              deferredReveal.kind === "legacy"
+                ? "reveal_missing_commit"
+                : "batch_reveal_missing_anchor",
             affectedName: result.affectedName
           }
         : result
@@ -327,6 +363,34 @@ function applyCommit(state: GnsState, event: ParsedGnsEvent): EventApplicationRe
   return {
     validationStatus: "applied",
     reason: "commit_registered",
+    affectedName: null
+  };
+}
+
+function applyBatchAnchor(state: GnsState, event: ParsedGnsEvent): EventApplicationResult {
+  const payload = event.payload as BatchAnchorEventPayload;
+  const bondOutputs = event.outputs.slice(0, payload.leafCount + 1).map((output, index) => ({
+    vout: index,
+    bondValueSats:
+      index === 0 || output?.scriptType === "op_return" || output === undefined
+        ? null
+        : output.valueSats
+  }));
+
+  state.pendingBatchAnchors.set(event.txid, {
+    txid: event.txid,
+    merkleRoot: payload.merkleRoot,
+    leafCount: payload.leafCount,
+    bondOutputs,
+    revealedBondVouts: [],
+    blockHeight: event.blockHeight,
+    txIndex: event.txIndex,
+    revealDeadlineHeight: event.blockHeight + 6
+  });
+
+  return {
+    validationStatus: "applied",
+    reason: "batch_anchor_registered",
     affectedName: null
   };
 }
@@ -426,10 +490,155 @@ function applyReveal(
   };
 }
 
+function applyBatchReveal(
+  state: GnsState,
+  event: ParsedGnsEvent,
+  launchHeight: number
+): RevealApplicationResult {
+  const payload = event.payload as BatchRevealEventPayload;
+  const pendingAnchor = state.pendingBatchAnchors.get(payload.anchorTxid);
+
+  if (pendingAnchor === undefined) {
+    return {
+      deferred: true,
+      affectedName: payload.name
+    };
+  }
+
+  if (event.blockHeight > pendingAnchor.revealDeadlineHeight) {
+    state.pendingBatchAnchors.delete(payload.anchorTxid);
+    return {
+      validationStatus: "ignored",
+      reason: "batch_reveal_deadline_missed",
+      affectedName: payload.name
+    };
+  }
+
+  if (payload.bondVout <= 0 || payload.bondVout > pendingAnchor.leafCount) {
+    return {
+      validationStatus: "ignored",
+      reason: "batch_reveal_invalid_bond_vout",
+      affectedName: payload.name
+    };
+  }
+
+  if (pendingAnchor.revealedBondVouts.includes(payload.bondVout)) {
+    return {
+      validationStatus: "ignored",
+      reason: "batch_reveal_bond_already_revealed",
+      affectedName: payload.name
+    };
+  }
+
+  let proof: MerkleProofStep[];
+
+  try {
+    proof = collectBatchRevealProof(event.outputs, payload);
+  } catch {
+    return {
+      validationStatus: "ignored",
+      reason: "batch_reveal_invalid_proof_chunks",
+      affectedName: payload.name
+    };
+  }
+
+  const commitHash = computeCommitHash({
+    name: payload.name,
+    nonce: payload.nonce,
+    ownerPubkey: payload.ownerPubkey
+  });
+  const leafHash = computeBatchCommitLeafHash({
+    bondVout: payload.bondVout,
+    ownerPubkey: payload.ownerPubkey,
+    commitHash
+  });
+
+  if (!verifyMerkleProof({ leafHash, proof, expectedRoot: pendingAnchor.merkleRoot })) {
+    return {
+      validationStatus: "ignored",
+      reason: "batch_reveal_invalid_merkle_proof",
+      affectedName: payload.name
+    };
+  }
+
+  const existing = state.names.get(payload.name);
+  const pending = resolveBatchPendingCommit(pendingAnchor, payload.bondVout, payload.ownerPubkey, commitHash);
+
+  if (existing !== undefined && compareCommitOrder(existing, pending) <= 0) {
+    return {
+      validationStatus: "ignored",
+      reason: "batch_reveal_lost_to_earlier_commit",
+      affectedName: payload.name
+    };
+  }
+
+  const claim = createClaimState({
+    name: payload.name,
+    claimHeight: pending.blockHeight,
+    epochIndex: getEpochIndex(pending.blockHeight, launchHeight)
+  });
+
+  if (pending.bondValueSats === null || pending.bondValueSats < claim.requiredBondSats) {
+    return {
+      validationStatus: "ignored",
+      reason: "batch_reveal_insufficient_bond",
+      affectedName: payload.name
+    };
+  }
+
+  state.names.set(payload.name, {
+    name: claim.name,
+    status: getClaimedNameStatus({
+      isRevealConfirmed: true,
+      currentHeight: event.blockHeight,
+      maturityHeight: claim.maturityHeight,
+      continuityIntact: true
+    }),
+    currentOwnerPubkey: payload.ownerPubkey,
+    claimCommitTxid: pending.txid,
+    claimRevealTxid: event.txid,
+    claimHeight: claim.claimHeight,
+    maturityHeight: claim.maturityHeight,
+    requiredBondSats: claim.requiredBondSats,
+    currentBondTxid: pending.txid,
+    currentBondVout: pending.bondVout,
+    currentBondValueSats: pending.bondValueSats,
+    lastStateTxid: event.txid,
+    lastStateHeight: event.blockHeight,
+    winningCommitBlockHeight: pending.blockHeight,
+    winningCommitTxIndex: pending.txIndex
+  });
+
+  const nextRevealedBondVouts = [...pendingAnchor.revealedBondVouts, payload.bondVout].sort(
+    (left, right) => left - right
+  );
+
+  if (nextRevealedBondVouts.length >= pendingAnchor.leafCount) {
+    state.pendingBatchAnchors.delete(payload.anchorTxid);
+  } else {
+    state.pendingBatchAnchors.set(payload.anchorTxid, {
+      ...pendingAnchor,
+      revealedBondVouts: nextRevealedBondVouts
+    });
+  }
+
+  return {
+    validationStatus: "applied",
+    reason: "batch_reveal_applied",
+    affectedName: payload.name
+  };
+}
+
 function pruneExpiredPendingCommits(state: GnsState, currentHeight: number): void {
   for (const [txid, pending] of state.pendingCommits.entries()) {
     if (pending.revealDeadlineHeight < currentHeight) {
       state.pendingCommits.delete(txid);
+    }
+  }
+
+  for (const [txid, pending] of state.pendingBatchAnchors.entries()) {
+    if (pending.revealDeadlineHeight < currentHeight) {
+      state.pendingBatchAnchors.delete(txid);
     }
   }
 }
@@ -616,6 +825,88 @@ function normalizeRevealOutcome(
   }
 
   return outcome;
+}
+
+function normalizeBatchRevealOutcome(
+  outcome: RevealApplicationResult,
+  event: ParsedGnsEvent
+): EventApplicationResult {
+  if ("deferred" in outcome) {
+    return {
+      validationStatus: "ignored",
+      reason: "batch_reveal_missing_anchor",
+      affectedName: outcome.affectedName
+    };
+  }
+
+  return outcome;
+}
+
+function resolveBatchPendingCommit(
+  anchor: PendingBatchAnchorRecord,
+  bondVout: number,
+  ownerPubkey: string,
+  commitHash: string
+): PendingCommitRecord {
+  const bondOutput = anchor.bondOutputs.find((candidate) => candidate.vout === bondVout);
+
+  return {
+    txid: anchor.txid,
+    bondVout,
+    bondValueSats: bondOutput?.bondValueSats ?? null,
+    ownerPubkey,
+    commitHash,
+    blockHeight: anchor.blockHeight,
+    txIndex: anchor.txIndex,
+    revealDeadlineHeight: anchor.revealDeadlineHeight
+  };
+}
+
+function collectBatchRevealProof(
+  outputs: readonly BitcoinTransactionOutput[],
+  payload: BatchRevealEventPayload
+): MerkleProofStep[] {
+  const chunks: Array<{ chunkIndex: number; proofBytesHex: string }> = [];
+
+  for (const output of outputs) {
+    if (output.scriptType !== "op_return" || output.dataHex === undefined) {
+      continue;
+    }
+
+    try {
+      const decoded = decodeGnsPayload(Buffer.from(output.dataHex, "hex"));
+      if (decoded.type !== GnsEventType.RevealProofChunk) {
+        continue;
+      }
+
+      chunks.push(decoded.payload);
+    } catch {
+      continue;
+    }
+  }
+
+  if (chunks.length !== payload.proofChunkCount) {
+    throw new Error("batch reveal proof chunk count does not match payload");
+  }
+
+  const ordered = [...chunks].sort((left, right) => left.chunkIndex - right.chunkIndex);
+  let expectedChunkIndex = 0;
+  let proofHex = "";
+
+  for (const chunk of ordered) {
+    if (chunk.chunkIndex !== expectedChunkIndex) {
+      throw new Error("batch reveal proof chunks must be contiguous from chunkIndex 0");
+    }
+
+    proofHex += chunk.proofBytesHex;
+    expectedChunkIndex += 1;
+  }
+
+  if (proofHex.length / 2 !== payload.proofBytesLength) {
+    throw new Error("batch reveal proof byte length does not match payload");
+  }
+
+  return decodeMerkleProof(Buffer.from(proofHex, "hex"));
 }
 
 function createTransactionProvenanceRecord(

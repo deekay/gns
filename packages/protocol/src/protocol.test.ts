@@ -222,6 +222,7 @@ describe("wire payloads", () => {
   it("round-trips batch reveal payloads", () => {
     const encoded = encodeBatchRevealPayload({
       anchorTxid: "88".repeat(32),
+      ownerPubkey: "99".repeat(32),
       nonce: 42n,
       bondVout: 3,
       proofBytesLength: 66,
@@ -232,6 +233,7 @@ describe("wire payloads", () => {
     expect(encoded.length).toBe(BATCH_REVEAL_MIN_PAYLOAD_LENGTH + "alice123".length);
     expect(decodeBatchRevealPayload(encoded)).toEqual({
       anchorTxid: "88".repeat(32),
+      ownerPubkey: "99".repeat(32),
       nonce: 42n,
       bondVout: 3,
       proofBytesLength: 66,
@@ -242,6 +244,7 @@ describe("wire payloads", () => {
       type: GnsEventType.BatchReveal,
       payload: {
         anchorTxid: "88".repeat(32),
+        ownerPubkey: "99".repeat(32),
         nonce: 42n,
         bondVout: 3,
         proofBytesLength: 66,
