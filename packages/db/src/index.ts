@@ -37,6 +37,20 @@ export interface PersistedPendingCommit {
   readonly revealDeadlineHeight: number;
 }
 
+export interface PersistedPendingBatchAnchor {
+  readonly txid: string;
+  readonly merkleRoot: string;
+  readonly leafCount: number;
+  readonly bondOutputs: ReadonlyArray<{
+    readonly vout: number;
+    readonly bondValueSats: string | null;
+  }>;
+  readonly revealedBondVouts: readonly number[];
+  readonly blockHeight: number;
+  readonly txIndex: number;
+  readonly revealDeadlineHeight: number;
+}
+
 export interface PersistedTransactionOutput {
   readonly valueSats: string;
   readonly scriptType: "op_return" | "payment" | "unknown";
@@ -55,17 +69,41 @@ export type PersistedTransactionProvenancePayload =
       readonly name: string;
     }
   | {
+      readonly anchorTxid: string;
+      readonly ownerPubkey: string;
+      readonly nonce: string;
+      readonly bondVout: number;
+      readonly proofBytesLength: number;
+      readonly proofChunkCount: number;
+      readonly name: string;
+    }
+  | {
       readonly prevStateTxid: string;
       readonly newOwnerPubkey: string;
       readonly flags: number;
       readonly successorBondVout: number;
       readonly signature: string;
+    }
+  | {
+      readonly flags: number;
+      readonly leafCount: number;
+      readonly merkleRoot: string;
+    }
+  | {
+      readonly chunkIndex: number;
+      readonly proofBytesHex: string;
     };
 
 export interface PersistedTransactionProvenanceEvent {
   readonly vout: number;
   readonly type: number;
-  readonly typeName: "COMMIT" | "REVEAL" | "TRANSFER";
+  readonly typeName:
+    | "COMMIT"
+    | "REVEAL"
+    | "TRANSFER"
+    | "BATCH_ANCHOR"
+    | "BATCH_REVEAL"
+    | "REVEAL_PROOF_CHUNK";
   readonly payload: PersistedTransactionProvenancePayload;
   readonly validationStatus: "applied" | "ignored";
   readonly reason: string;
@@ -93,6 +131,7 @@ export interface PersistedIndexerSnapshot {
   readonly processedBlocks: number;
   readonly names: readonly PersistedNameRecord[];
   readonly pendingCommits: readonly PersistedPendingCommit[];
+  readonly pendingBatchAnchors: readonly PersistedPendingBatchAnchor[];
   readonly transactionProvenance: readonly PersistedTransactionProvenance[];
   readonly recentCheckpoints?: readonly PersistedIndexerSnapshotState[];
 }
@@ -104,6 +143,7 @@ export interface PersistedIndexerSnapshotState {
   readonly processedBlocks: number;
   readonly names: readonly PersistedNameRecord[];
   readonly pendingCommits: readonly PersistedPendingCommit[];
+  readonly pendingBatchAnchors: readonly PersistedPendingBatchAnchor[];
   readonly transactionProvenance: readonly PersistedTransactionProvenance[];
 }
 
@@ -146,6 +186,7 @@ export function parseIndexerSnapshot(input: unknown): PersistedIndexerSnapshot {
   const processedBlocks = getRequiredInteger(input, "processedBlocks");
   const names = getRequiredArray(input, "names");
   const pendingCommits = getRequiredArray(input, "pendingCommits");
+  const pendingBatchAnchors = getOptionalArray(input, "pendingBatchAnchors") ?? [];
   const transactionProvenance = getOptionalArray(input, "transactionProvenance") ?? [];
   const recentCheckpoints = getOptionalArray(input, "recentCheckpoints");
 
@@ -156,6 +197,7 @@ export function parseIndexerSnapshot(input: unknown): PersistedIndexerSnapshot {
     processedBlocks,
     names: names.map(parseNameRecordSnapshot),
     pendingCommits: pendingCommits.map(parsePendingCommitRecord),
+    pendingBatchAnchors: pendingBatchAnchors.map(parsePendingBatchAnchorRecord),
     transactionProvenance: transactionProvenance.map(parseTransactionProvenanceRecord),
     ...(recentCheckpoints === undefined
       ? {}
@@ -172,6 +214,7 @@ function parseIndexerSnapshotState(input: unknown): PersistedIndexerSnapshotStat
     processedBlocks: parsed.processedBlocks,
     names: parsed.names,
     pendingCommits: parsed.pendingCommits,
+    pendingBatchAnchors: parsed.pendingBatchAnchors,
     transactionProvenance: parsed.transactionProvenance
   };
 }
@@ -357,6 +400,40 @@ function parsePendingCommitRecord(input: unknown): PersistedIndexerSnapshot["pen
   };
 }
 
+function parsePendingBatchAnchorRecord(
+  input: unknown
+): PersistedIndexerSnapshot["pendingBatchAnchors"][number] {
+  if (!isRecord(input)) {
+    throw new Error("pending batch anchor record must be an object");
+  }
+
+  return {
+    txid: getRequiredString(input, "txid"),
+    merkleRoot: getRequiredString(input, "merkleRoot"),
+    leafCount: getRequiredInteger(input, "leafCount"),
+    bondOutputs: getRequiredArray(input, "bondOutputs").map((output) => {
+      if (!isRecord(output)) {
+        throw new Error("pending batch anchor bond output must be an object");
+      }
+
+      return {
+        vout: getRequiredInteger(output, "vout"),
+        bondValueSats: getNullableString(output, "bondValueSats")
+      };
+    }),
+    revealedBondVouts: getRequiredArray(input, "revealedBondVouts").map((value) => {
+      if (typeof value !== "number" || !Number.isInteger(value)) {
+        throw new Error("pending batch anchor revealedBondVouts entries must be integers");
+      }
+
+      return value;
+    }),
+    blockHeight: getRequiredInteger(input, "blockHeight"),
+    txIndex: getRequiredInteger(input, "txIndex"),
+    revealDeadlineHeight: getRequiredInteger(input, "revealDeadlineHeight")
+  };
+}
+
 function parseTransactionProvenanceRecord(
   input: unknown
 ): PersistedIndexerSnapshot["transactionProvenance"][number] {
@@ -443,8 +520,17 @@ function parseTransactionProvenanceEvent(
   }
 
   const typeName = input.typeName;
-  if (typeName !== "COMMIT" && typeName !== "REVEAL" && typeName !== "TRANSFER") {
-    throw new Error("transaction provenance event typeName must be COMMIT, REVEAL, or TRANSFER");
+  if (
+    typeName !== "COMMIT" &&
+    typeName !== "REVEAL" &&
+    typeName !== "TRANSFER" &&
+    typeName !== "BATCH_ANCHOR" &&
+    typeName !== "BATCH_REVEAL" &&
+    typeName !== "REVEAL_PROOF_CHUNK"
+  ) {
+    throw new Error(
+      "transaction provenance event typeName must be COMMIT, REVEAL, TRANSFER, BATCH_ANCHOR, BATCH_REVEAL, or REVEAL_PROOF_CHUNK"
+    );
   }
 
   const validationStatus = input.validationStatus;
@@ -466,6 +552,33 @@ function parseTransactionProvenanceEvent(
 function parseTransactionProvenancePayload(
   input: Record<string, unknown>
 ): PersistedTransactionProvenancePayload {
+  if ("anchorTxid" in input) {
+    return {
+      anchorTxid: getRequiredString(input, "anchorTxid"),
+      ownerPubkey: getRequiredString(input, "ownerPubkey"),
+      nonce: getRequiredString(input, "nonce"),
+      bondVout: getRequiredInteger(input, "bondVout"),
+      proofBytesLength: getRequiredInteger(input, "proofBytesLength"),
+      proofChunkCount: getRequiredInteger(input, "proofChunkCount"),
+      name: getRequiredString(input, "name")
+    };
+  }
+
+  if ("merkleRoot" in input) {
+    return {
+      flags: getRequiredInteger(input, "flags"),
+      leafCount: getRequiredInteger(input, "leafCount"),
+      merkleRoot: getRequiredString(input, "merkleRoot")
+    };
+  }
+
+  if ("chunkIndex" in input) {
+    return {
+      chunkIndex: getRequiredInteger(input, "chunkIndex"),
+      proofBytesHex: getRequiredString(input, "proofBytesHex")
+    };
+  }
+
   if ("bondVout" in input) {
     return {
       bondVout: getRequiredInteger(input, "bondVout"),

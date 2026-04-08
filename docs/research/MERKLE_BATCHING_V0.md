@@ -32,6 +32,21 @@ These are the working assumptions for a v0 implementation plan:
 - avoid Taproot-hidden or scriptless commitment designs in v0
 - require explicit proof verification during reveal / indexing
 
+## Current Implementation Status
+
+The current repo now covers these implemented slices:
+
+- protocol encoders / decoders and Merkle proof helpers
+- architect and CLI batch artifact generation for ordinary-lane claims
+- core and indexer validation of batched anchors and batched reveals
+- database snapshot compatibility for batched pending anchors and provenance events
+- resolver / website compatibility for batched provenance inspection
+
+The main remaining user-facing gap is that the website still prepares legacy
+single-claim artifacts only. The web explorer can inspect batched provenance,
+but the browser claim-prep flow has not yet been expanded into a full batched
+claim builder.
+
 ## Non-Goals
 
 Merkle batching v0 is **not** trying to do all of the following:

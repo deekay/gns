@@ -18,4 +18,14 @@ describe("renderClientScript", () => {
     expect(script).toContain('setDetailsOpen(elements.claimStepInputs, true);');
     expect(script).toContain('setDetailsOpen(elements.claimStepBackups, true);');
   });
+
+  it("includes batched claim activity and provenance handling", () => {
+    const script = renderClientScript("");
+
+    expect(script).toContain('eventTypes.includes("BATCH_REVEAL")');
+    expect(script).toContain('eventTypes.includes("BATCH_ANCHOR")');
+    expect(script).toContain("Anchor Txid");
+    expect(script).toContain("Merkle Root");
+    expect(script).toContain("Proof Chunks");
+  });
 });

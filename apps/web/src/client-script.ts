@@ -1515,11 +1515,11 @@ function activityPriority(record) {
     return 3;
   }
 
-  if (eventTypes.includes("REVEAL")) {
+  if (eventTypes.includes("REVEAL") || eventTypes.includes("BATCH_REVEAL")) {
     return 2;
   }
 
-  if (eventTypes.includes("COMMIT")) {
+  if (eventTypes.includes("COMMIT") || eventTypes.includes("BATCH_ANCHOR")) {
     return 1;
   }
 
@@ -1537,8 +1537,12 @@ function activityHighlightLabel(record) {
     return "Transfer";
   }
 
-  if (eventTypes.includes("REVEAL")) {
+  if (eventTypes.includes("REVEAL") || eventTypes.includes("BATCH_REVEAL")) {
     return "Claim Revealed";
+  }
+
+  if (eventTypes.includes("BATCH_ANCHOR")) {
+    return "Batch Commit Broadcast";
   }
 
   if (eventTypes.includes("COMMIT")) {
@@ -1558,6 +1562,16 @@ function activityStatusLabel(record) {
     return "ignored";
   }
 
+  const firstType = String(appliedEvents[0]?.typeName ?? "").toUpperCase();
+
+  if (firstType === "BATCH_ANCHOR") {
+    return "batch_anchor";
+  }
+
+  if (firstType === "BATCH_REVEAL") {
+    return "batch_reveal";
+  }
+
   return String(appliedEvents[0]?.typeName ?? "activity").toLowerCase();
 }
 
@@ -1573,8 +1587,16 @@ function activityStatusPill(record) {
     return "immature";
   }
 
+  if (firstType === "BATCH_REVEAL") {
+    return "immature";
+  }
+
   if (firstType === "TRANSFER") {
     return "mature";
+  }
+
+  if (firstType === "BATCH_ANCHOR") {
+    return "pending";
   }
 
   if (firstType === "COMMIT") {
@@ -2601,7 +2623,13 @@ function formatNameFilterLabel(filter) {
 function matchesActivityFilter(record, filter) {
   switch (String(filter)) {
     case "claims":
-      return (record.events ?? []).some((event) => event.typeName === "COMMIT" || event.typeName === "REVEAL");
+      return (record.events ?? []).some(
+        (event) =>
+          event.typeName === "COMMIT" ||
+          event.typeName === "REVEAL" ||
+          event.typeName === "BATCH_ANCHOR" ||
+          event.typeName === "BATCH_REVEAL"
+      );
     case "transfers":
       return (record.events ?? []).some((event) => event.typeName === "TRANSFER");
     case "invalidated":
@@ -4114,6 +4142,9 @@ function renderTxEventPayload(payload) {
   if (payload.commitTxid) {
     rows.push('<div class="result-item"><label>Commit Txid</label>' + renderCopyableCode(payload.commitTxid) + "</div>");
   }
+  if (payload.anchorTxid) {
+    rows.push('<div class="result-item"><label>Anchor Txid</label>' + renderCopyableCode(payload.anchorTxid) + "</div>");
+  }
   if (payload.name) {
     rows.push('<div class="result-item"><label>Name</label><p class="field-value">' + escapeHtml(String(payload.name)) + "</p></div>");
   }
@@ -4137,6 +4168,24 @@ function renderTxEventPayload(payload) {
   }
   if (payload.flags !== undefined) {
     rows.push('<div class="result-item"><label>Flags</label><p class="field-value">' + escapeHtml(String(payload.flags)) + "</p></div>");
+  }
+  if (payload.leafCount !== undefined) {
+    rows.push('<div class="result-item"><label>Leaf Count</label><p class="field-value">' + escapeHtml(String(payload.leafCount)) + "</p></div>");
+  }
+  if (payload.merkleRoot) {
+    rows.push('<div class="result-item"><label>Merkle Root</label>' + renderCopyableCode(payload.merkleRoot) + "</div>");
+  }
+  if (payload.proofBytesLength !== undefined) {
+    rows.push('<div class="result-item"><label>Proof Bytes</label><p class="field-value">' + escapeHtml(String(payload.proofBytesLength)) + "</p></div>");
+  }
+  if (payload.proofChunkCount !== undefined) {
+    rows.push('<div class="result-item"><label>Proof Chunks</label><p class="field-value">' + escapeHtml(String(payload.proofChunkCount)) + "</p></div>");
+  }
+  if (payload.chunkIndex !== undefined) {
+    rows.push('<div class="result-item"><label>Chunk Index</label><p class="field-value">' + escapeHtml(String(payload.chunkIndex)) + "</p></div>");
+  }
+  if (payload.proofBytesHex) {
+    rows.push('<div class="result-item"><label>Proof Bytes Hex</label>' + renderCopyableCode(payload.proofBytesHex) + "</div>");
   }
 
   if (rows.length === 0) {
