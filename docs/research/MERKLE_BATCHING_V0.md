@@ -5,6 +5,7 @@ This note turns the earlier batching discussion into a concrete design target an
 It is not a final mainnet freeze, but it is meant to be specific enough to plan and build against.
 
 For the current recommended wire-format defaults, see [MERKLE_BATCHING_V0_DECISIONS.md](./MERKLE_BATCHING_V0_DECISIONS.md).
+For the package-by-package engineering task map, see [MERKLE_BATCHING_WORK_BREAKDOWN.md](./MERKLE_BATCHING_WORK_BREAKDOWN.md).
 
 ## Purpose
 

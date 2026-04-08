@@ -10,7 +10,7 @@ The goal is not to freeze the final mainnet protocol immediately. The goal is to
 - gather feedback from Bitcoin-focused reviewers
 - tighten the spec before any canonical mainnet launch
 
-This document describes the current explicit-event prototype baseline. If the project adopts Merkle-batched ordinary-lane commits, use [MERKLE_BATCHING_V0.md](./MERKLE_BATCHING_V0.md) and [MERKLE_BATCHING_V0_DECISIONS.md](./MERKLE_BATCHING_V0_DECISIONS.md) as the design note and checklist for that workstream.
+This document describes the current explicit-event prototype baseline. If the project adopts Merkle-batched ordinary-lane commits, use [MERKLE_BATCHING_V0.md](./MERKLE_BATCHING_V0.md), [MERKLE_BATCHING_V0_DECISIONS.md](./MERKLE_BATCHING_V0_DECISIONS.md), and [MERKLE_BATCHING_WORK_BREAKDOWN.md](./MERKLE_BATCHING_WORK_BREAKDOWN.md) as the design note and checklist set for that workstream.
 
 ## Build Goal
 
