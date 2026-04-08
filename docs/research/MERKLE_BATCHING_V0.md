@@ -4,6 +4,8 @@ This note turns the earlier batching discussion into a concrete design target an
 
 It is not a final mainnet freeze, but it is meant to be specific enough to plan and build against.
 
+For the current recommended wire-format defaults, see [MERKLE_BATCHING_V0_DECISIONS.md](./MERKLE_BATCHING_V0_DECISIONS.md).
+
 ## Purpose
 
 The goal of Merkle batching is to reduce ordinary-lane chain footprint without changing the core scarcity mechanism.
@@ -227,14 +229,14 @@ not like:
 
 ## Open Design Questions Before Coding
 
-These are the main things still worth resolving before implementation starts:
+The original open questions were:
 
 1. exact batched-commit anchor payload format
 2. exact batched reveal carrier and proof packing
 3. exact hash / domain-separation convention for leaves and internal nodes
 4. whether v0 should support both batched and legacy single-commit flows in parallel during transition
 
-None of these should block planning, but they do need closure before protocol code lands.
+These now have recommended defaults in [MERKLE_BATCHING_V0_DECISIONS.md](./MERKLE_BATCHING_V0_DECISIONS.md).
 
 ## Implementation Checklist
 
