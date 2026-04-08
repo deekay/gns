@@ -1,11 +1,17 @@
 import { bytesToHex, hexToBytes } from "./bytes.js";
 import { GnsEventType, PROTOCOL_MAGIC, PROTOCOL_VERSION } from "./constants.js";
 import {
+  createBatchAnchorPayload,
+  createBatchRevealPayload,
   createCommitPayload,
   createRevealPayload,
+  createRevealProofChunkPayload,
   createTransferPayload,
+  type BatchAnchorEventPayload,
+  type BatchRevealEventPayload,
   type CommitEventPayload,
   type RevealEventPayload,
+  type RevealProofChunkEventPayload,
   type TransferEventPayload
 } from "./events.js";
 
@@ -14,11 +20,17 @@ const MAGIC_BYTES = Buffer.from(PROTOCOL_MAGIC, "utf8");
 export const COMMIT_PAYLOAD_LENGTH = 3 + 1 + 1 + 1 + 32 + 32;
 export const TRANSFER_BODY_LENGTH = 32 + 32 + 1 + 1 + 64;
 export const MAX_REVEAL_NAME_LENGTH = 32;
+export const BATCH_ANCHOR_PAYLOAD_LENGTH = 3 + 1 + 1 + 1 + 1 + 32;
+export const BATCH_REVEAL_MIN_PAYLOAD_LENGTH = 3 + 1 + 1 + 32 + 8 + 1 + 2 + 1 + 1;
+export const REVEAL_PROOF_CHUNK_MIN_PAYLOAD_LENGTH = 3 + 1 + 1 + 1;
 
 export type DecodedGnsPayload =
   | { readonly type: GnsEventType.Commit; readonly payload: CommitEventPayload }
   | { readonly type: GnsEventType.Reveal; readonly payload: RevealEventPayload }
-  | { readonly type: GnsEventType.Transfer; readonly payload: TransferEventPayload };
+  | { readonly type: GnsEventType.Transfer; readonly payload: TransferEventPayload }
+  | { readonly type: GnsEventType.BatchAnchor; readonly payload: BatchAnchorEventPayload }
+  | { readonly type: GnsEventType.BatchReveal; readonly payload: BatchRevealEventPayload }
+  | { readonly type: GnsEventType.RevealProofChunk; readonly payload: RevealProofChunkEventPayload };
 
 export function encodeCommitPayload(payload: CommitEventPayload): Uint8Array {
   const normalized = createCommitPayload(payload);
@@ -83,6 +95,109 @@ export function decodeRevealPayload(payload: Uint8Array): RevealEventPayload {
   });
 }
 
+export function encodeBatchAnchorPayload(payload: BatchAnchorEventPayload): Uint8Array {
+  const normalized = createBatchAnchorPayload(payload);
+
+  return joinBytes(
+    MAGIC_BYTES,
+    Uint8Array.of(
+      PROTOCOL_VERSION,
+      GnsEventType.BatchAnchor,
+      normalized.flags,
+      normalized.leafCount
+    ),
+    hexToBytes(normalized.merkleRoot)
+  );
+}
+
+export function decodeBatchAnchorPayload(payload: Uint8Array): BatchAnchorEventPayload {
+  assertHeader(payload, GnsEventType.BatchAnchor, BATCH_ANCHOR_PAYLOAD_LENGTH);
+
+  return createBatchAnchorPayload({
+    flags: payload[5] ?? 0,
+    leafCount: payload[6] ?? 0,
+    merkleRoot: bytesToHex(payload.slice(7, 39))
+  });
+}
+
+export function encodeBatchRevealPayload(payload: BatchRevealEventPayload): Uint8Array {
+  const normalized = createBatchRevealPayload(payload);
+  const nameBytes = Buffer.from(normalized.name, "utf8");
+
+  if (nameBytes.length > MAX_REVEAL_NAME_LENGTH) {
+    throw new Error(`name must be at most ${MAX_REVEAL_NAME_LENGTH} bytes`);
+  }
+
+  return joinBytes(
+    MAGIC_BYTES,
+    Uint8Array.of(PROTOCOL_VERSION, GnsEventType.BatchReveal),
+    hexToBytes(normalized.anchorTxid),
+    bigIntToUint64Bytes(normalized.nonce),
+    Uint8Array.of(normalized.bondVout),
+    uint16ToBytes(normalized.proofBytesLength),
+    Uint8Array.of(normalized.proofChunkCount, nameBytes.length),
+    nameBytes
+  );
+}
+
+export function decodeBatchRevealPayload(payload: Uint8Array): BatchRevealEventPayload {
+  assertHeader(payload, GnsEventType.BatchReveal);
+
+  if (payload.length < BATCH_REVEAL_MIN_PAYLOAD_LENGTH) {
+    throw new Error(
+      `batch reveal payload must be at least ${BATCH_REVEAL_MIN_PAYLOAD_LENGTH} bytes`
+    );
+  }
+
+  const nameLength = payload[49];
+
+  if (nameLength === undefined) {
+    throw new Error("batch reveal payload is missing name length");
+  }
+
+  if (nameLength > MAX_REVEAL_NAME_LENGTH) {
+    throw new Error(`batch reveal name length must be at most ${MAX_REVEAL_NAME_LENGTH}`);
+  }
+
+  if (payload.length !== BATCH_REVEAL_MIN_PAYLOAD_LENGTH + nameLength) {
+    throw new Error("batch reveal payload length does not match embedded name length");
+  }
+
+  return createBatchRevealPayload({
+    anchorTxid: bytesToHex(payload.slice(5, 37)),
+    nonce: uint64BytesToBigInt(payload.slice(37, 45)),
+    bondVout: payload[45] ?? 0,
+    proofBytesLength: uint16FromBytes(payload.slice(46, 48)),
+    proofChunkCount: payload[48] ?? 0,
+    name: Buffer.from(payload.slice(50)).toString("utf8")
+  });
+}
+
+export function encodeRevealProofChunkPayload(payload: RevealProofChunkEventPayload): Uint8Array {
+  const normalized = createRevealProofChunkPayload(payload);
+
+  return joinBytes(
+    MAGIC_BYTES,
+    Uint8Array.of(PROTOCOL_VERSION, GnsEventType.RevealProofChunk, normalized.chunkIndex),
+    hexToBytes(normalized.proofBytesHex)
+  );
+}
+
+export function decodeRevealProofChunkPayload(payload: Uint8Array): RevealProofChunkEventPayload {
+  assertHeader(payload, GnsEventType.RevealProofChunk);
+
+  if (payload.length < REVEAL_PROOF_CHUNK_MIN_PAYLOAD_LENGTH) {
+    throw new Error(
+      `reveal proof chunk payload must be at least ${REVEAL_PROOF_CHUNK_MIN_PAYLOAD_LENGTH} bytes`
+    );
+  }
+
+  return createRevealProofChunkPayload({
+    chunkIndex: payload[5] ?? 0,
+    proofBytesHex: bytesToHex(payload.slice(6))
+  });
+}
+
 export function encodeTransferBody(payload: TransferEventPayload): Uint8Array {
   const normalized = createTransferPayload(payload);
 
@@ -118,6 +233,12 @@ export function decodeGnsPayload(payload: Uint8Array): DecodedGnsPayload {
       return { type, payload: decodeRevealPayload(payload) };
     case GnsEventType.Transfer:
       return { type, payload: decodeTransferBody(payload.slice(5)) };
+    case GnsEventType.BatchAnchor:
+      return { type, payload: decodeBatchAnchorPayload(payload) };
+    case GnsEventType.BatchReveal:
+      return { type, payload: decodeBatchRevealPayload(payload) };
+    case GnsEventType.RevealProofChunk:
+      return { type, payload: decodeRevealProofChunkPayload(payload) };
   }
 }
 
@@ -129,7 +250,10 @@ export function peekEventType(payload: Uint8Array): GnsEventType {
   if (
     type !== GnsEventType.Commit &&
     type !== GnsEventType.Reveal &&
-    type !== GnsEventType.Transfer
+    type !== GnsEventType.Transfer &&
+    type !== GnsEventType.BatchAnchor &&
+    type !== GnsEventType.BatchReveal &&
+    type !== GnsEventType.RevealProofChunk
   ) {
     throw new Error(`unsupported event type ${type}`);
   }
@@ -202,6 +326,22 @@ function uint64BytesToBigInt(bytes: Uint8Array): bigint {
   }
 
   return value;
+}
+
+function uint16ToBytes(value: number): Uint8Array {
+  if (!Number.isInteger(value) || value < 0 || value > 0xffff) {
+    throw new Error("value must fit in an unsigned 16-bit integer");
+  }
+
+  return Uint8Array.of((value >> 8) & 0xff, value & 0xff);
+}
+
+function uint16FromBytes(bytes: Uint8Array): number {
+  if (bytes.length !== 2) {
+    throw new Error("uint16 requires exactly 2 bytes");
+  }
+
+  return (bytes[0] ?? 0) * 0x100 + (bytes[1] ?? 0);
 }
 
 function joinBytes(...parts: Uint8Array[]): Uint8Array {

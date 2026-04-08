@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import * as secp256k1 from "tiny-secp256k1";
 
-import { assertHexBytes, bytesToHex, hexToBytes } from "./bytes.js";
+import { assertHexBytes, assertHexString, bytesToHex, hexToBytes } from "./bytes.js";
 import { GnsEventType } from "./constants.js";
 import { normalizeName } from "./names.js";
 
@@ -23,6 +23,26 @@ export interface TransferEventPayload {
   readonly flags: number;
   readonly successorBondVout: number;
   readonly signature: string;
+}
+
+export interface BatchAnchorEventPayload {
+  readonly flags: number;
+  readonly leafCount: number;
+  readonly merkleRoot: string;
+}
+
+export interface BatchRevealEventPayload {
+  readonly anchorTxid: string;
+  readonly nonce: bigint;
+  readonly bondVout: number;
+  readonly proofBytesLength: number;
+  readonly proofChunkCount: number;
+  readonly name: string;
+}
+
+export interface RevealProofChunkEventPayload {
+  readonly chunkIndex: number;
+  readonly proofBytesHex: string;
 }
 
 export interface TransferAuthorizationFields {
@@ -111,6 +131,86 @@ export function createTransferPayload(input: {
   };
 }
 
+export function createBatchAnchorPayload(input: {
+  readonly flags?: number;
+  readonly leafCount: number;
+  readonly merkleRoot: string;
+}): BatchAnchorEventPayload {
+  const flags = input.flags ?? 0;
+
+  if (!Number.isInteger(flags) || flags < 0 || flags > 0xff) {
+    throw new Error("flags must fit in one byte");
+  }
+
+  if (!Number.isInteger(input.leafCount) || input.leafCount < 0 || input.leafCount > 0xff) {
+    throw new Error("leafCount must fit in one byte");
+  }
+
+  return {
+    flags,
+    leafCount: input.leafCount,
+    merkleRoot: assertHexBytes(input.merkleRoot, 32, "merkleRoot")
+  };
+}
+
+export function createBatchRevealPayload(input: {
+  readonly anchorTxid: string;
+  readonly nonce: bigint;
+  readonly bondVout: number;
+  readonly proofBytesLength: number;
+  readonly proofChunkCount: number;
+  readonly name: string;
+}): BatchRevealEventPayload {
+  if (
+    !Number.isInteger(input.bondVout) ||
+    input.bondVout < 0 ||
+    input.bondVout > 0xff
+  ) {
+    throw new Error("bondVout must fit in one byte");
+  }
+
+  if (
+    !Number.isInteger(input.proofBytesLength) ||
+    input.proofBytesLength < 0 ||
+    input.proofBytesLength > 0xffff
+  ) {
+    throw new Error("proofBytesLength must fit in two bytes");
+  }
+
+  if (
+    !Number.isInteger(input.proofChunkCount) ||
+    input.proofChunkCount < 0 ||
+    input.proofChunkCount > 0xff
+  ) {
+    throw new Error("proofChunkCount must fit in one byte");
+  }
+
+  return {
+    anchorTxid: assertHexBytes(input.anchorTxid, 32, "anchorTxid"),
+    nonce: input.nonce,
+    bondVout: input.bondVout,
+    proofBytesLength: input.proofBytesLength,
+    proofChunkCount: input.proofChunkCount,
+    name: normalizeName(input.name)
+  };
+}
+
+export function createRevealProofChunkPayload(input: {
+  readonly chunkIndex: number;
+  readonly proofBytesHex: string;
+}): RevealProofChunkEventPayload {
+  if (!Number.isInteger(input.chunkIndex) || input.chunkIndex < 0 || input.chunkIndex > 0xff) {
+    throw new Error("chunkIndex must fit in one byte");
+  }
+
+  const proofBytesHex = assertHexString(input.proofBytesHex, "proofBytesHex");
+
+  return {
+    chunkIndex: input.chunkIndex,
+    proofBytesHex
+  };
+}
+
 export function signTransferAuthorization(
   input: TransferAuthorizationFields & { readonly ownerPrivateKeyHex: string }
 ): string {
@@ -149,7 +249,15 @@ export function computeTransferAuthorizationHash(input: TransferAuthorizationFie
   return bytesToHex(computeTransferAuthorizationDigest(input));
 }
 
-export function getEventTypeName(type: GnsEventType): "COMMIT" | "REVEAL" | "TRANSFER" {
+export function getEventTypeName(
+  type: GnsEventType
+):
+  | "COMMIT"
+  | "REVEAL"
+  | "TRANSFER"
+  | "BATCH_ANCHOR"
+  | "BATCH_REVEAL"
+  | "REVEAL_PROOF_CHUNK" {
   switch (type) {
     case GnsEventType.Commit:
       return "COMMIT";
@@ -157,6 +265,12 @@ export function getEventTypeName(type: GnsEventType): "COMMIT" | "REVEAL" | "TRA
       return "REVEAL";
     case GnsEventType.Transfer:
       return "TRANSFER";
+    case GnsEventType.BatchAnchor:
+      return "BATCH_ANCHOR";
+    case GnsEventType.BatchReveal:
+      return "BATCH_REVEAL";
+    case GnsEventType.RevealProofChunk:
+      return "REVEAL_PROOF_CHUNK";
   }
 }
 

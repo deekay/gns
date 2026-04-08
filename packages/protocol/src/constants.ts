@@ -42,7 +42,10 @@ export const BOND_FLOOR_SATS = 50_000n;
 export enum GnsEventType {
   Commit = 0x01,
   Reveal = 0x02,
-  Transfer = 0x03
+  Transfer = 0x03,
+  BatchAnchor = 0x04,
+  BatchReveal = 0x05,
+  RevealProofChunk = 0x06
 }
 
 export enum ValueType {

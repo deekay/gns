@@ -25,6 +25,10 @@ Current recommendation:
 - add a dedicated batch-anchor event for batched ordinary-lane commits
 - add a dedicated batched-reveal header event
 - add a dedicated reveal-proof-chunk event for explicit proof carriage
+- assign the first v0 batch carrier event codes as:
+  - `BATCH_ANCHOR = 0x04`
+  - `BATCH_REVEAL = 0x05`
+  - `REVEAL_PROOF_CHUNK = 0x06`
 
 This is a better engineering trade than trying to make one payload decoder silently support incompatible shapes.
 
@@ -191,10 +195,9 @@ These decisions imply the first implementation plan should assume:
 
 These are now much smaller and should be handled during protocol implementation planning rather than blocking it:
 
-1. exact numeric event-type assignments for the new batch carriers
-2. exact max bytes per proof chunk
-3. whether `proof_bytes_len` should remain `u16` or widen later
-4. whether v0 batch cap should be `32`, `64`, or another modest number
+1. exact max bytes per proof chunk
+2. whether `proof_bytes_len` should remain `u16` or widen later
+3. whether v0 batch cap should be `32`, `64`, or another modest number
 
 ## Current Recommendation
 

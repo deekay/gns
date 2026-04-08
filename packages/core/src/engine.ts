@@ -5,12 +5,15 @@ import {
   getOpReturnPayloads
 } from "@gns/bitcoin";
 import {
+  type BatchAnchorEventPayload,
+  type BatchRevealEventPayload,
   GnsEventType,
   computeCommitHash,
   decodeGnsPayload,
   getEventTypeName,
   type CommitEventPayload,
   type RevealEventPayload,
+  type RevealProofChunkEventPayload,
   type TransferEventPayload,
   getEpochIndex,
   verifyTransferAuthorization
@@ -55,14 +58,32 @@ export interface ParsedGnsEvent {
   readonly inputs: readonly BitcoinTransactionInput[];
   readonly outputs: readonly BitcoinTransactionOutput[];
   readonly type: GnsEventType;
-  readonly payload: CommitEventPayload | RevealEventPayload | TransferEventPayload;
+  readonly payload:
+    | CommitEventPayload
+    | RevealEventPayload
+    | TransferEventPayload
+    | BatchAnchorEventPayload
+    | BatchRevealEventPayload
+    | RevealProofChunkEventPayload;
 }
 
 export interface ProvenanceEventRecord {
   vout: number;
   type: GnsEventType;
-  typeName: "COMMIT" | "REVEAL" | "TRANSFER";
-  payload: CommitEventPayload | RevealEventPayload | TransferEventPayload;
+  typeName:
+    | "COMMIT"
+    | "REVEAL"
+    | "TRANSFER"
+    | "BATCH_ANCHOR"
+    | "BATCH_REVEAL"
+    | "REVEAL_PROOF_CHUNK";
+  payload:
+    | CommitEventPayload
+    | RevealEventPayload
+    | TransferEventPayload
+    | BatchAnchorEventPayload
+    | BatchRevealEventPayload
+    | RevealProofChunkEventPayload;
   validationStatus: "applied" | "ignored";
   reason: string;
   affectedName: string | null;
@@ -193,6 +214,14 @@ function applyEvent(
       return normalizeRevealOutcome(applyReveal(state, event, launchHeight), event);
     case GnsEventType.Transfer:
       return applyTransfer(state, event);
+    case GnsEventType.BatchAnchor:
+    case GnsEventType.BatchReveal:
+    case GnsEventType.RevealProofChunk:
+      return {
+        validationStatus: "ignored",
+        reason: "event_type_not_yet_supported_by_core",
+        affectedName: null
+      };
   }
 }
 

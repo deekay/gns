@@ -5,10 +5,13 @@ import {
   type BitcoinTransactionOutput
 } from "@gns/bitcoin";
 import {
+  type BatchAnchorEventPayload,
+  type BatchRevealEventPayload,
   GnsEventType,
   normalizeName,
   type CommitEventPayload,
   type RevealEventPayload,
+  type RevealProofChunkEventPayload,
   type TransferEventPayload
 } from "@gns/protocol";
 
@@ -63,12 +66,28 @@ export type TransactionProvenanceEventPayloadSnapshot =
       readonly nonce: string;
       readonly name: string;
     }
-  | TransferEventPayload;
+  | {
+      readonly anchorTxid: string;
+      readonly nonce: string;
+      readonly bondVout: number;
+      readonly proofBytesLength: number;
+      readonly proofChunkCount: number;
+      readonly name: string;
+    }
+  | TransferEventPayload
+  | BatchAnchorEventPayload
+  | RevealProofChunkEventPayload;
 
 export interface TransactionProvenanceEventSnapshot {
   readonly vout: number;
   readonly type: GnsEventType;
-  readonly typeName: "COMMIT" | "REVEAL" | "TRANSFER";
+  readonly typeName:
+    | "COMMIT"
+    | "REVEAL"
+    | "TRANSFER"
+    | "BATCH_ANCHOR"
+    | "BATCH_REVEAL"
+    | "REVEAL_PROOF_CHUNK";
   readonly payload: TransactionProvenanceEventPayloadSnapshot;
   readonly validationStatus: "applied" | "ignored";
   readonly reason: string;
@@ -395,9 +414,22 @@ function serializeTransactionProvenanceRecord(input: {
 }
 
 function serializeProvenancePayload(
-  payload: CommitEventPayload | RevealEventPayload | TransferEventPayload
+  payload:
+    | CommitEventPayload
+    | RevealEventPayload
+    | TransferEventPayload
+    | BatchAnchorEventPayload
+    | BatchRevealEventPayload
+    | RevealProofChunkEventPayload
 ): TransactionProvenanceEventPayloadSnapshot {
-  if ("nonce" in payload) {
+  if ("anchorTxid" in payload) {
+    return {
+      ...payload,
+      nonce: payload.nonce.toString()
+    };
+  }
+
+  if ("commitTxid" in payload) {
     return {
       ...payload,
       nonce: payload.nonce.toString()

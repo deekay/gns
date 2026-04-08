@@ -3,6 +3,7 @@ export * from "./claim-package.js";
 export * from "./bytes.js";
 export * from "./constants.js";
 export * from "./events.js";
+export * from "./merkle.js";
 export * from "./names.js";
 export * from "./transfer-package.js";
 export * from "./value-record.js";

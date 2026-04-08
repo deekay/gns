@@ -3,37 +3,53 @@ import * as secp256k1 from "tiny-secp256k1";
 
 import {
   BOND_FLOOR_SATS,
+  BATCH_ANCHOR_PAYLOAD_LENGTH,
+  BATCH_REVEAL_MIN_PAYLOAD_LENGTH,
   CLAIM_PACKAGE_FORMAT,
   CLAIM_PACKAGE_VERSION,
+  computeBatchCommitLeafHash,
   createClaimPackage,
+  createMerkleProof,
   createTransferPackage,
   INITIAL_MATURITY_BLOCKS,
+  decodeBatchAnchorPayload,
+  decodeBatchRevealPayload,
   MIN_MATURITY_BLOCKS,
+  decodeMerkleProof,
   computeCommitHash,
   decodeCommitPayload,
   decodeGnsPayload,
   decodeRevealPayload,
+  decodeRevealProofChunkPayload,
   decodeTransferBody,
+  encodeBatchAnchorPayload,
+  encodeBatchRevealPayload,
   encodeCommitPayload,
+  encodeMerkleProof,
   computeTransferAuthorizationHash,
   encodeTransferPayload,
   encodeRevealPayload,
+  encodeRevealProofChunkPayload,
   encodeTransferBody,
   GnsEventType,
   getBondSats,
   getEpochIndex,
   getMaturityBlocks,
+  computeMerkleRoot,
   normalizeName,
   parseClaimPackage,
+  parseMerkleProofHex,
   parseTransferPackage,
   parseSignedValueRecord,
   PROTOCOL_NAME,
+  REVEAL_PROOF_CHUNK_MIN_PAYLOAD_LENGTH,
   signTransferAuthorization,
   signValueRecord,
   TRANSFER_PACKAGE_FORMAT,
   TRANSFER_PACKAGE_VERSION,
   VALUE_RECORD_FORMAT,
   VALUE_RECORD_VERSION,
+  verifyMerkleProof,
   verifyTransferAuthorization,
   verifyValueRecord
 } from "./index.js";
@@ -175,6 +191,81 @@ describe("wire payloads", () => {
     });
   });
 
+  it("round-trips batch anchor payloads", () => {
+    const encoded = encodeBatchAnchorPayload({
+      flags: 0x00,
+      leafCount: 3,
+      merkleRoot: "77".repeat(32)
+    });
+
+    expect(encoded).toHaveLength(BATCH_ANCHOR_PAYLOAD_LENGTH);
+    expect(decodeBatchAnchorPayload(encoded)).toEqual({
+      flags: 0x00,
+      leafCount: 3,
+      merkleRoot: "77".repeat(32)
+    });
+    expect(decodeGnsPayload(encoded)).toEqual({
+      type: GnsEventType.BatchAnchor,
+      payload: {
+        flags: 0x00,
+        leafCount: 3,
+        merkleRoot: "77".repeat(32)
+      }
+    });
+  });
+
+  it("round-trips batch reveal payloads", () => {
+    const encoded = encodeBatchRevealPayload({
+      anchorTxid: "88".repeat(32),
+      nonce: 42n,
+      bondVout: 3,
+      proofBytesLength: 66,
+      proofChunkCount: 2,
+      name: "alice123"
+    });
+
+    expect(encoded.length).toBe(BATCH_REVEAL_MIN_PAYLOAD_LENGTH + "alice123".length);
+    expect(decodeBatchRevealPayload(encoded)).toEqual({
+      anchorTxid: "88".repeat(32),
+      nonce: 42n,
+      bondVout: 3,
+      proofBytesLength: 66,
+      proofChunkCount: 2,
+      name: "alice123"
+    });
+    expect(decodeGnsPayload(encoded)).toEqual({
+      type: GnsEventType.BatchReveal,
+      payload: {
+        anchorTxid: "88".repeat(32),
+        nonce: 42n,
+        bondVout: 3,
+        proofBytesLength: 66,
+        proofChunkCount: 2,
+        name: "alice123"
+      }
+    });
+  });
+
+  it("round-trips reveal proof chunk payloads", () => {
+    const encoded = encodeRevealProofChunkPayload({
+      chunkIndex: 1,
+      proofBytesHex: "aa".repeat(12)
+    });
+
+    expect(encoded.length).toBe(REVEAL_PROOF_CHUNK_MIN_PAYLOAD_LENGTH + 12);
+    expect(decodeRevealProofChunkPayload(encoded)).toEqual({
+      chunkIndex: 1,
+      proofBytesHex: "aa".repeat(12)
+    });
+    expect(decodeGnsPayload(encoded)).toEqual({
+      type: GnsEventType.RevealProofChunk,
+      payload: {
+        chunkIndex: 1,
+        proofBytesHex: "aa".repeat(12)
+      }
+    });
+  });
+
   it("signs and verifies transfer authorizations against the owner x-only pubkey", () => {
     const ownerPrivateKeyHex = "07".repeat(32);
     const ownerPubkey = Buffer.from(
@@ -205,6 +296,94 @@ describe("wire payloads", () => {
         signature
       })
     ).toBe(true);
+  });
+});
+
+describe("merkle batching helpers", () => {
+  it("computes deterministic batch leaf hashes", () => {
+    expect(
+      computeBatchCommitLeafHash({
+        bondVout: 0,
+        ownerPubkey: "11".repeat(32),
+        commitHash: "22".repeat(32)
+      })
+    ).toBe(
+      computeBatchCommitLeafHash({
+        bondVout: 0,
+        ownerPubkey: "11".repeat(32),
+        commitHash: "22".repeat(32)
+      })
+    );
+  });
+
+  it("creates and verifies merkle proofs", () => {
+    const leaves = [
+      computeBatchCommitLeafHash({
+        bondVout: 0,
+        ownerPubkey: "11".repeat(32),
+        commitHash: "aa".repeat(32)
+      }),
+      computeBatchCommitLeafHash({
+        bondVout: 1,
+        ownerPubkey: "22".repeat(32),
+        commitHash: "bb".repeat(32)
+      }),
+      computeBatchCommitLeafHash({
+        bondVout: 2,
+        ownerPubkey: "33".repeat(32),
+        commitHash: "cc".repeat(32)
+      })
+    ];
+
+    const root = computeMerkleRoot(leaves);
+    const proof = createMerkleProof(leaves, 1);
+
+    expect(verifyMerkleProof({
+      leafHash: leaves[1] ?? "",
+      proof,
+      expectedRoot: root
+    })).toBe(true);
+
+    expect(verifyMerkleProof({
+      leafHash: leaves[0] ?? "",
+      proof,
+      expectedRoot: root
+    })).toBe(false);
+  });
+
+  it("encodes and decodes proof bytes deterministically", () => {
+    const leaves = [
+      computeBatchCommitLeafHash({
+        bondVout: 0,
+        ownerPubkey: "11".repeat(32),
+        commitHash: "aa".repeat(32)
+      }),
+      computeBatchCommitLeafHash({
+        bondVout: 1,
+        ownerPubkey: "22".repeat(32),
+        commitHash: "bb".repeat(32)
+      })
+    ];
+
+    const proof = createMerkleProof(leaves, 0);
+    const encoded = encodeMerkleProof(proof);
+    const decoded = decodeMerkleProof(encoded);
+
+    expect(decoded).toEqual(proof);
+    expect(parseMerkleProofHex(Buffer.from(encoded).toString("hex"))).toEqual(proof);
+  });
+
+  it("treats a single-leaf proof as empty", () => {
+    const leaf = computeBatchCommitLeafHash({
+      bondVout: 0,
+      ownerPubkey: "11".repeat(32),
+      commitHash: "aa".repeat(32)
+    });
+
+    const proof = createMerkleProof([leaf], 0);
+
+    expect(proof).toEqual([]);
+    expect(parseMerkleProofHex("")).toEqual([]);
   });
 });
 
