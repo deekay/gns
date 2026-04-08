@@ -257,7 +257,7 @@ This is the main candidate answer to "respect blockspace more aggressively befor
 
 ### Current Status
 
-Open. We have earlier research notes, but no fresh decision about whether launch should include one of these approaches. Current direction is to treat Merkle batching as the leading launch-plausible footprint improvement if batching becomes part of v1, while treating Taproot / scriptless directions as deeper future research unless a much stronger implementation case emerges.
+Open, but more concrete than before. Current direction is to treat Merkle batching as the leading launch-plausible footprint improvement if batching becomes part of v1, while treating Taproot / scriptless directions as deeper future research unless a much stronger implementation case emerges. A first implementation-facing design note now exists in `MERKLE_BATCHING_V0.md`.
 
 ## 12. Auction Dynamics Versus Fixed Bonds
 

@@ -370,6 +370,8 @@ This is why Merkle batching is more launch-plausible than a scriptless redesign,
 
 This looks like the most plausible pre-launch footprint improvement to explore seriously.
 
+See [MERKLE_BATCHING_V0.md](./MERKLE_BATCHING_V0.md) for the current v0 design direction and implementation checklist.
+
 ## Batching Direction 2: Aggregator Or Service-Provider Batching
 
 ### Shape
