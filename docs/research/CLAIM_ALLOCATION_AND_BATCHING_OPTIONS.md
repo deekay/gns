@@ -317,7 +317,13 @@ A better batching design may be worth doing even if the allocation mechanic stay
 - it may make large-scale legitimate onboarding cleaner
 - it may also make large-scale squatting cheaper, so batching is not purely upside
 
-That last point matters: a batching design can help respectable use cases and aggressive squatting at the same time.
+That last point matters, but it needs to be stated precisely:
+
+- batching should be treated as an efficiency improvement, not as a scarcity lever
+- the bond and lock rules are what should create scarcity and make large-scale warehousing expensive
+- batching may still reduce the transaction-fee and operational cost of large-scale claiming campaigns
+
+So a batching design can help respectable use cases and aggressive squatting at the same time, even when it does **not** change the bond economics at all.
 
 ## Batching Direction 1: Merkle-Anchored Commit Batches
 
@@ -338,6 +344,27 @@ That last point matters: a batching design can help respectable use cases and ag
 - adds more off-chain artifact handling
 - changes the indexer and reveal logic
 - may complicate the "simple enough for launch" story
+
+### What It Changes Versus What It Preserves
+
+Merkle batching does **not** need to change the high-level claim lifecycle:
+
+- users still commit first
+- users still reveal later
+- the reveal still proves prior commitment and prevents simple front-running
+
+But it likely **does** change the wire and indexing model:
+
+- instead of one explicit per-claim on-chain `COMMIT` payload, a batch anchor transaction would carry a Merkle root
+- each claimant would need a Merkle proof artifact showing that their commitment was included in that anchored root
+- the reveal path and indexer would need to verify that proof and bind it to the committed name / owner data
+
+So the clean way to think about it is:
+
+- **conceptual protocol:** commit / reveal can stay intact
+- **on-chain carrier and verification path:** would change materially
+
+This is why Merkle batching is more launch-plausible than a scriptless redesign, but still not "free" or purely cosmetic.
 
 ### Current Assessment
 
@@ -391,6 +418,7 @@ It is tempting to combine these debates, but they solve different problems:
 
 - auctions or fixed bonds decide **who gets the name**
 - batching decides **how much chain footprint that competition creates**
+- batching should not be relied on to make names "hard enough" to claim; that job belongs to the bond and lock design
 
 Merkle batching may be a strong pre-launch improvement even if the allocation mechanism remains unchanged.
 
