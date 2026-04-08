@@ -27,6 +27,12 @@ The reserved lane works differently:
 
 The key idea is that the reserve list decides **which names are special** and **when they unlock**, not **what each one should cost**.
 
+The current floor intuition is:
+
+- reserved auction minimum = `max(ordinary floor for the name, reserved-class floor)`
+- ordinary table still provides the base scarcity floor
+- reserved class supplies the longer fixed lock and any stronger minimum amount
+
 ## Why Explore This
 
 The strongest fairness objection is not:

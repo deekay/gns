@@ -1,8 +1,8 @@
 # Reserved Name Auction Lane
 
-This note captures a new design direction that emerged while pressure-testing the premium-overlay work.
+This note captures the design direction that emerged while pressure-testing the premium-overlay work.
 
-It is **not** the chosen launch design yet.
+It is **not** a final protocol decision yet, but it is now the leading launch candidate and the main working assumption for follow-on design work.
 
 It is a serious alternative worth evaluating alongside:
 
@@ -34,6 +34,17 @@ The reserved lane would work differently:
 The key shift is:
 
 > the salience list would decide which names enter the auction lane and when, not what each name should cost
+
+## Current Working Assumptions
+
+The current provisional direction is:
+
+- **two-lane launch** as the leading candidate
+- **ordinary lane** keeps commit / reveal, a simple objective floor table, and a fixed ordinary lock such as `1 year`
+- **ordinary lane** drops or simplifies the current epoch / maturity-halving logic
+- **reserved lane** uses open ascending on-chain auctions with soft close
+- **reserved lane** fixes the bond lock duration by protocol or reserved class
+- **reserved lane** lets bids compete on BTC amount only, not arbitrary BTC-time pairs
 
 ## Why This Is Attractive
 
@@ -151,14 +162,14 @@ The cleanest version of the model currently looks like:
 - fixed floor table
 - simple standardized lock duration
 
-This lane could potentially become simpler than the current epoch-heavy model if this direction is chosen.
+This lane now appears likely to become simpler than the current epoch-heavy model if this direction is chosen.
 
-For example, it may make sense to explore:
+The current working assumption is:
 
 - a fixed `1-year` ordinary lock
 - and removal or simplification of maturity-era halving logic
 
-That is not a recommendation yet, only an implication worth considering.
+This is still provisional, but it is now the main direction being explored.
 
 ### Reserved Lane
 
@@ -184,6 +195,37 @@ A cleaner model is:
 
 - protocol sets duration by lane
 - auction bids compete on BTC amount
+
+## Floor And Duration Rule
+
+The cleanest current pricing rule for the reserved lane is:
+
+> `reserved_minimum_bid(name, class) = max(ordinary_floor_amount(name), reserved_class_floor_amount(class))`
+
+That means:
+
+- the ordinary base table still matters
+- reserved names do **not** ignore objective scarcity pricing
+- the reserved class can impose a higher minimum amount when needed
+
+So the ordinary table remains the system's base scarcity floor, while the reserved lane adds stronger treatment only where launch fairness demands it.
+
+Examples:
+
+- a name like `x` may already have a high ordinary floor because it is structurally ultra-scarce, and the reserved class may push the minimum even higher
+- a name like `google` may have a trivial ordinary floor relative to its reserved-class floor, so the reserved class dominates
+- a name like `tylercowen` may have a small ordinary floor, but still clear a lighter reserved public-identity class floor
+
+The important companion rule is:
+
+- the **amount** floor can inherit from the ordinary table
+- the **duration** in the reserved lane should come from the reserved class, not from the ordinary table
+
+So the reserved lane likely uses:
+
+- ordinary table as a lower bound on BTC amount
+- reserved class to determine fixed long lock duration
+- reserved class to determine any higher minimum BTC amount
 
 ## Why A Deferred Start Matters
 
@@ -223,7 +265,7 @@ Before specifying mechanics, the reserved lane should probably commit to a few p
    Ordinary names should stay on the simpler claim path. Auctions are for the deferred reserved lane, not for every name in the namespace.
 
 2. **Auction discovers amount, protocol fixes time**
-   Bidders should compete on BTC amount, while the protocol fixes the lock duration for the reserved lane.
+   Bidders should compete on BTC amount, while the protocol fixes the lock duration for the reserved lane or reserved class.
 
 3. **No hard-close sniping**
    The auction should not end in a way that rewards hidden miner coordination or mempool timing tricks near a single final block.
@@ -538,7 +580,7 @@ The cost is that we still need:
 ## Next Questions
 
 1. How broad should the reserved list be before launch starts to feel artificially constrained?
-2. What fixed lock duration should the reserved lane use?
+2. Should the reserved lane use one fixed lock duration or a small number of reserved classes?
 3. Should the ordinary lane keep epochs, or become simpler if this path is chosen?
 4. What auction mechanics best fit the fairness goal without creating a mempool knife fight?
 5. Can the reserved lane be designed to respect blockspace well enough to be politically credible?

@@ -237,11 +237,13 @@ See [LAUNCH_PREMIUM_OVERLAY_PIPELINE.md](./LAUNCH_PREMIUM_OVERLAY_PIPELINE.md).
 ### Shape
 
 - keep an ordinary claim lane for names not on a reserved list
-- ordinary lane uses commit / reveal and a standardized floor curve
+- ordinary lane uses commit / reveal, a standardized floor curve, and a simple fixed ordinary lock such as `1 year`
 - maintain a broad reserved list of salient existing names
 - reserved names do not open on launch day
 - instead they unlock later at a pre-announced block height and enter an auction lane
-- the auction sets the BTC amount while the protocol fixes the lock duration for that lane
+- the auction sets the BTC amount while the protocol fixes the lock duration for that lane or reserved class
+- the minimum reserved auction bid inherits the ordinary base table as a lower bound and can be expressed as:
+  - `max(ordinary_floor_amount(name), reserved_class_floor_amount(class))`
 
 See [RESERVED_NAME_AUCTION_LANE.md](./RESERVED_NAME_AUCTION_LANE.md).
 
@@ -250,6 +252,7 @@ See [RESERVED_NAME_AUCTION_LANE.md](./RESERVED_NAME_AUCTION_LANE.md).
 - the reserve list decides **which names are special**, not **what exact price they should cost**
 - speculators can compete away easy upside even if the real operator is not present yet
 - the ordinary namespace can keep a simpler claim path
+- the ordinary base table still matters, so reserved names do not escape objective scarcity pricing
 - the protocol no longer needs to pretend it knows the right custom price for `markzuckerberg` versus `tylercowen`
 
 ### Where It Struggles
@@ -261,7 +264,7 @@ See [RESERVED_NAME_AUCTION_LANE.md](./RESERVED_NAME_AUCTION_LANE.md).
 
 ### Current Assessment
 
-This is now one of the most promising alternatives to the fixed premium-overlay model.
+This is now the leading alternative to the fixed premium-overlay model and may become the main launch direction.
 
 It preserves a simple ordinary lane while using auctions only where the launch-fairness problem is most severe.
 
