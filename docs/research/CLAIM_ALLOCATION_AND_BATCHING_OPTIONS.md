@@ -232,6 +232,39 @@ That is still less neutral than pure fixed bonds, but it is much more defensible
 
 See [LAUNCH_PREMIUM_OVERLAY_PIPELINE.md](./LAUNCH_PREMIUM_OVERLAY_PIPELINE.md).
 
+## Allocation Mechanic 7: Two-Lane Launch With Reserved-Name Auctions
+
+### Shape
+
+- keep an ordinary claim lane for names not on a reserved list
+- ordinary lane uses commit / reveal and a standardized floor curve
+- maintain a broad reserved list of salient existing names
+- reserved names do not open on launch day
+- instead they unlock later at a pre-announced block height and enter an auction lane
+- the auction sets the BTC amount while the protocol fixes the lock duration for that lane
+
+See [RESERVED_NAME_AUCTION_LANE.md](./RESERVED_NAME_AUCTION_LANE.md).
+
+### Why It Is Attractive
+
+- the reserve list decides **which names are special**, not **what exact price they should cost**
+- speculators can compete away easy upside even if the real operator is not present yet
+- the ordinary namespace can keep a simpler claim path
+- the protocol no longer needs to pretend it knows the right custom price for `markzuckerberg` versus `tylercowen`
+
+### Where It Struggles
+
+- still requires a meaningful reserve list
+- still needs auction mechanics that do not create terrible griefing dynamics
+- may still use a lot of blockspace for hot names
+- can feel withholding if the reserve list gets too broad
+
+### Current Assessment
+
+This is now one of the most promising alternatives to the fixed premium-overlay model.
+
+It preserves a simple ordinary lane while using auctions only where the launch-fairness problem is most severe.
+
 ## Working Comparison
 
 | Mechanism | Best property | Main failure mode |
@@ -242,6 +275,7 @@ See [LAUNCH_PREMIUM_OVERLAY_PIPELINE.md](./LAUNCH_PREMIUM_OVERLAY_PIPELINE.md).
 | Fixed bond + challenge | hybrid flexibility | griefing and conditional complexity |
 | Fixed bond + secondary market | simple primary path | weak answer to existing-brand squatting |
 | Semantic pricing | targets premium names directly | destroys protocol neutrality |
+| Two-lane reserved auctions | broad reserve list without hand-pricing | still needs reserve-list legitimacy and auction design |
 
 ## Tentative Viewpoint So Far
 

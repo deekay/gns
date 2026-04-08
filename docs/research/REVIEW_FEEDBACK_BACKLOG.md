@@ -95,7 +95,7 @@ This is currently the most serious challenge to the fairness story.
 
 ### Current Status
 
-Active design path now exists.
+Active design paths now exist.
 
 Current working direction:
 
@@ -103,6 +103,13 @@ Current working direction:
 - add a bounded, frozen, launch-only premium overlay for already-salient names
 - score that overlay from public salience and coordination evidence
 - allow a second inclusion path for clear natural-buyer capture-risk cases
+
+Parallel alternative now under active exploration:
+
+- keep a simple ordinary commit / reveal lane for non-reserved names
+- prepare a broad reserved list of salient existing names
+- defer those names to a later auction lane
+- let the market set BTC amount under a fixed long lock instead of protocol-side pricing
 
 Still open, but no longer structurally vague.
 
