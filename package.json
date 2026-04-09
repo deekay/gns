@@ -39,6 +39,7 @@
     "test:private-signet-value-handoff-smoke": "node ./scripts/private-signet-value-handoff-smoke.mjs",
     "test:regtest-cli-suite": "node ./scripts/regtest-cli-suite.mjs",
     "test": "npm run build && npm run test:workspaces",
+    "test:smoke-fixture-batch": "node ./scripts/smoke-fixture-batch.mjs",
     "test:smoke-fixture": "node ./scripts/smoke-fixture.mjs",
     "test:workspaces": "npm run test --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present"

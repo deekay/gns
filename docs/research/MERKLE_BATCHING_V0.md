@@ -47,6 +47,14 @@ The main remaining user-facing gap is that the browser batch flow still stops
 at the batch commit PSBT plus reveal-ready packages. Later reveal PSBTs are not
 yet generated in-browser for every batch claim automatically.
 
+We now also have a repeatable fixture-backed end-to-end review path:
+
+- fixture: [demo-chain-batch.json](../../fixtures/demo-chain-batch.json)
+- smoke runner: [smoke-fixture-batch.mjs](../../scripts/smoke-fixture-batch.mjs)
+
+That path proves the batched ordinary-lane flow across resolver indexing, web
+name lookup, transaction provenance inspection, and offline architect review.
+
 ## Non-Goals
 
 Merkle batching v0 is **not** trying to do all of the following:

@@ -139,6 +139,32 @@ This checks:
 - prototype owner-key generation
 - claim-draft generation
 
+### 2b. Repeatable smoke test for batched fixture mode
+
+If you want the same kind of repeatable proof for the ordinary-lane Merkle
+batching path, use:
+
+```bash
+npm run test:smoke-fixture-batch
+```
+
+This boots the resolver and web app against the dedicated batched fixture at
+[`fixtures/demo-chain-batch.json`](../../fixtures/demo-chain-batch.json),
+then checks:
+
+- resolver `/health`
+- web `/api/health`
+- web `/api/names`
+- name lookups for `batchalpha` and `batchbravo`
+- name activity for `batchalpha`
+- transaction provenance for the batch anchor tx
+- transaction provenance for one batch reveal tx
+- offline architect HTML includes the batch commit builder controls
+
+The goal is not to simulate every signer step. It is to prove that the
+resolver, web app, provenance surfaces, and offline review flow all remain
+coherent when names arrive through a batched ordinary-lane commit.
+
 ## Full CLI Integration Suite: Controlled Chain
 
 For the exhaustive protocol suite, we use a controlled `regtest` environment instead of public signet. That lets us mint funds deterministically and exercise failure cases without depending on faucets.
