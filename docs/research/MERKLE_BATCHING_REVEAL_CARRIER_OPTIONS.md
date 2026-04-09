@@ -114,6 +114,9 @@ This is the most interesting "deeper protocol" option to study first.
 
 That makes the annex an appealing place to carry Merkle proof bytes.
 
+For a rough quantitative estimate of how much this might help, see
+[MERKLE_BATCHING_ANNEX_WEIGHT_MODEL.md](./MERKLE_BATCHING_ANNEX_WEIGHT_MODEL.md).
+
 ### What It Would Look Like
 
 - reveal transactions would need to spend a Taproot input
