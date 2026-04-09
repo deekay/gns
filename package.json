@@ -41,6 +41,7 @@
     "test": "npm run build && npm run test:workspaces",
     "test:smoke-fixture-batch": "node ./scripts/smoke-fixture-batch.mjs",
     "test:smoke-fixture": "node ./scripts/smoke-fixture.mjs",
+    "measure:batch-footprint": "npm run build -w @gns/protocol && npm run build -w @gns/architect && node ./scripts/measure-batch-footprint.mjs",
     "test:workspaces": "npm run test --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present"
   },

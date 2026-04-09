@@ -203,7 +203,7 @@ These decisions imply the first implementation plan should assume:
 These are now much smaller and should be handled during protocol implementation planning rather than blocking it:
 
 1. whether `proof_bytes_len` should remain `u16` or widen later
-2. whether v0 batch cap should be `32`, `64`, or another modest number
+2. whether the first v0 batch cap should sit closer to `2`, `4`, or `8` given the current footprint measurements in [MERKLE_BATCHING_FOOTPRINT.md](./MERKLE_BATCHING_FOOTPRINT.md)
 
 ## Current Recommendation
 

@@ -6,6 +6,7 @@ It is not a final mainnet freeze, but it is meant to be specific enough to plan 
 
 For the current recommended wire-format defaults, see [MERKLE_BATCHING_V0_DECISIONS.md](./MERKLE_BATCHING_V0_DECISIONS.md).
 For the package-by-package engineering task map, see [MERKLE_BATCHING_WORK_BREAKDOWN.md](./MERKLE_BATCHING_WORK_BREAKDOWN.md).
+For the first repeatable footprint measurements, see [MERKLE_BATCHING_FOOTPRINT.md](./MERKLE_BATCHING_FOOTPRINT.md).
 
 ## Purpose
 
@@ -61,6 +62,18 @@ We also now have the first batch-aware regtest CLI suite coverage in
 builds a batch anchor, queues two signed batch reveals, confirms the anchor,
 broadcasts both reveals through the watcher, and verifies the names through the
 resolver once they land on-chain.
+
+We also now have a repeatable footprint measurement script and report:
+
+- script: [measure-batch-footprint.mjs](../../scripts/measure-batch-footprint.mjs)
+- report: [MERKLE_BATCHING_FOOTPRINT.md](./MERKLE_BATCHING_FOOTPRINT.md)
+
+The current measured result is important:
+
+- commit batching is a strong footprint win
+- small batches can reduce total full-flow footprint
+- larger batches under the current explicit proof-carriage design do **not**
+  automatically reduce total vbytes across the full ordinary claim lifecycle
 
 ## Non-Goals
 
@@ -190,14 +203,14 @@ The initial batching design should stay modest.
 
 Working recommendation:
 
-- target an initial batch cap such as `64` claims per anchor
+- target an initial batch cap in the low single digits, such as `2-8` claims per anchor
 - keep the hard requirement that v0 remain under `255` bond outputs unless `bond_vout` is widened
 
 Why:
 
 - current payload and code paths already assume small `vout` references
-- modest batches reduce complexity while still cutting chain overhead significantly
-- large batches can be revisited later once measured on regtest / signet
+- the current measured footprint report shows that small batches are much more favorable than large batches under explicit proof carriage
+- large batches can be revisited later if reveal proof carriage becomes much more compact
 
 ## Coordinator Model
 
@@ -345,6 +358,10 @@ Implementation should be treated as a full-stack change, not only a core-protoco
 - keep the implementation behind a clear feature branch or staged rollout path until regtest coverage is complete
 - measure actual transaction size and chain-footprint deltas before claiming success publicly
 
+That last item is now partially complete: we have a repeatable measurement
+script and a first report, and the result is strong enough to guide the next
+design decision on batch sizing.
+
 ## Suggested Order Of Work
 
 1. close the remaining wire-format questions
@@ -366,3 +383,12 @@ The right framing is:
 - use batching to reduce footprint
 - preserve the ordinary-lane commit / reveal mental model
 - avoid overreaching into Taproot-heavy redesign unless there is a much stronger later reason
+
+The important nuance from measurement is:
+
+- batching already survives functional testing
+- batching clearly improves commit footprint and transaction count
+- batching does **not yet** justify a blanket claim of lower full-flow vbytes at
+  large batch sizes
+- so the next design work, if we want bigger wins, should focus on reveal proof
+  carriage rather than on the batch anchor itself
