@@ -16,9 +16,12 @@
   },
   "dependencies": {
     "@gns/bitcoin": "file:../bitcoin",
-    "@gns/protocol": "file:../protocol"
+    "@gns/protocol": "file:../protocol",
+    "bitcoinjs-lib": "^7.0.1"
   },
   "devDependencies": {
+    "ecpair": "^3.0.1",
+    "tiny-secp256k1": "^2.2.4",
     "vitest": "^3.2.4"
   }
 }

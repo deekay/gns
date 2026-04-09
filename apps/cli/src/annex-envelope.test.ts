@@ -7,6 +7,7 @@ import {
   CLAIM_PACKAGE_FORMAT,
   CLAIM_PACKAGE_VERSION,
   computeCommitHash,
+  decodeBatchRevealPayload,
   encodeCommitPayload,
   parseClaimPackage,
   PROTOCOL_NAME
@@ -236,8 +237,17 @@ describe("experimental annex envelope flow", () => {
       signedEnvelope
     });
 
+    const decodedPayload = decodeBatchRevealPayload(
+      Buffer.from(unsignedEnvelope.gnsBatchRevealPayloadHex ?? "", "hex")
+    );
+
     expect(unsignedEnvelope.semanticMode).toBe("batch_claim_package");
-    expect(unsignedEnvelope.gnsBatchRevealPayloadHex).toBe(batchClaimPackage.revealPayloadHex);
+    expect(unsignedEnvelope.gnsBatchRevealPayloadHex).not.toBe(batchClaimPackage.revealPayloadHex);
+    expect(decodedPayload.anchorTxid).toBe(batchClaimPackage.batchAnchorTxid);
+    expect(decodedPayload.bondVout).toBe(batchClaimPackage.bondVout);
+    expect(decodedPayload.proofBytesLength).toBe(batchClaimPackage.batchProofBytes);
+    expect(decodedPayload.proofChunkCount).toBe(0);
+    expect(decodedPayload.name).toBe(batchClaimPackage.name);
     expect(unsignedEnvelope.annexHex.startsWith("5000")).toBe(true);
     expect(unsignedEnvelope.annexHex.slice(4)).toBe(batchClaimPackage.batchProofHex);
     expect(Object.values(verification.verification).every(Boolean)).toBe(true);

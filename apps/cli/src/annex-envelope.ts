@@ -16,6 +16,7 @@ import * as tinysecp from "tiny-secp256k1";
 import {
   BATCH_REVEAL_MIN_PAYLOAD_LENGTH,
   decodeBatchRevealPayload,
+  encodeBatchRevealPayload,
   GnsEventType,
   type BatchClaimPackage
 } from "@gns/protocol";
@@ -188,8 +189,19 @@ export function buildExperimentalAnnexRevealEnvelopeFromBatchClaimPackage(
 ): ExperimentalAnnexUnsignedEnvelope {
   const annex = Buffer.concat([ANNEX_PREFIX, Buffer.from(options.claimPackage.batchProofHex, "hex")]);
   const carrierInputIndex = options.carrierInputIndex ?? 0;
+  const derivedBatchRevealPayloadHex = Buffer.from(
+    encodeBatchRevealPayload({
+      anchorTxid: options.claimPackage.batchAnchorTxid,
+      ownerPubkey: options.claimPackage.ownerPubkey,
+      nonce: BigInt(`0x${options.claimPackage.nonceHex}`),
+      bondVout: options.claimPackage.bondVout,
+      proofBytesLength: options.claimPackage.batchProofBytes,
+      proofChunkCount: 0,
+      name: options.claimPackage.name
+    })
+  ).toString("hex");
   const explicitHeader = buildBatchRevealHybridHeader({
-    batchRevealPayloadHex: options.claimPackage.revealPayloadHex,
+    batchRevealPayloadHex: derivedBatchRevealPayloadHex,
     carrierInputIndex,
     annex
   });
@@ -205,8 +217,8 @@ export function buildExperimentalAnnexRevealEnvelopeFromBatchClaimPackage(
     name: options.claimPackage.name,
     bondVout: options.claimPackage.bondVout,
     semanticMode: "batch_claim_package",
-    gnsBatchRevealPayloadHex: options.claimPackage.revealPayloadHex,
-    gnsBatchRevealPayloadBytes: options.claimPackage.revealPayloadBytes,
+    gnsBatchRevealPayloadHex: derivedBatchRevealPayloadHex,
+    gnsBatchRevealPayloadBytes: derivedBatchRevealPayloadHex.length / 2,
     ...(options.feeSats !== undefined ? { feeSats: options.feeSats } : {}),
     ...(options.changeAddress !== undefined ? { changeAddress: options.changeAddress } : {})
   });
