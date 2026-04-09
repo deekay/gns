@@ -24,6 +24,14 @@ import {
   type WalletDerivationDescriptor
 } from "./builder.js";
 import {
+  buildExperimentalAnnexRevealEnvelope,
+  parseExperimentalAnnexRevealEnvelope,
+  parseExperimentalCarrierPrevoutDescriptor,
+  parseSignedExperimentalAnnexRevealEnvelope,
+  signExperimentalAnnexRevealEnvelope,
+  verifyExperimentalAnnexRevealEnvelope
+} from "./annex-envelope.js";
+import {
   broadcastSignedArtifacts,
   checkEsploraAddress,
   checkEsploraConnection,
@@ -95,6 +103,15 @@ async function main(): Promise<void> {
       return;
     case "build-batch-reveal-artifacts":
       await buildBatchRevealArtifactsCommand(args);
+      return;
+    case "build-experimental-annex-reveal-envelope":
+      await buildExperimentalAnnexRevealEnvelopeCommand(args);
+      return;
+    case "sign-experimental-annex-reveal-envelope":
+      await signExperimentalAnnexRevealEnvelopeCommand(args);
+      return;
+    case "verify-experimental-annex-reveal-envelope":
+      await verifyExperimentalAnnexRevealEnvelopeCommand(args);
       return;
     case "build-transfer-artifacts":
       await buildTransferArtifactsCommand(args);
@@ -452,6 +469,126 @@ async function buildBatchRevealArtifactsCommand(args: readonly string[]): Promis
 
   await maybeWriteJsonFile(parsed.options.get("write"), artifacts);
   console.log(JSON.stringify(artifacts, null, 2));
+}
+
+async function buildExperimentalAnnexRevealEnvelopeCommand(args: readonly string[]): Promise<void> {
+  const parsed = parseOptions(args);
+  const name = parsed.options.get("name");
+  const anchorTxid = parsed.options.get("anchor-txid");
+  const carrierPrevout = parsed.options.get("carrier-prevout");
+  const wif = parsed.multiOptions.get("wif")?.[0];
+
+  if (!name) {
+    throw new Error("build-experimental-annex-reveal-envelope requires --name");
+  }
+
+  if (!anchorTxid) {
+    throw new Error("build-experimental-annex-reveal-envelope requires --anchor-txid");
+  }
+
+  if (!carrierPrevout) {
+    throw new Error("build-experimental-annex-reveal-envelope requires --carrier-prevout");
+  }
+
+  if (!wif) {
+    throw new Error("build-experimental-annex-reveal-envelope requires --wif");
+  }
+
+  const envelope = buildExperimentalAnnexRevealEnvelope({
+    network: parseNetwork(parsed.options.get("network")),
+    name,
+    anchorTxid,
+    bondVout: parseRequiredByte(parsed.options.get("bond-vout"), "bond-vout"),
+    carrierPrevout: parseExperimentalCarrierPrevoutDescriptor(carrierPrevout),
+    wif,
+    ...(parsed.options.has("carrier-input-index")
+      ? {
+          carrierInputIndex: parseRequiredInteger(
+            parsed.options.get("carrier-input-index"),
+            "carrier-input-index"
+          )
+        }
+      : {}),
+    ...(parsed.options.has("fee-sats")
+      ? { feeSats: parseRequiredBigInt(parsed.options.get("fee-sats"), "fee-sats") }
+      : {}),
+    ...(parsed.options.has("change-address")
+      ? { changeAddress: parsed.options.get("change-address") as string }
+      : {}),
+    ...(parsed.options.has("annex-proof-hex")
+      ? { annexProofHex: parsed.options.get("annex-proof-hex") as string }
+      : {}),
+    ...(parsed.options.has("annex-proof-bytes")
+      ? {
+          annexProofBytes: parseRequiredInteger(
+            parsed.options.get("annex-proof-bytes"),
+            "annex-proof-bytes"
+          )
+        }
+      : {}),
+    ...(parsed.options.has("annex-proof-fill-byte")
+      ? {
+          annexProofFillByte: parseRequiredByte(
+            parsed.options.get("annex-proof-fill-byte"),
+            "annex-proof-fill-byte"
+          )
+        }
+      : {})
+  });
+
+  await maybeWriteJsonFile(parsed.options.get("write"), envelope);
+  console.log(JSON.stringify(envelope, null, 2));
+}
+
+async function signExperimentalAnnexRevealEnvelopeCommand(args: readonly string[]): Promise<void> {
+  const parsed = parseOptions(args);
+  const envelopePath = parsed.positionals[0];
+  const wif = parsed.multiOptions.get("wif")?.[0];
+
+  if (!envelopePath) {
+    throw new Error(
+      "sign-experimental-annex-reveal-envelope requires a path to an unsigned envelope JSON file"
+    );
+  }
+
+  if (!wif) {
+    throw new Error("sign-experimental-annex-reveal-envelope requires --wif");
+  }
+
+  const unsignedEnvelope = await loadExperimentalAnnexRevealEnvelope(envelopePath);
+  const signedEnvelope = signExperimentalAnnexRevealEnvelope({
+    unsignedEnvelope,
+    wif
+  });
+
+  await maybeWriteJsonFile(parsed.options.get("write"), signedEnvelope);
+  console.log(JSON.stringify(signedEnvelope, null, 2));
+}
+
+async function verifyExperimentalAnnexRevealEnvelopeCommand(args: readonly string[]): Promise<void> {
+  const parsed = parseOptions(args);
+  const unsignedEnvelopePath = parsed.positionals[0];
+  const signedEnvelopePath = parsed.positionals[1];
+
+  if (!unsignedEnvelopePath || !signedEnvelopePath) {
+    throw new Error(
+      "verify-experimental-annex-reveal-envelope requires unsigned and signed envelope JSON paths"
+    );
+  }
+
+  const unsignedEnvelope = await loadExperimentalAnnexRevealEnvelope(unsignedEnvelopePath);
+  const signedEnvelope = await loadSignedExperimentalAnnexRevealEnvelope(signedEnvelopePath);
+  const report = verifyExperimentalAnnexRevealEnvelope({
+    unsignedEnvelope,
+    signedEnvelope
+  });
+  const allChecksPass = Object.values(report.verification).every(Boolean);
+
+  if (!allChecksPass) {
+    process.exitCode = 1;
+  }
+
+  console.log(JSON.stringify(report, null, 2));
 }
 
 async function buildTransferArtifactsCommand(args: readonly string[]): Promise<void> {
@@ -1413,6 +1550,18 @@ async function loadSignedArtifacts(filePath: string) {
   return parseSignedArtifactsFile(JSON.parse(raw));
 }
 
+async function loadExperimentalAnnexRevealEnvelope(filePath: string) {
+  const resolvedPath = resolve(process.cwd(), filePath);
+  const raw = await readFile(resolvedPath, "utf8");
+  return parseExperimentalAnnexRevealEnvelope(JSON.parse(raw));
+}
+
+async function loadSignedExperimentalAnnexRevealEnvelope(filePath: string) {
+  const resolvedPath = resolve(process.cwd(), filePath);
+  const raw = await readFile(resolvedPath, "utf8");
+  return parseSignedExperimentalAnnexRevealEnvelope(JSON.parse(raw));
+}
+
 async function writeBatchClaimPackagesDir(
   directoryPath: string | undefined,
   claimPackages: ReadonlyArray<ReturnType<typeof parseBatchClaimPackage>>
@@ -1627,6 +1776,15 @@ function printUsage(): void {
   console.log("");
   console.log("  build-batch-reveal-artifacts <batch-claim-package> --input <txid:vout:valueSats:address[:derivationPath]> [--input ...] --fee-sats <amount> [--network signet|testnet|regtest|main] [--change-address <addr>] [--wallet-master-fingerprint <hex8> --wallet-account-xpub <xpub> --wallet-account-path <path> [--wallet-scan-limit <n>]] [--write <path>]");
   console.log("    Build unsigned reveal transaction artifacts from a reveal-ready batch claim package");
+  console.log("");
+  console.log("  build-experimental-annex-reveal-envelope --name <name> --anchor-txid <txid> --bond-vout <0-255> --carrier-prevout <txid:vout:valueSats> --wif <wif> [--network signet|testnet|regtest|main] [--fee-sats <amount>] [--carrier-input-index <n>] [--change-address <addr>] [--annex-proof-hex <hex> | --annex-proof-bytes <n> [--annex-proof-fill-byte <0-255>]] [--write <path>]");
+  console.log("    Experimental: build one unsigned Taproot-annex batch reveal envelope from a single carrier input");
+  console.log("");
+  console.log("  sign-experimental-annex-reveal-envelope <unsigned-envelope-json> --wif <wif> [--write <path>]");
+  console.log("    Experimental: attach an annex-aware Taproot key-path witness and emit a signed annex envelope");
+  console.log("");
+  console.log("  verify-experimental-annex-reveal-envelope <unsigned-envelope-json> <signed-envelope-json>");
+  console.log("    Experimental: re-parse the signed transaction, recover the annex, and verify the envelope commitments");
   console.log("");
   console.log("  build-transfer-artifacts --prev-state-txid <txid> --new-owner-pubkey <hex32> --owner-private-key-hex <hex32> --bond-input <txid:vout:valueSats:address> [--input ...] --successor-bond-vout <0-255> --successor-bond-sats <amount> --fee-sats <amount> --bond-address <addr> [--change-address <addr>] [--flags <0-255>] [--network signet|testnet|regtest|main] [--write <path>]");
   console.log("    Build unsigned gift-transfer artifacts with embedded owner authorization and successor bond output");

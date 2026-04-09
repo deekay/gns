@@ -9,6 +9,14 @@ The question here was:
 
 This is still a prototype, not protocol integration.
 
+Update: the round-trip shape has now been promoted into an **experimental CLI
+module** in [apps/cli/src/annex-envelope.ts](../../apps/cli/src/annex-envelope.ts)
+with three commands:
+
+- `build-experimental-annex-reveal-envelope`
+- `sign-experimental-annex-reveal-envelope`
+- `verify-experimental-annex-reveal-envelope`
+
 Artifacts:
 
 - [spike-annex-artifact-roundtrip.mjs](../../scripts/spike-annex-artifact-roundtrip.mjs)
@@ -184,21 +192,18 @@ So the decision now looks more like:
 
 That is a healthy place to be.
 
-## Best Next Step
+## Current Status
 
-The next good step is no longer more envelope sketching.
+The next thin slice described above has now been done:
 
-The next good step is to decide whether we want to:
-
-1. stop at research and keep the explicit carrier for the foreseeable future, or
-2. build one experimental CLI module around this prototype shape
-
-If we choose `2`, the next thin slice should be:
-
-- a minimal TypeScript prototype in a sandbox package or script
-- typed unsigned/signed envelope interfaces
-- one custom annex finalizer
+- typed unsigned/signed experimental annex envelope interfaces
+- one experimental builder command
+- one custom annex finalizer command
 - one verifier command
 
-That would tell us whether the annex path still feels reasonable once it stops
-living only in research scripts.
+So the open question has shifted again. It is no longer "can we make the
+workflow concrete?" It is now:
+
+> does this experimental CLI flow feel maintainable enough to justify deeper
+> integration work, or should annex stay as a research lane beside the explicit
+> v0 carrier?
