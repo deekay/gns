@@ -317,7 +317,7 @@ export function renderOfflineClaimPageHtml(scriptBody: string): string {
         <div class="hero-grid">
           <article class="hero-card">
             <h2>What This Does</h2>
-            <p>Builds the claim package, commit PSBT, reveal PSBT, and reveal-ready package without sending your inputs to a hosted service.</p>
+            <p>Builds single-claim PSBT bundles, and can also build batched ordinary-lane commit artifacts plus reveal-ready batch packages, without sending your inputs to a hosted service.</p>
           </article>
           <article class="hero-card">
             <h2>What You Still Need</h2>
@@ -402,6 +402,28 @@ export function renderOfflineClaimPageHtml(scriptBody: string): string {
         <div id="offlineClaimResult" class="result-card">
           Fill in the claim inputs above, then build the bundle locally.
         </div>
+      </section>
+
+      <section class="panel">
+        <h2>Batch Commit Builder</h2>
+        <p>Use this when you want one ordinary-lane batch commit transaction for several names. This step builds the batch commit PSBT and one reveal-ready batch claim package per name.</p>
+        <p class="field-hint">Each line should use: <span class="mono">name|owner_pubkey|nonce_hex|bond_destination|change_destination(optional)</span>. The shared change destination field above is used as a fallback when a line omits the fifth column.</p>
+        <p class="field-hint">Batch mode does not build all later reveal PSBTs automatically. It gives you the reveal-ready batch claim packages you will use one-by-one for those later reveals.</p>
+        <label style="margin-top:20px;">
+          <span class="field-label">Batch Claim Lines</span>
+          <textarea id="offlineBatchClaimsInput" spellcheck="false" placeholder="markzuckerberg|<owner_pubkey>|<nonce_hex>|tb1...|tb1...\npatrickcollison|<owner_pubkey>|<nonce_hex>|tb1..."></textarea>
+          <span class="field-hint">Provide at most 255 claims in one batch so each bond output still fits the current one-byte <span class="mono">bond_vout</span> model.</span>
+        </label>
+        <div class="actions">
+          <button id="offlineBuildBatchButton" type="button">Build Batch Commit Bundle</button>
+          <button id="offlineDownloadBatchBundleButton" type="button" class="secondary" disabled>Download Batch Bundle JSON</button>
+          <button id="offlineDownloadBatchCommitPsbtButton" type="button" class="secondary" disabled>Download Batch Commit PSBT</button>
+          <button id="offlineDownloadBatchSignerNotesButton" type="button" class="secondary" disabled>Download Batch Signer Notes</button>
+        </div>
+        <div id="offlineBatchResult" class="result-card">
+          Paste one or more batch claim lines above, then build the batch commit bundle locally.
+        </div>
+        <div id="offlineBatchDownloads" class="actions"></div>
       </section>
 
       <section class="panel">

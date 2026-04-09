@@ -41,11 +41,11 @@ The current repo now covers these implemented slices:
 - core and indexer validation of batched anchors and batched reveals
 - database snapshot compatibility for batched pending anchors and provenance events
 - resolver / website compatibility for batched provenance inspection
+- offline web architect support for batch commit PSBT generation and per-name reveal-ready batch claim packages
 
-The main remaining user-facing gap is that the website still prepares legacy
-single-claim artifacts only. The web explorer can inspect batched provenance,
-but the browser claim-prep flow has not yet been expanded into a full batched
-claim builder.
+The main remaining user-facing gap is that the browser batch flow still stops
+at the batch commit PSBT plus reveal-ready packages. Later reveal PSBTs are not
+yet generated in-browser for every batch claim automatically.
 
 ## Non-Goals
 

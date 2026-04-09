@@ -1,10 +1,18 @@
 import {
+  buildBatchCommitArtifacts,
   buildClaimPsbtBundle,
   parseFundingInputDescriptor,
+  type BatchCommitArtifacts,
   type ClaimPsbtBundle,
-  type ClaimPsbtWalletUtxo
+  type ClaimPsbtWalletUtxo,
+  type WalletDerivationDescriptor
 } from "@gns/architect";
-import { createClaimPackage, type ClaimPackage, type CreateClaimPackageInput } from "@gns/protocol";
+import {
+  createClaimPackage,
+  type BatchClaimPackage,
+  type ClaimPackage,
+  type CreateClaimPackageInput
+} from "@gns/protocol";
 
 const elements = {
   nameInput: requireElement<HTMLInputElement>("offlineNameInput"),
@@ -20,18 +28,27 @@ const elements = {
   commitFeeInput: requireElement<HTMLInputElement>("offlineCommitFeeInput"),
   revealFeeInput: requireElement<HTMLInputElement>("offlineRevealFeeInput"),
   fundingInputsInput: requireElement<HTMLTextAreaElement>("offlineFundingInputsInput"),
+  batchClaimsInput: requireElement<HTMLTextAreaElement>("offlineBatchClaimsInput"),
   generateNonceButton: requireElement<HTMLButtonElement>("offlineGenerateNonceButton"),
   buildButton: requireElement<HTMLButtonElement>("offlineBuildButton"),
+  buildBatchButton: requireElement<HTMLButtonElement>("offlineBuildBatchButton"),
   downloadClaimPackageButton: requireElement<HTMLButtonElement>("offlineDownloadClaimPackageButton"),
   downloadRevealReadyButton: requireElement<HTMLButtonElement>("offlineDownloadRevealReadyButton"),
   downloadCommitPsbtButton: requireElement<HTMLButtonElement>("offlineDownloadCommitPsbtButton"),
   downloadRevealPsbtButton: requireElement<HTMLButtonElement>("offlineDownloadRevealPsbtButton"),
   downloadSignerNotesButton: requireElement<HTMLButtonElement>("offlineDownloadSignerNotesButton"),
-  result: requireElement<HTMLDivElement>("offlineClaimResult")
+  downloadBatchBundleButton: requireElement<HTMLButtonElement>("offlineDownloadBatchBundleButton"),
+  downloadBatchCommitPsbtButton: requireElement<HTMLButtonElement>("offlineDownloadBatchCommitPsbtButton"),
+  downloadBatchSignerNotesButton: requireElement<HTMLButtonElement>("offlineDownloadBatchSignerNotesButton"),
+  result: requireElement<HTMLDivElement>("offlineClaimResult"),
+  batchResult: requireElement<HTMLDivElement>("offlineBatchResult"),
+  batchDownloads: requireElement<HTMLDivElement>("offlineBatchDownloads")
 };
 
 let currentClaimPackage: ClaimPackage | null = null;
 let currentBundle: ClaimPsbtBundle | null = null;
+let currentBatchClaimPackages: ClaimPackage[] = [];
+let currentBatchArtifacts: BatchCommitArtifacts | null = null;
 
 elements.nonceInput.value = elements.nonceInput.value.trim() || generateNonceHex();
 
@@ -42,6 +59,7 @@ elements.generateNonceButton.addEventListener("click", () => {
 elements.buildButton.addEventListener("click", () => {
   try {
     const claimInput = readClaimPackageInput();
+    const walletDerivation = readWalletDerivation();
     const availableUtxos = readFundingInputs();
 
     currentClaimPackage = createClaimPackage(claimInput);
@@ -52,15 +70,10 @@ elements.buildButton.addEventListener("click", () => {
       bondVout: claimInput.bondVout ?? 0,
       bondDestination: claimInput.bondDestination ?? "",
       ...(claimInput.changeDestination === null ? {} : { changeDestination: claimInput.changeDestination }),
-      walletDerivation: {
-        masterFingerprint: elements.fingerprintInput.value.trim(),
-        accountXpub: elements.accountXpubInput.value.trim(),
-        accountDerivationPath: elements.accountPathInput.value.trim(),
-        scanLimit: Number.parseInt(elements.walletScanLimitInput.value.trim() || "50", 10)
-      },
+      walletDerivation,
       availableUtxos,
-      commitFeeSats: BigInt(elements.commitFeeInput.value.trim()),
-      revealFeeSats: BigInt(elements.revealFeeInput.value.trim()),
+      commitFeeSats: readSats(elements.commitFeeInput, "Commit fee"),
+      revealFeeSats: readSats(elements.revealFeeInput, "Reveal fee"),
       network: "signet"
     });
 
@@ -71,6 +84,44 @@ elements.buildButton.addEventListener("click", () => {
     currentBundle = null;
     setDownloadState(false);
     renderError(error);
+  }
+});
+
+elements.buildBatchButton.addEventListener("click", () => {
+  try {
+    const walletDerivation = readWalletDerivation();
+    const availableUtxos = readFundingInputs();
+    const batchInputs = readBatchClaimPackageInputs();
+    const claimPackages = batchInputs.map((claimInput) => createClaimPackage(claimInput));
+
+    const seenNames = new Set<string>();
+    for (const claimPackage of claimPackages) {
+      if (seenNames.has(claimPackage.name)) {
+        throw new Error(`Duplicate batch claim name: ${claimPackage.name}`);
+      }
+
+      seenNames.add(claimPackage.name);
+    }
+
+    const changeAddress = normalizeOptionalText(elements.changeDestinationInput.value);
+    currentBatchClaimPackages = claimPackages;
+    currentBatchArtifacts = buildBatchCommitArtifacts({
+      claimPackages,
+      fundingInputs: availableUtxos,
+      feeSats: readSats(elements.commitFeeInput, "Commit fee"),
+      network: "signet",
+      ...(changeAddress === null ? {} : { changeAddress }),
+      walletDerivation
+    });
+
+    setBatchDownloadState(true);
+    renderBatchSuccess(currentBatchClaimPackages, currentBatchArtifacts);
+    renderBatchDownloadButtons(currentBatchArtifacts.updatedClaimPackages);
+  } catch (error) {
+    currentBatchClaimPackages = [];
+    currentBatchArtifacts = null;
+    setBatchDownloadState(false);
+    renderBatchError(error);
   }
 });
 
@@ -126,12 +177,76 @@ elements.downloadSignerNotesButton.addEventListener("click", () => {
   );
 });
 
+elements.downloadBatchBundleButton.addEventListener("click", () => {
+  if (!currentBatchArtifacts) {
+    return;
+  }
+
+  downloadJsonFile(
+    {
+      kind: "gns-batch-offline-claim-bundle",
+      exportedAt: new Date().toISOString(),
+      network: "signet",
+      claimPackages: currentBatchClaimPackages,
+      commitArtifacts: currentBatchArtifacts,
+      revealReadyClaimPackages: currentBatchArtifacts.updatedClaimPackages
+    },
+    "gns-batch-" + String(currentBatchArtifacts.updatedClaimPackages.length) + "-claims-offline.json"
+  );
+});
+
+elements.downloadBatchCommitPsbtButton.addEventListener("click", () => {
+  if (!currentBatchArtifacts) {
+    return;
+  }
+
+  downloadBase64BinaryFile(
+    currentBatchArtifacts.psbtBase64,
+    "gns-batch-commit-" + String(currentBatchArtifacts.updatedClaimPackages.length) + "-claims-offline.psbt"
+  );
+});
+
+elements.downloadBatchSignerNotesButton.addEventListener("click", () => {
+  if (!currentBatchArtifacts) {
+    return;
+  }
+
+  downloadTextFile(
+    buildBatchSignerNotes(currentBatchClaimPackages, currentBatchArtifacts),
+    "gns-batch-" + String(currentBatchArtifacts.updatedClaimPackages.length) + "-claims-offline-signer-notes.txt"
+  );
+});
+
+elements.batchDownloads.addEventListener("click", (event) => {
+  const target = event.target;
+  if (!(target instanceof HTMLElement)) {
+    return;
+  }
+
+  const button = target.closest<HTMLButtonElement>("[data-batch-package-index]");
+  if (!button || !currentBatchArtifacts) {
+    return;
+  }
+
+  const index = Number.parseInt(button.dataset.batchPackageIndex ?? "", 10);
+  const claimPackage = currentBatchArtifacts.updatedClaimPackages[index];
+
+  if (!claimPackage) {
+    return;
+  }
+
+  downloadJsonFile(
+    claimPackage,
+    "gns-claim-" + claimPackage.name + "-batch-reveal-ready.json"
+  );
+});
+
 function readClaimPackageInput(): CreateClaimPackageInput {
   const name = elements.nameInput.value.trim();
   const ownerPubkey = elements.ownerPubkeyInput.value.trim();
   const nonceHex = elements.nonceInput.value.trim().toLowerCase();
   const bondDestination = elements.bondDestinationInput.value.trim();
-  const changeDestination = elements.changeDestinationInput.value.trim();
+  const changeDestination = normalizeOptionalText(elements.changeDestinationInput.value);
   const bondVoutText = elements.bondVoutInput.value.trim();
   const bondVout = Number.parseInt(bondVoutText || "0", 10);
 
@@ -143,17 +258,80 @@ function readClaimPackageInput(): CreateClaimPackageInput {
     throw new Error("Bond output vout must be a byte value between 0 and 255.");
   }
 
-  if (elements.fingerprintInput.value.trim() === "" || elements.accountXpubInput.value.trim() === "" || elements.accountPathInput.value.trim() === "") {
-    throw new Error("Master fingerprint, account xpub, and account derivation path are required.");
-  }
-
   return {
     name,
     ownerPubkey,
     nonceHex,
     bondVout,
     bondDestination,
-    changeDestination: changeDestination === "" ? null : changeDestination
+    changeDestination
+  };
+}
+
+function readBatchClaimPackageInputs(): CreateClaimPackageInput[] {
+  const lines = elements.batchClaimsInput.value
+    .split(/\r?\n/g)
+    .map((line) => line.trim())
+    .filter((line) => line !== "");
+
+  if (lines.length === 0) {
+    throw new Error("Paste at least one batch claim line.");
+  }
+
+  if (lines.length > 0xff) {
+    throw new Error("Batch commit builder currently supports at most 255 claims per batch.");
+  }
+
+  const fallbackChangeDestination = normalizeOptionalText(elements.changeDestinationInput.value);
+
+  return lines.map((line, index) => {
+    const parts = line.split("|").map((part) => part.trim());
+    if (parts.length < 4 || parts.length > 5) {
+      throw new Error(
+        "Batch claim line " +
+          String(index + 1) +
+          " must use name|owner_pubkey|nonce_hex|bond_destination|change_destination(optional)."
+      );
+    }
+
+    const [name, ownerPubkey, nonceHex, bondDestination, lineChangeDestination] = parts;
+    if (!name || !ownerPubkey || !nonceHex || !bondDestination) {
+      throw new Error(
+        "Batch claim line " +
+          String(index + 1) +
+          " must include name, owner pubkey, nonce, and bond destination."
+      );
+    }
+
+    return {
+      name,
+      ownerPubkey,
+      nonceHex: nonceHex.toLowerCase(),
+      bondDestination,
+      changeDestination: normalizeOptionalText(lineChangeDestination ?? "") ?? fallbackChangeDestination
+    };
+  });
+}
+
+function readWalletDerivation(): WalletDerivationDescriptor {
+  const masterFingerprint = elements.fingerprintInput.value.trim();
+  const accountXpub = elements.accountXpubInput.value.trim();
+  const accountDerivationPath = elements.accountPathInput.value.trim();
+
+  if (masterFingerprint === "" || accountXpub === "" || accountDerivationPath === "") {
+    throw new Error("Master fingerprint, account xpub, and account derivation path are required.");
+  }
+
+  const scanLimit = Number.parseInt(elements.walletScanLimitInput.value.trim() || "50", 10);
+  if (!Number.isInteger(scanLimit) || scanLimit <= 0 || scanLimit > 500) {
+    throw new Error("Wallet scan limit must be an integer between 1 and 500.");
+  }
+
+  return {
+    masterFingerprint,
+    accountXpub,
+    accountDerivationPath,
+    scanLimit
   };
 }
 
@@ -201,13 +379,75 @@ function renderSuccess(claimPackage: ClaimPackage, bundle: ClaimPsbtBundle): voi
   ].join("");
 }
 
+function renderBatchSuccess(claimPackages: readonly ClaimPackage[], artifacts: BatchCommitArtifacts): void {
+  const totalBondSats = claimPackages.reduce(
+    (sum, claimPackage) => sum + BigInt(claimPackage.requiredBondSats),
+    0n
+  );
+
+  elements.batchResult.className = "result-card success";
+  elements.batchResult.innerHTML = [
+    "<h2>Offline Batch Commit Bundle Ready</h2>",
+    "<p>The batch commit PSBT and one reveal-ready batch claim package per name were generated locally in this browser session. Sign the batch commit first, then keep the reveal-ready packages for the later one-by-one reveals.</p>",
+    '<div class="summary-grid">',
+    renderSummaryItem("Claim Count", String(artifacts.updatedClaimPackages.length)),
+    renderSummaryItem("Total Bond", formatSats(totalBondSats.toString())),
+    renderSummaryItem("Commit Txid", artifacts.commitTxid),
+    renderSummaryItem("Merkle Root", artifacts.merkleRoot),
+    "</div>",
+    "<pre>" + escapeHtml([
+      "Batch commit txid: " + artifacts.commitTxid,
+      "Merkle root: " + artifacts.merkleRoot,
+      "Proof chunk bytes: " + String(artifacts.proofChunkBytes),
+      "",
+      "Claim outputs:",
+      ...artifacts.updatedClaimPackages.map(
+        (claimPackage) =>
+          "  - " +
+          claimPackage.name +
+          " -> bond vout " +
+          String(claimPackage.bondVout) +
+          " · " +
+          formatSats(claimPackage.requiredBondSats) +
+          " · proof " +
+          String(claimPackage.batchProofBytes) +
+          " bytes"
+      )
+    ].join("\n")) + "</pre>"
+  ].join("");
+}
+
 function renderError(error: unknown): void {
   elements.result.className = "result-card error";
   elements.result.innerHTML = "<h2>Unable to Build Bundle</h2><p>" + escapeHtml(error instanceof Error ? error.message : "Unknown error.") + "</p>";
 }
 
+function renderBatchError(error: unknown): void {
+  elements.batchResult.className = "result-card error";
+  elements.batchResult.innerHTML = "<h2>Unable to Build Batch Bundle</h2><p>" + escapeHtml(error instanceof Error ? error.message : "Unknown error.") + "</p>";
+  elements.batchDownloads.innerHTML = "";
+}
+
 function renderSummaryItem(label: string, value: string): string {
   return '<div class="summary-item"><strong>' + escapeHtml(label) + '</strong><span class="mono">' + escapeHtml(value) + "</span></div>";
+}
+
+function renderBatchDownloadButtons(claimPackages: readonly BatchClaimPackage[]): void {
+  if (claimPackages.length === 0) {
+    elements.batchDownloads.innerHTML = "";
+    return;
+  }
+
+  elements.batchDownloads.innerHTML = claimPackages
+    .map(
+      (claimPackage, index) =>
+        '<button type="button" class="secondary" data-batch-package-index="' +
+        escapeHtml(String(index)) +
+        '">Download ' +
+        escapeHtml(claimPackage.name) +
+        " reveal-ready package</button>"
+    )
+    .join("");
 }
 
 function setDownloadState(enabled: boolean): void {
@@ -216,6 +456,16 @@ function setDownloadState(enabled: boolean): void {
   elements.downloadCommitPsbtButton.disabled = !enabled;
   elements.downloadRevealPsbtButton.disabled = !enabled;
   elements.downloadSignerNotesButton.disabled = !enabled;
+}
+
+function setBatchDownloadState(enabled: boolean): void {
+  elements.downloadBatchBundleButton.disabled = !enabled;
+  elements.downloadBatchCommitPsbtButton.disabled = !enabled;
+  elements.downloadBatchSignerNotesButton.disabled = !enabled;
+
+  if (!enabled) {
+    elements.batchDownloads.innerHTML = "";
+  }
 }
 
 function buildSignerNotes(claimPackage: ClaimPackage, bundle: ClaimPsbtBundle): string {
@@ -245,6 +495,65 @@ function buildSignerNotes(claimPackage: ClaimPackage, bundle: ClaimPsbtBundle): 
     "Reveal Inputs:",
     ...bundle.selectedRevealInputs.map((input) => "  - " + input.txid + ":" + input.vout + " · " + formatSats(input.valueSats))
   ].join("\n");
+}
+
+function buildBatchSignerNotes(
+  claimPackages: readonly ClaimPackage[],
+  artifacts: BatchCommitArtifacts
+): string {
+  return [
+    "Global Name System Offline Batch Claim Notes",
+    "",
+    "Claim Count: " + String(artifacts.updatedClaimPackages.length),
+    "Commit Txid: " + artifacts.commitTxid,
+    "Merkle Root: " + artifacts.merkleRoot,
+    "Proof Chunk Bytes: " + String(artifacts.proofChunkBytes),
+    "Fee: " + formatSats(artifacts.feeSats),
+    "",
+    "Claims:",
+    ...artifacts.updatedClaimPackages.map((claimPackage, index) => {
+      const original = claimPackages[index];
+      return [
+        "  - Name: " + claimPackage.name,
+        "    Owner Pubkey: " + claimPackage.ownerPubkey,
+        "    Nonce: " + claimPackage.nonceHex,
+        "    Required Bond: " + formatSats(claimPackage.requiredBondSats),
+        "    Assigned Bond Vout: " + String(claimPackage.bondVout),
+        "    Bond Destination: " + (claimPackage.bondDestination ?? "(none)"),
+        "    Change Destination: " + (claimPackage.changeDestination ?? "(none)"),
+        "    Original Commit Payload Hex: " + (original?.commitPayloadHex ?? "(missing)"),
+        "    Batch Reveal Payload Hex: " + claimPackage.revealPayloadHex,
+        "    Batch Proof Bytes: " + String(claimPackage.batchProofBytes)
+      ].join("\n");
+    })
+  ].join("\n");
+}
+
+function readSats(input: HTMLInputElement, label: string): bigint {
+  const value = input.value.trim();
+  if (value === "") {
+    throw new Error(label + " is required.");
+  }
+
+  try {
+    const sats = BigInt(value);
+    if (sats <= 0n) {
+      throw new Error(label + " must be greater than zero.");
+    }
+
+    return sats;
+  } catch (error) {
+    if (error instanceof Error && error.message.includes(label)) {
+      throw error;
+    }
+
+    throw new Error(label + " must be an integer satoshi amount.");
+  }
+}
+
+function normalizeOptionalText(value: string): string | null {
+  const trimmed = value.trim();
+  return trimmed === "" ? null : trimmed;
 }
 
 function generateNonceHex(): string {
