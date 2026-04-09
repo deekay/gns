@@ -44,6 +44,7 @@
     "measure:batch-footprint": "npm run build -w @gns/protocol && npm run build -w @gns/architect && node ./scripts/measure-batch-footprint.mjs",
     "measure:annex-hybrid-model": "npm run build -w @gns/protocol && npm run build -w @gns/architect && node ./scripts/measure-annex-hybrid-model.mjs",
     "spike:annex-keypath-reveal": "node ./scripts/spike-annex-keypath-reveal.mjs",
+    "spike:annex-artifact-roundtrip": "node ./scripts/spike-annex-artifact-roundtrip.mjs",
     "test:workspaces": "npm run test --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present"
   },

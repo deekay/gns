@@ -13,6 +13,7 @@ This is not a GNS integration. It is a feasibility probe.
 Artifacts:
 
 - [spike-annex-keypath-reveal.mjs](../../scripts/spike-annex-keypath-reveal.mjs)
+- [MERKLE_BATCHING_ANNEX_ARTIFACT_ROUNDTRIP.md](./MERKLE_BATCHING_ANNEX_ARTIFACT_ROUNDTRIP.md)
 - [MERKLE_BATCHING_TAPROOT_ANNEX_ENVELOPE_SKETCH.md](./MERKLE_BATCHING_TAPROOT_ANNEX_ENVELOPE_SKETCH.md)
 - [MERKLE_BATCHING_ANNEX_HYBRID_WEIGHT_MODEL.md](./MERKLE_BATCHING_ANNEX_HYBRID_WEIGHT_MODEL.md)
 
@@ -153,17 +154,7 @@ It is a slightly more product-shaped prototype.
 
 The best next step now is:
 
-1. make one experimental annex artifact envelope concrete in code:
-   - base PSBT
-   - explicit header bytes
-   - annex sidecar bytes
-   - custom finalization step
-
-2. prove we can round-trip that through:
-   - builder
-   - signer
-   - witness parsing
-   - `txid` / `wtxid` reporting
-
-That would tell us whether the annex path is merely promising research or a
-real candidate for a future GNS implementation slice.
+1. use the artifact round-trip prototype to decide whether annex should remain
+   research-only or graduate into an experimental CLI module
+2. if it graduates, turn the round-trip shape into typed envelope interfaces and
+   one custom finalizer command

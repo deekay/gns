@@ -15,6 +15,7 @@ Related notes:
 - [MERKLE_BATCHING_ANNEX_WEIGHT_MODEL.md](./MERKLE_BATCHING_ANNEX_WEIGHT_MODEL.md)
 - [MERKLE_BATCHING_ANNEX_HYBRID_WEIGHT_MODEL.md](./MERKLE_BATCHING_ANNEX_HYBRID_WEIGHT_MODEL.md)
 - [MERKLE_BATCHING_ANNEX_TOOLING_SPIKE.md](./MERKLE_BATCHING_ANNEX_TOOLING_SPIKE.md)
+- [MERKLE_BATCHING_ANNEX_ARTIFACT_ROUNDTRIP.md](./MERKLE_BATCHING_ANNEX_ARTIFACT_ROUNDTRIP.md)
 - [MERKLE_BATCHING_WALLET_COMPATIBILITY.md](./MERKLE_BATCHING_WALLET_COMPATIBILITY.md)
 
 ## Why The Envelope Matters
@@ -174,7 +175,8 @@ One plausible signed envelope shape:
   "signedTransactionHex": "...",
   "signedTransactionId": "...",
   "signedTransactionWitnessId": "...",
-  "signedPsbtBase64": "...",
+  "signedPsbtBase64": null,
+  "signedPsbtReason": "custom annex finalization happened outside standard PSBT fields",
   "signedInputCount": 1,
   "carrierInputIndex": 0,
   "annexSha256": "...",
@@ -197,6 +199,25 @@ If we only emitted `txid`, the signed artifact would not fully pin the exact
 wire transaction that was actually signed and broadcast.
 
 So annex-based flows should treat `wtxid` as a first-class artifact field.
+
+### Why `signedPsbtBase64` may become optional
+
+The earlier sketch assumed we might still want a signed PSBT in the final
+artifact.
+
+The later round-trip prototype in
+[MERKLE_BATCHING_ANNEX_ARTIFACT_ROUNDTRIP.md](./MERKLE_BATCHING_ANNEX_ARTIFACT_ROUNDTRIP.md)
+suggests a more honest stance:
+
+- the base PSBT is still useful as an unsigned construction container
+- but the final annex-bearing transaction is created by custom finalization
+- so the signed artifact that really matters is:
+  - `signedTransactionHex`
+  - `signedTransactionId`
+  - `signedTransactionWitnessId`
+
+That means `signedPsbtBase64` may be best treated as optional, nullable, or
+advisory rather than as a foundational output for this path.
 
 ## Builder Responsibilities
 
