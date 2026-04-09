@@ -151,6 +151,9 @@ For a more concrete GNS-specific flow sketch, see
 For a more concrete unsigned/signed artifact model, see
 [MERKLE_BATCHING_TAPROOT_ANNEX_ENVELOPE_SKETCH.md](./MERKLE_BATCHING_TAPROOT_ANNEX_ENVELOPE_SKETCH.md).
 
+For a more realistic hybrid weight estimate, see
+[MERKLE_BATCHING_ANNEX_HYBRID_WEIGHT_MODEL.md](./MERKLE_BATCHING_ANNEX_HYBRID_WEIGHT_MODEL.md).
+
 For wallet and signer compatibility tradeoffs, see
 [MERKLE_BATCHING_WALLET_COMPATIBILITY.md](./MERKLE_BATCHING_WALLET_COMPATIBILITY.md).
 

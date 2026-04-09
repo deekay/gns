@@ -13,6 +13,7 @@ Related notes:
 
 - [MERKLE_BATCHING_FOOTPRINT.md](./MERKLE_BATCHING_FOOTPRINT.md)
 - [MERKLE_BATCHING_TAPROOT_ANNEX_SKETCH.md](./MERKLE_BATCHING_TAPROOT_ANNEX_SKETCH.md)
+- [MERKLE_BATCHING_ANNEX_HYBRID_WEIGHT_MODEL.md](./MERKLE_BATCHING_ANNEX_HYBRID_WEIGHT_MODEL.md)
 - [MERKLE_BATCHING_REVEAL_CARRIER_OPTIONS.md](./MERKLE_BATCHING_REVEAL_CARRIER_OPTIONS.md)
 
 ## The Simplifying Assumption
@@ -122,16 +123,11 @@ The right next sequence now looks like:
 
 1. keep the current explicit path for real small-batch v0 work
 2. treat annex-based carriage as the leading scaling research candidate
-3. if we continue, the next deeper artifact should estimate:
+3. if we continue, tighten the model with:
    - Taproot input overhead
    - annex serialization overhead
-   - likely reveal-header carryover
+   - reveal-header carryover
    - final adjusted reveal vbytes per batch size
 
-That would move us from:
-
-- "annex seems promising"
-
-to:
-
-- "annex likely saves roughly this much after realistic overheads"
+That tighter model now exists in
+[MERKLE_BATCHING_ANNEX_HYBRID_WEIGHT_MODEL.md](./MERKLE_BATCHING_ANNEX_HYBRID_WEIGHT_MODEL.md).
