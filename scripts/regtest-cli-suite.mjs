@@ -965,6 +965,8 @@ async function claimBatchNames(input) {
   const batchPackagesDir = join(suiteState.artifactDir, `${input.label}-packages`);
   const batchCommitArtifactsPath = join(outDir, "batch-commit-artifacts.json");
   const signedBatchCommitPath = join(outDir, "signed-batch-commit-artifacts.json");
+  await mkdir(outDir, { recursive: true });
+  await mkdir(batchPackagesDir, { recursive: true });
   const commitFunding = await fundAddress(input.payer.fundingAddress, 140_000n);
 
   const batchCommitArtifacts = await cliJson([
