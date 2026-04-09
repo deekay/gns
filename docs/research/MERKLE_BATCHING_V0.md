@@ -7,6 +7,7 @@ It is not a final mainnet freeze, but it is meant to be specific enough to plan 
 For the current recommended wire-format defaults, see [MERKLE_BATCHING_V0_DECISIONS.md](./MERKLE_BATCHING_V0_DECISIONS.md).
 For the package-by-package engineering task map, see [MERKLE_BATCHING_WORK_BREAKDOWN.md](./MERKLE_BATCHING_WORK_BREAKDOWN.md).
 For the first repeatable footprint measurements, see [MERKLE_BATCHING_FOOTPRINT.md](./MERKLE_BATCHING_FOOTPRINT.md).
+For deeper reveal-proof carrier research, see [MERKLE_BATCHING_REVEAL_CARRIER_OPTIONS.md](./MERKLE_BATCHING_REVEAL_CARRIER_OPTIONS.md).
 
 ## Purpose
 
