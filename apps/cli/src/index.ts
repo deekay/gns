@@ -25,6 +25,7 @@ import {
 } from "./builder.js";
 import {
   buildExperimentalAnnexRevealEnvelope,
+  buildExperimentalAnnexRevealEnvelopeFromBatchClaimPackage,
   parseExperimentalAnnexRevealEnvelope,
   parseExperimentalCarrierPrevoutDescriptor,
   parseSignedExperimentalAnnexRevealEnvelope,
@@ -106,6 +107,9 @@ async function main(): Promise<void> {
       return;
     case "build-experimental-annex-reveal-envelope":
       await buildExperimentalAnnexRevealEnvelopeCommand(args);
+      return;
+    case "build-experimental-annex-reveal-envelope-from-batch-claim-package":
+      await buildExperimentalAnnexRevealEnvelopeFromBatchClaimPackageCommand(args);
       return;
     case "sign-experimental-annex-reveal-envelope":
       await signExperimentalAnnexRevealEnvelopeCommand(args);
@@ -533,6 +537,58 @@ async function buildExperimentalAnnexRevealEnvelopeCommand(args: readonly string
             "annex-proof-fill-byte"
           )
         }
+      : {})
+  });
+
+  await maybeWriteJsonFile(parsed.options.get("write"), envelope);
+  console.log(JSON.stringify(envelope, null, 2));
+}
+
+async function buildExperimentalAnnexRevealEnvelopeFromBatchClaimPackageCommand(
+  args: readonly string[]
+): Promise<void> {
+  const parsed = parseOptions(args);
+  const claimPackagePath = parsed.positionals[0];
+  const carrierPrevout = parsed.options.get("carrier-prevout");
+  const wif = parsed.multiOptions.get("wif")?.[0];
+
+  if (!claimPackagePath) {
+    throw new Error(
+      "build-experimental-annex-reveal-envelope-from-batch-claim-package requires a batch claim package JSON path"
+    );
+  }
+
+  if (!carrierPrevout) {
+    throw new Error(
+      "build-experimental-annex-reveal-envelope-from-batch-claim-package requires --carrier-prevout"
+    );
+  }
+
+  if (!wif) {
+    throw new Error(
+      "build-experimental-annex-reveal-envelope-from-batch-claim-package requires --wif"
+    );
+  }
+
+  const claimPackage = await loadBatchClaimPackage(claimPackagePath);
+  const envelope = buildExperimentalAnnexRevealEnvelopeFromBatchClaimPackage({
+    network: parseNetwork(parsed.options.get("network")),
+    claimPackage,
+    carrierPrevout: parseExperimentalCarrierPrevoutDescriptor(carrierPrevout),
+    wif,
+    ...(parsed.options.has("carrier-input-index")
+      ? {
+          carrierInputIndex: parseRequiredInteger(
+            parsed.options.get("carrier-input-index"),
+            "carrier-input-index"
+          )
+        }
+      : {}),
+    ...(parsed.options.has("fee-sats")
+      ? { feeSats: parseRequiredBigInt(parsed.options.get("fee-sats"), "fee-sats") }
+      : {}),
+    ...(parsed.options.has("change-address")
+      ? { changeAddress: parsed.options.get("change-address") as string }
       : {})
   });
 
@@ -1779,6 +1835,9 @@ function printUsage(): void {
   console.log("");
   console.log("  build-experimental-annex-reveal-envelope --name <name> --anchor-txid <txid> --bond-vout <0-255> --carrier-prevout <txid:vout:valueSats> --wif <wif> [--network signet|testnet|regtest|main] [--fee-sats <amount>] [--carrier-input-index <n>] [--change-address <addr>] [--annex-proof-hex <hex> | --annex-proof-bytes <n> [--annex-proof-fill-byte <0-255>]] [--write <path>]");
   console.log("    Experimental: build one unsigned Taproot-annex batch reveal envelope from a single carrier input");
+  console.log("");
+  console.log("  build-experimental-annex-reveal-envelope-from-batch-claim-package <batch-claim-package> --carrier-prevout <txid:vout:valueSats> --wif <wif> [--network signet|testnet|regtest|main] [--fee-sats <amount>] [--carrier-input-index <n>] [--change-address <addr>] [--write <path>]");
+  console.log("    Experimental: reuse a real reveal-ready batch claim package so the explicit header carries actual GNS batch reveal semantics and the annex carries the real Merkle proof bytes");
   console.log("");
   console.log("  sign-experimental-annex-reveal-envelope <unsigned-envelope-json> --wif <wif> [--write <path>]");
   console.log("    Experimental: attach an annex-aware Taproot key-path witness and emit a signed annex envelope");

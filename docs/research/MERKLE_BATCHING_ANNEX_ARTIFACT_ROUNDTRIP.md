@@ -14,6 +14,7 @@ module** in [apps/cli/src/annex-envelope.ts](../../apps/cli/src/annex-envelope.t
 with three commands:
 
 - `build-experimental-annex-reveal-envelope`
+- `build-experimental-annex-reveal-envelope-from-batch-claim-package`
 - `sign-experimental-annex-reveal-envelope`
 - `verify-experimental-annex-reveal-envelope`
 
@@ -198,8 +199,33 @@ The next thin slice described above has now been done:
 
 - typed unsigned/signed experimental annex envelope interfaces
 - one experimental builder command
+- one experimental builder command that reuses a **real reveal-ready batch claim
+  package**
 - one custom annex finalizer command
 - one verifier command
+
+The important follow-up result is that the experimental CLI now supports a
+bridge from:
+
+```text
+real GNS batch claim package -> annex envelope -> signed annex tx -> verifier
+```
+
+So the annex experiment is no longer limited to synthetic names and mock proof
+bytes. It can now reuse:
+
+- the real `BATCH_REVEAL` payload bytes from a reveal-ready batch claim package
+- the real Merkle proof bytes from `batchProofHex`
+- and the real batch anchor txid / name / owner / nonce / bond_vout semantics
+
+The current bridge shape is:
+
+- explicit `OP_RETURN` header = canonical `BATCH_REVEAL` payload + annex
+  commitment extension
+- witness annex = `0x50 0x00 || raw_merkle_proof_bytes`
+
+That is still experimental, but it is a much more credible signal than the
+earlier purely illustrative header.
 
 So the open question has shifted again. It is no longer "can we make the
 workflow concrete?" It is now:

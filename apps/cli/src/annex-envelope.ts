@@ -13,6 +13,13 @@ import {
 } from "bitcoinjs-lib";
 import * as tinysecp from "tiny-secp256k1";
 
+import {
+  BATCH_REVEAL_MIN_PAYLOAD_LENGTH,
+  decodeBatchRevealPayload,
+  GnsEventType,
+  type BatchClaimPackage
+} from "@gns/protocol";
+
 import type { GnsCliNetwork } from "./builder.js";
 
 initEccLib(tinysecp);
@@ -26,6 +33,7 @@ const DEFAULT_EXPERIMENTAL_FEE_SATS = 500n;
 const DEFAULT_EXPERIMENTAL_PROOF_BYTES = 99;
 const DEFAULT_EXPERIMENTAL_PROOF_FILL_BYTE = 0x41;
 const ANNEX_PREFIX = Buffer.from([0x50, 0x00]);
+const EXPERIMENTAL_BATCH_REVEAL_EXTENSION_TYPE = 0xf0;
 
 export interface ExperimentalAnnexCarrierPrevout {
   readonly txid: string;
@@ -35,6 +43,7 @@ export interface ExperimentalAnnexCarrierPrevout {
 
 export interface ExperimentalAnnexUnsignedEnvelope {
   readonly kind: "gns-batch-reveal-annex-artifacts";
+  readonly semanticMode: "illustrative" | "batch_claim_package";
   readonly network: GnsCliNetwork;
   readonly psbtBase64: string;
   readonly unsignedBaseTransactionHex: string;
@@ -53,6 +62,8 @@ export interface ExperimentalAnnexUnsignedEnvelope {
   readonly name: string;
   readonly bondVout: number;
   readonly feeSats: string;
+  readonly gnsBatchRevealPayloadHex?: string;
+  readonly gnsBatchRevealPayloadBytes?: number;
 }
 
 export interface ExperimentalAnnexSignedEnvelope {
@@ -111,6 +122,20 @@ export interface BuildExperimentalAnnexRevealEnvelopeOptions {
   readonly annexProofFillByte?: number;
 }
 
+export interface BuildExperimentalAnnexRevealEnvelopeFromBatchClaimPackageOptions {
+  readonly network: GnsCliNetwork;
+  readonly claimPackage: BatchClaimPackage;
+  readonly carrierPrevout: {
+    readonly txid: string;
+    readonly vout: number;
+    readonly valueSats: bigint;
+  };
+  readonly wif: string;
+  readonly carrierInputIndex?: number;
+  readonly feeSats?: bigint;
+  readonly changeAddress?: string;
+}
+
 export interface SignExperimentalAnnexRevealEnvelopeOptions {
   readonly unsignedEnvelope: ExperimentalAnnexUnsignedEnvelope;
   readonly wif: string;
@@ -125,28 +150,6 @@ export function buildExperimentalAnnexRevealEnvelope(
   options: BuildExperimentalAnnexRevealEnvelopeOptions
 ): ExperimentalAnnexUnsignedEnvelope {
   validateName(options.name);
-  const network = resolveNetwork(options.network);
-  const keyPair = ECPair.fromWIF(options.wif, [network]);
-  const internalPubkey = Buffer.from(toXOnly(keyPair.publicKey));
-  const taprootPayment = payments.p2tr({
-    internalPubkey,
-    network
-  });
-
-  if (!taprootPayment.output || !taprootPayment.address) {
-    throw new Error("failed to derive experimental taproot carrier payment");
-  }
-
-  const feeSats = options.feeSats ?? DEFAULT_EXPERIMENTAL_FEE_SATS;
-  if (feeSats < 0n) {
-    throw new Error("experimental annex feeSats must be non-negative");
-  }
-
-  const prevoutValue = options.carrierPrevout.valueSats;
-  if (prevoutValue <= feeSats) {
-    throw new Error("experimental annex carrier prevout must exceed feeSats");
-  }
-
   assertTxidHex(options.anchorTxid, "anchorTxid");
 
   const annexProof = options.annexProofHex
@@ -164,60 +167,49 @@ export function buildExperimentalAnnexRevealEnvelope(
     annex,
     name: options.name
   });
-  const changeValue = prevoutValue - feeSats;
-  const changeAddress = options.changeAddress ?? taprootPayment.address;
-
-  const transaction = new Transaction();
-  transaction.version = 2;
-  transaction.addInput(reverseHex(options.carrierPrevout.txid), options.carrierPrevout.vout);
-  transaction.addOutput(btcScript.compile([btcScript.OPS.OP_RETURN, explicitHeader]), 0n);
-  transaction.addOutput(taprootPayment.output, changeValue);
-
-  const psbt = new Psbt({ network });
-  psbt.setVersion(2);
-  psbt.addInput({
-    hash: options.carrierPrevout.txid,
-    index: options.carrierPrevout.vout,
-    witnessUtxo: {
-      script: taprootPayment.output,
-      value: prevoutValue
-    },
-    tapInternalKey: internalPubkey
-  });
-  psbt.addOutput({
-    script: btcScript.compile([btcScript.OPS.OP_RETURN, explicitHeader]),
-    value: 0n
-  });
-  psbt.addOutput({
-    address: changeAddress,
-    value: changeValue
-  });
-
-  return {
-    kind: "gns-batch-reveal-annex-artifacts",
+  return buildExperimentalAnnexRevealEnvelopeFromComponents({
     network: options.network,
-    psbtBase64: psbt.toBase64(),
-    unsignedBaseTransactionHex: transaction.toHex(),
-    unsignedBaseTransactionId: transaction.getId(),
+    carrierPrevout: options.carrierPrevout,
+    wif: options.wif,
     carrierInputIndex,
-    carrierPrevout: {
-      txid: options.carrierPrevout.txid,
-      vout: options.carrierPrevout.vout,
-      valueSats: prevoutValue.toString()
-    },
-    carrierAddress: taprootPayment.address,
-    taprootInternalPubkey: bytesToHex(internalPubkey),
-    explicitHeaderHex: bytesToHex(explicitHeader),
-    explicitHeaderSha256: bytesToHex(btcCrypto.sha256(explicitHeader)),
-    annexHex: bytesToHex(annex),
-    annexSha256: bytesToHex(btcCrypto.sha256(annex)),
-    annexBytesLength: annex.length,
-    annexFormat: EXPERIMENTAL_ANNEX_FORMAT,
+    explicitHeader,
+    annex,
     anchorTxid: options.anchorTxid,
     name: options.name,
     bondVout: options.bondVout,
-    feeSats: feeSats.toString()
-  };
+    semanticMode: "illustrative",
+    ...(options.feeSats !== undefined ? { feeSats: options.feeSats } : {}),
+    ...(options.changeAddress !== undefined ? { changeAddress: options.changeAddress } : {})
+  });
+}
+
+export function buildExperimentalAnnexRevealEnvelopeFromBatchClaimPackage(
+  options: BuildExperimentalAnnexRevealEnvelopeFromBatchClaimPackageOptions
+): ExperimentalAnnexUnsignedEnvelope {
+  const annex = Buffer.concat([ANNEX_PREFIX, Buffer.from(options.claimPackage.batchProofHex, "hex")]);
+  const carrierInputIndex = options.carrierInputIndex ?? 0;
+  const explicitHeader = buildBatchRevealHybridHeader({
+    batchRevealPayloadHex: options.claimPackage.revealPayloadHex,
+    carrierInputIndex,
+    annex
+  });
+
+  return buildExperimentalAnnexRevealEnvelopeFromComponents({
+    network: options.network,
+    carrierPrevout: options.carrierPrevout,
+    wif: options.wif,
+    carrierInputIndex,
+    explicitHeader,
+    annex,
+    anchorTxid: options.claimPackage.batchAnchorTxid,
+    name: options.claimPackage.name,
+    bondVout: options.claimPackage.bondVout,
+    semanticMode: "batch_claim_package",
+    gnsBatchRevealPayloadHex: options.claimPackage.revealPayloadHex,
+    gnsBatchRevealPayloadBytes: options.claimPackage.revealPayloadBytes,
+    ...(options.feeSats !== undefined ? { feeSats: options.feeSats } : {}),
+    ...(options.changeAddress !== undefined ? { changeAddress: options.changeAddress } : {})
+  });
 }
 
 export function signExperimentalAnnexRevealEnvelope(
@@ -249,7 +241,7 @@ export function signExperimentalAnnexRevealEnvelope(
   }
 
   const headerBytes = Buffer.from(options.unsignedEnvelope.explicitHeaderHex, "hex");
-  const parsedHeader = parseIllustrativeHybridHeader(headerBytes);
+  const parsedHeader = parseExperimentalExplicitHeader(headerBytes);
 
   if (parsedHeader.carrierInputIndex !== options.unsignedEnvelope.carrierInputIndex) {
     throw new Error("explicit header carrierInputIndex does not match the envelope");
@@ -269,6 +261,20 @@ export function signExperimentalAnnexRevealEnvelope(
 
   if (parsedHeader.name !== options.unsignedEnvelope.name) {
     throw new Error("explicit header name does not match the envelope");
+  }
+
+  if (
+    options.unsignedEnvelope.gnsBatchRevealPayloadHex &&
+    parsedHeader.mode !== "batch_claim_package"
+  ) {
+    throw new Error("experimental annex envelope expected a batch-claim-package header");
+  }
+
+  if (
+    options.unsignedEnvelope.gnsBatchRevealPayloadHex &&
+    parsedHeader.gnsBatchRevealPayloadHex !== options.unsignedEnvelope.gnsBatchRevealPayloadHex
+  ) {
+    throw new Error("explicit header batch reveal payload does not match the envelope");
   }
 
   const annex = Buffer.from(options.unsignedEnvelope.annexHex, "hex");
@@ -316,6 +322,110 @@ export function signExperimentalAnnexRevealEnvelope(
   };
 }
 
+function buildExperimentalAnnexRevealEnvelopeFromComponents(options: {
+  readonly network: GnsCliNetwork;
+  readonly carrierPrevout: {
+    readonly txid: string;
+    readonly vout: number;
+    readonly valueSats: bigint;
+  };
+  readonly wif: string;
+  readonly carrierInputIndex: number;
+  readonly feeSats?: bigint;
+  readonly changeAddress?: string;
+  readonly explicitHeader: Buffer;
+  readonly annex: Buffer;
+  readonly anchorTxid: string;
+  readonly name: string;
+  readonly bondVout: number;
+  readonly semanticMode: "illustrative" | "batch_claim_package";
+  readonly gnsBatchRevealPayloadHex?: string;
+  readonly gnsBatchRevealPayloadBytes?: number;
+}): ExperimentalAnnexUnsignedEnvelope {
+  const network = resolveNetwork(options.network);
+  const keyPair = ECPair.fromWIF(options.wif, [network]);
+  const internalPubkey = Buffer.from(toXOnly(keyPair.publicKey));
+  const taprootPayment = payments.p2tr({
+    internalPubkey,
+    network
+  });
+
+  if (!taprootPayment.output || !taprootPayment.address) {
+    throw new Error("failed to derive experimental taproot carrier payment");
+  }
+
+  const feeSats = options.feeSats ?? DEFAULT_EXPERIMENTAL_FEE_SATS;
+  if (feeSats < 0n) {
+    throw new Error("experimental annex feeSats must be non-negative");
+  }
+
+  const prevoutValue = options.carrierPrevout.valueSats;
+  if (prevoutValue <= feeSats) {
+    throw new Error("experimental annex carrier prevout must exceed feeSats");
+  }
+
+  const changeValue = prevoutValue - feeSats;
+  const changeAddress = options.changeAddress ?? taprootPayment.address;
+  const transaction = new Transaction();
+  transaction.version = 2;
+  transaction.addInput(reverseHex(options.carrierPrevout.txid), options.carrierPrevout.vout);
+  transaction.addOutput(btcScript.compile([btcScript.OPS.OP_RETURN, options.explicitHeader]), 0n);
+  transaction.addOutput(taprootPayment.output, changeValue);
+
+  const psbt = new Psbt({ network });
+  psbt.setVersion(2);
+  psbt.addInput({
+    hash: options.carrierPrevout.txid,
+    index: options.carrierPrevout.vout,
+    witnessUtxo: {
+      script: taprootPayment.output,
+      value: prevoutValue
+    },
+    tapInternalKey: internalPubkey
+  });
+  psbt.addOutput({
+    script: btcScript.compile([btcScript.OPS.OP_RETURN, options.explicitHeader]),
+    value: 0n
+  });
+  psbt.addOutput({
+    address: changeAddress,
+    value: changeValue
+  });
+
+  return {
+    kind: "gns-batch-reveal-annex-artifacts",
+    semanticMode: options.semanticMode,
+    network: options.network,
+    psbtBase64: psbt.toBase64(),
+    unsignedBaseTransactionHex: transaction.toHex(),
+    unsignedBaseTransactionId: transaction.getId(),
+    carrierInputIndex: options.carrierInputIndex,
+    carrierPrevout: {
+      txid: options.carrierPrevout.txid,
+      vout: options.carrierPrevout.vout,
+      valueSats: prevoutValue.toString()
+    },
+    carrierAddress: taprootPayment.address,
+    taprootInternalPubkey: bytesToHex(internalPubkey),
+    explicitHeaderHex: bytesToHex(options.explicitHeader),
+    explicitHeaderSha256: bytesToHex(btcCrypto.sha256(options.explicitHeader)),
+    annexHex: bytesToHex(options.annex),
+    annexSha256: bytesToHex(btcCrypto.sha256(options.annex)),
+    annexBytesLength: options.annex.length,
+    annexFormat: EXPERIMENTAL_ANNEX_FORMAT,
+    anchorTxid: options.anchorTxid,
+    name: options.name,
+    bondVout: options.bondVout,
+    feeSats: feeSats.toString(),
+    ...(options.gnsBatchRevealPayloadHex
+      ? { gnsBatchRevealPayloadHex: options.gnsBatchRevealPayloadHex }
+      : {}),
+    ...(options.gnsBatchRevealPayloadBytes !== undefined
+      ? { gnsBatchRevealPayloadBytes: options.gnsBatchRevealPayloadBytes }
+      : {})
+  };
+}
+
 export function verifyExperimentalAnnexRevealEnvelope(
   options: VerifyExperimentalAnnexRevealEnvelopeOptions
 ): ExperimentalAnnexVerificationReport {
@@ -324,7 +434,7 @@ export function verifyExperimentalAnnexRevealEnvelope(
   const recoveredAnnex = Buffer.from(carrierWitness.at(-1) ?? []);
   const recoveredSignature = Buffer.from(carrierWitness[0] ?? []);
   const headerBytes = extractOpReturnPayload(tx.outs[0]?.script ?? new Uint8Array());
-  const parsedHeader = parseIllustrativeHybridHeader(headerBytes);
+  const parsedHeader = parseExperimentalExplicitHeader(headerBytes);
   const headerHash = bytesToHex(btcCrypto.sha256(headerBytes));
   const annexHash = recoveredAnnex.length === 0 ? "" : bytesToHex(btcCrypto.sha256(recoveredAnnex));
   const network = resolveNetwork(options.unsignedEnvelope.network);
@@ -393,6 +503,10 @@ export function parseExperimentalAnnexRevealEnvelope(
 
   return {
     kind,
+    semanticMode:
+      record.semanticMode === "illustrative" || record.semanticMode === "batch_claim_package"
+        ? record.semanticMode
+        : "illustrative",
     network: parseNetwork(assertString(record.network, "network")),
     psbtBase64: assertString(record.psbtBase64, "psbtBase64"),
     unsignedBaseTransactionHex: assertString(
@@ -420,7 +534,13 @@ export function parseExperimentalAnnexRevealEnvelope(
     anchorTxid: assertString(record.anchorTxid, "anchorTxid"),
     name: assertString(record.name, "name"),
     bondVout: assertInteger(record.bondVout, "bondVout"),
-    feeSats: assertString(record.feeSats, "feeSats")
+    feeSats: assertString(record.feeSats, "feeSats"),
+    ...(typeof record.gnsBatchRevealPayloadHex === "string"
+      ? { gnsBatchRevealPayloadHex: assertString(record.gnsBatchRevealPayloadHex, "gnsBatchRevealPayloadHex") }
+      : {}),
+    ...(record.gnsBatchRevealPayloadBytes !== undefined
+      ? { gnsBatchRevealPayloadBytes: assertInteger(record.gnsBatchRevealPayloadBytes, "gnsBatchRevealPayloadBytes") }
+      : {})
   };
 }
 
@@ -512,7 +632,52 @@ function buildIllustrativeHybridHeader(options: {
   ]);
 }
 
-function parseIllustrativeHybridHeader(headerBytes: Uint8Array): {
+function buildBatchRevealHybridHeader(options: {
+  readonly batchRevealPayloadHex: string;
+  readonly carrierInputIndex: number;
+  readonly annex: Uint8Array;
+}): Buffer {
+  const batchRevealPayload = parseHex(options.batchRevealPayloadHex, "batchRevealPayloadHex");
+  const decodedPayload = decodeBatchRevealPayload(batchRevealPayload);
+  const nameBytes = Buffer.from(decodedPayload.name, "utf8");
+  const expectedPayloadLength = BATCH_REVEAL_MIN_PAYLOAD_LENGTH + nameBytes.length;
+
+  if (batchRevealPayload.length !== expectedPayloadLength) {
+    throw new Error("batchRevealPayloadHex is not a canonical batch reveal payload");
+  }
+
+  const annexLength = Buffer.alloc(2);
+  annexLength.writeUInt16BE(options.annex.length, 0);
+
+  return Buffer.concat([
+    batchRevealPayload,
+    Buffer.from([EXPERIMENTAL_BATCH_REVEAL_EXTENSION_TYPE, options.carrierInputIndex]),
+    btcCrypto.sha256(options.annex),
+    annexLength
+  ]);
+}
+
+function parseExperimentalExplicitHeader(headerBytes: Uint8Array): {
+  readonly mode: "illustrative" | "batch_claim_package";
+  readonly anchorTxid: string;
+  readonly bondVout: number;
+  readonly carrierInputIndex: number;
+  readonly annexSha256: string;
+  readonly annexBytesLength: number;
+  readonly name: string;
+  readonly gnsBatchRevealPayloadHex?: string;
+} {
+  const header = Buffer.from(headerBytes);
+
+  if (header[4] === GnsEventType.BatchReveal) {
+    return parseBatchRevealHybridHeader(header);
+  }
+
+  return parseIllustrativeHybridHeader(header);
+}
+
+function parseIllustrativeHybridHeader(header: Buffer): {
+  readonly mode: "illustrative";
   readonly anchorTxid: string;
   readonly bondVout: number;
   readonly carrierInputIndex: number;
@@ -520,7 +685,6 @@ function parseIllustrativeHybridHeader(headerBytes: Uint8Array): {
   readonly annexBytesLength: number;
   readonly name: string;
 } {
-  const header = Buffer.from(headerBytes);
   const minimumBytes = 3 + 1 + 1 + 32 + 1 + 1 + 32 + 2 + 1;
 
   if (header.length < minimumBytes) {
@@ -546,12 +710,59 @@ function parseIllustrativeHybridHeader(headerBytes: Uint8Array): {
   }
 
   return {
+    mode: "illustrative",
     anchorTxid: header.subarray(5, 37).toString("hex"),
     bondVout: header[37] ?? 0,
     carrierInputIndex: header[38] ?? 0,
     annexSha256: header.subarray(39, 71).toString("hex"),
     annexBytesLength: header.readUInt16BE(71),
     name: header.subarray(74).toString("utf8")
+  };
+}
+
+function parseBatchRevealHybridHeader(header: Buffer): {
+  readonly mode: "batch_claim_package";
+  readonly anchorTxid: string;
+  readonly bondVout: number;
+  readonly carrierInputIndex: number;
+  readonly annexSha256: string;
+  readonly annexBytesLength: number;
+  readonly name: string;
+  readonly gnsBatchRevealPayloadHex: string;
+} {
+  if (header.length < BATCH_REVEAL_MIN_PAYLOAD_LENGTH + 36) {
+    throw new Error("experimental annex batch reveal header is too short");
+  }
+
+  const nameLength = header[81];
+  if (nameLength === undefined) {
+    throw new Error("experimental annex batch reveal header missing name length");
+  }
+
+  const batchRevealPayloadLength = BATCH_REVEAL_MIN_PAYLOAD_LENGTH + nameLength;
+  const extensionLength = 36;
+
+  if (header.length !== batchRevealPayloadLength + extensionLength) {
+    throw new Error("experimental annex batch reveal header length mismatch");
+  }
+
+  const batchRevealPayload = header.subarray(0, batchRevealPayloadLength);
+  const decodedPayload = decodeBatchRevealPayload(batchRevealPayload);
+  const extensionType = header[batchRevealPayloadLength];
+
+  if (extensionType !== EXPERIMENTAL_BATCH_REVEAL_EXTENSION_TYPE) {
+    throw new Error("experimental annex batch reveal extension type mismatch");
+  }
+
+  return {
+    mode: "batch_claim_package",
+    anchorTxid: decodedPayload.anchorTxid,
+    bondVout: decodedPayload.bondVout,
+    carrierInputIndex: header[batchRevealPayloadLength + 1] ?? 0,
+    annexSha256: header.subarray(batchRevealPayloadLength + 2, batchRevealPayloadLength + 34).toString("hex"),
+    annexBytesLength: header.readUInt16BE(batchRevealPayloadLength + 34),
+    name: decodedPayload.name,
+    gnsBatchRevealPayloadHex: batchRevealPayload.toString("hex")
   };
 }
 
