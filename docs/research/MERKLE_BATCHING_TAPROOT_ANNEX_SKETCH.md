@@ -14,6 +14,7 @@ Related notes:
 - [MERKLE_BATCHING_REVEAL_CARRIER_OPTIONS.md](./MERKLE_BATCHING_REVEAL_CARRIER_OPTIONS.md)
 - [MERKLE_BATCHING_FOOTPRINT.md](./MERKLE_BATCHING_FOOTPRINT.md)
 - [MERKLE_BATCHING_ANNEX_WEIGHT_MODEL.md](./MERKLE_BATCHING_ANNEX_WEIGHT_MODEL.md)
+- [MERKLE_BATCHING_TAPROOT_ANNEX_ENVELOPE_SKETCH.md](./MERKLE_BATCHING_TAPROOT_ANNEX_ENVELOPE_SKETCH.md)
 - [MERKLE_BATCHING_V0.md](./MERKLE_BATCHING_V0.md)
 
 ## Why This Is Interesting
@@ -186,6 +187,9 @@ My current bias:
 - the signer should not be trusted to invent GNS proof content late
 
 That keeps artifact review and reproducibility cleaner.
+
+For a more concrete artifact-level version of that idea, see
+[MERKLE_BATCHING_TAPROOT_ANNEX_ENVELOPE_SKETCH.md](./MERKLE_BATCHING_TAPROOT_ANNEX_ENVELOPE_SKETCH.md).
 
 ## What The Product Surface Would Need To Change
 
