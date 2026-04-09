@@ -46,8 +46,11 @@ export function createRevealQueueItem(input: {
   readonly commitTxid: string;
   readonly signedRevealArtifacts: SignedArtifactsEnvelope;
 }): RevealQueueItem {
-  if (input.signedRevealArtifacts.kind !== "gns-signed-reveal-artifacts") {
-    throw new Error("queue items require signed reveal artifacts");
+  if (
+    input.signedRevealArtifacts.kind !== "gns-signed-reveal-artifacts" &&
+    input.signedRevealArtifacts.kind !== "gns-signed-batch-reveal-artifacts"
+  ) {
+    throw new Error("queue items require signed reveal or signed batch reveal artifacts");
   }
 
   const now = new Date().toISOString();

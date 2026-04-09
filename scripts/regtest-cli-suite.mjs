@@ -72,6 +72,8 @@ async function main() {
 
     const missingName = "suitefresh0001";
     const claimedName = "suiteclaim0001";
+    const batchAlphaName = "suitebatcha01";
+    const batchBetaName = "suitebatchb01";
     const staleRevealName = "suitestale0001";
     const invalidTransferName = "suitebreak0001";
     const immatureSaleName = "suiteimmsale01";
@@ -174,6 +176,40 @@ async function main() {
     summary.names[`${claimedName}-duplicateAttempt`] = {
       commitTxid: duplicateClaimResult.commitTxid,
       revealTxid: duplicateClaimResult.revealTxid
+    };
+
+    const batchPayer = await createLiveAccount("batch-payer");
+    const batchOwnerAlpha = await createLiveAccount("batch-owner-alpha");
+    const batchOwnerBeta = await createLiveAccount("batch-owner-beta");
+    const batchAlphaClaim = await createClaimPackage({
+      account: batchPayer,
+      ownerPubkey: batchOwnerAlpha.ownerPubkey,
+      bondDestination: batchPayer.fundingAddress,
+      changeDestination: batchPayer.fundingAddress,
+      name: batchAlphaName,
+      fileLabel: "batch-alpha-claim"
+    });
+    const batchBetaClaim = await createClaimPackage({
+      account: batchPayer,
+      ownerPubkey: batchOwnerBeta.ownerPubkey,
+      bondDestination: batchPayer.fundingAddress,
+      changeDestination: batchPayer.fundingAddress,
+      name: batchBetaName,
+      fileLabel: "batch-beta-claim"
+    });
+    const batchClaimResult = await claimBatchNames({
+      label: "batch-claim",
+      payer: batchPayer,
+      claimPackagePaths: [batchAlphaClaim.path, batchBetaClaim.path],
+      claimNames: [batchAlphaName, batchBetaName]
+    });
+    summary.names[batchAlphaName] = {
+      commitTxid: batchClaimResult.commitTxid,
+      revealTxid: batchClaimResult.revealTxids[batchAlphaName]
+    };
+    summary.names[batchBetaName] = {
+      commitTxid: batchClaimResult.commitTxid,
+      revealTxid: batchClaimResult.revealTxids[batchBetaName]
     };
 
     const staleOwner = await createLiveAccount("stale-owner");
@@ -842,11 +878,11 @@ async function createClaimPackage(input) {
     "create-claim-package",
     input.name,
     "--owner-pubkey",
-    input.account.ownerPubkey,
+    input.ownerPubkey ?? input.account.ownerPubkey,
     "--bond-destination",
-    input.account.fundingAddress,
+    input.bondDestination ?? input.account.fundingAddress,
     "--change-destination",
-    input.account.fundingAddress,
+    input.changeDestination ?? input.account.fundingAddress,
     "--write",
     outputPath
   ]);
@@ -920,6 +956,154 @@ async function claimName(input) {
   assertEqual(claimedRecord.status, "immature", `${input.label} claimed status`);
 
   return submitResult;
+}
+
+async function claimBatchNames(input) {
+  logStep(`Batch claim flow: ${input.label}`);
+  const outDir = join(suiteState.artifactDir, `${input.label}-artifacts`);
+  const queuePath = join(suiteState.artifactDir, `${input.label}-queue.json`);
+  const batchPackagesDir = join(suiteState.artifactDir, `${input.label}-packages`);
+  const batchCommitArtifactsPath = join(outDir, "batch-commit-artifacts.json");
+  const signedBatchCommitPath = join(outDir, "signed-batch-commit-artifacts.json");
+  const commitFunding = await fundAddress(input.payer.fundingAddress, 140_000n);
+
+  const batchCommitArtifacts = await cliJson([
+    "build-batch-commit-artifacts",
+    ...input.claimPackagePaths,
+    "--input",
+    formatDescriptor(commitFunding),
+    "--fee-sats",
+    COMMIT_FEE_SATS.toString(),
+    "--network",
+    "regtest",
+    "--change-address",
+    input.payer.fundingAddress,
+    "--write",
+    batchCommitArtifactsPath,
+    "--write-packages-dir",
+    batchPackagesDir
+  ]);
+  const signedBatchCommit = await cliJson([
+    "sign-artifacts",
+    batchCommitArtifactsPath,
+    "--wif",
+    input.payer.fundingWif,
+    "--write",
+    signedBatchCommitPath
+  ]);
+  assertEqual(
+    signedBatchCommit.signedTransactionId,
+    batchCommitArtifacts.commitTxid,
+    "batch commit signed txid"
+  );
+
+  const revealTxids = {};
+
+  for (let index = 0; index < input.claimNames.length; index += 1) {
+    const name = input.claimNames[index];
+    const sequence = String(index + 1).padStart(2, "0");
+    const batchClaimPackagePath = join(batchPackagesDir, `${sequence}-${name}.json`);
+    const batchRevealArtifactsPath = join(outDir, `${sequence}-${name}-batch-reveal-artifacts.json`);
+    const signedBatchRevealPath = join(outDir, `${sequence}-${name}-signed-batch-reveal-artifacts.json`);
+    const revealFunding = await fundAddress(input.payer.fundingAddress, 10_000n);
+
+    const batchRevealArtifacts = await cliJson([
+      "build-batch-reveal-artifacts",
+      batchClaimPackagePath,
+      "--input",
+      formatDescriptor(revealFunding),
+      "--fee-sats",
+      REVEAL_FEE_SATS.toString(),
+      "--network",
+      "regtest",
+      "--change-address",
+      input.payer.fundingAddress,
+      "--write",
+      batchRevealArtifactsPath
+    ]);
+    const signedBatchReveal = await cliJson([
+      "sign-artifacts",
+      batchRevealArtifactsPath,
+      "--wif",
+      input.payer.fundingWif,
+      "--write",
+      signedBatchRevealPath
+    ]);
+    assertEqual(
+      signedBatchReveal.signedTransactionId,
+      batchRevealArtifacts.revealTxid,
+      `batch reveal signed txid ${name}`
+    );
+
+    await cliJson([
+      "enqueue-reveal",
+      signedBatchRevealPath,
+      "--commit-txid",
+      batchCommitArtifacts.commitTxid,
+      "--queue",
+      queuePath,
+      "--expected-chain",
+      "regtest"
+    ]);
+    revealTxids[name] = signedBatchReveal.signedTransactionId;
+  }
+
+  const preConfirmWatcher = await cliJson([
+    "run-reveal-watcher",
+    "--queue",
+    queuePath,
+    "--expected-chain",
+    "regtest",
+    "--once"
+  ]);
+  assertEqual(preConfirmWatcher.broadcastedCount, 0, "batch pre-confirm reveal broadcast count");
+
+  const batchCommitBroadcast = await cliJson([
+    "broadcast-transaction",
+    signedBatchCommitPath,
+    "--expected-chain",
+    "regtest"
+  ]);
+  assertEqual(
+    batchCommitBroadcast.broadcastedTxid,
+    batchCommitArtifacts.commitTxid,
+    "batch commit broadcast txid"
+  );
+
+  await mineBlocks(1, `confirm-${input.label}-commit`);
+  await waitForResolverHeight(await rpcCall("getblockcount"));
+
+  const postConfirmWatcher = await cliJson([
+    "run-reveal-watcher",
+    "--queue",
+    queuePath,
+    "--expected-chain",
+    "regtest",
+    "--once"
+  ]);
+  assertEqual(
+    postConfirmWatcher.broadcastedCount,
+    input.claimNames.length,
+    "batch post-confirm reveal broadcast count"
+  );
+
+  await mineBlocks(1, `confirm-${input.label}-reveals`);
+  await waitForResolverHeight(await rpcCall("getblockcount"));
+
+  for (const name of input.claimNames) {
+    const claimedRecord = await waitForName(name, 120_000);
+    assertEqual(claimedRecord.status, "immature", `${input.label} ${name} claimed status`);
+    assertEqual(
+      claimedRecord.currentBondTxid,
+      batchCommitArtifacts.commitTxid,
+      `${input.label} ${name} bond txid`
+    );
+  }
+
+  return {
+    commitTxid: batchCommitArtifacts.commitTxid,
+    revealTxids
+  };
 }
 
 async function fundAddress(address, sats) {

@@ -761,8 +761,13 @@ async function watchAndBroadcastRevealCommand(args: readonly string[]): Promise<
   }
 
   const signedRevealArtifacts = await loadSignedArtifacts(signedArtifactsPath);
-  if (signedRevealArtifacts.kind !== "gns-signed-reveal-artifacts") {
-    throw new Error("watch-and-broadcast-reveal requires a signed reveal artifacts file");
+  if (
+    signedRevealArtifacts.kind !== "gns-signed-reveal-artifacts" &&
+    signedRevealArtifacts.kind !== "gns-signed-batch-reveal-artifacts"
+  ) {
+    throw new Error(
+      "watch-and-broadcast-reveal requires a signed reveal or signed batch reveal artifacts file"
+    );
   }
 
   const expectedChain = parseNetwork(parsed.options.get("expected-chain"));
@@ -803,8 +808,13 @@ async function enqueueRevealCommand(args: readonly string[]): Promise<void> {
   }
 
   const signedArtifacts = await loadSignedArtifacts(signedArtifactsPath);
-  if (signedArtifacts.kind !== "gns-signed-reveal-artifacts") {
-    throw new Error("enqueue-reveal requires a signed reveal artifacts file");
+  if (
+    signedArtifacts.kind !== "gns-signed-reveal-artifacts" &&
+    signedArtifacts.kind !== "gns-signed-batch-reveal-artifacts"
+  ) {
+    throw new Error(
+      "enqueue-reveal requires a signed reveal or signed batch reveal artifacts file"
+    );
   }
 
   const expectedChain = parseNetwork(parsed.options.get("expected-chain"));
@@ -1643,10 +1653,10 @@ function printUsage(): void {
   console.log("    Broadcast a signed transaction through Bitcoin Core RPC or a compatible Esplora backend");
   console.log("");
   console.log("  watch-and-broadcast-reveal <signed-reveal-artifacts-json> --commit-txid <txid> [--rpc-url <url> --rpc-username <user> --rpc-password <pass> | --base-url <url>] [--expected-chain signet|testnet|regtest|main] [--poll-interval-ms <ms>] [--timeout-ms <ms>]");
-  console.log("    Wait for the commit tx to confirm, then broadcast the signed reveal automatically via the selected backend");
+  console.log("    Wait for the commit tx to confirm, then broadcast a signed reveal or signed batch reveal automatically via the selected backend");
   console.log("");
   console.log("  enqueue-reveal <signed-reveal-artifacts-json> --commit-txid <txid> [--queue <path>] [--expected-chain signet|testnet|regtest|main]");
-  console.log("    Store a signed reveal on disk so the watcher can resume it after restarts");
+  console.log("    Store a signed reveal or signed batch reveal on disk so the watcher can resume it after restarts");
   console.log("");
   console.log("  run-reveal-watcher [--queue <path>] [--rpc-url <url> --rpc-username <user> --rpc-password <pass> | --base-url <url>] [--expected-chain signet|testnet|regtest|main] [--poll-interval-ms <ms>] [--once]");
   console.log("    Process the persisted reveal queue once or continuously using RPC or Esplora");

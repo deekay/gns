@@ -115,4 +115,28 @@ describe("reveal queue", () => {
     const reloaded = await loadRevealQueueFile(queuePath);
     expect(reloaded.items[0]?.status).toBe("broadcasted");
   });
+
+  it("accepts signed batch reveal artifacts as queue items", () => {
+    const item = createRevealQueueItem({
+      expectedChain: "regtest",
+      commitTxid: "11".repeat(32),
+      signedRevealArtifacts: {
+        kind: "gns-signed-batch-reveal-artifacts",
+        network: "regtest",
+        signedTransactionHex: "cafebabe",
+        signedTransactionId: "22".repeat(32),
+        signedPsbtBase64: "psbt",
+        signedInputCount: 1
+      }
+    });
+
+    expect(item).toMatchObject({
+      expectedChain: "regtest",
+      commitTxid: "11".repeat(32),
+      revealTxid: "22".repeat(32),
+      signedRevealTransactionHex: "cafebabe",
+      status: "pending"
+    });
+    expect(item.id).toBe(`${"11".repeat(32)}:${"22".repeat(32)}`);
+  });
 });

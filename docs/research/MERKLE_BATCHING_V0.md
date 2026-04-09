@@ -38,6 +38,7 @@ The current repo now covers these implemented slices:
 
 - protocol encoders / decoders and Merkle proof helpers
 - architect and CLI batch artifact generation for ordinary-lane claims
+- CLI reveal queue acceptance for signed batch reveal artifacts
 - core and indexer validation of batched anchors and batched reveals
 - database snapshot compatibility for batched pending anchors and provenance events
 - resolver / website compatibility for batched provenance inspection
@@ -54,6 +55,12 @@ We now also have a repeatable fixture-backed end-to-end review path:
 
 That path proves the batched ordinary-lane flow across resolver indexing, web
 name lookup, transaction provenance inspection, and offline architect review.
+
+We also now have the first batch-aware regtest CLI suite coverage in
+[`regtest-cli-suite.mjs`](../../scripts/regtest-cli-suite.mjs). That path
+builds a batch anchor, queues two signed batch reveals, confirms the anchor,
+broadcasts both reveals through the watcher, and verifies the names through the
+resolver once they land on-chain.
 
 ## Non-Goals
 
