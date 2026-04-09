@@ -142,6 +142,9 @@ This is the strongest candidate if we want a serious next-step research lane
 without fully redesigning the protocol around script trees. It is much deeper
 than v0 explicit packing, but much more targeted than a full tapscript redesign.
 
+For a more concrete GNS-specific flow sketch, see
+[MERKLE_BATCHING_TAPROOT_ANNEX_SKETCH.md](./MERKLE_BATCHING_TAPROOT_ANNEX_SKETCH.md).
+
 ## Option 3: Taproot Script-Path Carrier
 
 This is a more ambitious version of the Taproot path.
