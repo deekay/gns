@@ -15,6 +15,10 @@ pattern:
 - larger batches become expensive because the **reveal proofs themselves** are
   heavy
 
+For a broader reviewer-facing explanation of the Merkle path, annex path, and
+the protocol questions we want outside experts to pressure-test, see
+[MERKLE_BATCHING_PROTOCOL_REVIEW_MEMO.md](./MERKLE_BATCHING_PROTOCOL_REVIEW_MEMO.md).
+
 So if we want a reviewer to come away saying "this is designed to scale", the
 next serious protocol question is not the batch anchor. It is the **reveal proof
 carrier**.
