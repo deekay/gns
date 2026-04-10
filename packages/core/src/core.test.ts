@@ -446,6 +446,245 @@ describe("applyBlockTransactions", () => {
     expect(record?.status).toBe("immature");
   });
 
+  it("rejects a batch reveal when proof chunks are malformed for a non-empty proof", () => {
+    const ownerPubkey = "11".repeat(32);
+    const otherOwnerPubkey = "22".repeat(32);
+    const anchorTxid = "aa".repeat(32);
+    const state = createEmptyState();
+    const leafHashes = [
+      computeBatchCommitLeafHash({
+        bondVout: 1,
+        ownerPubkey,
+        commitHash: computeCommitHash({
+          name: "alice",
+          nonce: 42n,
+          ownerPubkey
+        })
+      }),
+      computeBatchCommitLeafHash({
+        bondVout: 2,
+        ownerPubkey: otherOwnerPubkey,
+        commitHash: computeCommitHash({
+          name: "bob",
+          nonce: 7n,
+          ownerPubkey: otherOwnerPubkey
+        })
+      })
+    ];
+    const proofHex = Buffer.from(encodeMerkleProof(createMerkleProof(leafHashes, 0))).toString("hex");
+
+    applyBlockTransactions(
+      state,
+      [
+        makeTransaction({
+          txid: anchorTxid,
+          blockHeight: 100,
+          txIndex: 0,
+          paymentOutputs: [6_250_000n, 6_250_000n],
+          payloadsFirst: true,
+          payloads: [
+            encodeBatchAnchorPayload({
+              flags: 0,
+              leafCount: 2,
+              merkleRoot: computeMerkleRoot(leafHashes)
+            })
+          ]
+        }),
+        makeTransaction({
+          txid: "bb".repeat(32),
+          blockHeight: 101,
+          txIndex: 0,
+          payloads: [
+            encodeBatchRevealPayload({
+              anchorTxid,
+              ownerPubkey,
+              nonce: 42n,
+              bondVout: 1,
+              proofBytesLength: proofHex.length / 2,
+              proofChunkCount: 2,
+              name: "alice"
+            }),
+            encodeRevealProofChunkPayload({
+              chunkIndex: 0,
+              proofBytesHex: proofHex
+            })
+          ]
+        })
+      ],
+      100
+    );
+
+    expect(state.names.has("alice")).toBe(false);
+    expect(state.pendingBatchAnchors.get(anchorTxid)?.revealedBondVouts).toEqual([]);
+  });
+
+  it("rejects a batch reveal when the claimed bond_vout does not match the committed leaf proof", () => {
+    const ownerPubkey = "11".repeat(32);
+    const otherOwnerPubkey = "22".repeat(32);
+    const anchorTxid = "aa".repeat(32);
+    const state = createEmptyState();
+    const leafHashes = [
+      computeBatchCommitLeafHash({
+        bondVout: 1,
+        ownerPubkey,
+        commitHash: computeCommitHash({
+          name: "alice",
+          nonce: 42n,
+          ownerPubkey
+        })
+      }),
+      computeBatchCommitLeafHash({
+        bondVout: 2,
+        ownerPubkey: otherOwnerPubkey,
+        commitHash: computeCommitHash({
+          name: "bob",
+          nonce: 7n,
+          ownerPubkey: otherOwnerPubkey
+        })
+      })
+    ];
+    const proofHex = Buffer.from(encodeMerkleProof(createMerkleProof(leafHashes, 0))).toString("hex");
+
+    applyBlockTransactions(
+      state,
+      [
+        makeTransaction({
+          txid: anchorTxid,
+          blockHeight: 100,
+          txIndex: 0,
+          paymentOutputs: [6_250_000n, 6_250_000n],
+          payloadsFirst: true,
+          payloads: [
+            encodeBatchAnchorPayload({
+              flags: 0,
+              leafCount: 2,
+              merkleRoot: computeMerkleRoot(leafHashes)
+            })
+          ]
+        }),
+        makeTransaction({
+          txid: "bb".repeat(32),
+          blockHeight: 101,
+          txIndex: 0,
+          payloads: [
+            encodeBatchRevealPayload({
+              anchorTxid,
+              ownerPubkey,
+              nonce: 42n,
+              bondVout: 2,
+              proofBytesLength: proofHex.length / 2,
+              proofChunkCount: 1,
+              name: "alice"
+            }),
+            encodeRevealProofChunkPayload({
+              chunkIndex: 0,
+              proofBytesHex: proofHex
+            })
+          ]
+        })
+      ],
+      100
+    );
+
+    expect(state.names.has("alice")).toBe(false);
+    expect(state.pendingBatchAnchors.get(anchorTxid)?.revealedBondVouts).toEqual([]);
+  });
+
+  it("applies a valid immature transfer after a name was claimed through a batch anchor", () => {
+    const ownerPrivateKeyHex = "07".repeat(32);
+    const ownerPubkey = Buffer.from(
+      secp256k1.xOnlyPointFromScalar(Buffer.from(ownerPrivateKeyHex, "hex"))
+    ).toString("hex");
+    const anchorTxid = "aa".repeat(32);
+    const revealTxid = "bb".repeat(32);
+    const transferTxid = "cc".repeat(32);
+    const newOwnerPubkey = "22".repeat(32);
+    const state = createEmptyState();
+    const commitHash = computeCommitHash({
+      name: "alice",
+      nonce: 42n,
+      ownerPubkey
+    });
+    const leafHash = computeBatchCommitLeafHash({
+      bondVout: 1,
+      ownerPubkey,
+      commitHash
+    });
+
+    applyBlockTransactions(
+      state,
+      [
+        makeTransaction({
+          txid: anchorTxid,
+          blockHeight: 100,
+          txIndex: 0,
+          paymentOutputs: [6_250_000n],
+          payloadsFirst: true,
+          payloads: [
+            encodeBatchAnchorPayload({
+              flags: 0,
+              leafCount: 1,
+              merkleRoot: leafHash
+            })
+          ]
+        }),
+        makeTransaction({
+          txid: revealTxid,
+          blockHeight: 101,
+          txIndex: 0,
+          payloads: [
+            encodeBatchRevealPayload({
+              anchorTxid,
+              ownerPubkey,
+              nonce: 42n,
+              bondVout: 1,
+              proofBytesLength: 0,
+              proofChunkCount: 0,
+              name: "alice"
+            })
+          ]
+        }),
+        makeTransaction({
+          txid: transferTxid,
+          blockHeight: 102,
+          txIndex: 0,
+          inputs: [
+            {
+              txid: anchorTxid,
+              vout: 1
+            }
+          ],
+          bondOutputValueSats: 6_250_000n,
+          payloads: [
+            encodeTransferPayload({
+              prevStateTxid: revealTxid,
+              newOwnerPubkey,
+              flags: 0x00,
+              successorBondVout: 0,
+              signature: signTransferAuthorization({
+                prevStateTxid: revealTxid,
+                newOwnerPubkey,
+                flags: 0x00,
+                successorBondVout: 0,
+                ownerPrivateKeyHex
+              })
+            })
+          ]
+        })
+      ],
+      100
+    );
+
+    const record = state.names.get("alice");
+    expect(record?.currentOwnerPubkey).toBe(newOwnerPubkey);
+    expect(record?.claimCommitTxid).toBe(anchorTxid);
+    expect(record?.currentBondTxid).toBe(transferTxid);
+    expect(record?.currentBondVout).toBe(0);
+    expect(record?.currentBondValueSats).toBe(6_250_000n);
+    expect(record?.lastStateTxid).toBe(transferTxid);
+    expect(record?.status).toBe("immature");
+  });
+
   it("applies a valid immature transfer and carries bond continuity forward", () => {
     const ownerPrivateKeyHex = "07".repeat(32);
     const ownerPubkey = Buffer.from(

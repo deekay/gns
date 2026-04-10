@@ -9,6 +9,7 @@ For the package-by-package engineering task map, see [MERKLE_BATCHING_WORK_BREAK
 For the first repeatable footprint measurements, see [MERKLE_BATCHING_FOOTPRINT.md](./MERKLE_BATCHING_FOOTPRINT.md).
 For deeper reveal-proof carrier research, see [MERKLE_BATCHING_REVEAL_CARRIER_OPTIONS.md](./MERKLE_BATCHING_REVEAL_CARRIER_OPTIONS.md).
 For a reviewer-facing summary of the Merkle and annex design space, see [MERKLE_BATCHING_PROTOCOL_REVIEW_MEMO.md](./MERKLE_BATCHING_PROTOCOL_REVIEW_MEMO.md).
+For a concise implementation and validation snapshot, see [MERKLE_BATCHING_STATUS.md](./MERKLE_BATCHING_STATUS.md).
 
 ## Purpose
 
