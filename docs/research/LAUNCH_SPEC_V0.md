@@ -14,6 +14,7 @@ The main job of this note is to separate:
 Related notes:
 
 - [RESERVED_NAME_AUCTION_LANE.md](./RESERVED_NAME_AUCTION_LANE.md)
+- [RESERVED_CLASS_OPTIONS.md](./RESERVED_CLASS_OPTIONS.md)
 - [CLAIM_ALLOCATION_AND_BATCHING_OPTIONS.md](./CLAIM_ALLOCATION_AND_BATCHING_OPTIONS.md)
 - [SALIENCE_OVERLAY_RATIONALE.md](./SALIENCE_OVERLAY_RATIONALE.md)
 - [TWO_LANE_LAUNCH_ONE_PAGER.md](./TWO_LANE_LAUNCH_ONE_PAGER.md)
@@ -266,8 +267,13 @@ The current bias is **not** to create many bespoke classes.
 
 The most likely good outcome is:
 
-- one universal reserved duration, or
 - `2-3` reserved classes maximum
+
+The current recommendation after comparing the options is:
+
+- prefer `3` coarse reserved classes over one universal reserved duration
+
+See [RESERVED_CLASS_OPTIONS.md](./RESERVED_CLASS_OPTIONS.md).
 
 Possible class shapes worth exploring:
 
@@ -285,14 +291,13 @@ These are the main unresolved items that should stay explicit.
 
 This is probably the most important remaining economic choice.
 
-We need to decide whether:
+The current recommended direction is:
 
-- all reserved names share one long duration
+- use a few coarse reserved classes rather than one universal reserved duration
 
-or:
+The remaining question is narrower:
 
-- there are `2-3` classes with different fixed long durations and/or class
-  floors
+- what exact `2-3` class structure and burdens should those classes use?
 
 ### 2. Exact reserved duration
 

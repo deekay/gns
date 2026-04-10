@@ -235,6 +235,10 @@ The practical implication is:
 - but assign them to coarse capital-time buckets based on hostage-risk and likely buyer firepower
 - not on hand-wavy bespoke guesses about exact future sale price
 
+For the broader launch-level question of whether the reserved lane should use
+one burden or a few coarse classes, see
+[RESERVED_CLASS_OPTIONS.md](./RESERVED_CLASS_OPTIONS.md).
+
 ## What This Still Does Not Solve
 
 Even a strong premium tier may not eliminate all speculation.
