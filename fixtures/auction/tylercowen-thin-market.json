@@ -1,0 +1,17 @@
+{
+  "name": "tylercowen",
+  "reservedClassId": "public_identity",
+  "unlockBlock": 860000,
+  "bidAttempts": [
+    {
+      "bidderId": "watcher_a",
+      "blockHeight": 860020,
+      "amountSats": "20000000"
+    },
+    {
+      "bidderId": "watcher_b",
+      "blockHeight": 860100,
+      "amountSats": "25000000"
+    }
+  ]
+}

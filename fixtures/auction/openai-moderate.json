@@ -1,0 +1,27 @@
+{
+  "name": "openai",
+  "reservedClassId": "major_existing_name",
+  "unlockBlock": 850000,
+  "bidAttempts": [
+    {
+      "bidderId": "speculator_a",
+      "blockHeight": 850010,
+      "amountSats": "200000000"
+    },
+    {
+      "bidderId": "speculator_b",
+      "blockHeight": 851500,
+      "amountSats": "220000000"
+    },
+    {
+      "bidderId": "speculator_c",
+      "blockHeight": 854320,
+      "amountSats": "231000000"
+    },
+    {
+      "bidderId": "speculator_d",
+      "blockHeight": 854450,
+      "amountSats": "250000000"
+    }
+  ]
+}

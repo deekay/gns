@@ -1,0 +1,37 @@
+{
+  "name": "google",
+  "reservedClassId": "top_collision",
+  "unlockBlock": 840000,
+  "bidAttempts": [
+    {
+      "bidderId": "early_bidder",
+      "blockHeight": 839999,
+      "amountSats": "1000000000"
+    },
+    {
+      "bidderId": "alpha",
+      "blockHeight": 840010,
+      "amountSats": "1000000000"
+    },
+    {
+      "bidderId": "beta",
+      "blockHeight": 844200,
+      "amountSats": "1020000000"
+    },
+    {
+      "bidderId": "beta",
+      "blockHeight": 844210,
+      "amountSats": "1100000000"
+    },
+    {
+      "bidderId": "gamma",
+      "blockHeight": 844353,
+      "amountSats": "1160000000"
+    },
+    {
+      "bidderId": "late",
+      "blockHeight": 844500,
+      "amountSats": "1300000000"
+    }
+  ]
+}

@@ -11,6 +11,9 @@ The short answer is:
 - one universal reserved duration is simpler
 - but `2-3` reserved classes are probably the better launch design
 
+The current temporary implementation work for testing those assumptions now
+lives in [RESERVED_AUCTION_SIMULATOR.md](./RESERVED_AUCTION_SIMULATOR.md).
+
 The reason is that the current reserved list is broad enough that a single
 capital-time burden will likely be too weak for the top names or too harsh for
 public-identity and narrower institutional names.

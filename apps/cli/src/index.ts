@@ -24,6 +24,15 @@ import {
   type WalletDerivationDescriptor
 } from "./builder.js";
 import {
+  createDefaultReservedAuctionPolicy,
+  parseReservedAuctionPolicy,
+  parseReservedAuctionScenario,
+  serializeReservedAuctionPolicy,
+  serializeReservedAuctionSimulationResult,
+  simulateReservedAuction,
+  type SerializedReservedAuctionPolicy
+} from "@gns/core";
+import {
   buildExperimentalAnnexRevealEnvelope,
   buildExperimentalAnnexRevealEnvelopeFromBatchClaimPackage,
   parseExperimentalAnnexRevealEnvelope,
@@ -104,6 +113,12 @@ async function main(): Promise<void> {
       return;
     case "build-batch-reveal-artifacts":
       await buildBatchRevealArtifactsCommand(args);
+      return;
+    case "print-reserved-auction-policy":
+      await printReservedAuctionPolicyCommand(args);
+      return;
+    case "simulate-reserved-auction":
+      await simulateReservedAuctionCommand(args);
       return;
     case "build-experimental-annex-reveal-envelope":
       await buildExperimentalAnnexRevealEnvelopeCommand(args);
@@ -295,6 +310,37 @@ async function inspectTransferPackage(filePath: string | undefined): Promise<voi
     console.log(mode.command);
     console.log("");
   }
+}
+
+async function printReservedAuctionPolicyCommand(args: readonly string[]): Promise<void> {
+  const parsed = parseOptions(args);
+  const serializedPolicy = serializeReservedAuctionPolicy(createDefaultReservedAuctionPolicy());
+
+  await maybeWriteJsonFile(parsed.options.get("write"), serializedPolicy);
+  console.log(JSON.stringify(serializedPolicy, null, 2));
+}
+
+async function simulateReservedAuctionCommand(args: readonly string[]): Promise<void> {
+  const parsed = parseOptions(args);
+  const scenarioPath = parsed.positionals[0];
+
+  if (!scenarioPath) {
+    throw new Error("simulate-reserved-auction requires a path to an auction scenario JSON file");
+  }
+
+  const scenario = parseReservedAuctionScenario(await loadJsonFile(scenarioPath));
+  const serializedPolicy = parsed.options.has("policy")
+    ? await loadReservedAuctionPolicy(parsed.options.get("policy"))
+    : serializeReservedAuctionPolicy(createDefaultReservedAuctionPolicy());
+  const policy = parseReservedAuctionPolicy(serializedPolicy);
+  const result = simulateReservedAuction({
+    policy,
+    scenario
+  });
+  const serializedResult = serializeReservedAuctionSimulationResult(result);
+
+  await maybeWriteJsonFile(parsed.options.get("write"), serializedResult);
+  console.log(JSON.stringify(serializedResult, null, 2));
 }
 
 async function createClaimPackageCommand(args: readonly string[]): Promise<void> {
@@ -1606,6 +1652,37 @@ async function loadSignedArtifacts(filePath: string) {
   return parseSignedArtifactsFile(JSON.parse(raw));
 }
 
+async function loadJsonFile(filePath: string): Promise<unknown> {
+  const primaryPath = resolve(process.cwd(), filePath);
+
+  try {
+    const raw = await readFile(primaryPath, "utf8");
+    return JSON.parse(raw);
+  } catch (error) {
+    const initCwd = process.env.INIT_CWD;
+
+    if (
+      !(error instanceof Error && "code" in error && error.code === "ENOENT") ||
+      !initCwd ||
+      resolve(initCwd) === process.cwd()
+    ) {
+      throw error;
+    }
+
+    const fallbackPath = resolve(initCwd, filePath);
+    const raw = await readFile(fallbackPath, "utf8");
+    return JSON.parse(raw);
+  }
+}
+
+async function loadReservedAuctionPolicy(filePath: string | undefined): Promise<SerializedReservedAuctionPolicy> {
+  if (!filePath) {
+    throw new Error("--policy requires a path to a reserved auction policy JSON file");
+  }
+
+  return loadJsonFile(filePath) as Promise<SerializedReservedAuctionPolicy>;
+}
+
 async function loadExperimentalAnnexRevealEnvelope(filePath: string) {
   const resolvedPath = resolve(process.cwd(), filePath);
   const raw = await readFile(resolvedPath, "utf8");
@@ -1832,6 +1909,12 @@ function printUsage(): void {
   console.log("");
   console.log("  build-batch-reveal-artifacts <batch-claim-package> --input <txid:vout:valueSats:address[:derivationPath]> [--input ...] --fee-sats <amount> [--network signet|testnet|regtest|main] [--change-address <addr>] [--wallet-master-fingerprint <hex8> --wallet-account-xpub <xpub> --wallet-account-path <path> [--wallet-scan-limit <n>]] [--write <path>]");
   console.log("    Build unsigned reveal transaction artifacts from a reveal-ready batch claim package");
+  console.log("");
+  console.log("  print-reserved-auction-policy [--write <path>]");
+  console.log("    Emit the current temporary reserved-lane policy JSON so floors, durations, and timing can be edited outside the code");
+  console.log("");
+  console.log("  simulate-reserved-auction <scenario-json> [--policy <policy-json>] [--write <path>]");
+  console.log("    Run one reserved-lane auction scenario against the temporary policy defaults or a supplied override file");
   console.log("");
   console.log("  build-experimental-annex-reveal-envelope --name <name> --anchor-txid <txid> --bond-vout <0-255> --carrier-prevout <txid:vout:valueSats> --wif <wif> [--network signet|testnet|regtest|main] [--fee-sats <amount>] [--carrier-input-index <n>] [--change-address <addr>] [--annex-proof-hex <hex> | --annex-proof-bytes <n> [--annex-proof-fill-byte <0-255>]] [--write <path>]");
   console.log("    Experimental: build one unsigned Taproot-annex batch reveal envelope from a single carrier input");
