@@ -408,7 +408,7 @@ export function renderOfflineClaimPageHtml(scriptBody: string): string {
         <h2>Batch Commit Builder</h2>
         <p>Use this when you want one ordinary-lane batch commit transaction for several names. This step builds the batch commit PSBT and one reveal-ready batch claim package per name.</p>
         <p class="field-hint">Each line should use: <span class="mono">name|owner_pubkey|nonce_hex|bond_destination|change_destination(optional)</span>. The shared change destination field above is used as a fallback when a line omits the fifth column.</p>
-        <p class="field-hint">Batch mode does not build all later reveal PSBTs automatically. It gives you the reveal-ready batch claim packages you will use one-by-one for those later reveals.</p>
+        <p class="field-hint">After the batch commit confirms, use the saved reveal-ready batch claim packages in the Batch Reveal Builder below to generate the later one-by-one reveal PSBTs locally.</p>
         <label style="margin-top:20px;">
           <span class="field-label">Batch Claim Lines</span>
           <textarea id="offlineBatchClaimsInput" spellcheck="false" placeholder="markzuckerberg|<owner_pubkey>|<nonce_hex>|tb1...|tb1...\npatrickcollison|<owner_pubkey>|<nonce_hex>|tb1..."></textarea>
@@ -424,6 +424,25 @@ export function renderOfflineClaimPageHtml(scriptBody: string): string {
           Paste one or more batch claim lines above, then build the batch commit bundle locally.
         </div>
         <div id="offlineBatchDownloads" class="actions"></div>
+      </section>
+
+      <section class="panel">
+        <h2>Batch Reveal Builder</h2>
+        <p>Use this later, after the batch commit confirms, to turn one saved reveal-ready batch claim package into the one-by-one reveal PSBT for that name.</p>
+        <p class="field-hint">Paste the exact JSON from a reveal-ready batch claim package you saved earlier, or load one directly from the Batch Commit Builder above.</p>
+        <label style="margin-top:20px;">
+          <span class="field-label">Reveal-Ready Batch Claim Package JSON</span>
+          <textarea id="offlineBatchRevealPackageInput" spellcheck="false" placeholder='Paste one saved reveal-ready batch claim package JSON document here'></textarea>
+        </label>
+        <div class="actions">
+          <button id="offlineBuildBatchRevealButton" type="button">Build Batch Reveal PSBT</button>
+          <button id="offlineDownloadBatchRevealPackageButton" type="button" class="secondary" disabled>Download Loaded Package</button>
+          <button id="offlineDownloadBatchRevealPsbtButton" type="button" class="secondary" disabled>Download Batch Reveal PSBT</button>
+          <button id="offlineDownloadBatchRevealSignerNotesButton" type="button" class="secondary" disabled>Download Batch Reveal Signer Notes</button>
+        </div>
+        <div id="offlineBatchRevealResult" class="result-card">
+          Paste one reveal-ready batch claim package above, then build the later one-by-one reveal PSBT locally.
+        </div>
       </section>
 
       <section class="panel">

@@ -45,11 +45,17 @@ The current repo now covers these implemented slices:
 - core and indexer validation of batched anchors and batched reveals
 - database snapshot compatibility for batched pending anchors and provenance events
 - resolver / website compatibility for batched provenance inspection
-- offline web architect support for batch commit PSBT generation and per-name reveal-ready batch claim packages
+- offline web architect support for batch commit PSBT generation, per-name reveal-ready batch claim packages, and later one-by-one batch reveal PSBT generation from those saved packages
 
-The main remaining user-facing gap is that the browser batch flow still stops
-at the batch commit PSBT plus reveal-ready packages. Later reveal PSBTs are not
-yet generated in-browser for every batch claim automatically.
+The current browser-side scope is now:
+
+- build one ordinary-lane batch commit PSBT
+- export one reveal-ready batch claim package per name
+- later load any one saved batch claim package back into the browser architect
+- generate the corresponding one-by-one batch reveal PSBT locally
+
+What the browser still does **not** try to do is automate all later reveals in
+one step. Batched ordinary claims still reveal name by name.
 
 We now also have a repeatable fixture-backed end-to-end review path:
 

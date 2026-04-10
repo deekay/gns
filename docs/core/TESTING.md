@@ -159,7 +159,7 @@ then checks:
 - name activity for `batchalpha`
 - transaction provenance for the batch anchor tx
 - transaction provenance for one batch reveal tx
-- offline architect HTML includes the batch commit builder controls
+- offline architect HTML includes both the batch commit and batch reveal builder controls
 
 The goal is not to simulate every signer step. It is to prove that the
 resolver, web app, provenance surfaces, and offline review flow all remain

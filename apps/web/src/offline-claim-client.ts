@@ -1,14 +1,17 @@
 import {
+  buildBatchRevealArtifacts,
   buildBatchCommitArtifacts,
   buildClaimPsbtBundle,
   parseFundingInputDescriptor,
   type BatchCommitArtifacts,
+  type BatchRevealArtifacts,
   type ClaimPsbtBundle,
   type ClaimPsbtWalletUtxo,
   type WalletDerivationDescriptor
 } from "@gns/architect";
 import {
   createClaimPackage,
+  parseBatchClaimPackage,
   type BatchClaimPackage,
   type ClaimPackage,
   type CreateClaimPackageInput
@@ -29,9 +32,11 @@ const elements = {
   revealFeeInput: requireElement<HTMLInputElement>("offlineRevealFeeInput"),
   fundingInputsInput: requireElement<HTMLTextAreaElement>("offlineFundingInputsInput"),
   batchClaimsInput: requireElement<HTMLTextAreaElement>("offlineBatchClaimsInput"),
+  batchRevealPackageInput: requireElement<HTMLTextAreaElement>("offlineBatchRevealPackageInput"),
   generateNonceButton: requireElement<HTMLButtonElement>("offlineGenerateNonceButton"),
   buildButton: requireElement<HTMLButtonElement>("offlineBuildButton"),
   buildBatchButton: requireElement<HTMLButtonElement>("offlineBuildBatchButton"),
+  buildBatchRevealButton: requireElement<HTMLButtonElement>("offlineBuildBatchRevealButton"),
   downloadClaimPackageButton: requireElement<HTMLButtonElement>("offlineDownloadClaimPackageButton"),
   downloadRevealReadyButton: requireElement<HTMLButtonElement>("offlineDownloadRevealReadyButton"),
   downloadCommitPsbtButton: requireElement<HTMLButtonElement>("offlineDownloadCommitPsbtButton"),
@@ -40,15 +45,22 @@ const elements = {
   downloadBatchBundleButton: requireElement<HTMLButtonElement>("offlineDownloadBatchBundleButton"),
   downloadBatchCommitPsbtButton: requireElement<HTMLButtonElement>("offlineDownloadBatchCommitPsbtButton"),
   downloadBatchSignerNotesButton: requireElement<HTMLButtonElement>("offlineDownloadBatchSignerNotesButton"),
+  downloadBatchRevealPackageButton: requireElement<HTMLButtonElement>("offlineDownloadBatchRevealPackageButton"),
+  downloadBatchRevealPsbtButton: requireElement<HTMLButtonElement>("offlineDownloadBatchRevealPsbtButton"),
+  downloadBatchRevealSignerNotesButton: requireElement<HTMLButtonElement>("offlineDownloadBatchRevealSignerNotesButton"),
   result: requireElement<HTMLDivElement>("offlineClaimResult"),
   batchResult: requireElement<HTMLDivElement>("offlineBatchResult"),
-  batchDownloads: requireElement<HTMLDivElement>("offlineBatchDownloads")
+  batchDownloads: requireElement<HTMLDivElement>("offlineBatchDownloads"),
+  batchRevealResult: requireElement<HTMLDivElement>("offlineBatchRevealResult")
 };
 
 let currentClaimPackage: ClaimPackage | null = null;
 let currentBundle: ClaimPsbtBundle | null = null;
 let currentBatchClaimPackages: ClaimPackage[] = [];
 let currentBatchArtifacts: BatchCommitArtifacts | null = null;
+let currentBatchRevealClaimPackage: BatchClaimPackage | null = null;
+let currentBatchRevealArtifacts: BatchRevealArtifacts | null = null;
+let currentBatchRevealFundingInputs: ClaimPsbtWalletUtxo[] = [];
 
 elements.nonceInput.value = elements.nonceInput.value.trim() || generateNonceHex();
 
@@ -122,6 +134,35 @@ elements.buildBatchButton.addEventListener("click", () => {
     currentBatchArtifacts = null;
     setBatchDownloadState(false);
     renderBatchError(error);
+  }
+});
+
+elements.buildBatchRevealButton.addEventListener("click", () => {
+  try {
+    const walletDerivation = readWalletDerivation();
+    const availableUtxos = readFundingInputs();
+    const claimPackage = readBatchRevealClaimPackage();
+    const changeAddress = normalizeOptionalText(elements.changeDestinationInput.value);
+
+    currentBatchRevealClaimPackage = claimPackage;
+    currentBatchRevealFundingInputs = availableUtxos;
+    currentBatchRevealArtifacts = buildBatchRevealArtifacts({
+      claimPackage,
+      fundingInputs: availableUtxos,
+      feeSats: readSats(elements.revealFeeInput, "Reveal fee"),
+      network: "signet",
+      ...(changeAddress === null ? {} : { changeAddress }),
+      walletDerivation
+    });
+
+    setBatchRevealDownloadState(true);
+    renderBatchRevealSuccess(claimPackage, currentBatchRevealArtifacts);
+  } catch (error) {
+    currentBatchRevealClaimPackage = null;
+    currentBatchRevealArtifacts = null;
+    currentBatchRevealFundingInputs = [];
+    setBatchRevealDownloadState(false);
+    renderBatchRevealError(error);
   }
 });
 
@@ -217,6 +258,43 @@ elements.downloadBatchSignerNotesButton.addEventListener("click", () => {
   );
 });
 
+elements.downloadBatchRevealPackageButton.addEventListener("click", () => {
+  if (!currentBatchRevealClaimPackage) {
+    return;
+  }
+
+  downloadJsonFile(
+    currentBatchRevealClaimPackage,
+    "gns-claim-" + currentBatchRevealClaimPackage.name + "-batch-reveal-ready.json"
+  );
+});
+
+elements.downloadBatchRevealPsbtButton.addEventListener("click", () => {
+  if (!currentBatchRevealArtifacts || !currentBatchRevealClaimPackage) {
+    return;
+  }
+
+  downloadBase64BinaryFile(
+    currentBatchRevealArtifacts.psbtBase64,
+    "gns-reveal-" + currentBatchRevealClaimPackage.name + "-batch-offline.psbt"
+  );
+});
+
+elements.downloadBatchRevealSignerNotesButton.addEventListener("click", () => {
+  if (!currentBatchRevealClaimPackage || !currentBatchRevealArtifacts) {
+    return;
+  }
+
+  downloadTextFile(
+    buildBatchRevealSignerNotes(
+      currentBatchRevealClaimPackage,
+      currentBatchRevealArtifacts,
+      currentBatchRevealFundingInputs
+    ),
+    "gns-reveal-" + currentBatchRevealClaimPackage.name + "-batch-offline-signer-notes.txt"
+  );
+});
+
 elements.batchDownloads.addEventListener("click", (event) => {
   const target = event.target;
   if (!(target instanceof HTMLElement)) {
@@ -235,10 +313,14 @@ elements.batchDownloads.addEventListener("click", (event) => {
     return;
   }
 
-  downloadJsonFile(
-    claimPackage,
-    "gns-claim-" + claimPackage.name + "-batch-reveal-ready.json"
-  );
+  const action = button.dataset.batchPackageAction ?? "download";
+  if (action === "load") {
+    elements.batchRevealPackageInput.value = JSON.stringify(claimPackage, null, 2);
+    renderBatchRevealLoaded(claimPackage);
+    return;
+  }
+
+  downloadJsonFile(claimPackage, "gns-claim-" + claimPackage.name + "-batch-reveal-ready.json");
 });
 
 function readClaimPackageInput(): CreateClaimPackageInput {
@@ -335,6 +417,22 @@ function readWalletDerivation(): WalletDerivationDescriptor {
   };
 }
 
+function readBatchRevealClaimPackage(): BatchClaimPackage {
+  const raw = elements.batchRevealPackageInput.value.trim();
+  if (raw === "") {
+    throw new Error("Paste one reveal-ready batch claim package JSON document.");
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    throw new Error("Batch reveal package input must be valid JSON.");
+  }
+
+  return parseBatchClaimPackage(parsed);
+}
+
 function readFundingInputs(): ClaimPsbtWalletUtxo[] {
   const lines = elements.fundingInputsInput.value
     .split(/\r?\n/g)
@@ -417,6 +515,43 @@ function renderBatchSuccess(claimPackages: readonly ClaimPackage[], artifacts: B
   ].join("");
 }
 
+function renderBatchRevealSuccess(
+  claimPackage: BatchClaimPackage,
+  artifacts: BatchRevealArtifacts
+): void {
+  elements.batchRevealResult.className = "result-card success";
+  elements.batchRevealResult.innerHTML = [
+    "<h2>Offline Batch Reveal PSBT Ready</h2>",
+    "<p>This reveal transaction was generated locally from a saved reveal-ready batch claim package. Each batched name still reveals one-by-one, but the Merkle proof and batch anchor details are already pinned in the package.</p>",
+    '<div class="summary-grid">',
+    renderSummaryItem("Name", claimPackage.name),
+    renderSummaryItem("Anchor Txid", claimPackage.batchAnchorTxid),
+    renderSummaryItem("Reveal Txid", artifacts.revealTxid),
+    renderSummaryItem("Proof", String(claimPackage.batchProofBytes) + " bytes"),
+    "</div>",
+    "<pre>" + escapeHtml([
+      "Batch reveal payload: " + claimPackage.revealPayloadHex,
+      "Proof chunk count: " + String(claimPackage.revealProofChunkPayloadsHex.length),
+      "Anchor txid: " + claimPackage.batchAnchorTxid,
+      "Merkle root: " + claimPackage.batchMerkleRoot
+    ].join("\n")) + "</pre>"
+  ].join("");
+}
+
+function renderBatchRevealLoaded(claimPackage: BatchClaimPackage): void {
+  elements.batchRevealResult.className = "result-card";
+  elements.batchRevealResult.innerHTML = [
+    "<h2>Batch Reveal Package Loaded</h2>",
+    "<p>Reuse the wallet metadata, reveal fee, and confirmed funding inputs above, then build the one-by-one reveal PSBT for this saved batch claim package.</p>",
+    '<div class="summary-grid">',
+    renderSummaryItem("Name", claimPackage.name),
+    renderSummaryItem("Anchor Txid", claimPackage.batchAnchorTxid),
+    renderSummaryItem("Proof", String(claimPackage.batchProofBytes) + " bytes"),
+    renderSummaryItem("Bond Vout", String(claimPackage.bondVout)),
+    "</div>"
+  ].join("");
+}
+
 function renderError(error: unknown): void {
   elements.result.className = "result-card error";
   elements.result.innerHTML = "<h2>Unable to Build Bundle</h2><p>" + escapeHtml(error instanceof Error ? error.message : "Unknown error.") + "</p>";
@@ -426,6 +561,14 @@ function renderBatchError(error: unknown): void {
   elements.batchResult.className = "result-card error";
   elements.batchResult.innerHTML = "<h2>Unable to Build Batch Bundle</h2><p>" + escapeHtml(error instanceof Error ? error.message : "Unknown error.") + "</p>";
   elements.batchDownloads.innerHTML = "";
+}
+
+function renderBatchRevealError(error: unknown): void {
+  elements.batchRevealResult.className = "result-card error";
+  elements.batchRevealResult.innerHTML =
+    "<h2>Unable to Build Batch Reveal PSBT</h2><p>" +
+    escapeHtml(error instanceof Error ? error.message : "Unknown error.") +
+    "</p>";
 }
 
 function renderSummaryItem(label: string, value: string): string {
@@ -443,9 +586,13 @@ function renderBatchDownloadButtons(claimPackages: readonly BatchClaimPackage[])
       (claimPackage, index) =>
         '<button type="button" class="secondary" data-batch-package-index="' +
         escapeHtml(String(index)) +
-        '">Download ' +
+        '" data-batch-package-action="download">Download ' +
         escapeHtml(claimPackage.name) +
-        " reveal-ready package</button>"
+        ' package</button><button type="button" class="secondary" data-batch-package-index="' +
+        escapeHtml(String(index)) +
+        '" data-batch-package-action="load">Load ' +
+        escapeHtml(claimPackage.name) +
+        " into reveal builder</button>"
     )
     .join("");
 }
@@ -466,6 +613,12 @@ function setBatchDownloadState(enabled: boolean): void {
   if (!enabled) {
     elements.batchDownloads.innerHTML = "";
   }
+}
+
+function setBatchRevealDownloadState(enabled: boolean): void {
+  elements.downloadBatchRevealPackageButton.disabled = !enabled;
+  elements.downloadBatchRevealPsbtButton.disabled = !enabled;
+  elements.downloadBatchRevealSignerNotesButton.disabled = !enabled;
 }
 
 function buildSignerNotes(claimPackage: ClaimPackage, bundle: ClaimPsbtBundle): string {
@@ -526,6 +679,31 @@ function buildBatchSignerNotes(
         "    Batch Proof Bytes: " + String(claimPackage.batchProofBytes)
       ].join("\n");
     })
+  ].join("\n");
+}
+
+function buildBatchRevealSignerNotes(
+  claimPackage: BatchClaimPackage,
+  artifacts: BatchRevealArtifacts,
+  fundingInputs: readonly ClaimPsbtWalletUtxo[]
+): string {
+  return [
+    "Global Name System Offline Batch Reveal Notes",
+    "",
+    "Name: " + claimPackage.name,
+    "Owner Pubkey: " + claimPackage.ownerPubkey,
+    "Nonce: " + claimPackage.nonceHex,
+    "Anchor Txid: " + claimPackage.batchAnchorTxid,
+    "Merkle Root: " + claimPackage.batchMerkleRoot,
+    "Batch Proof Bytes: " + String(claimPackage.batchProofBytes),
+    "Reveal Proof Chunk Count: " + String(claimPackage.revealProofChunkPayloadsHex.length),
+    "Reveal Fee: " + formatSats(artifacts.feeSats),
+    "",
+    "Reveal Payload Hex:",
+    claimPackage.revealPayloadHex,
+    "",
+    "Funding Inputs:",
+    ...fundingInputs.map((input) => "  - " + input.txid + ":" + input.vout + " · " + formatSats(input.valueSats.toString()))
   ].join("\n");
 }
 

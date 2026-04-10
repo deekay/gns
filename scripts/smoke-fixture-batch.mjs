@@ -87,6 +87,14 @@ try {
     offlineArchitect.includes("offlineBuildBatchButton"),
     "offline architect batch control should be present"
   );
+  assert(
+    offlineArchitect.includes("Batch Reveal Builder"),
+    "offline architect should expose the batch reveal builder"
+  );
+  assert(
+    offlineArchitect.includes("offlineBuildBatchRevealButton"),
+    "offline architect batch reveal control should be present"
+  );
 
   console.log(
     JSON.stringify(
