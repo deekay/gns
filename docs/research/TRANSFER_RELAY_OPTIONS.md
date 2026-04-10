@@ -2,6 +2,9 @@
 
 This note explains why the current `TRANSFER` event is still awkward for broad relay compatibility, and which directions are actually available if we want to change it.
 
+For a separate assessment of whether transfer batching itself is worth pursuing
+soon, see [TRANSFER_BATCHING_EVALUATION.md](./TRANSFER_BATCHING_EVALUATION.md).
+
 ## Current shape
 
 The current transfer payload is:
