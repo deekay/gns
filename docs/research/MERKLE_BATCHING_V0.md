@@ -69,8 +69,9 @@ name lookup, transaction provenance inspection, and offline architect review.
 We also now have the first batch-aware regtest CLI suite coverage in
 [`regtest-cli-suite.mjs`](../../scripts/regtest-cli-suite.mjs). That path
 builds a batch anchor, queues two signed batch reveals, confirms the anchor,
-broadcasts both reveals through the watcher, and verifies the names through the
-resolver once they land on-chain.
+broadcasts both reveals through the watcher, verifies the names through the
+resolver once they land on-chain, and then applies an immature transfer to one
+of the names originally claimed through the batch anchor.
 
 We also now have a repeatable footprint measurement script and report:
 

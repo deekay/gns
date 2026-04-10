@@ -183,6 +183,7 @@ What it covers today:
 - insufficient bond funding for a claim
 - successful claim commit/reveal flow
 - successful ordinary-lane batched claim flow with one batch anchor and two queued reveals
+- successful immature gift transfer for a name originally claimed through a batch anchor
 - duplicate claim that does not overtake the earlier winner
 - missed reveal window / stale reveal handling
 - immature gift transfer with bond continuity

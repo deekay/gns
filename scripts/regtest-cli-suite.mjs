@@ -181,6 +181,7 @@ async function main() {
     const batchPayer = await createLiveAccount("batch-payer");
     const batchOwnerAlpha = await createLiveAccount("batch-owner-alpha");
     const batchOwnerBeta = await createLiveAccount("batch-owner-beta");
+    const batchGiftRecipient = await createLiveAccount("batch-gift-recipient");
     const batchAlphaClaim = await createClaimPackage({
       account: batchPayer,
       ownerPubkey: batchOwnerAlpha.ownerPubkey,
@@ -210,6 +211,65 @@ async function main() {
     summary.names[batchBetaName] = {
       commitTxid: batchClaimResult.commitTxid,
       revealTxid: batchClaimResult.revealTxids[batchBetaName]
+    };
+    const batchTransferFeeUtxo = await fundAddress(batchPayer.fundingAddress, 10_000n);
+    const batchGiftTransfer = await cliJson([
+      "submit-transfer",
+      "--prev-state-txid",
+      batchClaimResult.revealTxids[batchAlphaName],
+      "--new-owner-pubkey",
+      batchGiftRecipient.ownerPubkey,
+      "--owner-private-key-hex",
+      batchOwnerAlpha.ownerPrivateKeyHex,
+      "--bond-input",
+      formatDescriptor({
+        txid: batchClaimResult.commitTxid,
+        vout: 1,
+        valueSats: 50_000n,
+        address: batchPayer.fundingAddress
+      }),
+      "--input",
+      formatDescriptor(batchTransferFeeUtxo),
+      "--successor-bond-vout",
+      "0",
+      "--successor-bond-sats",
+      "50000",
+      "--fee-sats",
+      TRANSFER_FEE_SATS.toString(),
+      "--bond-address",
+      batchGiftRecipient.fundingAddress,
+      "--change-address",
+      batchPayer.fundingAddress,
+      "--wif",
+      batchPayer.fundingWif,
+      "--network",
+      "regtest",
+      "--expected-chain",
+      "regtest",
+      "--out-dir",
+      join(suiteState.artifactDir, "batch-gift-transfer")
+    ]);
+    await mineBlocks(1, "confirm-batch-gift-transfer");
+    await waitForResolverHeight(await rpcCall("getblockcount"));
+    const batchGiftedRecord = await cliJson([
+      "get-name",
+      batchAlphaName,
+      "--resolver-url",
+      resolverUrl()
+    ]);
+    assertEqual(
+      batchGiftedRecord.currentOwnerPubkey,
+      batchGiftRecipient.ownerPubkey,
+      "batch-claimed name gift transfer owner"
+    );
+    assertEqual(
+      batchGiftedRecord.currentBondTxid,
+      batchGiftTransfer.transferTxid,
+      "batch-claimed name gift transfer bond txid"
+    );
+    summary.names[`${batchAlphaName}-giftTransfer`] = {
+      prevRevealTxid: batchClaimResult.revealTxids[batchAlphaName],
+      transferTxid: batchGiftTransfer.transferTxid
     };
 
     const staleOwner = await createLiveAccount("stale-owner");

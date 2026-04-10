@@ -113,6 +113,7 @@ ordinary-lane batched claim flow with:
 - anchor confirmation
 - reveal broadcast through the watcher
 - final resolver verification of both claimed names
+- and an immature gift transfer applied to one of those batch-claimed names
 
 ## What We Can Say Confidently
 
