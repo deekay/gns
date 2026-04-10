@@ -73,6 +73,15 @@ broadcasts both reveals through the watcher, verifies the names through the
 resolver once they land on-chain, and then applies an immature transfer to one
 of the names originally claimed through the batch anchor.
 
+The same controlled-chain suite now also proves the negative path:
+
+- a deliberately tampered batch reveal can still confirm as a valid Bitcoin
+  transaction
+- the resolver and core state machine ignore it because the Merkle proof does
+  not match the anchored root
+- the resulting transaction provenance records
+  `batch_reveal_invalid_merkle_proof`
+
 We also now have a repeatable footprint measurement script and report:
 
 - script: [measure-batch-footprint.mjs](../../scripts/measure-batch-footprint.mjs)

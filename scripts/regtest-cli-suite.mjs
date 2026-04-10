@@ -7,6 +7,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawn } from "node:child_process";
 import os from "node:os";
+import { Psbt, networks } from "bitcoinjs-lib";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const SSH_TARGET = process.env.GNS_REGTEST_SSH_TARGET ?? process.env.GNS_SSH_TARGET ?? "";
@@ -74,6 +75,8 @@ async function main() {
     const claimedName = "suiteclaim0001";
     const batchAlphaName = "suitebatcha01";
     const batchBetaName = "suitebatchb01";
+    const invalidBatchRevealName = "suitebatchbad01";
+    const invalidBatchCompanionName = "suitebatchpad01";
     const staleRevealName = "suitestale0001";
     const invalidTransferName = "suitebreak0001";
     const immatureSaleName = "suiteimmsale01";
@@ -271,6 +274,32 @@ async function main() {
       prevRevealTxid: batchClaimResult.revealTxids[batchAlphaName],
       transferTxid: batchGiftTransfer.transferTxid
     };
+
+    const batchInvalidPayer = await createLiveAccount("batch-invalid-payer");
+    const batchInvalidOwner = await createLiveAccount("batch-invalid-owner");
+    const batchInvalidClaim = await createClaimPackage({
+      account: batchInvalidPayer,
+      ownerPubkey: batchInvalidOwner.ownerPubkey,
+      bondDestination: batchInvalidPayer.fundingAddress,
+      changeDestination: batchInvalidPayer.fundingAddress,
+      name: invalidBatchRevealName,
+      fileLabel: "batch-invalid-claim"
+    });
+    const batchInvalidCompanionClaim = await createClaimPackage({
+      account: batchInvalidPayer,
+      ownerPubkey: batchInvalidOwner.ownerPubkey,
+      bondDestination: batchInvalidPayer.fundingAddress,
+      changeDestination: batchInvalidPayer.fundingAddress,
+      name: invalidBatchCompanionName,
+      fileLabel: "batch-invalid-companion-claim"
+    });
+    const invalidBatchRevealResult = await claimNameWithInvalidBatchReveal({
+      label: "batch-invalid-reveal",
+      payer: batchInvalidPayer,
+      claimPackagePaths: [batchInvalidClaim.path, batchInvalidCompanionClaim.path],
+      claimName: invalidBatchRevealName
+    });
+    summary.failures[invalidBatchRevealName] = invalidBatchRevealResult;
 
     const staleOwner = await createLiveAccount("stale-owner");
     const staleClaim = await createClaimPackage({
@@ -1166,6 +1195,173 @@ async function claimBatchNames(input) {
     commitTxid: batchCommitArtifacts.commitTxid,
     revealTxids
   };
+}
+
+async function claimNameWithInvalidBatchReveal(input) {
+  logStep(`Invalid batch reveal flow: ${input.label}`);
+  const outDir = join(suiteState.artifactDir, `${input.label}-artifacts`);
+  const batchPackagesDir = join(suiteState.artifactDir, `${input.label}-packages`);
+  const batchCommitArtifactsPath = join(outDir, "batch-commit-artifacts.json");
+  const signedBatchCommitPath = join(outDir, "signed-batch-commit-artifacts.json");
+  const validBatchRevealArtifactsPath = join(outDir, "valid-batch-reveal-artifacts.json");
+  const tamperedBatchRevealArtifactsPath = join(outDir, "tampered-batch-reveal-artifacts.json");
+  const signedTamperedBatchRevealPath = join(outDir, "signed-tampered-batch-reveal-artifacts.json");
+  await mkdir(outDir, { recursive: true });
+  await mkdir(batchPackagesDir, { recursive: true });
+
+  const commitFunding = await fundAddress(input.payer.fundingAddress, 140_000n);
+  const batchCommitArtifacts = await cliJson([
+    "build-batch-commit-artifacts",
+    ...input.claimPackagePaths,
+    "--input",
+    formatDescriptor(commitFunding),
+    "--fee-sats",
+    COMMIT_FEE_SATS.toString(),
+    "--network",
+    "regtest",
+    "--change-address",
+    input.payer.fundingAddress,
+    "--write",
+    batchCommitArtifactsPath,
+    "--write-packages-dir",
+    batchPackagesDir
+  ]);
+  await cliJson([
+    "sign-artifacts",
+    batchCommitArtifactsPath,
+    "--wif",
+    input.payer.fundingWif,
+    "--write",
+    signedBatchCommitPath
+  ]);
+  const batchCommitBroadcast = await cliJson([
+    "broadcast-transaction",
+    signedBatchCommitPath,
+    "--expected-chain",
+    "regtest"
+  ]);
+  assertEqual(
+    batchCommitBroadcast.broadcastedTxid,
+    batchCommitArtifacts.commitTxid,
+    "invalid-batch-reveal commit broadcast txid"
+  );
+
+  await mineBlocks(1, `confirm-${input.label}-commit`);
+  await waitForResolverHeight(await rpcCall("getblockcount"));
+
+  const batchClaimPackagePath = join(batchPackagesDir, `01-${input.claimName}.json`);
+  const revealFunding = await fundAddress(input.payer.fundingAddress, 10_000n);
+  await cliJson([
+    "build-batch-reveal-artifacts",
+    batchClaimPackagePath,
+    "--input",
+    formatDescriptor(revealFunding),
+    "--fee-sats",
+    REVEAL_FEE_SATS.toString(),
+    "--network",
+    "regtest",
+    "--change-address",
+    input.payer.fundingAddress,
+    "--write",
+    validBatchRevealArtifactsPath
+  ]);
+  await writeTamperedBatchRevealArtifacts({
+    sourcePath: validBatchRevealArtifactsPath,
+    destinationPath: tamperedBatchRevealArtifactsPath
+  });
+  const signedTamperedReveal = await cliJson([
+    "sign-artifacts",
+    tamperedBatchRevealArtifactsPath,
+    "--wif",
+    input.payer.fundingWif,
+    "--write",
+    signedTamperedBatchRevealPath
+  ]);
+  const invalidRevealBroadcast = await cliJson([
+    "broadcast-transaction",
+    signedTamperedBatchRevealPath,
+    "--expected-chain",
+    "regtest"
+  ]);
+  assertEqual(
+    invalidRevealBroadcast.broadcastedTxid,
+    signedTamperedReveal.signedTransactionId,
+    "invalid-batch-reveal broadcast txid"
+  );
+
+  await mineBlocks(1, `confirm-${input.label}-reveal`);
+  await waitForResolverHeight(await rpcCall("getblockcount"));
+  await expectMissingNameFeedback(input.claimName);
+
+  const provenance = await cliJson([
+    "get-tx",
+    invalidRevealBroadcast.broadcastedTxid,
+    "--resolver-url",
+    resolverUrl()
+  ]);
+  const batchRevealEvent = provenance.events.find((candidate) => candidate.typeName === "BATCH_REVEAL");
+
+  if (!batchRevealEvent) {
+    throw new Error(`missing BATCH_REVEAL provenance event for ${invalidRevealBroadcast.broadcastedTxid}`);
+  }
+
+  assertEqual(
+    batchRevealEvent.validationStatus,
+    "ignored",
+    "invalid-batch-reveal validation status"
+  );
+  assertEqual(
+    batchRevealEvent.reason,
+    "batch_reveal_invalid_merkle_proof",
+    "invalid-batch-reveal provenance reason"
+  );
+
+  return {
+    commitTxid: batchCommitArtifacts.commitTxid,
+    invalidRevealTxid: invalidRevealBroadcast.broadcastedTxid,
+    provenanceReason: batchRevealEvent.reason
+  };
+}
+
+async function writeTamperedBatchRevealArtifacts(input) {
+  const builtArtifacts = JSON.parse(await readFile(input.sourcePath, "utf8"));
+  const proofOutputIndex = builtArtifacts.outputs.findIndex(
+    (candidate) => candidate.role === "gns_reveal_proof_chunk"
+  );
+
+  if (proofOutputIndex < 0) {
+    throw new Error("expected at least one proof chunk output in batch reveal artifacts");
+  }
+
+  const psbt = Psbt.fromBase64(builtArtifacts.psbtBase64, { network: networks.regtest });
+  const unsignedOutput = psbt.data.globalMap.unsignedTx.tx.outs[proofOutputIndex];
+
+  if (!unsignedOutput) {
+    throw new Error(`missing unsigned output ${proofOutputIndex} for tampered batch reveal`);
+  }
+
+  const tamperedScript = Uint8Array.from(unsignedOutput.script);
+
+  if (tamperedScript.length === 0) {
+    throw new Error("cannot tamper an empty proof chunk script");
+  }
+
+  tamperedScript[tamperedScript.length - 1] ^= 0x01;
+  unsignedOutput.script = tamperedScript;
+
+  await writeFile(
+    input.destinationPath,
+    JSON.stringify(
+      {
+        kind: builtArtifacts.kind,
+        network: builtArtifacts.network,
+        psbtBase64: psbt.toBase64()
+      },
+      null,
+      2
+    ) + "\n",
+    "utf8"
+  );
 }
 
 async function fundAddress(address, sats) {

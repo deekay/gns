@@ -90,6 +90,8 @@ The Merkle-specific confidence points now include:
 - wrong Merkle proofs fail
 - names claimed through batched anchors still transfer correctly under the
   normal immature transfer rules
+- a bad batched reveal can still confirm as a Bitcoin transaction and is then
+  ignored by the GNS state machine with `batch_reveal_invalid_merkle_proof`
 
 ### Fixture-backed smoke validation
 
@@ -115,13 +117,25 @@ ordinary-lane batched claim flow with:
 - final resolver verification of both claimed names
 - and an immature gift transfer applied to one of those batch-claimed names
 
+The same controlled-chain suite now also includes a negative-path batched
+reveal case:
+
+- one batched anchor confirms normally
+- a later reveal transaction is deliberately tampered so the Merkle proof no
+  longer matches the anchored root
+- the reveal still confirms as a valid Bitcoin transaction
+- the resolver keeps the name unavailable because the GNS state machine ignores
+  the reveal
+- transaction provenance records the reason as
+  `batch_reveal_invalid_merkle_proof`
+
 ## What We Can Say Confidently
 
 The strongest current claim is:
 
 > explicit Merkle batching works today for the ordinary claim lifecycle through
-> batched commit, individual batched reveal, and later ordinary transfer
-> semantics.
+> batched commit, individual batched reveal, negative-path proof rejection on a
+> controlled chain, and later ordinary transfer semantics.
 
 That is materially stronger than:
 

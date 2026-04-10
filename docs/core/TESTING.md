@@ -184,6 +184,7 @@ What it covers today:
 - successful claim commit/reveal flow
 - successful ordinary-lane batched claim flow with one batch anchor and two queued reveals
 - successful immature gift transfer for a name originally claimed through a batch anchor
+- invalid ordinary-lane batch reveal that is valid Bitcoin, confirms on-chain, and is ignored by GNS because the Merkle proof is wrong
 - duplicate claim that does not overtake the earlier winner
 - missed reveal window / stale reveal handling
 - immature gift transfer with bond continuity
