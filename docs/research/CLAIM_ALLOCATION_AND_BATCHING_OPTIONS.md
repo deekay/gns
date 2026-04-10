@@ -8,6 +8,9 @@ This note explores the main design fork now under active pressure from review:
 
 The goal here is not to lock a decision immediately. The goal is to make the trade-offs explicit.
 
+For the current leading launch assumptions after this exploration, see
+[LAUNCH_SPEC_V0.md](./LAUNCH_SPEC_V0.md).
+
 ## Design Goals
 
 Any launch allocation mechanism should be judged against a few concrete goals:

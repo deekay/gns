@@ -4,6 +4,8 @@ This note summarizes a launch structure now under active exploration for GNS.
 
 It is **not** a final protocol decision. The point is to share the philosophy, the mechanism split, and the current calibration intuition in a compact form.
 
+For the fuller current working spec, see [LAUNCH_SPEC_V0.md](./LAUNCH_SPEC_V0.md).
+
 ## Core Idea
 
 Split launch into two lanes:

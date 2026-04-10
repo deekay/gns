@@ -4,6 +4,9 @@ This note captures the design direction that emerged while pressure-testing the 
 
 It is **not** a final protocol decision yet, but it is now the leading launch candidate and the main working assumption for follow-on design work.
 
+For the current provisional launch defaults gathered in one place, see
+[LAUNCH_SPEC_V0.md](./LAUNCH_SPEC_V0.md).
+
 It is a serious alternative worth evaluating alongside:
 
 - [CLAIM_ALLOCATION_AND_BATCHING_OPTIONS.md](./CLAIM_ALLOCATION_AND_BATCHING_OPTIONS.md)
