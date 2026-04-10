@@ -1,0 +1,16 @@
+{
+  "scenario": {
+    "name": "citadel",
+    "reservedClassId": "major_existing_name",
+    "unlockBlock": 870000,
+    "bidAttempts": []
+  },
+  "expected": {
+    "status": "no_valid_bids",
+    "winnerBidderId": null,
+    "winnerAmountSats": null,
+    "initialAuctionCloseBlock": null,
+    "finalAuctionCloseBlock": null,
+    "reasons": []
+  }
+}

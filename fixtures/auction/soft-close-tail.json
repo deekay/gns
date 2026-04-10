@@ -1,0 +1,42 @@
+{
+  "scenario": {
+    "name": "xai",
+    "reservedClassId": "major_existing_name",
+    "unlockBlock": 875000,
+    "bidAttempts": [
+      {
+        "bidderId": "alpha",
+        "blockHeight": 875010,
+        "amountSats": "200000000"
+      },
+      {
+        "bidderId": "beta",
+        "blockHeight": 879250,
+        "amountSats": "210000000"
+      },
+      {
+        "bidderId": "gamma",
+        "blockHeight": 879390,
+        "amountSats": "221000000"
+      },
+      {
+        "bidderId": "delta",
+        "blockHeight": 879520,
+        "amountSats": "233000000"
+      }
+    ]
+  },
+  "expected": {
+    "status": "settled",
+    "winnerBidderId": "delta",
+    "winnerAmountSats": "233000000",
+    "initialAuctionCloseBlock": 879330,
+    "finalAuctionCloseBlock": 879664,
+    "reasons": [
+      "opening_bid",
+      "higher_bid_soft_close_extended",
+      "higher_bid_soft_close_extended",
+      "higher_bid_soft_close_extended"
+    ]
+  }
+}

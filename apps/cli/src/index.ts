@@ -328,7 +328,9 @@ async function simulateReservedAuctionCommand(args: readonly string[]): Promise<
     throw new Error("simulate-reserved-auction requires a path to an auction scenario JSON file");
   }
 
-  const scenario = parseReservedAuctionScenario(await loadJsonFile(scenarioPath));
+  const scenario = parseReservedAuctionScenario(
+    extractReservedAuctionScenarioInput(await loadJsonFile(scenarioPath))
+  );
   const serializedPolicy = parsed.options.has("policy")
     ? await loadReservedAuctionPolicy(parsed.options.get("policy"))
     : serializeReservedAuctionPolicy(createDefaultReservedAuctionPolicy());
@@ -1681,6 +1683,15 @@ async function loadReservedAuctionPolicy(filePath: string | undefined): Promise<
   }
 
   return loadJsonFile(filePath) as Promise<SerializedReservedAuctionPolicy>;
+}
+
+function extractReservedAuctionScenarioInput(input: unknown): unknown {
+  if (typeof input !== "object" || input === null || Array.isArray(input)) {
+    return input;
+  }
+
+  const record = input as Record<string, unknown>;
+  return "scenario" in record ? record.scenario : input;
 }
 
 async function loadExperimentalAnnexRevealEnvelope(filePath: string) {

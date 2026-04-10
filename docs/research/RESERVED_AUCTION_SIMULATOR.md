@@ -36,7 +36,7 @@ It does **not** yet model:
 
 - bidder capital reuse across multiple concurrent auctions
 - auction-wave timing across many names
-- no-bid fallback behavior
+- no-bid fallback behavior after an auction ends with no valid winner
 - transfer or settlement execution details
 - the actual on-chain bid transaction format
 
@@ -101,6 +101,9 @@ Current fixture scenarios live in:
 - [fixtures/auction/google-competitive.json](/Users/davidking/dev/gns/fixtures/auction/google-competitive.json)
 - [fixtures/auction/openai-moderate.json](/Users/davidking/dev/gns/fixtures/auction/openai-moderate.json)
 - [fixtures/auction/tylercowen-thin-market.json](/Users/davidking/dev/gns/fixtures/auction/tylercowen-thin-market.json)
+- [fixtures/auction/no-bids.json](/Users/davidking/dev/gns/fixtures/auction/no-bids.json)
+- [fixtures/auction/underfloor-major-name.json](/Users/davidking/dev/gns/fixtures/auction/underfloor-major-name.json)
+- [fixtures/auction/soft-close-tail.json](/Users/davidking/dev/gns/fixtures/auction/soft-close-tail.json)
 
 These are meant to be illustrative:
 
@@ -113,6 +116,15 @@ These are meant to be illustrative:
   - a competitive but less extreme major-name auction
 - `tylercowen-thin-market`
   - a lower-intensity public-identity case
+- `no-bids`
+  - reserved name unlocks and attracts no demand at all
+- `underfloor-major-name`
+  - repeated attempts fail to clear the opening minimum
+- `soft-close-tail`
+  - a live auction keeps extending because meaningful late bids keep arriving
+
+Each fixture now also carries an explicit `expected` section so the core test
+suite can lock the intended behavior in place.
 
 ## Why This Exists
 

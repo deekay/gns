@@ -1,27 +1,42 @@
 {
-  "name": "openai",
-  "reservedClassId": "major_existing_name",
-  "unlockBlock": 850000,
-  "bidAttempts": [
-    {
-      "bidderId": "speculator_a",
-      "blockHeight": 850010,
-      "amountSats": "200000000"
-    },
-    {
-      "bidderId": "speculator_b",
-      "blockHeight": 851500,
-      "amountSats": "220000000"
-    },
-    {
-      "bidderId": "speculator_c",
-      "blockHeight": 854320,
-      "amountSats": "231000000"
-    },
-    {
-      "bidderId": "speculator_d",
-      "blockHeight": 854450,
-      "amountSats": "250000000"
-    }
-  ]
+  "scenario": {
+    "name": "openai",
+    "reservedClassId": "major_existing_name",
+    "unlockBlock": 850000,
+    "bidAttempts": [
+      {
+        "bidderId": "speculator_a",
+        "blockHeight": 850010,
+        "amountSats": "200000000"
+      },
+      {
+        "bidderId": "speculator_b",
+        "blockHeight": 851500,
+        "amountSats": "220000000"
+      },
+      {
+        "bidderId": "speculator_c",
+        "blockHeight": 854320,
+        "amountSats": "231000000"
+      },
+      {
+        "bidderId": "speculator_d",
+        "blockHeight": 854450,
+        "amountSats": "250000000"
+      }
+    ]
+  },
+  "expected": {
+    "status": "settled",
+    "winnerBidderId": "speculator_d",
+    "winnerAmountSats": "250000000",
+    "initialAuctionCloseBlock": 854330,
+    "finalAuctionCloseBlock": 854594,
+    "reasons": [
+      "opening_bid",
+      "higher_bid",
+      "higher_bid_soft_close_extended",
+      "higher_bid_soft_close_extended"
+    ]
+  }
 }
