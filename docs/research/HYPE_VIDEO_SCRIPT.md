@@ -6,15 +6,15 @@ It is intentionally script-like rather than protocol-spec-like. The goal is to m
 
 ## Current Draft
 
-Every name you use online is rented.
+Bitcoin addresses are not a human interface.
 
-Your domain renews annually through a registrar that can suspend it. Your social handle lives on a platform that can deactivate it. Your email address belongs to a provider that can close your account.
+If you are paying someone, approving a merchant, or telling software which counterparty you mean, raw addresses and opaque account strings are a bad final interface.
 
-These are not edge cases. Domains get suspended. Accounts get deleted. Businesses and individuals lose names they spent years building around because the name was never really theirs. It was on loan.
+Readable names exist, but they usually depend on somebody else. A domain depends on a registrar. A social handle depends on a platform. A payment alias often depends on a service provider.
 
 Global Name System is a different approach.
 
-A GNS name is something you control directly. No registrar. No platform. No renewal fee to a gatekeeper. The ownership record is public, verifiable, and anchored to Bitcoin.
+A GNS name is a human-readable name anchored to Bitcoin. It gives you a way to say who you mean before money moves, without relying on a registrar, a platform handle, or a gatekeeper-controlled alias.
 
 There is still a cost to claiming a name. Naming is never free. The difference is what kind of cost it is.
 
@@ -24,22 +24,23 @@ Here is how it works.
 
 To claim a name, you lock bitcoin as a bond. The name goes through a settlement period, during which the bond stays parked. Once settlement completes, the bond is yours to reclaim. The name remains yours.
 
-What the name points to can change. A payment address, a website, an identity key, a service endpoint. Those records live off-chain and are signed by the current owner. The mutable pointer stays lightweight. The ownership record is what stays permanent.
+What the name points to can change. A payment address first. Later, an identity key or a service endpoint. Those records live off-chain and are signed by the current owner. The mutable pointer stays lightweight. The ownership record is what stays permanent.
 
-This matters even more as software starts acting on your behalf. When an agent routes a payment, authenticates a counterparty, or calls a service without a human in the loop, the final destination should not rest on a probabilistic guess or on a rented domain. GNS gives human-readable names cryptographically grounded ownership.
+This matters even more as software starts acting on your behalf. Let the model infer what you want. Do not let the model guess who you mean. When an agent routes a payment, authenticates a counterparty, or calls a service without a human in the loop, the final destination should not rest on a probabilistic guess or on a rented domain. GNS gives human-readable names cryptographically grounded ownership.
 
 Other naming systems charge rent or depend on organizations that can change terms, remove access, or govern the namespace for their own interests. GNS is meant to be different: no token, no founder allocation, no whitelist, no protocol-level sale of names. Just a public namespace open under the same rules for everyone.
 
-Think about what it would have meant to register a domain in the early web, before the rest of the world fully appreciated what those names would become. Thousands of future companies, brands, and identities were still sitting there, unclaimed. That moment never comes back.
+The first proof point is simple: pay the right person in words you control. The broader future can come later: services, identities, richer software delegation. But the payment problem alone is already real.
 
 GNS is currently live on a private signet: a controlled Bitcoin test environment where anyone can inspect the idea, search names, prepare claims, and verify the ownership history for themselves.
 
-A name you control, anchored to Bitcoin, without paying a gatekeeper to keep it alive.
+A name you control, anchored to Bitcoin, for choosing who you mean before money moves.
 
 That is Global Name System.
 
 ## Messaging Notes
 
+- Lead first with payment and counterparty trust, not with generic naming ambition.
 - Lead with the idea that bonds are still pricing, but a special form of pricing.
 - Emphasize that GNS does not make naming free; it changes who gets paid and what the claimant retains.
 - Keep the difference between:

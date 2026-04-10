@@ -1,6 +1,6 @@
 # GNS One-Pager
 
-Global Name System (GNS) is a human-readable naming system anchored to Bitcoin. A GNS name is a flat string like `satoshi`, not a hierarchical domain like `satoshi.com`. The goal is to let people, projects, agents, payment flows, and services use a name they control directly, without depending on a registrar, a platform handle, or a rented suffix.
+Global Name System (GNS) is a human-readable naming system anchored to Bitcoin. A GNS name is a flat string like `satoshi`, not a hierarchical domain like `satoshi.com`. The front-door use case is simple: help humans say who they mean before money moves, without depending on a registrar, a platform handle, or a rented suffix.
 
 ## What The System Does
 
@@ -13,11 +13,11 @@ That means Bitcoin is used as a notary for ownership and state transitions, not 
 
 A name can point to:
 
-- a profile or identity record
 - payment destinations
 - APIs and services
+- a profile or identity record
 - agent endpoints
-- any ordered key/value pairs the ecosystem chooses to support
+- broader ordered key/value pairs later if the ecosystem decides to support them
 
 ## Core Design
 
@@ -147,11 +147,19 @@ That creates a decentralized path forward that is stronger than a generic off-ch
 
 ## The Vision For GNS
 
-GNS is not just "better DNS." It is a sovereign naming layer for the internet resources humans and software actually want to access:
+GNS should not be introduced as "better DNS" or as a generic key/value layer for everything on day one.
 
-- identities
+The first claim is narrower and more believable:
+
+- pay the right person
+- use the right Bitcoin-native service
+- express that choice in words you control instead of raw addresses, DNS aliases, or platform handles
+
+From that wedge, GNS can grow into a broader sovereign naming layer for the resources humans and software actually want to access:
+
 - payment endpoints
 - services
+- identities
 - software agents
 
 As we hand more decision-making to language models, human-readable names become more important, not less. Software can interpret intent flexibly, but the final payment, API call, or identity lookup should not rest on a probabilistic guess about which account, service, or counterparty is the right one. GNS is designed to make names human-readable while keeping ownership cryptographically grounded, so both people and software acting on their behalf can resolve them with much higher confidence.
