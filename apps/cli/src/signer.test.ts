@@ -4,6 +4,7 @@ import { initEccLib, networks, payments, Transaction } from "bitcoinjs-lib";
 import * as tinysecp from "tiny-secp256k1";
 
 import {
+  createAuctionBidPackage,
   CLAIM_PACKAGE_FORMAT,
   CLAIM_PACKAGE_VERSION,
   computeCommitHash,
@@ -13,6 +14,7 @@ import {
 } from "@gns/protocol";
 
 import {
+  buildAuctionBidArtifacts,
   buildBatchCommitArtifacts,
   buildBatchRevealArtifacts,
   buildCommitArtifacts,
@@ -129,6 +131,27 @@ function createSecondClaimPackage() {
     revealReady: false,
     revealPayloadHex: null,
     revealPayloadBytes: null
+  });
+}
+
+function createAuctionBidPackageFixture() {
+  return createAuctionBidPackage({
+    auctionId: "04-soft-close-google",
+    name: "google",
+    reservedClassId: "top_collision",
+    classLabel: "Top collision / ultra-scarce",
+    currentBlockHeight: 844_360,
+    phase: "soft_close",
+    unlockBlock: 840_000,
+    auctionCloseBlockAfter: 844_497,
+    openingMinimumBidSats: 1_000_000_000n,
+    currentLeaderBidderId: "gamma",
+    currentHighestBidSats: 1_160_000_000n,
+    currentRequiredMinimumBidSats: 1_218_000_000n,
+    reservedLockBlocks: 525_600,
+    bidderId: "operator_alpha",
+    bidAmountSats: 1_700_000_000n,
+    exportedAt: "2026-04-11T22:00:00.000Z"
   });
 }
 
@@ -271,6 +294,39 @@ describe("signArtifacts", () => {
 
     expect(signed.kind).toBe("gns-signed-transfer-artifacts");
     expect(signed.signedTransactionId).toBe(artifacts.transferTxid);
+
+    const transaction = Transaction.fromHex(signed.signedTransactionHex);
+    expect(transaction.ins[0]?.witness.length).toBeGreaterThan(0);
+  });
+
+  it("signs witnesspubkeyhash auction bid artifacts and preserves txid", () => {
+    const { fundingKey, fundingAddress } = createClaimPackage();
+    const artifacts = buildAuctionBidArtifacts({
+      bidPackage: createAuctionBidPackageFixture(),
+      fundingInputs: [
+        {
+          txid: "cc".repeat(32),
+          vout: 0,
+          valueSats: 1_800_100_000n,
+          address: fundingAddress
+        }
+      ],
+      feeSats: 100_000n,
+      network: "signet",
+      bondAddress: payments.p2wpkh({
+        hash: Buffer.alloc(20, 8),
+        network: networks.testnet
+      }).address ?? "",
+      changeAddress: fundingAddress
+    });
+
+    const signed = signArtifacts({
+      artifacts,
+      wifs: [fundingKey.toWIF()]
+    });
+
+    expect(signed.kind).toBe("gns-signed-auction-bid-artifacts");
+    expect(signed.signedTransactionId).toBe(artifacts.bidTxid);
 
     const transaction = Transaction.fromHex(signed.signedTransactionHex);
     expect(transaction.ins[0]?.witness.length).toBeGreaterThan(0);

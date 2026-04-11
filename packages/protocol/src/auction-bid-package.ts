@@ -1,3 +1,6 @@
+import { createHash } from "node:crypto";
+
+import { assertHexBytes } from "./bytes.js";
 import { PROTOCOL_NAME } from "./constants.js";
 import { normalizeName } from "./names.js";
 
@@ -39,6 +42,8 @@ export interface AuctionBidPackage {
   readonly blocksUntilClose: number | null;
   readonly bidderId: string;
   readonly bidAmountSats: string;
+  readonly auctionStateCommitment: string;
+  readonly bidderCommitment: string;
   readonly previewStatus: AuctionBidPackagePreviewStatus;
   readonly previewSummary: string;
   readonly previewRequiredMinimumBidSats: string | null;
@@ -64,6 +69,8 @@ export interface CreateAuctionBidPackageInput {
   readonly blocksUntilClose?: number | null;
   readonly bidderId: string;
   readonly bidAmountSats: bigint | number | string;
+  readonly auctionStateCommitment?: string;
+  readonly bidderCommitment?: string;
   readonly exportedAt?: string;
 }
 
@@ -90,6 +97,25 @@ export function createAuctionBidPackage(input: CreateAuctionBidPackageInput): Au
   );
   const bidderId = normalizeRequiredText(input.bidderId, "bidderId");
   const bidAmountSats = parseBigIntLike(input.bidAmountSats, "bidAmountSats");
+  const auctionStateCommitment = input.auctionStateCommitment
+    ? assertHexBytes(input.auctionStateCommitment, 32, "auctionStateCommitment")
+    : computeAuctionBidStateCommitment({
+        auctionId,
+        name,
+        reservedClassId,
+        currentBlockHeight,
+        phase,
+        unlockBlock,
+        auctionCloseBlockAfter,
+        openingMinimumBidSats,
+        currentLeaderBidderId,
+        currentHighestBidSats,
+        currentRequiredMinimumBidSats,
+        reservedLockBlocks
+      });
+  const bidderCommitment = input.bidderCommitment
+    ? assertHexBytes(input.bidderCommitment, 16, "bidderCommitment")
+    : computeAuctionBidderCommitment(bidderId);
 
   assertAuctionStateConsistency({
     phase,
@@ -130,6 +156,8 @@ export function createAuctionBidPackage(input: CreateAuctionBidPackageInput): Au
     blocksUntilClose,
     bidderId,
     bidAmountSats: bidAmountSats.toString(),
+    auctionStateCommitment,
+    bidderCommitment,
     previewStatus: preview.previewStatus,
     previewSummary: preview.previewSummary,
     previewRequiredMinimumBidSats: preview.previewRequiredMinimumBidSats?.toString() ?? null,
@@ -181,6 +209,16 @@ export function parseAuctionBidPackage(input: unknown): AuctionBidPackage {
   const blocksUntilClose = parseOptionalNonNegativeSafeInteger(record.blocksUntilClose, "blocksUntilClose");
   const bidderId = normalizeRequiredText(assertString(record.bidderId, "bidderId"), "bidderId");
   const bidAmountSats = parseBigIntLike(record.bidAmountSats, "bidAmountSats");
+  const auctionStateCommitment = assertHexBytes(
+    assertString(record.auctionStateCommitment, "auctionStateCommitment"),
+    32,
+    "auctionStateCommitment"
+  );
+  const bidderCommitment = assertHexBytes(
+    assertString(record.bidderCommitment, "bidderCommitment"),
+    16,
+    "bidderCommitment"
+  );
   const previewStatus = parseAuctionBidPackagePreviewStatus(record.previewStatus, "previewStatus");
   const previewSummary = assertString(record.previewSummary, "previewSummary");
   const previewRequiredMinimumBidSats = parseOptionalBigIntLike(
@@ -217,6 +255,28 @@ export function parseAuctionBidPackage(input: unknown): AuctionBidPackage {
     bidAmountSats,
     blocksUntilUnlock
   });
+  const expectedAuctionStateCommitment = computeAuctionBidStateCommitment({
+    auctionId,
+    name,
+    reservedClassId,
+    currentBlockHeight,
+    phase,
+    unlockBlock,
+    auctionCloseBlockAfter,
+    openingMinimumBidSats,
+    currentLeaderBidderId,
+    currentHighestBidSats,
+    currentRequiredMinimumBidSats,
+    reservedLockBlocks
+  });
+  if (auctionStateCommitment !== expectedAuctionStateCommitment) {
+    throw new Error("auctionStateCommitment does not match the observed auction state");
+  }
+
+  const expectedBidderCommitment = computeAuctionBidderCommitment(bidderId);
+  if (bidderCommitment !== expectedBidderCommitment) {
+    throw new Error("bidderCommitment does not match bidderId");
+  }
 
   if (previewStatus !== expectedPreview.previewStatus) {
     throw new Error("previewStatus does not match the observed auction state");
@@ -260,12 +320,62 @@ export function parseAuctionBidPackage(input: unknown): AuctionBidPackage {
     blocksUntilClose,
     bidderId,
     bidAmountSats: bidAmountSats.toString(),
+    auctionStateCommitment,
+    bidderCommitment,
     previewStatus,
     previewSummary,
     previewRequiredMinimumBidSats: previewRequiredMinimumBidSats?.toString() ?? null,
     wouldBecomeLeader,
     wouldExtendSoftClose
   };
+}
+
+export function computeAuctionBidderCommitment(bidderId: string): string {
+  return createHash("sha256")
+    .update("gns-auction-bidder-v1", "utf8")
+    .update("\u0000", "utf8")
+    .update(normalizeRequiredText(bidderId, "bidderId"), "utf8")
+    .digest("hex")
+    .slice(0, 32);
+}
+
+export function computeAuctionBidStateCommitment(input: {
+  readonly auctionId: string;
+  readonly name: string;
+  readonly reservedClassId: string;
+  readonly currentBlockHeight: number;
+  readonly phase: AuctionBidPackagePhase;
+  readonly unlockBlock: number;
+  readonly auctionCloseBlockAfter: number | null;
+  readonly openingMinimumBidSats: bigint;
+  readonly currentLeaderBidderId: string | null;
+  readonly currentHighestBidSats: bigint | null;
+  readonly currentRequiredMinimumBidSats: bigint | null;
+  readonly reservedLockBlocks: number;
+}): string {
+  const hasher = createHash("sha256");
+  const fields = [
+    "gns-auction-state-v1",
+    normalizeRequiredText(input.auctionId, "auctionId"),
+    normalizeName(input.name),
+    normalizeRequiredText(input.reservedClassId, "reservedClassId"),
+    String(parseNonNegativeSafeInteger(input.currentBlockHeight, "currentBlockHeight")),
+    parseAuctionBidPackagePhase(input.phase, "phase"),
+    String(parseNonNegativeSafeInteger(input.unlockBlock, "unlockBlock")),
+    input.auctionCloseBlockAfter === null ? "" : String(parseNonNegativeSafeInteger(input.auctionCloseBlockAfter, "auctionCloseBlockAfter")),
+    input.openingMinimumBidSats.toString(),
+    input.currentLeaderBidderId ?? "",
+    input.currentHighestBidSats?.toString() ?? "",
+    input.currentRequiredMinimumBidSats?.toString() ?? "",
+    String(parseNonNegativeSafeInteger(input.reservedLockBlocks, "reservedLockBlocks"))
+  ];
+
+  for (const field of fields) {
+    hasher.update(field, "utf8");
+    hasher.update("\u0000", "utf8");
+  }
+
+  return hasher.digest("hex");
 }
 
 function deriveAuctionBidPreview(input: {

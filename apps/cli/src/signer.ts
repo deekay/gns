@@ -13,6 +13,7 @@ export interface BuiltArtifactsEnvelope {
     | "gns-commit-artifacts"
     | "gns-reveal-artifacts"
     | "gns-transfer-artifacts"
+    | "gns-auction-bid-artifacts"
     | "gns-batch-commit-artifacts"
     | "gns-batch-reveal-artifacts";
   readonly network: GnsCliNetwork;
@@ -20,6 +21,7 @@ export interface BuiltArtifactsEnvelope {
   readonly commitTxid?: string;
   readonly revealTxid?: string;
   readonly transferTxid?: string;
+  readonly bidTxid?: string;
 }
 
 export interface SignedArtifacts {
@@ -27,6 +29,7 @@ export interface SignedArtifacts {
     | "gns-signed-commit-artifacts"
     | "gns-signed-reveal-artifacts"
     | "gns-signed-transfer-artifacts"
+    | "gns-signed-auction-bid-artifacts"
     | "gns-signed-batch-commit-artifacts"
     | "gns-signed-batch-reveal-artifacts";
   readonly network: GnsCliNetwork;
@@ -41,6 +44,7 @@ export interface SignedArtifactsEnvelope {
     | "gns-signed-commit-artifacts"
     | "gns-signed-reveal-artifacts"
     | "gns-signed-transfer-artifacts"
+    | "gns-signed-auction-bid-artifacts"
     | "gns-signed-batch-commit-artifacts"
     | "gns-signed-batch-reveal-artifacts";
   readonly network: GnsCliNetwork;
@@ -58,11 +62,12 @@ export function parseBuiltArtifactsEnvelope(input: unknown): BuiltArtifactsEnvel
     kind !== "gns-commit-artifacts" &&
     kind !== "gns-reveal-artifacts" &&
     kind !== "gns-transfer-artifacts" &&
+    kind !== "gns-auction-bid-artifacts" &&
     kind !== "gns-batch-commit-artifacts" &&
     kind !== "gns-batch-reveal-artifacts"
   ) {
     throw new Error(
-      "artifacts kind must be gns-commit-artifacts, gns-reveal-artifacts, gns-transfer-artifacts, gns-batch-commit-artifacts, or gns-batch-reveal-artifacts"
+      "artifacts kind must be gns-commit-artifacts, gns-reveal-artifacts, gns-transfer-artifacts, gns-auction-bid-artifacts, gns-batch-commit-artifacts, or gns-batch-reveal-artifacts"
     );
   }
 
@@ -75,7 +80,8 @@ export function parseBuiltArtifactsEnvelope(input: unknown): BuiltArtifactsEnvel
     psbtBase64,
     ...(typeof record.commitTxid === "string" ? { commitTxid: record.commitTxid } : {}),
     ...(typeof record.revealTxid === "string" ? { revealTxid: record.revealTxid } : {}),
-    ...(typeof record.transferTxid === "string" ? { transferTxid: record.transferTxid } : {})
+    ...(typeof record.transferTxid === "string" ? { transferTxid: record.transferTxid } : {}),
+    ...(typeof record.bidTxid === "string" ? { bidTxid: record.bidTxid } : {})
   };
 }
 
@@ -163,6 +169,14 @@ export function signArtifacts(options: {
     throw new Error("signed transfer txid does not match the unsigned transfer artifact");
   }
 
+  if (
+    options.artifacts.kind === "gns-auction-bid-artifacts" &&
+    options.artifacts.bidTxid &&
+    options.artifacts.bidTxid !== signedTransactionId
+  ) {
+    throw new Error("signed auction bid txid does not match the unsigned auction bid artifact");
+  }
+
   return {
     kind: (
       options.artifacts.kind === "gns-commit-artifacts"
@@ -173,6 +187,8 @@ export function signArtifacts(options: {
           ? "gns-signed-reveal-artifacts"
           : options.artifacts.kind === "gns-batch-reveal-artifacts"
             ? "gns-signed-batch-reveal-artifacts"
+          : options.artifacts.kind === "gns-auction-bid-artifacts"
+            ? "gns-signed-auction-bid-artifacts"
           : "gns-signed-transfer-artifacts"
     ),
     network: options.artifacts.network,
@@ -191,11 +207,12 @@ export function parseSignedArtifactsEnvelope(input: unknown): SignedArtifactsEnv
     kind !== "gns-signed-commit-artifacts" &&
     kind !== "gns-signed-reveal-artifacts" &&
     kind !== "gns-signed-transfer-artifacts" &&
+    kind !== "gns-signed-auction-bid-artifacts" &&
     kind !== "gns-signed-batch-commit-artifacts" &&
     kind !== "gns-signed-batch-reveal-artifacts"
   ) {
     throw new Error(
-      "signed artifacts kind must be gns-signed-commit-artifacts, gns-signed-reveal-artifacts, gns-signed-transfer-artifacts, gns-signed-batch-commit-artifacts, or gns-signed-batch-reveal-artifacts"
+      "signed artifacts kind must be gns-signed-commit-artifacts, gns-signed-reveal-artifacts, gns-signed-transfer-artifacts, gns-signed-auction-bid-artifacts, gns-signed-batch-commit-artifacts, or gns-signed-batch-reveal-artifacts"
     );
   }
 

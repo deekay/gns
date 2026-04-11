@@ -46,6 +46,15 @@ export interface RevealProofChunkEventPayload {
   readonly proofBytesHex: string;
 }
 
+export interface AuctionBidEventPayload {
+  readonly flags: number;
+  readonly bondVout: number;
+  readonly reservedLockBlocks: number;
+  readonly bidAmountSats: bigint;
+  readonly auctionCommitment: string;
+  readonly bidderCommitment: string;
+}
+
 export interface TransferAuthorizationFields {
   readonly prevStateTxid: string;
   readonly newOwnerPubkey: string;
@@ -214,6 +223,42 @@ export function createRevealProofChunkPayload(input: {
   };
 }
 
+export function createAuctionBidPayload(input: {
+  readonly flags?: number;
+  readonly bondVout: number;
+  readonly reservedLockBlocks: number;
+  readonly bidAmountSats: bigint;
+  readonly auctionCommitment: string;
+  readonly bidderCommitment: string;
+}): AuctionBidEventPayload {
+  const flags = input.flags ?? 0;
+
+  if (!Number.isInteger(flags) || flags < 0 || flags > 0xff) {
+    throw new Error("flags must fit in one byte");
+  }
+
+  if (!Number.isInteger(input.bondVout) || input.bondVout < 0 || input.bondVout > 0xff) {
+    throw new Error("bondVout must fit in one byte");
+  }
+
+  if (!Number.isInteger(input.reservedLockBlocks) || input.reservedLockBlocks < 0 || input.reservedLockBlocks > 0xffff_ffff) {
+    throw new Error("reservedLockBlocks must fit in an unsigned 32-bit integer");
+  }
+
+  if (input.bidAmountSats < 0n || input.bidAmountSats > 0xffff_ffff_ffff_ffffn) {
+    throw new Error("bidAmountSats must fit in an unsigned 64-bit integer");
+  }
+
+  return {
+    flags,
+    bondVout: input.bondVout,
+    reservedLockBlocks: input.reservedLockBlocks,
+    bidAmountSats: input.bidAmountSats,
+    auctionCommitment: assertHexBytes(input.auctionCommitment, 32, "auctionCommitment"),
+    bidderCommitment: assertHexBytes(input.bidderCommitment, 16, "bidderCommitment")
+  };
+}
+
 export function signTransferAuthorization(
   input: TransferAuthorizationFields & { readonly ownerPrivateKeyHex: string }
 ): string {
@@ -260,7 +305,8 @@ export function getEventTypeName(
   | "TRANSFER"
   | "BATCH_ANCHOR"
   | "BATCH_REVEAL"
-  | "REVEAL_PROOF_CHUNK" {
+  | "REVEAL_PROOF_CHUNK"
+  | "AUCTION_BID" {
   switch (type) {
     case GnsEventType.Commit:
       return "COMMIT";
@@ -274,6 +320,8 @@ export function getEventTypeName(
       return "BATCH_REVEAL";
     case GnsEventType.RevealProofChunk:
       return "REVEAL_PROOF_CHUNK";
+    case GnsEventType.AuctionBid:
+      return "AUCTION_BID";
   }
 }
 

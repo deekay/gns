@@ -45,7 +45,8 @@ export enum GnsEventType {
   Transfer = 0x03,
   BatchAnchor = 0x04,
   BatchReveal = 0x05,
-  RevealProofChunk = 0x06
+  RevealProofChunk = 0x06,
+  AuctionBid = 0x07
 }
 
 export enum ValueType {

@@ -5,6 +5,7 @@ import {
   type BitcoinTransactionOutput
 } from "@gns/bitcoin";
 import {
+  type AuctionBidEventPayload,
   type BatchAnchorEventPayload,
   type BatchRevealEventPayload,
   GnsEventType,
@@ -86,7 +87,8 @@ export type TransactionProvenanceEventPayloadSnapshot =
     }
   | TransferEventPayload
   | BatchAnchorEventPayload
-  | RevealProofChunkEventPayload;
+  | RevealProofChunkEventPayload
+  | AuctionBidEventPayload;
 
 export interface TransactionProvenanceEventSnapshot {
   readonly vout: number;
@@ -97,7 +99,8 @@ export interface TransactionProvenanceEventSnapshot {
     | "TRANSFER"
     | "BATCH_ANCHOR"
     | "BATCH_REVEAL"
-    | "REVEAL_PROOF_CHUNK";
+    | "REVEAL_PROOF_CHUNK"
+    | "AUCTION_BID";
   readonly payload: TransactionProvenanceEventPayloadSnapshot;
   readonly validationStatus: "applied" | "ignored";
   readonly reason: string;
@@ -471,6 +474,7 @@ function serializeProvenancePayload(
     | BatchAnchorEventPayload
     | BatchRevealEventPayload
     | RevealProofChunkEventPayload
+    | AuctionBidEventPayload
 ): TransactionProvenanceEventPayloadSnapshot {
   if ("anchorTxid" in payload) {
     return {

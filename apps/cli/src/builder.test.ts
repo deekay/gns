@@ -5,16 +5,21 @@ import { BIP32Factory } from "bip32";
 import * as tinysecp from "tiny-secp256k1";
 
 import {
+  createAuctionBidPackage,
   CLAIM_PACKAGE_FORMAT,
   CLAIM_PACKAGE_VERSION,
   BATCH_REVEAL_MIN_PAYLOAD_LENGTH,
   computeCommitHash,
+  decodeAuctionBidPayload,
+  decodeGnsPayload,
   encodeCommitPayload,
+  GnsEventType,
   parseClaimPackage,
   PROTOCOL_NAME
 } from "@gns/protocol";
 
 import {
+  buildAuctionBidArtifacts,
   buildBatchCommitArtifacts,
   buildBatchRevealArtifacts,
   buildCommitArtifacts,
@@ -115,6 +120,27 @@ function createSecondClaimPackage() {
     revealReady: false,
     revealPayloadHex: null,
     revealPayloadBytes: null
+  });
+}
+
+function createAuctionBidPackageFixture() {
+  return createAuctionBidPackage({
+    auctionId: "04-soft-close-google",
+    name: "google",
+    reservedClassId: "top_collision",
+    classLabel: "Top collision / ultra-scarce",
+    currentBlockHeight: 844_360,
+    phase: "soft_close",
+    unlockBlock: 840_000,
+    auctionCloseBlockAfter: 844_497,
+    openingMinimumBidSats: 1_000_000_000n,
+    currentLeaderBidderId: "gamma",
+    currentHighestBidSats: 1_160_000_000n,
+    currentRequiredMinimumBidSats: 1_218_000_000n,
+    reservedLockBlocks: 525_600,
+    bidderId: "operator_alpha",
+    bidAmountSats: 1_700_000_000n,
+    exportedAt: "2026-04-11T22:00:00.000Z"
   });
 }
 
@@ -258,6 +284,45 @@ describe("buildRevealArtifacts", () => {
 
     const transaction = Transaction.fromHex(revealArtifacts.unsignedTransactionHex);
     expect(transaction.outs[0]?.value).toBe(0n);
+  });
+});
+
+describe("buildAuctionBidArtifacts", () => {
+  it("builds unsigned experimental auction bid artifacts from a bid package", () => {
+    const bidPackage = createAuctionBidPackageFixture();
+    const artifacts = buildAuctionBidArtifacts({
+      bidPackage,
+      fundingInputs: [
+        {
+          txid: "cc".repeat(32),
+          vout: 0,
+          valueSats: 1_800_100_000n,
+          address: createTestAddress(13)
+        }
+      ],
+      feeSats: 100_000n,
+      network: "signet",
+      bondAddress: createTestAddress(14),
+      changeAddress: createTestAddress(15)
+    });
+
+    expect(artifacts.kind).toBe("gns-auction-bid-artifacts");
+    expect(artifacts.bidTxid).toHaveLength(64);
+    expect(artifacts.payloadBytes).toBeGreaterThan(0);
+    expect(artifacts.outputs[0]?.role).toBe("auction_bid_bond");
+    expect(artifacts.outputs[0]?.valueSats).toBe("1700000000");
+    expect(artifacts.outputs[1]?.role).toBe("gns_auction_bid");
+
+    const transaction = Transaction.fromHex(artifacts.unsignedTransactionHex);
+    expect(transaction.outs[0]?.value).toBe(1_700_000_000n);
+    const payload = decodeAuctionBidPayload(Buffer.from(artifacts.payloadHex, "hex"));
+    expect(payload.bidAmountSats).toBe(1_700_000_000n);
+    expect(payload.reservedLockBlocks).toBe(525_600);
+    expect(payload.bondVout).toBe(0);
+    expect(decodeGnsPayload(Buffer.from(artifacts.payloadHex, "hex"))).toEqual({
+      type: GnsEventType.AuctionBid,
+      payload
+    });
   });
 });
 

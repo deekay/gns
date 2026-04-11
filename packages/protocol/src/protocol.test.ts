@@ -7,9 +7,12 @@ import {
   BATCH_CLAIM_PACKAGE_FORMAT,
   BATCH_CLAIM_PACKAGE_VERSION,
   BATCH_REVEAL_MIN_PAYLOAD_LENGTH,
+  AUCTION_BID_PAYLOAD_LENGTH,
   CLAIM_PACKAGE_FORMAT,
   CLAIM_PACKAGE_VERSION,
+  computeAuctionBidStateCommitment,
   computeBatchCommitLeafHash,
+  computeAuctionBidderCommitment,
   createBatchClaimPackage,
   createClaimPackage,
   createMerkleProof,
@@ -17,6 +20,7 @@ import {
   DEFAULT_BATCH_PROOF_CHUNK_BYTES,
   INITIAL_MATURITY_BLOCKS,
   decodeBatchAnchorPayload,
+  decodeAuctionBidPayload,
   decodeBatchRevealPayload,
   MIN_MATURITY_BLOCKS,
   decodeMerkleProof,
@@ -27,6 +31,7 @@ import {
   decodeRevealProofChunkPayload,
   decodeTransferBody,
   encodeBatchAnchorPayload,
+  encodeAuctionBidPayload,
   encodeBatchRevealPayload,
   encodeCommitPayload,
   encodeMerkleProof,
@@ -192,6 +197,77 @@ describe("wire payloads", () => {
         flags: 0x00,
         successorBondVout: 0x02,
         signature: "66".repeat(64)
+      }
+    });
+  });
+
+  it("round-trips auction bid payloads", () => {
+    const encoded = encodeAuctionBidPayload({
+      flags: 0,
+      bondVout: 0,
+      reservedLockBlocks: 262_800,
+      bidAmountSats: 200_000_000n,
+      auctionCommitment: computeAuctionBidStateCommitment({
+        auctionId: "openai-soft-close",
+        name: "openai",
+        reservedClassId: "major_existing_name",
+        currentBlockHeight: 844_360,
+        phase: "soft_close",
+        unlockBlock: 840_000,
+        auctionCloseBlockAfter: 844_497,
+        openingMinimumBidSats: 200_000_000n,
+        currentLeaderBidderId: "gamma",
+        currentHighestBidSats: 210_000_000n,
+        currentRequiredMinimumBidSats: 220_500_000n,
+        reservedLockBlocks: 262_800
+      }),
+      bidderCommitment: computeAuctionBidderCommitment("operator_alpha")
+    });
+
+    expect(encoded).toHaveLength(AUCTION_BID_PAYLOAD_LENGTH);
+    expect(decodeAuctionBidPayload(encoded)).toEqual({
+      flags: 0,
+      bondVout: 0,
+      reservedLockBlocks: 262_800,
+      bidAmountSats: 200_000_000n,
+      auctionCommitment: computeAuctionBidStateCommitment({
+        auctionId: "openai-soft-close",
+        name: "openai",
+        reservedClassId: "major_existing_name",
+        currentBlockHeight: 844_360,
+        phase: "soft_close",
+        unlockBlock: 840_000,
+        auctionCloseBlockAfter: 844_497,
+        openingMinimumBidSats: 200_000_000n,
+        currentLeaderBidderId: "gamma",
+        currentHighestBidSats: 210_000_000n,
+        currentRequiredMinimumBidSats: 220_500_000n,
+        reservedLockBlocks: 262_800
+      }),
+      bidderCommitment: computeAuctionBidderCommitment("operator_alpha")
+    });
+    expect(decodeGnsPayload(encoded)).toEqual({
+      type: GnsEventType.AuctionBid,
+      payload: {
+        flags: 0,
+        bondVout: 0,
+        reservedLockBlocks: 262_800,
+        bidAmountSats: 200_000_000n,
+        auctionCommitment: computeAuctionBidStateCommitment({
+          auctionId: "openai-soft-close",
+          name: "openai",
+          reservedClassId: "major_existing_name",
+          currentBlockHeight: 844_360,
+          phase: "soft_close",
+          unlockBlock: 840_000,
+          auctionCloseBlockAfter: 844_497,
+          openingMinimumBidSats: 200_000_000n,
+          currentLeaderBidderId: "gamma",
+          currentHighestBidSats: 210_000_000n,
+          currentRequiredMinimumBidSats: 220_500_000n,
+          reservedLockBlocks: 262_800
+        }),
+        bidderCommitment: computeAuctionBidderCommitment("operator_alpha")
       }
     });
   });

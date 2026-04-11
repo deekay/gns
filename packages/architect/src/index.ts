@@ -12,17 +12,22 @@ import * as tinysecp from "tiny-secp256k1";
 
 import {
   bytesToHex,
+  computeAuctionBidderCommitment,
+  computeAuctionBidStateCommitment,
   computeBatchCommitLeafHash,
   computeMerkleRoot,
   createBatchClaimPackage,
   createMerkleProof,
   createClaimPackage,
+  encodeAuctionBidPayload,
   encodeBatchAnchorPayload,
   encodeMerkleProof,
   encodeRevealPayload,
   encodeTransferPayload,
+  type AuctionBidPackage,
   type BatchClaimPackage,
   type ClaimPackage,
+  parseAuctionBidPackage,
   parseClaimPackage,
   signTransferAuthorization
 } from "@gns/protocol";
@@ -140,6 +145,18 @@ export interface BuildBatchRevealArtifactsOptions {
   readonly feeSats: bigint;
   readonly network: GnsCliNetwork;
   readonly changeAddress?: string;
+  readonly walletDerivation?: WalletDerivationDescriptor;
+}
+
+export interface BuildAuctionBidArtifactsOptions {
+  readonly bidPackage: AuctionBidPackage;
+  readonly fundingInputs: ReadonlyArray<FundingInputDescriptor>;
+  readonly feeSats: bigint;
+  readonly network: GnsCliNetwork;
+  readonly bondAddress: string;
+  readonly changeAddress?: string;
+  readonly bondVout?: number;
+  readonly flags?: number;
   readonly walletDerivation?: WalletDerivationDescriptor;
 }
 
@@ -273,6 +290,31 @@ export interface BatchRevealArtifacts {
   }>;
 }
 
+export interface AuctionBidArtifacts {
+  readonly kind: "gns-auction-bid-artifacts";
+  readonly network: GnsCliNetwork;
+  readonly feeSats: string;
+  readonly totalInputSats: string;
+  readonly changeValueSats: string;
+  readonly unsignedTransactionHex: string;
+  readonly unsignedTransactionVirtualSize: number;
+  readonly bidTxid: string;
+  readonly psbtBase64: string;
+  readonly outputs: ReadonlyArray<{
+    readonly vout: number;
+    readonly role: "auction_bid_bond" | "gns_auction_bid" | "change";
+    readonly valueSats: string;
+    readonly address: string | null;
+    readonly scriptHex: string;
+  }>;
+  readonly payloadHex: string;
+  readonly payloadBytes: number;
+  readonly bondAddress: string;
+  readonly bondVout: number;
+  readonly bidderCommitment: string;
+  readonly auctionStateCommitment: string;
+}
+
 export interface TransferArtifacts {
   readonly kind: "gns-transfer-artifacts";
   readonly mode?: "gift" | "sale" | "immature-sale";
@@ -323,6 +365,13 @@ interface BatchCommitBuilderOutput {
 
 interface BatchRevealBuilderOutput {
   readonly role: "gns_batch_reveal" | "gns_reveal_proof_chunk" | "change";
+  readonly valueSats: bigint;
+  readonly address: string | null;
+  readonly script: Uint8Array;
+}
+
+interface AuctionBidBuilderOutput {
+  readonly role: "auction_bid_bond" | "gns_auction_bid" | "change";
   readonly valueSats: bigint;
   readonly address: string | null;
   readonly script: Uint8Array;
@@ -1049,6 +1098,173 @@ export function buildBatchRevealArtifacts(
       address: output.address,
       scriptHex: bytesToHex(output.script)
     }))
+  };
+}
+
+export function buildAuctionBidArtifacts(
+  options: BuildAuctionBidArtifactsOptions
+): AuctionBidArtifacts {
+  const network = resolveNetwork(options.network);
+  const bidPackage = parseAuctionBidPackage(options.bidPackage);
+  const flags = options.flags ?? 0;
+  const bondVout = options.bondVout ?? 0;
+
+  if (!Number.isInteger(flags) || flags < 0 || flags > 0xff) {
+    throw new Error("flags must fit in one byte");
+  }
+
+  if (!Number.isInteger(bondVout) || bondVout < 0 || bondVout > 1) {
+    throw new Error("prototype auction bid builder currently supports bondVout 0 or 1 only");
+  }
+
+  const bondAddress = options.bondAddress;
+  const bidAmountSats = BigInt(bidPackage.bidAmountSats);
+  const totalInputSats = sumInputValues(options.fundingInputs);
+  const changeAddress = options.changeAddress ?? null;
+  const changeValueSats = totalInputSats - bidAmountSats - options.feeSats;
+
+  if (changeValueSats < 0n) {
+    throw new Error("funding inputs do not cover the auction bid amount and fee");
+  }
+
+  if (changeValueSats > 0n && changeAddress === null) {
+    throw new Error("a change address is required when the auction bid transaction produces change");
+  }
+
+  const expectedBidderCommitment = computeAuctionBidderCommitment(bidPackage.bidderId);
+  if (bidPackage.bidderCommitment !== expectedBidderCommitment) {
+    throw new Error("bid package bidderCommitment does not match bidderId");
+  }
+
+  const expectedAuctionStateCommitment = computeAuctionBidStateCommitment({
+    auctionId: bidPackage.auctionId,
+    name: bidPackage.name,
+    reservedClassId: bidPackage.reservedClassId,
+    currentBlockHeight: bidPackage.currentBlockHeight,
+    phase: bidPackage.phase,
+    unlockBlock: bidPackage.unlockBlock,
+    auctionCloseBlockAfter: bidPackage.auctionCloseBlockAfter,
+    openingMinimumBidSats: BigInt(bidPackage.openingMinimumBidSats),
+    currentLeaderBidderId: bidPackage.currentLeaderBidderId,
+    currentHighestBidSats: bidPackage.currentHighestBidSats === null ? null : BigInt(bidPackage.currentHighestBidSats),
+    currentRequiredMinimumBidSats:
+      bidPackage.currentRequiredMinimumBidSats === null ? null : BigInt(bidPackage.currentRequiredMinimumBidSats),
+    reservedLockBlocks: bidPackage.reservedLockBlocks
+  });
+  if (bidPackage.auctionStateCommitment !== expectedAuctionStateCommitment) {
+    throw new Error("bid package auctionStateCommitment does not match the observed auction state");
+  }
+
+  const bidBondScript = toSupportedOutputScript(bondAddress, network, "bond address");
+  const payloadBytes = encodeAuctionBidPayload({
+    flags,
+    bondVout,
+    reservedLockBlocks: bidPackage.reservedLockBlocks,
+    bidAmountSats,
+    auctionCommitment: bidPackage.auctionStateCommitment,
+    bidderCommitment: bidPackage.bidderCommitment
+  });
+  const auctionBidScript = compileOpReturn(bytesToHex(payloadBytes));
+  const changeScript = changeAddress === null ? null : toSupportedOutputScript(changeAddress, network, "change address");
+
+  const outputs: AuctionBidBuilderOutput[] = bondVout === 0
+    ? [
+        {
+          role: "auction_bid_bond",
+          valueSats: bidAmountSats,
+          address: bondAddress,
+          script: bidBondScript
+        },
+        {
+          role: "gns_auction_bid",
+          valueSats: 0n,
+          address: null,
+          script: auctionBidScript
+        }
+      ]
+    : [
+        {
+          role: "gns_auction_bid",
+          valueSats: 0n,
+          address: null,
+          script: auctionBidScript
+        },
+        {
+          role: "auction_bid_bond",
+          valueSats: bidAmountSats,
+          address: bondAddress,
+          script: bidBondScript
+        }
+      ];
+
+  if (changeValueSats > 0n && changeScript !== null) {
+    outputs.push({
+      role: "change",
+      valueSats: changeValueSats,
+      address: changeAddress,
+      script: changeScript
+    });
+  }
+
+  const transaction = new Transaction();
+  const psbt = new Psbt({ network });
+  transaction.version = 2;
+  psbt.setVersion(2);
+
+  for (const input of options.fundingInputs) {
+    const inputScript = toSupportedOutputScript(input.address, network, "input address");
+
+    transaction.addInput(reverseTxid(input.txid), input.vout);
+    psbt.addInput({
+      hash: input.txid,
+      index: input.vout,
+      witnessUtxo: {
+        script: inputScript,
+        value: input.valueSats
+      },
+      ...(buildInputBip32Derivation(input, options.walletDerivation, network) ?? {})
+    });
+  }
+
+  for (const output of outputs) {
+    transaction.addOutput(output.script, output.valueSats);
+
+    if (output.address !== null) {
+      psbt.addOutput({
+        address: output.address,
+        value: output.valueSats
+      });
+    } else {
+      psbt.addOutput({
+        script: output.script,
+        value: output.valueSats
+      });
+    }
+  }
+
+  return {
+    kind: "gns-auction-bid-artifacts",
+    network: options.network,
+    feeSats: options.feeSats.toString(),
+    totalInputSats: totalInputSats.toString(),
+    changeValueSats: changeValueSats.toString(),
+    unsignedTransactionHex: transaction.toHex(),
+    unsignedTransactionVirtualSize: transaction.virtualSize(),
+    bidTxid: transaction.getId(),
+    psbtBase64: psbt.toBase64(),
+    outputs: outputs.map((output, index) => ({
+      vout: index,
+      role: output.role,
+      valueSats: output.valueSats.toString(),
+      address: output.address,
+      scriptHex: bytesToHex(output.script)
+    })),
+    payloadHex: bytesToHex(payloadBytes),
+    payloadBytes: payloadBytes.length,
+    bondAddress,
+    bondVout,
+    bidderCommitment: bidPackage.bidderCommitment,
+    auctionStateCommitment: bidPackage.auctionStateCommitment
   };
 }
 

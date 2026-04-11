@@ -1,12 +1,14 @@
 import { bytesToHex, hexToBytes } from "./bytes.js";
 import { GnsEventType, PROTOCOL_MAGIC, PROTOCOL_VERSION } from "./constants.js";
 import {
+  createAuctionBidPayload,
   createBatchAnchorPayload,
   createBatchRevealPayload,
   createCommitPayload,
   createRevealPayload,
   createRevealProofChunkPayload,
   createTransferPayload,
+  type AuctionBidEventPayload,
   type BatchAnchorEventPayload,
   type BatchRevealEventPayload,
   type CommitEventPayload,
@@ -23,6 +25,7 @@ export const MAX_REVEAL_NAME_LENGTH = 32;
 export const BATCH_ANCHOR_PAYLOAD_LENGTH = 3 + 1 + 1 + 1 + 1 + 32;
 export const BATCH_REVEAL_MIN_PAYLOAD_LENGTH = 3 + 1 + 1 + 32 + 32 + 8 + 1 + 2 + 1 + 1;
 export const REVEAL_PROOF_CHUNK_MIN_PAYLOAD_LENGTH = 3 + 1 + 1 + 1;
+export const AUCTION_BID_PAYLOAD_LENGTH = 3 + 1 + 1 + 1 + 1 + 4 + 8 + 32 + 16;
 
 export type DecodedGnsPayload =
   | { readonly type: GnsEventType.Commit; readonly payload: CommitEventPayload }
@@ -30,7 +33,8 @@ export type DecodedGnsPayload =
   | { readonly type: GnsEventType.Transfer; readonly payload: TransferEventPayload }
   | { readonly type: GnsEventType.BatchAnchor; readonly payload: BatchAnchorEventPayload }
   | { readonly type: GnsEventType.BatchReveal; readonly payload: BatchRevealEventPayload }
-  | { readonly type: GnsEventType.RevealProofChunk; readonly payload: RevealProofChunkEventPayload };
+  | { readonly type: GnsEventType.RevealProofChunk; readonly payload: RevealProofChunkEventPayload }
+  | { readonly type: GnsEventType.AuctionBid; readonly payload: AuctionBidEventPayload };
 
 export function encodeCommitPayload(payload: CommitEventPayload): Uint8Array {
   const normalized = createCommitPayload(payload);
@@ -200,6 +204,37 @@ export function decodeRevealProofChunkPayload(payload: Uint8Array): RevealProofC
   });
 }
 
+export function encodeAuctionBidPayload(payload: AuctionBidEventPayload): Uint8Array {
+  const normalized = createAuctionBidPayload(payload);
+
+  return joinBytes(
+    MAGIC_BYTES,
+    Uint8Array.of(
+      PROTOCOL_VERSION,
+      GnsEventType.AuctionBid,
+      normalized.flags,
+      normalized.bondVout
+    ),
+    uint32ToBytes(normalized.reservedLockBlocks),
+    bigIntToUint64Bytes(normalized.bidAmountSats),
+    hexToBytes(normalized.auctionCommitment),
+    hexToBytes(normalized.bidderCommitment)
+  );
+}
+
+export function decodeAuctionBidPayload(payload: Uint8Array): AuctionBidEventPayload {
+  assertHeader(payload, GnsEventType.AuctionBid, AUCTION_BID_PAYLOAD_LENGTH);
+
+  return createAuctionBidPayload({
+    flags: payload[5] ?? 0,
+    bondVout: payload[6] ?? 0,
+    reservedLockBlocks: uint32FromBytes(payload.slice(7, 11)),
+    bidAmountSats: uint64BytesToBigInt(payload.slice(11, 19)),
+    auctionCommitment: bytesToHex(payload.slice(19, 51)),
+    bidderCommitment: bytesToHex(payload.slice(51, 67))
+  });
+}
+
 export function encodeTransferBody(payload: TransferEventPayload): Uint8Array {
   const normalized = createTransferPayload(payload);
 
@@ -241,6 +276,8 @@ export function decodeGnsPayload(payload: Uint8Array): DecodedGnsPayload {
       return { type, payload: decodeBatchRevealPayload(payload) };
     case GnsEventType.RevealProofChunk:
       return { type, payload: decodeRevealProofChunkPayload(payload) };
+    case GnsEventType.AuctionBid:
+      return { type, payload: decodeAuctionBidPayload(payload) };
   }
 }
 
@@ -255,7 +292,8 @@ export function peekEventType(payload: Uint8Array): GnsEventType {
     type !== GnsEventType.Transfer &&
     type !== GnsEventType.BatchAnchor &&
     type !== GnsEventType.BatchReveal &&
-    type !== GnsEventType.RevealProofChunk
+    type !== GnsEventType.RevealProofChunk &&
+    type !== GnsEventType.AuctionBid
   ) {
     throw new Error(`unsupported event type ${type}`);
   }
@@ -344,6 +382,32 @@ function uint16FromBytes(bytes: Uint8Array): number {
   }
 
   return (bytes[0] ?? 0) * 0x100 + (bytes[1] ?? 0);
+}
+
+function uint32ToBytes(value: number): Uint8Array {
+  if (!Number.isInteger(value) || value < 0 || value > 0xffff_ffff) {
+    throw new Error("value must fit in an unsigned 32-bit integer");
+  }
+
+  return Uint8Array.of(
+    (value >>> 24) & 0xff,
+    (value >>> 16) & 0xff,
+    (value >>> 8) & 0xff,
+    value & 0xff
+  );
+}
+
+function uint32FromBytes(bytes: Uint8Array): number {
+  if (bytes.length !== 4) {
+    throw new Error("uint32 requires exactly 4 bytes");
+  }
+
+  return (
+    ((bytes[0] ?? 0) * 0x1000000)
+    + ((bytes[1] ?? 0) << 16)
+    + ((bytes[2] ?? 0) << 8)
+    + (bytes[3] ?? 0)
+  );
 }
 
 function joinBytes(...parts: Uint8Array[]): Uint8Array {

@@ -13,6 +13,7 @@ import {
 } from "@gns/protocol";
 
 import {
+  buildAuctionBidArtifacts,
   buildBatchCommitArtifacts,
   buildBatchRevealArtifacts,
   buildCommitArtifacts,
@@ -122,6 +123,9 @@ async function main(): Promise<void> {
       return;
     case "build-batch-reveal-artifacts":
       await buildBatchRevealArtifactsCommand(args);
+      return;
+    case "build-auction-bid-artifacts":
+      await buildAuctionBidArtifactsCommand(args);
       return;
     case "print-reserved-auction-policy":
       await printReservedAuctionPolicyCommand(args);
@@ -652,6 +656,47 @@ async function buildBatchRevealArtifactsCommand(args: readonly string[]): Promis
     ...(walletDerivation !== null ? { walletDerivation } : {}),
     ...(parsed.options.has("change-address")
       ? { changeAddress: parsed.options.get("change-address") as string }
+      : {})
+  });
+
+  await maybeWriteJsonFile(parsed.options.get("write"), artifacts);
+  console.log(JSON.stringify(artifacts, null, 2));
+}
+
+async function buildAuctionBidArtifactsCommand(args: readonly string[]): Promise<void> {
+  const parsed = parseOptions(args);
+  const bidPackagePath = parsed.positionals[0];
+
+  if (!bidPackagePath) {
+    throw new Error("build-auction-bid-artifacts requires a path to an auction bid package JSON file");
+  }
+
+  const bidPackage = await loadAuctionBidPackage(bidPackagePath);
+  const network = parseNetwork(parsed.options.get("network"));
+  const feeSats = parseRequiredBigInt(parsed.options.get("fee-sats"), "fee-sats");
+  const bondAddress = parsed.options.get("bond-address");
+
+  if (!bondAddress) {
+    throw new Error("--bond-address is required");
+  }
+
+  const inputSpecs = parsed.multiOptions.get("input") ?? [];
+  const walletDerivation = parseWalletDerivationOptions(parsed);
+  const artifacts = buildAuctionBidArtifacts({
+    bidPackage,
+    fundingInputs: inputSpecs.map(parseFundingInputDescriptor),
+    feeSats,
+    network,
+    bondAddress,
+    ...(walletDerivation !== null ? { walletDerivation } : {}),
+    ...(parsed.options.has("change-address")
+      ? { changeAddress: parsed.options.get("change-address") as string }
+      : {}),
+    ...(parsed.options.has("bond-vout")
+      ? { bondVout: parseRequiredByte(parsed.options.get("bond-vout"), "bond-vout") }
+      : {}),
+    ...(parsed.options.has("flags")
+      ? { flags: parseRequiredByte(parsed.options.get("flags"), "flags") }
       : {})
   });
 
@@ -1784,6 +1829,14 @@ async function loadBatchClaimPackage(
   return parseBatchClaimPackage(JSON.parse(raw));
 }
 
+async function loadAuctionBidPackage(
+  filePath: string
+): Promise<ReturnType<typeof parseAuctionBidPackage>> {
+  const resolvedPath = resolve(process.cwd(), filePath);
+  const raw = await readFile(resolvedPath, "utf8");
+  return parseAuctionBidPackage(JSON.parse(raw));
+}
+
 async function loadSignedArtifacts(filePath: string) {
   const resolvedPath = resolve(process.cwd(), filePath);
   const raw = await readFile(resolvedPath, "utf8");
@@ -2076,6 +2129,9 @@ function printUsage(): void {
   console.log("");
   console.log("  build-batch-reveal-artifacts <batch-claim-package> --input <txid:vout:valueSats:address[:derivationPath]> [--input ...] --fee-sats <amount> [--network signet|testnet|regtest|main] [--change-address <addr>] [--wallet-master-fingerprint <hex8> --wallet-account-xpub <xpub> --wallet-account-path <path> [--wallet-scan-limit <n>]] [--write <path>]");
   console.log("    Build unsigned reveal transaction artifacts from a reveal-ready batch claim package");
+  console.log("");
+  console.log("  build-auction-bid-artifacts <auction-bid-package> --input <txid:vout:valueSats:address[:derivationPath]> [--input ...] --fee-sats <amount> --bond-address <addr> [--bond-vout <0|1>] [--flags <0-255>] [--network signet|testnet|regtest|main] [--change-address <addr>] [--wallet-master-fingerprint <hex8> --wallet-account-xpub <xpub> --wallet-account-path <path> [--wallet-scan-limit <n>]] [--write <path>]");
+  console.log("    Build unsigned experimental auction bid artifacts from an auction bid package");
   console.log("");
   console.log("  print-reserved-auction-policy [--write <path>]");
   console.log("    Emit the current temporary reserved-lane policy JSON so floors, durations, and timing can be edited outside the code");

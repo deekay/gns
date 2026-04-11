@@ -5,6 +5,7 @@ import {
   getOpReturnPayloads
 } from "@gns/bitcoin";
 import {
+  type AuctionBidEventPayload,
   type BatchAnchorEventPayload,
   type BatchRevealEventPayload,
   GnsEventType,
@@ -82,7 +83,8 @@ export interface ParsedGnsEvent {
     | TransferEventPayload
     | BatchAnchorEventPayload
     | BatchRevealEventPayload
-    | RevealProofChunkEventPayload;
+    | RevealProofChunkEventPayload
+    | AuctionBidEventPayload;
 }
 
 export interface ProvenanceEventRecord {
@@ -94,14 +96,16 @@ export interface ProvenanceEventRecord {
     | "TRANSFER"
     | "BATCH_ANCHOR"
     | "BATCH_REVEAL"
-    | "REVEAL_PROOF_CHUNK";
+    | "REVEAL_PROOF_CHUNK"
+    | "AUCTION_BID";
   payload:
     | CommitEventPayload
     | RevealEventPayload
     | TransferEventPayload
     | BatchAnchorEventPayload
     | BatchRevealEventPayload
-    | RevealProofChunkEventPayload;
+    | RevealProofChunkEventPayload
+    | AuctionBidEventPayload;
   validationStatus: "applied" | "ignored";
   reason: string;
   affectedName: string | null;
@@ -242,6 +246,12 @@ function applyEvent(
       return {
         validationStatus: "ignored",
         reason: "proof_chunk_requires_batch_reveal_header",
+        affectedName: null
+      };
+    case GnsEventType.AuctionBid:
+      return {
+        validationStatus: "ignored",
+        reason: "auction_bid_requires_reserved_auction_engine",
         affectedName: null
       };
   }

@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   AUCTION_BID_PACKAGE_FORMAT,
   AUCTION_BID_PACKAGE_VERSION,
+  computeAuctionBidderCommitment,
   createAuctionBidPackage,
   parseAuctionBidPackage,
   PROTOCOL_NAME
@@ -36,6 +37,8 @@ describe("auction bid packages", () => {
     expect(pkg.previewRequiredMinimumBidSats).toBe("1000000000");
     expect(pkg.wouldBecomeLeader).toBe(false);
     expect(pkg.previewSummary).toContain("pending unlock");
+    expect(pkg.bidderCommitment).toBe(computeAuctionBidderCommitment("operator_a"));
+    expect(pkg.auctionStateCommitment).toHaveLength(64);
   });
 
   it("builds a valid soft-close preview when the amount clears the next minimum", () => {

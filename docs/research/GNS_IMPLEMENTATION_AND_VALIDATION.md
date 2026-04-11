@@ -34,7 +34,7 @@ The shortest honest summary is:
 | Off-chain signed value records | Implemented prototype | Moderate | Works today, but broader resolver/network availability is still an ecosystem question |
 | Transfers | Implemented prototype | Moderate to high | Gift and cooperative sale flows exist; browser UX is not the full end-user story yet |
 | Ordinary-lane explicit Merkle batching | Implemented | High | Commit, reveal, negative-path rejection, and later transfer behavior are validated |
-| Reserved-lane auction flow | Experimental simulator + website lab | Moderate | Configurable policy, CLI simulation, fixture coverage, and website state rendering exist; no live on-chain reserved-auction flow yet |
+| Reserved-lane auction flow | Experimental simulator + bid-artifact prototype | Moderate | Configurable policy, CLI simulation, fixture coverage, website state rendering, bid packages, and signable experimental bid artifacts exist; no live on-chain reserved-auction flow yet |
 | Taproot annex reveal carrier | Experimental research | Moderate | Structurally plausible, custom tooling path proven, not mainline |
 
 ## What Is Implemented Today
@@ -105,6 +105,8 @@ Today the repo has:
 - fixture-backed auction scenarios
 - CLI commands for policy printing, scenario execution, and experimental
   bid-package creation / inspection
+- an experimental bid transaction builder and signer path built on top of those
+  bid packages
 - a website-facing `/auctions` page that renders pending unlock, opening-floor,
   live bidding, soft-close, and settled states from those same fixtures
 - website download utilities for experimental auction bid packages derived from
@@ -132,6 +134,8 @@ For reserved auctions specifically, this now includes:
 - fixture-backed single-auction outcomes
 - market-level bidder budget behavior
 - state-at-block phase derivation
+- experimental bid package commitment validation
+- experimental bid artifact building and signing
 - website fixture loading and page rendering for the auction lab
 
 ### Fixture-backed smoke tests
@@ -216,7 +220,8 @@ That direction is strong, but it is still a design direction rather than the
 implemented launch spec.
 
 What is implemented is the simulator-backed auction lab around that direction,
-not the on-chain reserved-name market itself.
+plus an experimental signable bid-artifact layer, not the on-chain
+reserved-name market itself.
 
 ### 2. Taproot annex reveal carrier
 

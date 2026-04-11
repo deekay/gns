@@ -109,6 +109,13 @@ The current leading auction family is:
 - soft close
 - real on-chain bonded bids
 
+Current implementation note:
+
+- simulator-backed policy/state tooling is real
+- experimental bid-package and bid-artifact tooling is real
+- the actual reserved-lane on-chain auction state machine is still not
+  implemented
+
 ### 6. Reserved auctions bid on BTC amount only
 
 The protocol should fix the time dimension.

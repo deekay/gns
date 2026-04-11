@@ -42,7 +42,8 @@ It does **not** yet model:
 - auction-wave timing across many names
 - no-bid fallback behavior after an auction ends with no valid winner
 - transfer or settlement execution details
-- the actual on-chain bid transaction format
+- the real reserved-auction state machine that would accept or reject bid
+  transactions on chain
 
 That is intentional. The first goal is to test policy behavior and edge cases,
 not to pretend the entire reserved-lane protocol is already finalized.
@@ -104,6 +105,24 @@ Run a concurrent-auction market scenario with bidder budgets:
 npm run dev:cli -- simulate-reserved-auction-market fixtures/auction/market-capital-pressure.json
 ```
 
+Create an experimental bid package from a lab case:
+
+```bash
+npm run dev:cli -- create-auction-bid-package fixtures/auction/lab/04-soft-close-google.json --bidder-id operator_alpha --amount-sats 1700000000 --write /tmp/gns-auction-bid-package.json
+```
+
+Turn that package into signable experimental bid artifacts:
+
+```bash
+npm run dev:cli -- build-auction-bid-artifacts /tmp/gns-auction-bid-package.json --input <txid:vout:valueSats:address> --fee-sats 100000 --bond-address <address> --change-address <address> --write /tmp/gns-auction-bid-artifacts.json
+```
+
+Sign the experimental bid artifacts:
+
+```bash
+npm run dev:cli -- sign-artifacts /tmp/gns-auction-bid-artifacts.json --wif <wif> --write /tmp/gns-signed-auction-bid-artifacts.json
+```
+
 ## Current Website Surface
 
 The experimental simulator is also exposed through the website now:
@@ -120,6 +139,14 @@ That page renders a curated set of stateful fixtures so we can inspect:
 - soft close
 - settled winner
 - and download an experimental bid package for any displayed state
+
+So the current public surface is:
+
+- simulator-backed state inspection on the website
+- bid-package handoff on the website
+- bid-artifact building/signing in CLI
+
+It is not yet a live bidder surface tied to registry-backed auction state.
 
 Importantly, the website is not using a separate mock.
 

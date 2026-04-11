@@ -10,6 +10,8 @@ are:
 - fixture coverage exists
 - the website shows live auction states
 - CLI and website can now export an experimental bid package from those states
+- CLI can now turn that package into a signable experimental bid transaction
+- the protocol has an explicit experimental `AUCTION_BID` payload shape
 
 That is real progress, but it is still not the same thing as a live reserved
 auction protocol.
@@ -25,36 +27,45 @@ What exists today:
 - shared `gns-auction-bid-package` artifact in `@gns/protocol`
 - CLI creation and inspection of those bid packages
 - website download utility for those bid packages
+- an experimental `AUCTION_BID` event payload in `@gns/protocol`
+- an experimental unsigned/signed auction bid artifact flow in CLI + architect
+- core/indexer compatibility so `AUCTION_BID` is parsed and recorded honestly,
+  then ignored until the real reserved-auction engine exists
 
 That means we now have:
 
 - state visualization
 - operator handoff artifacts
 - testable simulator behavior
+- a real offline operator round-trip for:
+  - simulator state -> bid package
+  - bid package -> unsigned bid artifacts
+  - unsigned bid artifacts -> signed bid transaction
 
 What we do **not** yet have:
 
-- a real bid transaction format
 - on-chain auction indexing
 - registry-backed auction state transitions
 - settlement and fallback rules running end to end
 
 ## Gap Categories
 
-### 1. Real Bid Artifact
+### 1. Signable Bid Artifact To Live Auction Logic
 
-The new bid package is useful, but it is still only a handoff artifact.
+The first half of this gap is now closed.
 
-Missing next step:
+We now have:
 
-- define how a bid package becomes a signable/broadcastable bid transaction
+- a stable bid package
+- a compact experimental `AUCTION_BID` payload
+- a builder that turns the package into signable bid artifacts
+- signer support for producing a real signed bid transaction offline
 
-That includes:
+What is still missing is the second half:
 
-- funding input expectations
-- bidder identity / key expectations
-- how the bid amount and lock are bound on chain
-- how rebids consume and replace earlier bid capital
+- chain rules that give that transaction meaning inside the reserved lane
+- rebid and replacement semantics against prior auction state
+- settlement consequences once those bid transactions land on chain
 
 ### 2. On-Chain Auction Event Model
 
@@ -62,13 +73,15 @@ We still need the actual protocol shape for reserved-lane bids.
 
 Missing:
 
-- bid event types or transaction patterns
 - chain-verifiable state transitions for:
   - opening bid
   - higher bid
   - soft-close extension
   - auction settlement
 - treatment for rejected or stale late bids
+- treatment for transactions that are Bitcoin-valid but auction-invalid at the
+  observed state
+- clear definition of how the bond output and payload relate to an auction lot
 
 This is the point where the simulator becomes a real protocol.
 
@@ -88,6 +101,14 @@ It does **not** yet know:
 Until this exists, the website auction lab remains fixture-backed rather than
 registry-backed.
 
+One helpful compatibility step is already in place:
+
+- the core/indexer stack now recognizes `AUCTION_BID` payloads and records them
+  in provenance as ignored experimental events
+
+That means we can extend from a stable wire shape later instead of inventing it
+from scratch.
+
 ### 4. Settlement / Release / Fallback Rules
 
 Some of the most important reserved-lane rules are still policy notes rather
@@ -105,11 +126,13 @@ Still open:
 
 The website can now inspect auction states and download a bid package.
 
+The CLI can now go one step further and build/sign a bid transaction from that
+package.
+
 It cannot yet:
 
 - show a bidder’s current standing bid
 - show “you are leading” / “you were outbid”
-- build a signable bid artifact
 - broadcast bids
 - follow an auction through settlement from live resolver state
 
@@ -139,19 +162,28 @@ The first operator-facing gap we closed is:
 > there is now one shared artifact for “I want to bid on this reserved auction
 > state,” and both CLI and website can produce it.
 
+The second gap we just closed is:
+
+> that shared artifact can now be turned into a signable experimental bid
+> transaction offline, using the same CLI artifact/signer flow as the rest of
+> the repo.
+
 That matters because it gives the next protocol step a stable boundary:
 
 - simulator state in
 - bidder intent in
 - portable artifact out
+- signable transaction out
 
 ## Recommended Build Order
 
 The next implementation order that still feels sane is:
 
 1. keep the bid package as the stable operator boundary
-2. define an experimental signable bid artifact / transaction builder
-3. prototype reserved-auction indexing from those bid transactions
+2. keep the experimental bid artifact / transaction builder stable long enough
+   to learn from it
+3. prototype reserved-auction indexing and state transitions from those bid
+   transactions
 4. only then wire the website past “download package” into a more active bidder
    flow
 
