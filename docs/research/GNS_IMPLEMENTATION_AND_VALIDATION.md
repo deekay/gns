@@ -140,6 +140,13 @@ That is a strong validation milestone because it proves the protocol logic is
 not just tied to transaction construction. It correctly rejects bad batched
 reveals after they land on chain.
 
+### Live signet note
+
+The shared public signet smoke path still exists, but it currently exercises a
+single-name live claim flow rather than the newer batched ordinary-claim path.
+So public signet remains useful as a “real external chain” smoke signal, but it
+is not yet where the strongest Merkle-batching validation comes from.
+
 ## What We Can Say Confidently
 
 The strongest implementation claims we can make today are:

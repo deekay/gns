@@ -2,6 +2,15 @@ import { PRODUCT_NAME, REVEAL_WINDOW_BLOCKS } from "@gns/protocol";
 
 export type PageKind = "home" | "explore" | "claim" | "values" | "transfer" | "setup" | "explainer";
 const GITHUB_REPO_URL = "https://github.com/deekay/gns";
+const GITHUB_BLOB_BASE_URL = `${GITHUB_REPO_URL}/blob/main`;
+const DOC_URLS = {
+  readme: `${GITHUB_BLOB_BASE_URL}/README.md`,
+  fromZero: `${GITHUB_BLOB_BASE_URL}/docs/core/GNS_FROM_ZERO.md`,
+  implementation: `${GITHUB_BLOB_BASE_URL}/docs/research/GNS_IMPLEMENTATION_AND_VALIDATION.md`,
+  merkleStatus: `${GITHUB_BLOB_BASE_URL}/docs/research/MERKLE_BATCHING_STATUS.md`,
+  launchSpec: `${GITHUB_BLOB_BASE_URL}/docs/research/LAUNCH_SPEC_V0.md`,
+  testing: `${GITHUB_BLOB_BASE_URL}/docs/core/TESTING.md`
+} as const;
 
 export interface PageShellOptions {
   basePath: string,
@@ -41,7 +50,7 @@ export function renderPageHtml(options: PageShellOptions): string {
           : `${PRODUCT_NAME} Explorer`;
   const description =
     pageKind === "home"
-      ? "Search a name, understand the model, and choose whether to explore, claim, or learn more about Global Name System."
+      ? "Search a name, understand the payment-first model, and choose whether to explore, claim, or review the current Global Name System prototype."
       : pageKind === "claim"
       ? "Prepare a Global Name System claim package, then finish the commit and reveal flow in Sparrow or another external signer."
       : pageKind === "values"
@@ -196,28 +205,28 @@ function renderHeroSection(
   return `<header class="hero hero-home">
     <div class="hero-copy">
       <p class="eyebrow"><a class="eyebrow-link" href="${withBasePath("/", configuredBasePath)}">Global Name System</a> · ${escapeHtml(configuredNetworkLabel)}</p>
-      <h1>A Human-Readable Name You Control</h1>
+      <h1>Human-Readable Names For Bitcoin Counterparties</h1>
       <p class="lede">
-        Global Name System gives people, agents, and services a human-readable name that is bonded, not rented, and can point to the resources that represent them.
+        Global Name System is best understood today as a payment-first naming layer: a way to say who gets paid, which merchant you trust, or which Bitcoin-native counterparty or service you mean before software acts.
       </p>
     </div>
     <aside class="hero-card hero-home-card">
-      <p class="hero-card-label">What it can point to</p>
+      <p class="hero-card-label">Current wedge</p>
       <div class="hero-action-list">
         <article class="hero-action-item">
-          <strong>Identity</strong>
-          <p>Profiles, social handles, and public identity.</p>
+          <strong>Payments First</strong>
+          <p>Start with who gets paid and how that target resolves.</p>
         </article>
         <article class="hero-action-item">
-          <strong>Payments</strong>
-          <p>Bitcoin addresses, payment endpoints, and invoices.</p>
+          <strong>Counterparties</strong>
+          <p>Then expand into merchants, operators, and service endpoints you trust.</p>
         </article>
         <article class="hero-action-item">
-          <strong>Services</strong>
-          <p>Apps, APIs, and agent endpoints that can change over time.</p>
+          <strong>Broader Uses Later</strong>
+          <p>Profiles, navigation, and richer key/value publishing can come after the basic trust wedge is clear.</p>
         </article>
       </div>
-      <p class="hero-card-meta">Bonded, not rented or sold.</p>
+      <p class="hero-card-meta">Bonded bitcoin, not rented namespace.</p>
     </aside>
   </header>`;
 }
@@ -225,6 +234,7 @@ function renderHeroSection(
 function renderPrimaryNav(configuredBasePath: string, pageKind: PageKind, faviconDataUrl: string): string {
   const links = [
     { href: withBasePath("/", configuredBasePath), label: "Home", active: pageKind === "home" },
+    { href: withBasePath("/explainer", configuredBasePath), label: "Overview", active: pageKind === "explainer" },
     { href: withBasePath("/explore", configuredBasePath), label: "Explore", active: pageKind === "explore" },
     { href: withBasePath("/claim", configuredBasePath), label: "Claim", active: pageKind === "claim" },
     { href: withBasePath("/values", configuredBasePath), label: "Values", active: pageKind === "values" },
@@ -273,6 +283,7 @@ function renderHomePageSections(configuredBasePath: string): string {
     ${renderHomeActionsSection(configuredBasePath)}
     ${renderHomeModelSection()}
     ${renderHomeExampleSection(configuredBasePath)}
+    ${renderHomeDocsSection()}
     ${renderHomeStatusSection()}`;
 }
 
@@ -327,7 +338,7 @@ function renderHomeActionsSection(configuredBasePath: string): string {
   return `<section id="start-here" class="panel panel-guide panel-home">
     ${renderPanelHead(
       "Start Here",
-      "Set up a wallet, claim a name, or browse the registry."
+      "Set up a wallet, prepare a claim, use the offline batch tools, or browse the registry."
     )}
     <div class="path-grid">
       <article class="path-card">
@@ -345,6 +356,13 @@ function renderHomeActionsSection(configuredBasePath: string): string {
         </div>
       </article>
       <article class="path-card">
+        <h3>Offline / Batch</h3>
+        <p>Use the offline architect when you want local PSBT generation, ordinary-lane batch commits, or later one-by-one batch reveal PSBTs.</p>
+        <div class="path-card-actions">
+          <a class="action-link secondary" href="${withBasePath("/claim/offline", configuredBasePath)}">Open offline architect</a>
+        </div>
+      </article>
+      <article class="path-card">
         <h3>Explore</h3>
         <p>Browse recent names, current activity, pending claims, and the full tracked registry.</p>
         <div class="path-card-actions">
@@ -352,8 +370,8 @@ function renderHomeActionsSection(configuredBasePath: string): string {
         </div>
       </article>
     </div>
-    <p class="tool-handoff-note">Fastest loop: <a href="${withBasePath("/setup", configuredBasePath)}">Setup</a> → <a href="${withBasePath("/claim", configuredBasePath)}">Claim</a> → <a href="${withBasePath("/values?name=bundledemo", configuredBasePath)}">Values</a>.</p>
-    <p class="tool-handoff-note">Project background and deeper documentation live on <a href="${GITHUB_REPO_URL}" target="_blank" rel="noreferrer noopener">GitHub</a>.</p>
+    <p class="tool-handoff-note">Fastest hosted loop: <a href="${withBasePath("/setup", configuredBasePath)}">Setup</a> → <a href="${withBasePath("/claim", configuredBasePath)}">Claim</a> → <a href="${withBasePath("/explore", configuredBasePath)}">Explore</a> → <a href="${withBasePath("/values?name=bundledemo", configuredBasePath)}">Values</a>.</p>
+    <p class="tool-handoff-note">Best docs path: <a href="${DOC_URLS.fromZero}" target="_blank" rel="noreferrer noopener">From Zero</a> → <a href="${DOC_URLS.implementation}" target="_blank" rel="noreferrer noopener">Implementation &amp; Validation</a> → <a href="${DOC_URLS.merkleStatus}" target="_blank" rel="noreferrer noopener">Merkle Batching Status</a> → <a href="${DOC_URLS.launchSpec}" target="_blank" rel="noreferrer noopener">Launch Spec v0</a>.</p>
   </section>`;
 }
 
@@ -366,7 +384,7 @@ function renderHomeModelSection(): string {
     <div class="guide-grid">
       <article class="guide-card">
         <h3>1. Claim On-Chain</h3>
-        <p>Your wallet key signs the Bitcoin transactions that claim or transfer the name.</p>
+        <p>Your wallet key signs the Bitcoin transactions that claim or transfer the name. Ordinary names use commit/reveal today, while the launch research now points toward a separate reserved lane for salient existing names.</p>
         <ul class="guide-list">
           <li><strong>Commit:</strong> hide the intended name.</li>
           <li><strong>Reveal:</strong> publish it within the reveal window.</li>
@@ -383,11 +401,11 @@ function renderHomeModelSection(): string {
         </ul>
       </article>
       <article class="guide-card">
-        <h3>3. Resolve It</h3>
-        <p>Resolvers and clients combine chain ownership with the latest owner-signed value.</p>
+        <h3>3. Review It</h3>
+        <p>Resolvers, CLI tools, and the website combine chain ownership with the latest owner-signed value. The ordinary-lane Merkle path is now validated through batched commit, individual batch reveal, and later transfer behavior.</p>
         <ul class="guide-list">
-          <li><strong>Wallet key:</strong> controls Bitcoin transactions.</li>
-          <li><strong>Owner key:</strong> controls what the name points to.</li>
+          <li><strong>Website:</strong> browse names, provenance, value records, and transfer prep.</li>
+          <li><strong>Offline architect:</strong> build single-claim or batched ordinary-lane artifacts locally.</li>
           <li><strong>Released:</strong> if settlement fails, the name returns to the pool.</li>
         </ul>
       </article>
@@ -398,13 +416,13 @@ function renderHomeModelSection(): string {
 function renderHomeExampleSection(configuredBasePath: string): string {
   return `<section id="bundle-example" class="panel panel-guide panel-home">
     ${renderPanelHead(
-      "One Name, Several Destinations",
-      "A single current value record can act like a compact key/value bundle."
+      "Live Examples And Batch Path",
+      "The hosted demo still has a few seeded example names, while the newer Merkle-batched flow is validated through the offline builder, fixture stack, and controlled-chain tests."
     )}
     <div class="guide-grid">
       <article class="guide-card">
-        <h3>Try These Live Examples</h3>
-        <p>The hosted demo now has three clean example names you can inspect right away:</p>
+        <h3>Hosted Demo Names</h3>
+        <p>These older seeded examples are still useful for quickly inspecting claim, value, and transfer states in the hosted explorer:</p>
         <ul class="guide-list">
           <li><strong><a class="detail-link" href="${withBasePath("/names/simpledemo", configuredBasePath)}">simpledemo</a></strong> → plain claimed name with no current value.</li>
           <li><strong><a class="detail-link" href="${withBasePath("/names/bundledemo", configuredBasePath)}">bundledemo</a></strong> → mature name with repeatable key/value pairs.</li>
@@ -415,16 +433,56 @@ function renderHomeExampleSection(configuredBasePath: string): string {
         </div>
       </article>
       <article class="guide-card">
-        <h3>Bundle Shape</h3>
+        <h3>Merkle-Batched Claims</h3>
+        <p>The current implemented batching path is for ordinary claims: one batch anchor, then later one-by-one reveals against the anchored Merkle root.</p>
+        <ul class="guide-list">
+          <li>The offline architect can build a batch commit bundle and reveal-ready package per name.</li>
+          <li>The website and resolver understand batch anchors and batch reveals in provenance views.</li>
+          <li>The public signet smoke path is still single-name today; batched live signet smoke is the next separate tooling step.</li>
+        </ul>
+        <div class="guide-card-actions">
+          <a class="action-link secondary" href="${withBasePath("/claim/offline", configuredBasePath)}">Open offline architect</a>
+          <a class="action-link secondary" href="${DOC_URLS.merkleStatus}" target="_blank" rel="noreferrer noopener">Read batching status</a>
+        </div>
+      </article>
+      <article class="guide-card">
+        <h3>Value Bundle Shape</h3>
         <p>The values tool publishes an ordered list of key/value entries. Keys are repeatable and app-defined.</p>
         <ul class="guide-list">
           <li>You can use whatever keys make sense to you.</li>
           <li>You can repeat a key more than once.</li>
-          <li>The protocol does not need to know which services exist.</li>
+          <li>The protocol does not need to know which services exist in advance.</li>
         </ul>
         <div class="guide-card-actions">
           <a class="action-link secondary" href="${withBasePath("/values?name=bundledemo", configuredBasePath)}">Inspect bundledemo in values tool</a>
         </div>
+      </article>
+    </div>
+  </section>`;
+}
+
+function renderHomeDocsSection(): string {
+  return `<section id="current-docs" class="panel panel-guide panel-home">
+    ${renderPanelHead(
+      "Current Docs And Status",
+      "Use these notes when you want the current framing, implementation status, and launch direction instead of the older broad-story materials."
+    )}
+    <div class="guide-grid">
+      <article class="guide-card">
+        <h3>Start Here</h3>
+        <p><a class="detail-link" href="${DOC_URLS.fromZero}" target="_blank" rel="noreferrer noopener">GNS From Zero</a> is the shortest honest orientation for someone new to the project.</p>
+      </article>
+      <article class="guide-card">
+        <h3>What Is Implemented</h3>
+        <p><a class="detail-link" href="${DOC_URLS.implementation}" target="_blank" rel="noreferrer noopener">Implementation &amp; Validation</a> separates real prototype behavior from design direction and experiments.</p>
+      </article>
+      <article class="guide-card">
+        <h3>Merkle Batching</h3>
+        <p><a class="detail-link" href="${DOC_URLS.merkleStatus}" target="_blank" rel="noreferrer noopener">Merkle Batching Status</a> explains exactly what batching covers today, what has been validated, and what is still out of scope.</p>
+      </article>
+      <article class="guide-card">
+        <h3>Launch Direction</h3>
+        <p><a class="detail-link" href="${DOC_URLS.launchSpec}" target="_blank" rel="noreferrer noopener">Launch Spec v0</a> is the current working summary of the ordinary lane, reserved lane, and deferred-auction direction.</p>
       </article>
     </div>
   </section>`;
@@ -443,12 +501,14 @@ function renderHomeStatusSection(): string {
           <li>Hosted private demo claims</li>
           <li>Self-hosted website + resolver</li>
           <li>Browser value publishing and key/value bundles</li>
+          <li>Explicit ordinary-lane Merkle batching through batch anchor, reveal, and later transfer semantics</li>
         </ul>
       </article>
       <article class="guide-card">
         <h3>Still Prototype</h3>
         <ul class="guide-list">
           <li>Transfers still lean on CLI and signer flow.</li>
+          <li>The public signet smoke path still exercises a single-name claim flow, not the batched path.</li>
           <li>Resolver availability is only partly decentralized in v1.</li>
           <li>Mainnet-ready usage is not the current claim.</li>
         </ul>
@@ -457,7 +517,7 @@ function renderHomeStatusSection(): string {
         <h3>Fast Rule Of Thumb</h3>
         <ul class="guide-list">
           <li>Use the website to try the model.</li>
-          <li>Use GitHub to understand the protocol and self-host it.</li>
+          <li>Use the docs links above to understand the current framing and status.</li>
           <li>Use the offline architect when you want less trust in the hosted site.</li>
         </ul>
       </article>
@@ -469,8 +529,8 @@ function renderWhyGnsSection(configuredBasePath: string): string {
   return `<section id="why-gns" class="panel panel-guide">
     ${renderPanelHead(
       "What A GNS Name Is",
-      "A human-readable name for people, agents, payments, and services.",
-      `<p>Think of GNS as partly a DNS replacement, but not only that.</p>
+      "A payment-first human-readable name for Bitcoin counterparties, with room to grow into broader service and publishing uses later.",
+      `<p>The project is easier to understand if we start with payments and counterparties instead of leading with a generic DNS-replacement claim.</p>
       <ul>
         <li><strong>Bonded:</strong> you lock bond capital instead of paying rent.</li>
         <li><strong>No suffix:</strong> names are first-class strings.</li>
@@ -479,17 +539,21 @@ function renderWhyGnsSection(configuredBasePath: string): string {
     )}
     <div class="guide-grid">
       <article class="guide-card">
-        <h3>What is a GNS name?</h3>
-        <p>A name you can hold directly and point at the resources that represent you, without depending on a registrar or platform handle.</p>
+        <h3>Start With The Payment Problem</h3>
+        <p>A GNS name is best understood first as a human-readable way to say who gets paid, which merchant you trust, or which Bitcoin-native counterparty or service you mean before software acts.</p>
       </article>
       <article class="guide-card">
-        <h3>How is it different?</h3>
-        <p><strong>Bonded, not rented or sold.</strong> The bond stays yours. The protocol uses locked bond capital, not annual renewal fees, to price scarce names.</p>
+        <h3>Ownership And Values Are Separate</h3>
+        <p><strong>Bonded, not rented or sold.</strong> Bitcoin transactions establish ownership. The current owner then signs the mutable off-chain value record that says what the name points to.</p>
       </article>
       <article class="guide-card">
-        <h3>What can it point to?</h3>
-        <p>A GNS name can point to profiles, payment endpoints, APIs, services, and agent endpoints. The name stays stable while the resources behind it can change, whether a person or an agent is using it.</p>
+        <h3>Broader Uses Can Come Later</h3>
+        <p>A GNS name can later point to profiles, payment endpoints, APIs, services, and agent endpoints. The stable human-readable string comes first; richer key/value publishing is the expansion path, not the onboarding requirement.</p>
       </article>
+    </div>
+    <div class="hero-cta-row section-cta-row">
+      <a class="action-link" href="${DOC_URLS.fromZero}" target="_blank" rel="noreferrer noopener">Read From Zero</a>
+      <a class="action-link secondary" href="${DOC_URLS.readme}" target="_blank" rel="noreferrer noopener">Open README</a>
     </div>
   </section>`;
 }
@@ -497,8 +561,8 @@ function renderWhyGnsSection(configuredBasePath: string): string {
 function renderUsingGnsSection(configuredBasePath: string): string {
   return `<section id="using-gns" class="panel panel-guide">
     ${renderPanelHead(
-      "Use This Site",
-      "The site is mainly a tool for setup, browsing, claim prep, and transfer prep."
+      "Use The Current Prototype",
+      "The site is a working product surface for setup, browsing, claim prep, value publication, transfer prep, and offline batch tooling."
     )}
     <div class="guide-grid">
       <article class="guide-card">
@@ -510,6 +574,10 @@ function renderUsingGnsSection(configuredBasePath: string): string {
         <p>Prepare the claim package, save the backup, and build the signer handoff. The actual signing still happens in your wallet.</p>
       </article>
       <article class="guide-card">
+        <h3>Offline / Batch</h3>
+        <p>The offline architect can build ordinary single-claim artifacts, ordinary batch commit bundles, and later one-by-one batch reveal PSBTs from saved reveal-ready packages.</p>
+      </article>
+      <article class="guide-card">
         <h3>Transfer</h3>
         <p>Prepare the transfer handoff from the current name state, then finish the ownership change in your external signer flow.</p>
       </article>
@@ -517,12 +585,18 @@ function renderUsingGnsSection(configuredBasePath: string): string {
         <h3>Explore</h3>
         <p>Browse recent names, current state, and the tracked registry. Use the detail pages when you want the deeper provenance view.</p>
       </article>
+      <article class="guide-card">
+        <h3>Docs And Status</h3>
+        <p>Use the GitHub docs when you want the current framing, implementation status, Merkle batching status, and launch research instead of only the hosted walkthrough.</p>
+      </article>
     </div>
     <div class="hero-cta-row section-cta-row">
       <a class="action-link" href="${withBasePath("/setup", configuredBasePath)}">Open setup</a>
       <a class="action-link" href="${withBasePath("/claim", configuredBasePath)}">Open claim prep</a>
+      <a class="action-link secondary" href="${withBasePath("/claim/offline", configuredBasePath)}">Open offline architect</a>
       <a class="action-link secondary" href="${withBasePath("/transfer", configuredBasePath)}">Open transfer prep</a>
       <a class="action-link secondary" href="${withBasePath("/explore", configuredBasePath)}">Open explorer</a>
+      <a class="action-link secondary" href="${DOC_URLS.implementation}" target="_blank" rel="noreferrer noopener">Implementation status</a>
     </div>
   </section>`;
 }
@@ -696,7 +770,8 @@ function renderLiveSmokeSection(collapsible = false): string {
       `<p>Separate from the private demo network.</p>
       <ul>
         <li>It shows whether the shared signet smoke wallet is funded.</li>
-        <li>It helps us track whether public signet is ready for another real-world test.</li>
+        <li>It currently exercises the single-name live signet claim flow.</li>
+        <li>The newer batched ordinary-claim path is validated in fixture mode and controlled-chain regtest, not in this live smoke yet.</li>
       </ul>`
     )}
     ${body}
@@ -707,7 +782,7 @@ function renderLiveSmokeSection(collapsible = false): string {
     <summary class="panel-summary">
       <div class="panel-summary-copy">
         <h2>Live Signet Smoke</h2>
-        <p>Latest status from the shared public signet smoke flow.</p>
+        <p>Latest status from the shared public signet smoke flow. This is still the single-name public signet path today; the batched ordinary-claim path is validated in fixture mode and controlled-chain regtest.</p>
       </div>
       <span class="summary-chip">Open smoke</span>
     </summary>
@@ -1101,7 +1176,8 @@ function renderClaimSupportStrip(configuredBasePath: string): string {
       <a class="action-link secondary" href="${withBasePath("/setup", configuredBasePath)}">Open setup</a>
       <a class="action-link secondary" href="${withBasePath("/values", configuredBasePath)}">Publish value</a>
       <a class="action-link secondary" href="${withBasePath("/claim/offline", configuredBasePath)}">Open offline architect</a>
-      <a class="action-link secondary" href="${GITHUB_REPO_URL}" target="_blank" rel="noreferrer noopener">GitHub docs</a>
+      <a class="action-link secondary" href="${DOC_URLS.merkleStatus}" target="_blank" rel="noreferrer noopener">Merkle status</a>
+      <a class="action-link secondary" href="${DOC_URLS.testing}" target="_blank" rel="noreferrer noopener">Testing guide</a>
     </div>
   </section>`;
 }
@@ -1111,7 +1187,8 @@ function renderSetupSupportStrip(configuredBasePath: string): string {
     <p class="support-strip-label">Utility links</p>
     <div class="hero-cta-row support-strip-actions">
       <a class="action-link secondary" href="${withBasePath("/claim", configuredBasePath)}">Open claim prep</a>
-      <a class="action-link secondary" href="${GITHUB_REPO_URL}" target="_blank" rel="noreferrer noopener">GitHub docs</a>
+      <a class="action-link secondary" href="${withBasePath("/claim/offline", configuredBasePath)}">Offline architect</a>
+      <a class="action-link secondary" href="${DOC_URLS.fromZero}" target="_blank" rel="noreferrer noopener">From Zero</a>
     </div>
   </section>`;
 }
@@ -1306,7 +1383,8 @@ function renderValuesSupportStrip(configuredBasePath: string): string {
     <div class="hero-cta-row support-strip-actions">
       <a class="action-link secondary" href="${withBasePath("/claim", configuredBasePath)}">Open claim prep</a>
       <a class="action-link secondary" href="${withBasePath("/transfer", configuredBasePath)}">Open transfer prep</a>
-      <a class="action-link secondary" href="${GITHUB_REPO_URL}" target="_blank" rel="noreferrer noopener">GitHub docs</a>
+      <a class="action-link secondary" href="${DOC_URLS.implementation}" target="_blank" rel="noreferrer noopener">Implementation status</a>
+      <a class="action-link secondary" href="${DOC_URLS.fromZero}" target="_blank" rel="noreferrer noopener">From Zero</a>
     </div>
   </section>`;
 }
@@ -1549,7 +1627,7 @@ function renderTransferSupportStrip(configuredBasePath: string): string {
       <a class="action-link secondary" href="${withBasePath("/claim", configuredBasePath)}">Open claim prep</a>
       <a class="action-link secondary" href="${withBasePath("/values", configuredBasePath)}">Publish value</a>
       <a class="action-link secondary" href="${withBasePath("/explore", configuredBasePath)}">Open explorer</a>
-      <a class="action-link secondary" href="${GITHUB_REPO_URL}" target="_blank" rel="noreferrer noopener">GitHub docs</a>
+      <a class="action-link secondary" href="${DOC_URLS.implementation}" target="_blank" rel="noreferrer noopener">Implementation status</a>
     </div>
   </section>`;
 }

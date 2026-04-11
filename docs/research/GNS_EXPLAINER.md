@@ -1,5 +1,14 @@
 # Global Name System (GNS)
 
+Status note:
+
+- for the cleanest current intro, start with [GNS_FROM_ZERO.md](../core/GNS_FROM_ZERO.md)
+- for what is actually implemented and validated, use [GNS_IMPLEMENTATION_AND_VALIDATION.md](./GNS_IMPLEMENTATION_AND_VALIDATION.md)
+- for the current launch direction, use [LAUNCH_SPEC_V0.md](./LAUNCH_SPEC_V0.md)
+
+This explainer still describes the core model accurately, but the launch-allocation
+story has evolved since some of the older “no special cases at launch” wording.
+
 ## The Problem With Names Today
 
 Bitcoin addresses are not a human interface.
@@ -89,14 +98,24 @@ GNS uses a flat namespace. A name is just `satoshi` — not `satoshi.gns` or `sa
 
 ## Fairness
 
-The protocol has no special cases:
+The fairness goal is still:
 
-- No reserved names
 - No founder allocation
 - No discounted claims
 - No whitelist or identity-based quotas
 
-Every claim follows the same rules. Fairness is auditable by anyone from the public ownership record.
+But the current lead launch direction is no longer “every name opens the same
+way on day one.”
+
+Instead, the working launch direction is:
+
+- an ordinary public commit/reveal lane for ordinary names
+- a reserved deferred-auction lane for salient existing names
+
+The point of that split is not to create insider allocation. It is to avoid
+giving obviously salient existing names away at the ordinary floor while still
+keeping the ordinary namespace easy to access. Fairness remains auditable from
+public rules and public on-chain outcomes rather than private approvals.
 
 ---
 

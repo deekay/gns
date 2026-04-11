@@ -1,5 +1,14 @@
 # GNS One-Pager
 
+Status note:
+
+- for the current framing, start with [GNS_FROM_ZERO.md](./GNS_FROM_ZERO.md)
+- for the current implementation status, use [GNS_IMPLEMENTATION_AND_VALIDATION.md](../research/GNS_IMPLEMENTATION_AND_VALIDATION.md)
+- for the current launch direction, use [LAUNCH_SPEC_V0.md](../research/LAUNCH_SPEC_V0.md)
+
+This one-pager still captures the core model, but some older launch details below
+should not be treated as the settled launch spec.
+
 Global Name System (GNS) is a human-readable naming system anchored to Bitcoin. A GNS name is a flat string like `satoshi`, not a hierarchical domain like `satoshi.com`. The front-door use case is simple: help humans say who they mean before money moves, without depending on a registrar, a platform handle, or a rented suffix.
 
 ## What The System Does
@@ -26,7 +35,7 @@ GNS claims use a **commit / reveal** flow plus a **bitcoin bond**.
 1. `COMMIT` hides the intended name while establishing the claim attempt.
 2. `REVEAL` publishes the plaintext name and must confirm within **24 blocks** after the commit confirms.
 3. Once the reveal confirms, the name is claimed and usable, but it enters a settlement period.
-4. In the launch epoch that period is **52,000 blocks**. Later epochs halve the maturity duration until the **4,000-block** floor is reached. During settlement, bond continuity still matters. After maturity, the name remains valid without ongoing bond continuity.
+4. The current lead launch direction is to simplify this into a fixed ordinary-lane settlement period of about **1 year** rather than the older epoch-and-halving schedule. During settlement, bond continuity still matters. After maturity, the name remains valid without ongoing bond continuity.
 
 Transfers move ownership from one pubkey to another. Off-chain value updates are only valid if signed by the name's **current owner key**.
 
@@ -67,7 +76,7 @@ Examples:
 | `6` | `₿3,125,000 (0.03125 BTC)` |
 | `12+` | `₿50,000 (0.0005 BTC)` |
 
-This is meant to make short premium names expensive to monopolize while keeping the long tail accessible.
+This is meant to make short premium names expensive to monopolize while keeping the long tail accessible. The current lead launch direction also layers a separate reserved deferred-auction lane on top for salient existing names, rather than treating every name as the same launch-day ordinary claim.
 
 ### Why The Namespace Remains Open
 

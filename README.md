@@ -1,14 +1,15 @@
 # Global Name System (GNS)
 
-Global Name System is a human-readable naming system anchored to Bitcoin.
+Global Name System is a human-readable naming layer anchored to Bitcoin.
 
-It is partly a replacement for DNS, but that is not the whole story. GNS is meant to give people, agents, projects, payment flows, and services a name they control more directly, without depending on a registrar, a platform handle, or a rented suffix.
+The best front door is narrower than “DNS replacement.” GNS is easiest to understand as **payments first, counterparties second, broader publishing and service uses later**: a way to say who gets paid, which merchant you trust, or which Bitcoin-native counterparty or service you mean without depending on a registrar, a platform handle, or a rented suffix.
 
 The hosted website is mainly a tool surface:
 
 - browse names
 - check availability
 - prepare claims
+- prepare offline and batched ordinary-lane claim artifacts
 - prepare transfers
 - fund the private signet demo
 
@@ -17,6 +18,14 @@ This repository is where the fuller project explanation lives.
 Human-facing amounts in GNS use integer bitcoin notation alongside the conventional BTC equivalent. Example: `₿50,000 (0.0005 BTC)`.
 
 ## Start Here
+
+If you want the shortest honest project orientation before touching the product surface, start with:
+
+1. [docs/core/GNS_FROM_ZERO.md](./docs/core/GNS_FROM_ZERO.md)
+2. [docs/research/GNS_IMPLEMENTATION_AND_VALIDATION.md](./docs/research/GNS_IMPLEMENTATION_AND_VALIDATION.md)
+3. [docs/research/MERKLE_BATCHING_STATUS.md](./docs/research/MERKLE_BATCHING_STATUS.md)
+4. [docs/research/LAUNCH_SPEC_V0.md](./docs/research/LAUNCH_SPEC_V0.md)
+5. [docs/core/TESTING.md](./docs/core/TESTING.md)
 
 If you want the fastest first walkthrough, use the hosted private demo:
 
@@ -35,6 +44,12 @@ Keep these distinctions in mind:
 - the **owner key** controls the name later for value updates and transfers
 - the hosted site prepares the flow, but your wallet still signs and broadcasts it
 - in v1, losing the **owner key** means losing update and transfer authority for that name
+
+One important testing/status distinction:
+
+- the hosted private demo is a **private signet** walkthrough for people using the site
+- the shared **public signet smoke** path is a separate VPS-backed validation flow
+- explicit Merkle batching for ordinary claims is implemented and validated in fixture mode and controlled-chain regtest today; the public signet smoke flow is still a single-name live path
 
 ## Quick Map
 
@@ -140,8 +155,8 @@ Ownership is derived from Bitcoin transactions. Mutable value records stay off-c
 
 The result is a naming layer that can point to:
 
-- identities and profiles
 - payment endpoints
+- identities and profiles
 - APIs and services
 - software or agent endpoints
 - whatever other owner-signed resources the ecosystem chooses to support
@@ -163,6 +178,10 @@ GNS is trying to offer a different model:
 - publicly verifiable ownership history
 
 So the right framing is not just “better DNS.” It is closer to a sovereign naming layer for the internet resources humans want to access and remember.
+
+The clearest current wording is:
+
+> use a human-readable name to say who gets paid or which Bitcoin-native counterparty or service you trust.
 
 ## How Ownership Works
 
@@ -209,12 +228,11 @@ It does that by using locked bitcoin bonds instead of:
 
 - registrar pricing tiers
 - recurring rent
-- reserved-name programs
 - founder allocation
 - whitelist access
 - protocol-level sales of names
 
-At launch, everyone follows the same public curve.
+For ordinary names, the current lead launch direction still uses a public objective curve. For salient existing names, the current lead launch direction is a separate deferred reserved lane with public auctions instead of hand-priced protocol sales.
 
 ### Bond Curve
 

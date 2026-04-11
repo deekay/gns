@@ -218,6 +218,7 @@ What it does:
 - reuses a stable owner account from `./.data/live-account-2.json`
 - checks whether that address has enough signet for the `50,000` sat bond plus fees
 - publishes the latest smoke summary to the VPS at `/var/lib/gns/live-smoke-summary.json` so the public app can show current readiness
+- currently exercises the **single-name** live signet claim flow, not the newer ordinary-lane batched claim path
 - if funded:
   - prepares a fresh available name
   - submits the live signet claim
@@ -238,6 +239,7 @@ Important note:
 - this script does **not** bypass faucet anti-bot protection
 - if the owner address is unfunded, the script will stop at `awaiting_funds` and leave everything ready for the moment a real signet UTXO arrives
 - the public app can surface the latest published status at [https://globalnamesystem.org/api/live-smoke-status](https://globalnamesystem.org/api/live-smoke-status) once the VPS web service is deployed with `GNS_WEB_LIVE_SMOKE_STATUS_PATH=/var/lib/gns/live-smoke-summary.json`
+- if we want live signet evidence for batched ordinary claims, that still needs a separate batch-oriented smoke script and summary path
 
 ## Private Signet On The Existing VPS
 

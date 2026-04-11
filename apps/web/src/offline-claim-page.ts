@@ -2,6 +2,10 @@ import { PRODUCT_NAME, PROTOCOL_NAME } from "@gns/protocol";
 
 const HOSTED_SITE_URL = "https://globalnamesystem.org";
 const GITHUB_REPO_URL = "https://github.com/deekay/gns";
+const GITHUB_BLOB_BASE_URL = `${GITHUB_REPO_URL}/blob/main`;
+const FROM_ZERO_URL = `${GITHUB_BLOB_BASE_URL}/docs/core/GNS_FROM_ZERO.md`;
+const MERKLE_STATUS_URL = `${GITHUB_BLOB_BASE_URL}/docs/research/MERKLE_BATCHING_STATUS.md`;
+const TESTING_DOC_URL = `${GITHUB_BLOB_BASE_URL}/docs/core/TESTING.md`;
 
 export function renderOfflineClaimPageHtml(scriptBody: string): string {
   const safeScriptBody = scriptBody.replaceAll("</script>", "<\\/script>");
@@ -312,7 +316,8 @@ export function renderOfflineClaimPageHtml(scriptBody: string): string {
         <div class="hero-links">
           <a class="text-link" href="${HOSTED_SITE_URL}" target="_blank" rel="noreferrer noopener">Return to main site</a>
           <a class="text-link" href="${HOSTED_SITE_URL}/claim" target="_blank" rel="noreferrer noopener">Open hosted claim tool</a>
-          <a class="text-link" href="${GITHUB_REPO_URL}" target="_blank" rel="noreferrer noopener">GitHub docs</a>
+          <a class="text-link" href="${FROM_ZERO_URL}" target="_blank" rel="noreferrer noopener">From Zero</a>
+          <a class="text-link" href="${MERKLE_STATUS_URL}" target="_blank" rel="noreferrer noopener">Merkle status</a>
         </div>
         <div class="hero-grid">
           <article class="hero-card">
@@ -455,7 +460,7 @@ export function renderOfflineClaimPageHtml(scriptBody: string): string {
           </article>
           <article class="faq-card">
             <h3>Does Electrum work?</h3>
-            <p>Not for the hosted private demo flow today. Electrum expects an Electrum server, while our private demo setup exposes Bitcoin Core RPC over an SSH tunnel. We do not currently run an Electrum-compatible server for this demo network.</p>
+            <p>Not for the hosted private demo flow today. The current demo setup is Sparrow-first and exposes a public wallet endpoint for Sparrow rather than an Electrum-compatible server.</p>
           </article>
           <article class="faq-card">
             <h3>Why doesn’t a public signet server show my demo coins?</h3>
@@ -463,7 +468,7 @@ export function renderOfflineClaimPageHtml(scriptBody: string): string {
           </article>
           <article class="faq-card">
             <h3>What about other wallets later?</h3>
-            <p>Other PSBT-capable wallets may be compatible, but they are not validated end to end yet. Broader support would require more wallet-specific testing or an Electrum-compatible server for the private signet flow.</p>
+            <p>Other PSBT-capable wallets may be compatible, but they are not validated end to end yet. Broader support would require more wallet-specific testing or another wallet-facing server path for the private signet flow.</p>
           </article>
         </div>
       </section>
@@ -476,6 +481,7 @@ export function renderOfflineClaimPageHtml(scriptBody: string): string {
           <li>Open this single file on an offline computer, build the PSBTs, then carry them into Sparrow for signing.</li>
           <li>Only reconnect when you are ready to broadcast through your own chosen infrastructure.</li>
         </ul>
+        <p>Current docs: <a class="text-link" href="${FROM_ZERO_URL}" target="_blank" rel="noreferrer noopener">From Zero</a> · <a class="text-link" href="${MERKLE_STATUS_URL}" target="_blank" rel="noreferrer noopener">Merkle status</a> · <a class="text-link" href="${TESTING_DOC_URL}" target="_blank" rel="noreferrer noopener">Testing guide</a></p>
       </section>
     </div>
     <script>${safeScriptBody}</script>

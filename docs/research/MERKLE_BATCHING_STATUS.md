@@ -129,6 +129,13 @@ reveal case:
 - transaction provenance records the reason as
   `batch_reveal_invalid_merkle_proof`
 
+### Public signet note
+
+The shared public signet smoke flow is still a single-name live claim path.
+That is useful as an external-chain smoke check, but it should not be confused
+with batched-claim validation. The strongest batching confidence still comes
+from package tests, fixture-mode smoke, and the controlled-chain regtest suite.
+
 ## What We Can Say Confidently
 
 The strongest current claim is:
