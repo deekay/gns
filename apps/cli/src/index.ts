@@ -1,8 +1,10 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { join, resolve } from "node:path";
+import { basename, join, resolve } from "node:path";
 
 import {
+  createAuctionBidPackage,
   parseBatchClaimPackage,
+  parseAuctionBidPackage,
   createClaimPackage,
   parseClaimPackage,
   parseTransferPackage,
@@ -33,6 +35,7 @@ import {
   serializeReservedAuctionPolicy,
   serializeReservedAuctionSimulationResult,
   simulateReservedAuction,
+  simulateReservedAuctionStateAtBlock,
   type SerializedReservedAuctionPolicy
 } from "@gns/core";
 import {
@@ -96,6 +99,9 @@ async function main(): Promise<void> {
     case "inspect-batch-claim-package":
       await inspectBatchClaimPackage(args[0]);
       return;
+    case "inspect-auction-bid-package":
+      await inspectAuctionBidPackage(args[0]);
+      return;
     case "inspect-transfer-package":
       await inspectTransferPackage(args[0]);
       return;
@@ -125,6 +131,9 @@ async function main(): Promise<void> {
       return;
     case "simulate-reserved-auction-market":
       await simulateReservedAuctionMarketCommand(args);
+      return;
+    case "create-auction-bid-package":
+      await createAuctionBidPackageCommand(args);
       return;
     case "build-experimental-annex-reveal-envelope":
       await buildExperimentalAnnexRevealEnvelopeCommand(args);
@@ -284,6 +293,41 @@ async function inspectBatchClaimPackage(filePath: string | undefined): Promise<v
   console.log("Next step: build and sign the batch reveal transaction for this claim.");
 }
 
+async function inspectAuctionBidPackage(filePath: string | undefined): Promise<void> {
+  if (!filePath) {
+    throw new Error("inspect-auction-bid-package requires a path to an auction bid package JSON file");
+  }
+
+  const resolvedPath = resolve(process.cwd(), filePath);
+  const raw = await readFile(resolvedPath, "utf8");
+  const parsed = parseAuctionBidPackage(JSON.parse(raw));
+
+  console.log(`${PRODUCT_NAME} auction bid package is valid.`);
+  console.log(`File: ${resolvedPath}`);
+  console.log(`Exported: ${parsed.exportedAt}`);
+  console.log("");
+  console.log(`Auction: ${parsed.auctionId}`);
+  console.log(`Name: ${parsed.name}`);
+  console.log(`Class: ${parsed.classLabel} (${parsed.reservedClassId})`);
+  console.log(`Observed phase: ${parsed.phase}`);
+  console.log(`Observed block: ${parsed.currentBlockHeight}`);
+  console.log(`Unlock block: ${parsed.unlockBlock}`);
+  console.log(`Close after: ${parsed.auctionCloseBlockAfter ?? "(not started yet)"}`);
+  console.log(`Reserved lock: ${parsed.reservedLockBlocks.toLocaleString("en-US")} blocks`);
+  console.log("");
+  console.log(`Opening minimum: ${formatSats(parsed.openingMinimumBidSats)}`);
+  console.log(`Current leader: ${parsed.currentLeaderBidderId ?? "None yet"}`);
+  console.log(`Current highest: ${parsed.currentHighestBidSats ? formatSats(parsed.currentHighestBidSats) : "None yet"}`);
+  console.log(`Current required minimum: ${parsed.currentRequiredMinimumBidSats ? formatSats(parsed.currentRequiredMinimumBidSats) : "Auction settled"}`);
+  console.log("");
+  console.log(`Bidder: ${parsed.bidderId}`);
+  console.log(`Bid amount: ${formatSats(parsed.bidAmountSats)}`);
+  console.log(`Preview: ${parsed.previewStatus}`);
+  console.log(`Would become leader: ${parsed.wouldBecomeLeader ? "yes" : "no"}`);
+  console.log(`Would extend soft close: ${parsed.wouldExtendSoftClose ? "yes" : "no"}`);
+  console.log(parsed.previewSummary);
+}
+
 async function inspectTransferPackage(filePath: string | undefined): Promise<void> {
   if (!filePath) {
     throw new Error("inspect-transfer-package requires a path to a transfer package JSON file");
@@ -374,6 +418,67 @@ async function simulateReservedAuctionMarketCommand(args: readonly string[]): Pr
 
   await maybeWriteJsonFile(parsed.options.get("write"), serializedResult);
   console.log(JSON.stringify(serializedResult, null, 2));
+}
+
+async function createAuctionBidPackageCommand(args: readonly string[]): Promise<void> {
+  const parsed = parseOptions(args);
+  const scenarioPath = parsed.positionals[0];
+
+  if (!scenarioPath) {
+    throw new Error("create-auction-bid-package requires a path to an auction scenario or lab fixture JSON file");
+  }
+
+  const bidderId = parsed.options.get("bidder-id");
+  if (!bidderId) {
+    throw new Error("--bidder-id is required");
+  }
+
+  const bidAmountSats = parseRequiredBigInt(parsed.options.get("amount-sats"), "amount-sats");
+  const rawInput = await loadJsonFile(scenarioPath);
+  const scenario = parseReservedAuctionScenario(extractReservedAuctionScenarioInput(rawInput));
+  const serializedPolicy = parsed.options.has("policy")
+    ? await loadReservedAuctionPolicy(parsed.options.get("policy"))
+    : serializeReservedAuctionPolicy(createDefaultReservedAuctionPolicy());
+  const policy = parseReservedAuctionPolicy(serializedPolicy);
+  const currentBlockHeight = parsed.options.has("current-block-height")
+    ? parseRequiredInteger(parsed.options.get("current-block-height"), "current-block-height")
+    : extractReservedAuctionCurrentBlockHeight(rawInput);
+
+  if (currentBlockHeight === null) {
+    throw new Error(
+      "create-auction-bid-package requires --current-block-height unless the input fixture already includes currentBlockHeight"
+    );
+  }
+
+  const state = simulateReservedAuctionStateAtBlock({
+    policy,
+    scenario,
+    currentBlockHeight
+  });
+  const auctionBidPackage = createAuctionBidPackage({
+    auctionId:
+      parsed.options.get("auction-id")
+      ?? basename(scenarioPath).replace(/\.json$/u, ""),
+    name: state.normalizedName,
+    reservedClassId: state.reservedClassId,
+    classLabel: state.classLabel,
+    currentBlockHeight: state.currentBlockHeight,
+    phase: state.phase,
+    unlockBlock: state.unlockBlock,
+    auctionCloseBlockAfter: state.auctionCloseBlockAfter,
+    openingMinimumBidSats: state.openingMinimumBidSats,
+    currentLeaderBidderId: state.currentLeaderBidderId,
+    currentHighestBidSats: state.currentHighestBidSats,
+    currentRequiredMinimumBidSats: state.currentRequiredMinimumBidSats,
+    reservedLockBlocks: state.reservedLockBlocks,
+    blocksUntilUnlock: state.blocksUntilUnlock,
+    blocksUntilClose: state.blocksUntilClose,
+    bidderId,
+    bidAmountSats
+  });
+
+  await maybeWriteJsonFile(parsed.options.get("write"), auctionBidPackage);
+  console.log(JSON.stringify(auctionBidPackage, null, 2));
 }
 
 async function createClaimPackageCommand(args: readonly string[]): Promise<void> {
@@ -1725,6 +1830,20 @@ function extractReservedAuctionScenarioInput(input: unknown): unknown {
   return "scenario" in record ? record.scenario : input;
 }
 
+function extractReservedAuctionCurrentBlockHeight(input: unknown): number | null {
+  if (typeof input !== "object" || input === null || Array.isArray(input)) {
+    return null;
+  }
+
+  const record = input as Record<string, unknown>;
+  const currentBlockHeight = record.currentBlockHeight;
+  if (typeof currentBlockHeight !== "number" || !Number.isSafeInteger(currentBlockHeight) || currentBlockHeight < 0) {
+    return null;
+  }
+
+  return currentBlockHeight;
+}
+
 async function loadExperimentalAnnexRevealEnvelope(filePath: string) {
   const resolvedPath = resolve(process.cwd(), filePath);
   const raw = await readFile(resolvedPath, "utf8");
@@ -1931,6 +2050,9 @@ function printUsage(): void {
   console.log("  inspect-batch-claim-package <path>");
   console.log("    Validate and summarize a downloaded reveal-ready batch claim package JSON file");
   console.log("");
+  console.log("  inspect-auction-bid-package <path>");
+  console.log("    Validate and summarize an experimental reserved-auction bid package JSON file");
+  console.log("");
   console.log("  inspect-transfer-package <path>");
   console.log("    Validate and summarize a downloaded transfer package JSON file");
   console.log("");
@@ -1939,6 +2061,9 @@ function printUsage(): void {
   console.log("");
   console.log("  generate-live-account [--network signet|testnet|regtest|main] [--write <path>]");
   console.log("    Generate a fresh owner key plus a witnesspubkeyhash funding address for live prototype testing");
+  console.log("");
+  console.log("  create-auction-bid-package <scenario-or-lab-fixture> --bidder-id <id> --amount-sats <amount> [--current-block-height <height>] [--policy <path>] [--auction-id <id>] [--write <path>]");
+  console.log("    Create an experimental reserved-auction bid package from the current simulator state");
   console.log("");
   console.log("  build-commit-artifacts <claim-package> --input <txid:vout:valueSats:address[:derivationPath]> [--input ...] --fee-sats <amount> [--network signet|testnet|regtest|main] [--bond-address <addr>] [--change-address <addr>] [--wallet-master-fingerprint <hex8> --wallet-account-xpub <xpub> --wallet-account-path <path> [--wallet-scan-limit <n>]] [--write <path>] [--write-package <path>]");
   console.log("    Build unsigned commit transaction artifacts and emit a reveal-ready claim package");

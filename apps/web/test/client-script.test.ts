@@ -45,8 +45,11 @@ describe("renderClientScript", () => {
     const script = renderClientScript("");
 
     expect(script).toContain('/api/auctions');
+    expect(script).toContain('/api/auction-bid-package');
     expect(script).toContain("renderAuctionLab");
     expect(script).toContain("renderAuctionPolicySummary");
+    expect(script).toContain("renderAuctionBidPackageComposer");
+    expect(script).toContain("setAuctionBidPackageMessage");
     expect(script).toContain("isAuctionsPage");
   });
 });

@@ -103,9 +103,12 @@ Today the repo has:
 - single-auction simulator logic
 - market-level simulator logic with bidder budget constraints
 - fixture-backed auction scenarios
-- CLI commands for policy printing and scenario execution
+- CLI commands for policy printing, scenario execution, and experimental
+  bid-package creation / inspection
 - a website-facing `/auctions` page that renders pending unlock, opening-floor,
   live bidding, soft-close, and settled states from those same fixtures
+- website download utilities for experimental auction bid packages derived from
+  those same observed states
 
 This is still explicitly an experimental layer rather than the launch protocol,
 but it is now implemented enough to inspect and test end to end.

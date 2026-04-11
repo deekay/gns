@@ -18,6 +18,7 @@ Related notes:
 - [LAUNCH_SPEC_V0.md](./LAUNCH_SPEC_V0.md)
 - [RESERVED_CLASS_OPTIONS.md](./RESERVED_CLASS_OPTIONS.md)
 - [RESERVED_NAME_AUCTION_LANE.md](./RESERVED_NAME_AUCTION_LANE.md)
+- [AUCTION_IMPLEMENTATION_GAP_LIST.md](./AUCTION_IMPLEMENTATION_GAP_LIST.md)
 
 ## What It Covers
 
@@ -109,6 +110,7 @@ The experimental simulator is also exposed through the website now:
 
 - local/dev path: `/auctions`
 - API payload: `/api/auctions`
+- bid-package export: `/api/auction-bid-package`
 
 That page renders a curated set of stateful fixtures so we can inspect:
 
@@ -117,6 +119,7 @@ That page renders a curated set of stateful fixtures so we can inspect:
 - live bidding
 - soft close
 - settled winner
+- and download an experimental bid package for any displayed state
 
 Importantly, the website is not using a separate mock.
 

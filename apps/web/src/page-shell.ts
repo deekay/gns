@@ -405,6 +405,7 @@ function renderAuctionLabNotesSection(): string {
           <li>Configurable reserved classes, opening floors, soft close, and minimum increments.</li>
           <li>Single-auction and market-level simulators with bidder budget pressure.</li>
           <li>CLI commands, fixture scenarios, and this website-facing auction state view.</li>
+          <li>Experimental bid-package handoffs from the CLI and directly from the auction lab page.</li>
         </ul>
       </article>
       <article class="guide-card">

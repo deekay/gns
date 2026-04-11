@@ -19,7 +19,7 @@ import {
   PROTOCOL_NAME,
   REVEAL_WINDOW_BLOCKS
 } from "@gns/protocol";
-import { loadReservedAuctionLab } from "./auction-lab.js";
+import { createReservedAuctionLabBidPackage, loadReservedAuctionLab } from "./auction-lab.js";
 import { renderClientScript } from "./client-script.js";
 import { getOfflineClaimClientBundle } from "./offline-claim-bundle.js";
 import { renderOfflineClaimPageHtml } from "./offline-claim-page.js";
@@ -262,6 +262,46 @@ const server = createServer(async (request, response) => {
       return writeJson(response, 400, {
         error: "invalid_value_record",
         message: error instanceof Error ? error.message : "Unable to publish the signed value record."
+      });
+    }
+  }
+
+  if (pathname === "/api/auction-bid-package") {
+    if (method !== "POST") {
+      return writeJson(response, 405, {
+        error: "method_not_allowed",
+        message: "Use POST for auction bid package generation."
+      });
+    }
+
+    try {
+      const body = await readJsonBody(request);
+
+      if (!body || typeof body !== "object") {
+        return writeJson(response, 400, {
+          error: "invalid_body",
+          message: "Auction bid package generation requires a JSON body."
+        });
+      }
+
+      const record = body as Record<string, unknown>;
+      const caseId = getRequiredWebBodyString(record, "caseId");
+      const bidderId = getRequiredWebBodyString(record, "bidderId");
+      const bidAmountSats = getRequiredWebBodySats(record, "bidAmountSats");
+      const pkg = await createReservedAuctionLabBidPackage({
+        caseId,
+        bidderId,
+        bidAmountSats
+      });
+
+      return writeJson(response, 200, pkg);
+    } catch (error) {
+      return writeJson(response, 400, {
+        error: "auction_bid_package_failed",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Unable to build the auction bid package."
       });
     }
   }
@@ -772,6 +812,18 @@ function getOptionalWebBodySats(
   } catch {
     throw new Error(`${key} must be a positive sats amount`);
   }
+}
+
+function getRequiredWebBodySats(
+  record: Record<string, unknown>,
+  key: string
+): bigint {
+  const parsed = getOptionalWebBodySats(record, key);
+  if (parsed === undefined) {
+    throw new Error(`${key} is required`);
+  }
+
+  return parsed;
 }
 
 function parseBoolean(value: string | undefined, fallback: boolean): boolean {

@@ -78,5 +78,6 @@ describe("renderPageHtml", () => {
     expect(html).toContain("Reserved Auction States");
     expect(html).toContain("auctionLabList");
     expect(html).toContain("What This Covers");
+    expect(html).toContain("Experimental bid-package handoffs");
   });
 });

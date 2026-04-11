@@ -1,6 +1,7 @@
 import { readdir, readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 
+import { createAuctionBidPackage, type AuctionBidPackage } from "@gns/protocol";
 import {
   createDefaultReservedAuctionPolicy,
   parseReservedAuctionScenario,
@@ -64,4 +65,37 @@ export async function loadReservedAuctionLab(): Promise<ReservedAuctionLabPayloa
     policy: policyPayload,
     cases
   };
+}
+
+export async function createReservedAuctionLabBidPackage(input: {
+  readonly caseId: string;
+  readonly bidderId: string;
+  readonly bidAmountSats: bigint | number | string;
+}): Promise<AuctionBidPackage> {
+  const payload = await loadReservedAuctionLab();
+  const auctionCase = payload.cases.find((entry) => entry.id === input.caseId);
+
+  if (!auctionCase) {
+    throw new Error(`Unknown auction lab case: ${input.caseId}`);
+  }
+
+  return createAuctionBidPackage({
+    auctionId: auctionCase.id,
+    name: auctionCase.state.normalizedName,
+    reservedClassId: auctionCase.state.reservedClassId,
+    classLabel: auctionCase.state.classLabel,
+    currentBlockHeight: auctionCase.state.currentBlockHeight,
+    phase: auctionCase.state.phase,
+    unlockBlock: auctionCase.state.unlockBlock,
+    auctionCloseBlockAfter: auctionCase.state.auctionCloseBlockAfter,
+    openingMinimumBidSats: auctionCase.state.openingMinimumBidSats,
+    currentLeaderBidderId: auctionCase.state.currentLeaderBidderId,
+    currentHighestBidSats: auctionCase.state.currentHighestBidSats,
+    currentRequiredMinimumBidSats: auctionCase.state.currentRequiredMinimumBidSats,
+    reservedLockBlocks: auctionCase.state.reservedLockBlocks,
+    blocksUntilUnlock: auctionCase.state.blocksUntilUnlock,
+    blocksUntilClose: auctionCase.state.blocksUntilClose,
+    bidderId: input.bidderId,
+    bidAmountSats: input.bidAmountSats
+  });
 }

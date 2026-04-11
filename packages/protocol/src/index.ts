@@ -1,4 +1,5 @@
 export * from "./bond.js";
+export * from "./auction-bid-package.js";
 export * from "./batch-claim-package.js";
 export * from "./claim-package.js";
 export * from "./bytes.js";
