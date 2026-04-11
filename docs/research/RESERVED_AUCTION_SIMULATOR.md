@@ -103,6 +103,25 @@ Run a concurrent-auction market scenario with bidder budgets:
 npm run dev:cli -- simulate-reserved-auction-market fixtures/auction/market-capital-pressure.json
 ```
 
+## Current Website Surface
+
+The experimental simulator is also exposed through the website now:
+
+- local/dev path: `/auctions`
+- API payload: `/api/auctions`
+
+That page renders a curated set of stateful fixtures so we can inspect:
+
+- pending unlock
+- awaiting opening bid
+- live bidding
+- soft close
+- settled winner
+
+Importantly, the website is not using a separate mock.
+
+It is reading the same simulator-backed fixture data that the test suite uses.
+
 ## Included Sample Scenarios
 
 Current fixture scenarios live in:
@@ -143,6 +162,17 @@ These are meant to be illustrative:
 
 Each fixture now also carries an explicit `expected` section so the core test
 suite can lock the intended behavior in place.
+
+The website-facing auction lab fixtures live separately in:
+
+- [fixtures/auction/lab/01-pending-unlock-google.json](/Users/davidking/dev/gns/fixtures/auction/lab/01-pending-unlock-google.json)
+- [fixtures/auction/lab/02-awaiting-opening-sequoia.json](/Users/davidking/dev/gns/fixtures/auction/lab/02-awaiting-opening-sequoia.json)
+- [fixtures/auction/lab/03-live-bidding-openai.json](/Users/davidking/dev/gns/fixtures/auction/lab/03-live-bidding-openai.json)
+- [fixtures/auction/lab/04-soft-close-google.json](/Users/davidking/dev/gns/fixtures/auction/lab/04-soft-close-google.json)
+- [fixtures/auction/lab/05-settled-openai.json](/Users/davidking/dev/gns/fixtures/auction/lab/05-settled-openai.json)
+
+These are intentionally curated around visible auction phases rather than only
+final outcomes.
 
 ## Why This Exists
 

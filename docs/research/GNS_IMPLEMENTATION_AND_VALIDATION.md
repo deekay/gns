@@ -34,7 +34,7 @@ The shortest honest summary is:
 | Off-chain signed value records | Implemented prototype | Moderate | Works today, but broader resolver/network availability is still an ecosystem question |
 | Transfers | Implemented prototype | Moderate to high | Gift and cooperative sale flows exist; browser UX is not the full end-user story yet |
 | Ordinary-lane explicit Merkle batching | Implemented | High | Commit, reveal, negative-path rejection, and later transfer behavior are validated |
-| Reserved-lane auction flow | Design direction | Low to moderate | Strong conceptual progress, not yet the implemented launch path |
+| Reserved-lane auction flow | Experimental simulator + website lab | Moderate | Configurable policy, CLI simulation, fixture coverage, and website state rendering exist; no live on-chain reserved-auction flow yet |
 | Taproot annex reveal carrier | Experimental research | Moderate | Structurally plausible, custom tooling path proven, not mainline |
 
 ## What Is Implemented Today
@@ -93,6 +93,23 @@ The explicit batching path now includes:
 For the current confidence summary, see
 [MERKLE_BATCHING_STATUS.md](/Users/davidking/dev/gns/docs/research/MERKLE_BATCHING_STATUS.md).
 
+### 5. Experimental reserved-auction lab
+
+The reserved-auction direction is no longer only prose.
+
+Today the repo has:
+
+- configurable reserved-auction policy defaults
+- single-auction simulator logic
+- market-level simulator logic with bidder budget constraints
+- fixture-backed auction scenarios
+- CLI commands for policy printing and scenario execution
+- a website-facing `/auctions` page that renders pending unlock, opening-floor,
+  live bidding, soft-close, and settled states from those same fixtures
+
+This is still explicitly an experimental layer rather than the launch protocol,
+but it is now implemented enough to inspect and test end to end.
+
 ## What Has Been Validated
 
 ### Unit and package tests
@@ -105,6 +122,14 @@ We have passing test coverage across:
 - `@gns/web`
 
 These cover both happy-path and important negative-path behaviors.
+
+For reserved auctions specifically, this now includes:
+
+- policy and increment behavior
+- fixture-backed single-auction outcomes
+- market-level bidder budget behavior
+- state-at-block phase derivation
+- website fixture loading and page rendering for the auction lab
 
 ### Fixture-backed smoke tests
 
@@ -186,6 +211,9 @@ We are converging toward:
 
 That direction is strong, but it is still a design direction rather than the
 implemented launch spec.
+
+What is implemented is the simulator-backed auction lab around that direction,
+not the on-chain reserved-name market itself.
 
 ### 2. Taproot annex reveal carrier
 

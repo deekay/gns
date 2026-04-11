@@ -22,6 +22,7 @@ const state = {
   transferDraft: null,
   liveSmokeStatus: null,
   privateBatchSmokeStatus: null,
+  auctionLab: null,
   nameFilter: "all",
   activityFilter: "all",
   txCache: new Map()
@@ -95,6 +96,9 @@ const elements = {
   liveSmokeResult: document.getElementById("liveSmokeResult"),
   privateBatchSmokeMeta: document.getElementById("privateBatchSmokeMeta"),
   privateBatchSmokeResult: document.getElementById("privateBatchSmokeResult"),
+  auctionLabMeta: document.getElementById("auctionLabMeta"),
+  auctionPolicySummary: document.getElementById("auctionPolicySummary"),
+  auctionLabList: document.getElementById("auctionLabList"),
   recentNamesState: document.getElementById("recentNamesState"),
   recentNamesList: document.getElementById("recentNamesList"),
   activityFilters: document.getElementById("activityFilters"),
@@ -417,12 +421,13 @@ async function bootstrap() {
   updateTransferActionStates();
 
   try {
-    const [config, health, namesPayload, pendingPayload, activityPayload] = await Promise.all([
+    const [config, health, namesPayload, pendingPayload, activityPayload, auctionLabPayload] = await Promise.all([
       fetchJson(withBasePath("/api/config")),
       fetchJson(withBasePath("/api/health")),
       fetchJson(withBasePath("/api/names")),
       fetchJson(withBasePath("/api/pending-commits")),
-      fetchJson(withBasePath("/api/activity?limit=10"))
+      fetchJson(withBasePath("/api/activity?limit=10")),
+      isAuctionsPage() ? fetchJson(withBasePath("/api/auctions")).catch(() => null) : Promise.resolve(null)
     ]);
     const liveSmokeStatus = config.showLiveSmoke
       ? await fetchJson(withBasePath("/api/live-smoke-status")).catch(() => null)
@@ -438,10 +443,12 @@ async function bootstrap() {
     state.pendingCommits = Array.isArray(pendingPayload.pendingCommits) ? pendingPayload.pendingCommits : [];
     state.liveSmokeStatus = liveSmokeStatus;
     state.privateBatchSmokeStatus = privateBatchSmokeStatus;
+    state.auctionLab = auctionLabPayload;
 
     renderHealth();
     renderLiveSmokeStatus();
     renderPrivateBatchSmokeStatus();
+    renderAuctionLab();
     renderRecentNames();
     renderActivity();
     renderPendingCommits();
@@ -2036,6 +2043,12 @@ function isClaimPrepPage() {
   const currentUrl = new URL(window.location.href);
   const pathname = stripClientBasePath(currentUrl.pathname);
   return pathname === "/claim" || pathname === "/claim/";
+}
+
+function isAuctionsPage() {
+  const currentUrl = new URL(window.location.href);
+  const pathname = stripClientBasePath(currentUrl.pathname);
+  return pathname === "/auctions" || pathname === "/auctions/";
 }
 
 function isTransferPrepPage() {
@@ -4373,6 +4386,218 @@ function escapeHtml(value) {
     .replaceAll(">", "&gt;")
     .replaceAll(String.fromCharCode(34), "&quot;")
     .replaceAll("'", "&#39;");
+}
+
+function renderAuctionLab() {
+  if (!elements.auctionLabList) {
+    return;
+  }
+
+  const auctionLab = state.auctionLab;
+  if (!auctionLab || !Array.isArray(auctionLab.cases)) {
+    elements.auctionLabList.classList.add("empty");
+    elements.auctionLabList.innerHTML = '<div class="result-card empty">No auction lab payload is available yet.</div>';
+    if (elements.auctionPolicySummary) {
+      elements.auctionPolicySummary.innerHTML = "";
+    }
+    setText(
+      elements.auctionLabMeta,
+      "Waiting for the reserved-auction lab payload."
+    );
+    return;
+  }
+
+  elements.auctionLabList.classList.remove("empty");
+  if (elements.auctionPolicySummary) {
+    elements.auctionPolicySummary.innerHTML = renderAuctionPolicySummary(auctionLab.policy ?? null);
+  }
+  setText(
+    elements.auctionLabMeta,
+    [
+      String(auctionLab.cases.length) + " experimental auction state" + (auctionLab.cases.length === 1 ? "" : "s"),
+      "using current stub reserved-class floors and lock durations",
+      "website/API/tests are all reading the same fixture set"
+    ].join(" · ")
+  );
+  elements.auctionLabList.innerHTML = auctionLab.cases
+    .map((auctionCase) => renderAuctionCaseCard(auctionCase))
+    .join("");
+}
+
+function renderAuctionPolicySummary(policy) {
+  if (!policy || typeof policy !== "object") {
+    return "";
+  }
+
+  const reservedClasses = policy.reservedClasses && typeof policy.reservedClasses === "object"
+    ? Object.entries(policy.reservedClasses)
+    : [];
+  const topRow = [
+    {
+      title: "Base window",
+      value: formatBlockWindow(policy.auction?.baseWindowBlocks)
+    },
+    {
+      title: "Soft close",
+      value: formatBlockWindow(policy.auction?.softCloseExtensionBlocks)
+    },
+    {
+      title: "Min increment",
+      value:
+        formatSats(policy.auction?.minimumIncrementAbsoluteSats ?? "0") +
+        " or " +
+        String((Number(policy.auction?.minimumIncrementBasisPoints ?? 0) / 100).toFixed(2)) +
+        "%"
+    }
+  ];
+
+  return [
+    '<article class="guide-card">',
+    "  <h3>Current Prototype Policy</h3>",
+    '  <div class="result-grid">',
+    topRow
+      .map((row) => {
+        return (
+          '<div class="result-item"><label>' +
+          escapeHtml(row.title) +
+          '</label><p class="field-value">' +
+          escapeHtml(row.value) +
+          "</p></div>"
+        );
+      })
+      .join(""),
+    "  </div>",
+    "</article>",
+    ...reservedClasses.map(([classId, entry]) => {
+      return [
+        '<article class="guide-card">',
+        "  <h3>" + escapeHtml(String(entry.label ?? classId)) + "</h3>",
+        '  <div class="result-grid">',
+        '    <div class="result-item"><label>Opening floor</label><p class="field-value">' + escapeHtml(formatSats(entry.floorSats ?? "0")) + "</p></div>",
+        '    <div class="result-item"><label>Lock length</label><p class="field-value">' + escapeHtml(formatBlockWindow(entry.lockBlocks)) + "</p></div>",
+        '    <div class="result-item"><label>Class id</label><p class="field-value">' + escapeHtml(String(classId)) + "</p></div>",
+        "  </div>",
+        "</article>"
+      ].join("");
+    })
+  ].join("");
+}
+
+function renderAuctionCaseCard(auctionCase) {
+  const stateView = auctionCase.state ?? {};
+  const phase = String(stateView.phase ?? "unknown");
+  const phasePill = mapAuctionPhasePill(phase);
+  const leaderLabel = phase === "settled" ? "Winner" : "Current leader";
+  const closeLabel = phase === "pending_unlock"
+    ? "Unlock block"
+    : phase === "awaiting_opening_bid"
+      ? "Current block"
+      : "Auction close";
+  const closeValue =
+    phase === "pending_unlock"
+      ? String(stateView.unlockBlock ?? "-")
+      : phase === "awaiting_opening_bid"
+        ? String(stateView.currentBlockHeight ?? "-")
+        : stateView.auctionCloseBlockAfter == null
+          ? "-"
+          : String(stateView.auctionCloseBlockAfter);
+
+  return [
+    '<article class="activity-card">',
+    '  <div class="result-title">',
+    '    <h3>' + escapeHtml(String(auctionCase.title ?? stateView.normalizedName ?? "Reserved auction")) + "</h3>",
+    '    <span class="status-pill ' + escapeHtml(phasePill) + '">' + escapeHtml(String(stateView.phaseLabel ?? phase)) + "</span>",
+    "  </div>",
+    '  <p class="field-value">' + escapeHtml(String(auctionCase.description ?? "")) + "</p>",
+    '  <div class="result-grid">',
+    '    <div class="result-item"><label>Name</label><p class="field-value">' + escapeHtml(String(stateView.normalizedName ?? "-")) + "</p></div>",
+    '    <div class="result-item"><label>Class</label><p class="field-value">' + escapeHtml(String(stateView.classLabel ?? "-")) + "</p></div>",
+    '    <div class="result-item"><label>Observed block</label><p class="field-value">' + escapeHtml(String(stateView.currentBlockHeight ?? "-")) + "</p></div>",
+    '    <div class="result-item"><label>' + escapeHtml(closeLabel) + '</label><p class="field-value">' + escapeHtml(closeValue) + "</p></div>",
+    '    <div class="result-item"><label>Opening minimum</label><p class="field-value">' + escapeHtml(formatSats(stateView.openingMinimumBidSats ?? "0")) + "</p></div>",
+    '    <div class="result-item"><label>' + escapeHtml(leaderLabel) + '</label><p class="field-value">' + escapeHtml(stateView.currentLeaderBidderId ?? "None yet") + "</p></div>",
+    '    <div class="result-item"><label>Highest bid</label><p class="field-value">' + escapeHtml(stateView.currentHighestBidSats ? formatSats(stateView.currentHighestBidSats) : "None yet") + "</p></div>",
+    '    <div class="result-item"><label>Next valid bid</label><p class="field-value">' + escapeHtml(stateView.currentRequiredMinimumBidSats ? formatSats(stateView.currentRequiredMinimumBidSats) : "Auction settled") + "</p></div>",
+    '    <div class="result-item"><label>Accepted / rejected</label><p class="field-value">' + escapeHtml(String(stateView.acceptedBidCount ?? 0) + " / " + String(stateView.rejectedBidCount ?? 0)) + "</p></div>",
+    '    <div class="result-item"><label>Reserved lock</label><p class="field-value">' + escapeHtml(formatBlockWindow(stateView.reservedLockBlocks)) + "</p></div>",
+    '    <div class="result-item"><label>Blocks to unlock</label><p class="field-value">' + escapeHtml(String(stateView.blocksUntilUnlock ?? 0)) + "</p></div>",
+    '    <div class="result-item"><label>Blocks to close</label><p class="field-value">' + escapeHtml(stateView.blocksUntilClose == null ? "-" : String(stateView.blocksUntilClose)) + "</p></div>",
+    "  </div>",
+    renderAuctionBidHistory(stateView.visibleBidOutcomes),
+    "</article>"
+  ].join("");
+}
+
+function renderAuctionBidHistory(outcomes) {
+  if (!Array.isArray(outcomes) || outcomes.length === 0) {
+    return '<p class="tx-panel-note">No visible bid attempts yet at this block height.</p>';
+  }
+
+  return [
+    '<details class="detail-technical">',
+    "  <summary>Visible bid attempts</summary>",
+    '  <div class="detail-technical-body">',
+    '    <div class="tx-event-list">',
+    outcomes
+      .map((outcome) => {
+        return [
+          '<article class="tx-event-card">',
+          '  <div class="tx-event-header">',
+          "    <strong>" + escapeHtml(String(outcome.bidderId ?? "unknown")) + "</strong>",
+          '    <span class="tx-pill ' + escapeHtml(String(outcome.status ?? "rejected")) + '">' + escapeHtml(String(outcome.status ?? "rejected")) + "</span>",
+          '    <span class="inline-note">block ' + escapeHtml(String(outcome.blockHeight ?? "-")) + "</span>",
+          "  </div>",
+          '  <p class="tx-event-meta">Attempted ' + escapeHtml(formatSats(outcome.amountSats ?? "0")) + " · " + escapeHtml(String(outcome.reason ?? "unknown")) + "</p>",
+          '  <div class="result-grid">',
+          '    <div class="result-item"><label>Required minimum</label><p class="field-value">' + escapeHtml(formatSats(outcome.requiredMinimumBidSats ?? "0")) + "</p></div>",
+          '    <div class="result-item"><label>Highest after</label><p class="field-value">' + escapeHtml(outcome.highestBidSatsAfter ? formatSats(outcome.highestBidSatsAfter) : "None yet") + "</p></div>",
+          '    <div class="result-item"><label>Close after</label><p class="field-value">' + escapeHtml(outcome.auctionCloseBlockAfter == null ? "-" : String(outcome.auctionCloseBlockAfter)) + "</p></div>",
+          "  </div>",
+          "</article>"
+        ].join("");
+      })
+      .join(""),
+    "    </div>",
+    "  </div>",
+    "</details>"
+  ].join("");
+}
+
+function mapAuctionPhasePill(phase) {
+  switch (phase) {
+    case "pending_unlock":
+      return "pending";
+    case "awaiting_opening_bid":
+      return "available";
+    case "live_bidding":
+      return "immature";
+    case "soft_close":
+      return "transfer";
+    case "settled":
+      return "mature";
+    default:
+      return "invalid";
+  }
+}
+
+function formatBlockWindow(value) {
+  const blocks = Number(value ?? 0);
+  if (!Number.isFinite(blocks) || blocks <= 0) {
+    return "0 blocks";
+  }
+
+  const days = blocks / 144;
+  if (days >= 365) {
+    return (days / 365).toFixed(days % 365 === 0 ? 0 : 1) + " years";
+  }
+  if (days >= 30) {
+    return (days / 30).toFixed(days % 30 === 0 ? 0 : 1) + " months";
+  }
+  if (days >= 1) {
+    return days.toFixed(days % 1 === 0 ? 0 : 1) + " days";
+  }
+
+  return String(blocks) + " blocks";
 }
 
 function renderPrivateBatchSmokeStatus() {

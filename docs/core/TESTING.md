@@ -139,6 +139,33 @@ This checks:
 - prototype owner-key generation
 - claim-draft generation
 
+### 2c. Experimental reserved-auction lab
+
+The current reserved-auction work is implemented as an experimental simulator
+and website lab, not an on-chain market yet.
+
+You can inspect it in the local app at:
+
+- `http://127.0.0.1:3000/auctions`
+
+The backing API is:
+
+- `/api/auctions`
+
+And the most relevant automated coverage is:
+
+```bash
+npm test -w @gns/core
+npm test -w @gns/web
+```
+
+That coverage includes:
+
+- single-auction policy and fixture outcomes
+- market-level bidder budget behavior
+- state-at-block phase derivation
+- website loading of the curated auction-state fixtures
+
 ### 2b. Repeatable smoke test for batched fixture mode
 
 If you want the same kind of repeatable proof for the ordinary-lane Merkle

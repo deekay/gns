@@ -23,6 +23,7 @@ describe("renderPageHtml", () => {
     expect(html).toContain("Human-Readable Names For Bitcoin Counterparties");
     expect(html).toContain("payment-first naming layer");
     expect(html).toContain("Open offline architect");
+    expect(html).toContain("Open auction lab");
     expect(html).toContain("GNS_FROM_ZERO.md");
     expect(html).toContain("GNS_IMPLEMENTATION_AND_VALIDATION.md");
     expect(html).toContain("MERKLE_BATCHING_STATUS.md");
@@ -62,7 +63,20 @@ describe("renderPageHtml", () => {
     });
 
     expect(html).toContain(">Overview<");
+    expect(html).toContain(">Auctions<");
     expect(html).toContain("Use The Current Prototype");
     expect(html).toContain("Implementation status");
+  });
+
+  it("renders the auction lab page", () => {
+    const html = renderPageHtml({
+      ...baseOptions,
+      pageKind: "auctions"
+    });
+
+    expect(html).toContain("Experimental Reserved Auction Lab");
+    expect(html).toContain("Reserved Auction States");
+    expect(html).toContain("auctionLabList");
+    expect(html).toContain("What This Covers");
   });
 });

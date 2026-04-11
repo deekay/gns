@@ -19,6 +19,7 @@ import {
   PROTOCOL_NAME,
   REVEAL_WINDOW_BLOCKS
 } from "@gns/protocol";
+import { loadReservedAuctionLab } from "./auction-lab.js";
 import { renderClientScript } from "./client-script.js";
 import { getOfflineClaimClientBundle } from "./offline-claim-bundle.js";
 import { renderOfflineClaimPageHtml } from "./offline-claim-page.js";
@@ -306,6 +307,7 @@ const server = createServer(async (request, response) => {
   if (
     pathname === "/"
     || isExplorePath(pathname)
+    || isAuctionsPath(pathname)
     || isNameDetailPath(pathname)
     || isClaimPath(pathname)
     || isValuesPath(pathname)
@@ -323,6 +325,8 @@ const server = createServer(async (request, response) => {
         networkLabel,
         pageKind: pathname === "/"
           ? "home"
+          : isAuctionsPath(pathname)
+          ? "auctions"
           : isClaimPath(pathname)
           ? "claim"
           : isValuesPath(pathname)
@@ -377,6 +381,7 @@ const server = createServer(async (request, response) => {
       networkLabel,
       showLiveSmoke,
       showPrivateBatchSmoke,
+      showAuctionLab: true,
       privateDemoBasePath,
       privateFunding: {
         enabled: privateSignetFundingEnabled,
@@ -398,6 +403,10 @@ const server = createServer(async (request, response) => {
 
   if (pathname === "/api/private-batch-smoke-status") {
     return writeJson(response, 200, await readPrivateBatchSmokeStatus());
+  }
+
+  if (pathname === "/api/auctions") {
+    return writeJson(response, 200, await loadReservedAuctionLab());
   }
 
   if (pathname === "/api/names") {
@@ -481,7 +490,7 @@ const server = createServer(async (request, response) => {
   return writeJson(response, 404, {
     error: "not_found",
     message:
-      "Supported paths: /, /explore, /claim, /values, /transfer, /setup, /explainer, /api/config, /api/health, /api/names, /api/pending-commits, /api/activity, /api/tx/{txid}, /api/dev-owner-key, /api/private-signet-fund, /api/claim-draft/{name}, /api/claim-plan/{name}, /api/name/{name}, /api/name/{name}/activity, /api/name/{name}/value, /api/live-smoke-status, /api/private-batch-smoke-status"
+      "Supported paths: /, /explore, /auctions, /claim, /values, /transfer, /setup, /explainer, /api/config, /api/health, /api/names, /api/pending-commits, /api/activity, /api/tx/{txid}, /api/dev-owner-key, /api/private-signet-fund, /api/claim-draft/{name}, /api/claim-plan/{name}, /api/name/{name}, /api/name/{name}/activity, /api/name/{name}/value, /api/live-smoke-status, /api/private-batch-smoke-status, /api/auctions"
       + ", /api/private-signet-claim-psbts, /api/values, /claim/offline, /claim/offline/download"
   });
 });
@@ -513,6 +522,10 @@ function isNameDetailPath(pathname: string): boolean {
 
 function isExplorePath(pathname: string): boolean {
   return pathname === "/explore" || pathname === "/explore/";
+}
+
+function isAuctionsPath(pathname: string): boolean {
+  return pathname === "/auctions" || pathname === "/auctions/";
 }
 
 function isClaimPath(pathname: string): boolean {

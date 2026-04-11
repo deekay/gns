@@ -1,0 +1,17 @@
+{
+  "title": "Pending unlock · google",
+  "description": "Top-collision reserved name before its auction unlock block. This is the state before any valid opening bid can be accepted.",
+  "currentBlockHeight": 839990,
+  "scenario": {
+    "name": "google",
+    "reservedClassId": "top_collision",
+    "unlockBlock": 840000,
+    "bidAttempts": [
+      {
+        "bidderId": "alpha",
+        "blockHeight": 840010,
+        "amountSats": "1000000000"
+      }
+    ]
+  }
+}

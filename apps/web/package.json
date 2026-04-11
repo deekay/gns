@@ -6,11 +6,12 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "dev": "tsx src/index.ts",
-    "test": "vitest run",
+    "test": "npm run build -w @gns/protocol && npm run build -w @gns/core && vitest run",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
     "@gns/architect": "file:../../packages/architect",
+    "@gns/core": "file:../../packages/core",
     "@gns/protocol": "file:../../packages/protocol",
     "@noble/curves": "^1.9.7",
     "@noble/hashes": "^1.8.0",

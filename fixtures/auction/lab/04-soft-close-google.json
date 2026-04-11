@@ -1,0 +1,27 @@
+{
+  "title": "Soft close · google",
+  "description": "Top-collision reserved name after a late higher bid extended the auction. The auction is still live, but continuation now requires a meaningful late response.",
+  "currentBlockHeight": 844360,
+  "scenario": {
+    "name": "google",
+    "reservedClassId": "top_collision",
+    "unlockBlock": 840000,
+    "bidAttempts": [
+      {
+        "bidderId": "alpha",
+        "blockHeight": 840010,
+        "amountSats": "1000000000"
+      },
+      {
+        "bidderId": "beta",
+        "blockHeight": 844210,
+        "amountSats": "1100000000"
+      },
+      {
+        "bidderId": "gamma",
+        "blockHeight": 844353,
+        "amountSats": "1160000000"
+      }
+    ]
+  }
+}

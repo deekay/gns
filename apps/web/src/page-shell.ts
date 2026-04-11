@@ -1,6 +1,6 @@
 import { PRODUCT_NAME, REVEAL_WINDOW_BLOCKS } from "@gns/protocol";
 
-export type PageKind = "home" | "explore" | "claim" | "values" | "transfer" | "setup" | "explainer";
+export type PageKind = "home" | "explore" | "auctions" | "claim" | "values" | "transfer" | "setup" | "explainer";
 const GITHUB_REPO_URL = "https://github.com/deekay/gns";
 const GITHUB_BLOB_BASE_URL = `${GITHUB_REPO_URL}/blob/main`;
 const DOC_URLS = {
@@ -46,6 +46,8 @@ export function renderPageHtml(options: PageShellOptions): string {
       ? PRODUCT_NAME
       : pageKind === "claim"
       ? `${PRODUCT_NAME} Claim Prep`
+      : pageKind === "auctions"
+      ? `${PRODUCT_NAME} Auction Lab`
       : pageKind === "values"
         ? `${PRODUCT_NAME} Value Publishing`
       : pageKind === "transfer"
@@ -60,6 +62,8 @@ export function renderPageHtml(options: PageShellOptions): string {
       ? "Search a name, understand the payment-first model, and choose whether to explore, claim, or review the current Global Name System prototype."
       : pageKind === "claim"
       ? "Prepare a Global Name System claim package, then finish the commit and reveal flow in Sparrow or another external signer."
+      : pageKind === "auctions"
+      ? "Experimental reserved-auction lab showing pending, live, soft-close, and settled states from the current auction simulator."
       : pageKind === "values"
         ? "Sign a Global Name System value record locally in the browser, then publish the signed record to the resolver."
       : pageKind === "transfer"
@@ -101,6 +105,8 @@ export function renderPageHtml(options: PageShellOptions): string {
         ${
           pageKind === "home"
             ? renderHomePageSections(basePath, includePrivateBatchSmoke)
+            : pageKind === "auctions"
+            ? renderAuctionsPageSections()
             : pageKind === "claim"
             ? renderClaimPageSections(basePath, privateSignetFundingEnabled, privateSignetFundingAmountSats)
             : pageKind === "values"
@@ -209,6 +215,21 @@ function renderHeroSection(
     </header>`;
   }
 
+  if (pageKind === "auctions") {
+    return `<header class="hero hero-single hero-page">
+      <div class="hero-copy">
+        <p class="eyebrow"><a class="eyebrow-link" href="${withBasePath("/", configuredBasePath)}">Global Name System</a> · ${escapeHtml(configuredNetworkLabel)}</p>
+        <h1>Experimental Reserved Auction Lab</h1>
+        <p class="lede">
+          Pending unlock, opening-floor pressure, live bidding, soft close, and settled winner states rendered from the current reserved-auction simulator.
+        </p>
+        <p class="hero-status">
+          Experimental product slice · policy, API, and website states all come from the same simulator-backed fixtures.
+        </p>
+      </div>
+    </header>`;
+  }
+
   return `<header class="hero hero-home">
     <div class="hero-copy">
       <p class="eyebrow"><a class="eyebrow-link" href="${withBasePath("/", configuredBasePath)}">Global Name System</a> · ${escapeHtml(configuredNetworkLabel)}</p>
@@ -243,6 +264,7 @@ function renderPrimaryNav(configuredBasePath: string, pageKind: PageKind, favico
     { href: withBasePath("/", configuredBasePath), label: "Home", active: pageKind === "home" },
     { href: withBasePath("/explainer", configuredBasePath), label: "Overview", active: pageKind === "explainer" },
     { href: withBasePath("/explore", configuredBasePath), label: "Explore", active: pageKind === "explore" },
+    { href: withBasePath("/auctions", configuredBasePath), label: "Auctions", active: pageKind === "auctions" },
     { href: withBasePath("/claim", configuredBasePath), label: "Claim", active: pageKind === "claim" },
     { href: withBasePath("/values", configuredBasePath), label: "Values", active: pageKind === "values" },
     { href: withBasePath("/transfer", configuredBasePath), label: "Transfer", active: pageKind === "transfer" },
@@ -310,6 +332,11 @@ function renderExplorePageSections(
     ${renderNetworkDetailsSection(true)}`;
 }
 
+function renderAuctionsPageSections(): string {
+  return `${renderAuctionLabSection()}
+    ${renderAuctionLabNotesSection()}`;
+}
+
 function renderClaimPageSections(
   configuredBasePath: string,
   _privateSignetFundingEnabled: boolean,
@@ -347,11 +374,56 @@ function renderExplainerPageSections(configuredBasePath: string): string {
     ${renderUsingGnsSection(configuredBasePath)}`;
 }
 
+function renderAuctionLabSection(): string {
+  return `<section id="auction-lab" class="panel panel-list">
+    ${renderPanelHead(
+      "Reserved Auction States",
+      "Experimental website view of the current reserved-auction simulator and stub launch policy.",
+      `<p>This is not the live on-chain reserved lane yet.</p>
+      <ul>
+        <li>The policy values are temporary and intentionally easy to change.</li>
+        <li>The states come from the same simulator and fixtures used in automated tests.</li>
+        <li>This is where we can review pending unlock, opening floor, live bidding, soft close, and settled outcomes in one place.</li>
+      </ul>`
+    )}
+    <p id="auctionLabMeta" class="helper-text">Loading the current reserved-auction policy and state fixtures.</p>
+    <div id="auctionPolicySummary" class="guide-grid"></div>
+    <div id="auctionLabList" class="activity-list"></div>
+  </section>`;
+}
+
+function renderAuctionLabNotesSection(): string {
+  return `<section class="panel panel-guide">
+    ${renderPanelHead(
+      "What This Covers",
+      "Current auction work is end-to-end at the experimental simulator layer, not a live on-chain reserved-name market yet."
+    )}
+    <div class="guide-grid">
+      <article class="guide-card">
+        <h3>Implemented</h3>
+        <ul class="guide-list">
+          <li>Configurable reserved classes, opening floors, soft close, and minimum increments.</li>
+          <li>Single-auction and market-level simulators with bidder budget pressure.</li>
+          <li>CLI commands, fixture scenarios, and this website-facing auction state view.</li>
+        </ul>
+      </article>
+      <article class="guide-card">
+        <h3>Still Experimental</h3>
+        <ul class="guide-list">
+          <li>No on-chain reserved-auction transaction flow yet.</li>
+          <li>No live reserved-auction registry state in the explorer.</li>
+          <li>The values here are the current prototype defaults, not locked protocol parameters.</li>
+        </ul>
+      </article>
+    </div>
+  </section>`;
+}
+
 function renderHomeActionsSection(configuredBasePath: string): string {
   return `<section id="start-here" class="panel panel-guide panel-home">
     ${renderPanelHead(
       "Start Here",
-      "Set up a wallet, prepare a claim, use the offline batch tools, or browse the registry."
+      "Set up a wallet, prepare a claim, inspect the experimental auction states, use the offline batch tools, or browse the registry."
     )}
     <div class="path-grid">
       <article class="path-card">
@@ -366,6 +438,13 @@ function renderHomeActionsSection(configuredBasePath: string): string {
         <p>Prepare the claim package, save the backup, and build the signer handoff.</p>
         <div class="path-card-actions">
           <a class="action-link secondary" href="${withBasePath("/claim", configuredBasePath)}">Open claim prep</a>
+        </div>
+      </article>
+      <article class="path-card">
+        <h3>Auctions</h3>
+        <p>Review the current reserved-auction prototype states with the same fixtures and stub policy values used in simulator tests.</p>
+        <div class="path-card-actions">
+          <a class="action-link secondary" href="${withBasePath("/auctions", configuredBasePath)}">Open auction lab</a>
         </div>
       </article>
       <article class="path-card">

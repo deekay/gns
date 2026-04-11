@@ -40,4 +40,13 @@ describe("renderClientScript", () => {
     expect(script).toContain("privateDemoBasePath");
     expect(script).toContain('withBasePath("/claim/offline", privateDemoBasePath)');
   });
+
+  it("includes auction lab handling", () => {
+    const script = renderClientScript("");
+
+    expect(script).toContain('/api/auctions');
+    expect(script).toContain("renderAuctionLab");
+    expect(script).toContain("renderAuctionPolicySummary");
+    expect(script).toContain("isAuctionsPage");
+  });
 });

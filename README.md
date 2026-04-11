@@ -81,6 +81,7 @@ Hosted private demo:
 - website: [https://globalnamesystem.org](https://globalnamesystem.org)
 - setup: [https://globalnamesystem.org/setup](https://globalnamesystem.org/setup)
 - claim prep: [https://globalnamesystem.org/claim](https://globalnamesystem.org/claim)
+- experimental auction lab: [https://globalnamesystem.org/auctions](https://globalnamesystem.org/auctions)
 
 Self-hosted website + resolver:
 - quick guide: [SELF_HOSTING.md](./docs/core/SELF_HOSTING.md)
@@ -150,6 +151,8 @@ Once the name is active, use the values tool to publish ordered key/value pairs 
 ### 5. Inspect the live prototype status
 
 Use the explore page to inspect recent names, provenance, and the current smoke summaries. On the hosted private signet demo, the explorer now also surfaces the latest batched ordinary-claim smoke run so you can see a real batch anchor, later reveals, and a post-claim transfer check.
+
+Use the auction lab page to inspect the current reserved-auction simulator states directly in the website. It renders pending unlock, opening-floor pressure, live bidding, soft close, and settled winner cases from the same fixture set the automated tests use.
 
 ## What GNS Is
 
