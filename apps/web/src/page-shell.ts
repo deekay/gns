@@ -16,6 +16,7 @@ export interface PageShellOptions {
   basePath: string,
   faviconDataUrl: string,
   includeLiveSmoke: boolean,
+  includePrivateBatchSmoke: boolean,
   networkLabel: string,
   pageKind: PageKind,
   privateSignetElectrumEndpoint: string | null,
@@ -28,6 +29,7 @@ export function renderPageHtml(options: PageShellOptions): string {
     basePath,
     faviconDataUrl,
     includeLiveSmoke,
+    includePrivateBatchSmoke,
     networkLabel,
     pageKind,
     privateSignetElectrumEndpoint,
@@ -104,7 +106,7 @@ export function renderPageHtml(options: PageShellOptions): string {
                 ? renderSetupPageSections(basePath, privateSignetElectrumEndpoint, privateSignetFundingEnabled, privateSignetFundingAmountSats)
               : pageKind === "explainer"
                 ? renderExplainerPageSections(basePath)
-              : renderExplorePageSections(basePath, includeLiveSmoke)
+              : renderExplorePageSections(basePath, includeLiveSmoke, includePrivateBatchSmoke)
         }
       </main>
     </div>
@@ -287,13 +289,18 @@ function renderHomePageSections(configuredBasePath: string): string {
     ${renderHomeStatusSection()}`;
 }
 
-function renderExplorePageSections(configuredBasePath: string, includeLiveSmoke: boolean): string {
+function renderExplorePageSections(
+  configuredBasePath: string,
+  includeLiveSmoke: boolean,
+  includePrivateBatchSmoke: boolean
+): string {
   return `${renderOverviewSection()}
     ${renderRecentNamesSection()}
     ${renderActivitySection(true)}
     ${renderPendingSection(true)}
     ${renderNamesSection(true)}
     ${includeLiveSmoke ? renderLiveSmokeSection(true) : ""}
+    ${includePrivateBatchSmoke ? renderPrivateBatchSmokeSection(true) : ""}
     ${renderNetworkDetailsSection(true)}`;
 }
 
@@ -417,7 +424,7 @@ function renderHomeExampleSection(configuredBasePath: string): string {
   return `<section id="bundle-example" class="panel panel-guide panel-home">
     ${renderPanelHead(
       "Live Examples And Batch Path",
-      "The hosted demo still has a few seeded example names, while the newer Merkle-batched flow is validated through the offline builder, fixture stack, and controlled-chain tests."
+      "The hosted demo still has a few seeded example names, while the newer Merkle-batched flow is now visible through the private signet batch-smoke panel and validated through the offline builder, fixture stack, and controlled-chain tests."
     )}
     <div class="guide-grid">
       <article class="guide-card">
@@ -438,10 +445,12 @@ function renderHomeExampleSection(configuredBasePath: string): string {
         <ul class="guide-list">
           <li>The offline architect can build a batch commit bundle and reveal-ready package per name.</li>
           <li>The website and resolver understand batch anchors and batch reveals in provenance views.</li>
-          <li>The public signet smoke path is still single-name today; batched live signet smoke is the next separate tooling step.</li>
+          <li>The shared public signet smoke path is still single-name today.</li>
+          <li>The hosted private signet demo now publishes a dedicated batch-smoke status panel with one batch anchor, two reveals, and a later transfer check.</li>
         </ul>
         <div class="guide-card-actions">
           <a class="action-link secondary" href="${withBasePath("/claim/offline", configuredBasePath)}">Open offline architect</a>
+          <a class="action-link secondary" href="${withBasePath("/explore", configuredBasePath)}">Open batch smoke panel</a>
           <a class="action-link secondary" href="${DOC_URLS.merkleStatus}" target="_blank" rel="noreferrer noopener">Read batching status</a>
         </div>
       </article>
@@ -509,6 +518,7 @@ function renderHomeStatusSection(): string {
         <ul class="guide-list">
           <li>Transfers still lean on CLI and signer flow.</li>
           <li>The public signet smoke path still exercises a single-name claim flow, not the batched path.</li>
+          <li>The private signet demo now shows a live batched ordinary-claim smoke run, but that does not yet mean the public signet path is batched too.</li>
           <li>Resolver availability is only partly decentralized in v1.</li>
           <li>Mainnet-ready usage is not the current claim.</li>
         </ul>
@@ -785,6 +795,38 @@ function renderLiveSmokeSection(collapsible = false): string {
         <p>Latest status from the shared public signet smoke flow. This is still the single-name public signet path today; the batched ordinary-claim path is validated in fixture mode and controlled-chain regtest.</p>
       </div>
       <span class="summary-chip">Open smoke</span>
+    </summary>
+    <div class="collapsible-panel-body">${body}</div>
+  </details>`;
+}
+
+function renderPrivateBatchSmokeSection(collapsible = false): string {
+  const body = `<p id="privateBatchSmokeMeta" class="helper-text">Checking the latest private signet batched ordinary-claim smoke run.</p>
+    <div id="privateBatchSmokeResult" class="result-card empty">Loading the latest private signet batch smoke status...</div>`;
+
+  if (!collapsible) {
+    return `<section class="panel panel-live-smoke">
+    ${renderPanelHead(
+      "Private Signet Batch Smoke",
+      "Latest status from the batched ordinary-claim flow on the hosted private signet demo.",
+      `<p>This is the best live-chain proof for the current ordinary-lane Merkle batching path.</p>
+      <ul>
+        <li>It uses one batch anchor and later one-by-one reveals against that root.</li>
+        <li>It currently checks two batched claims plus a later transfer on one of those names.</li>
+        <li>Unlike the public live smoke, it runs on the private signet deployment we control.</li>
+      </ul>`
+    )}
+    ${body}
+  </section>`;
+  }
+
+  return `<details class="panel panel-live-smoke panel-collapsible">
+    <summary class="panel-summary">
+      <div class="panel-summary-copy">
+        <h2>Private Signet Batch Smoke</h2>
+        <p>Latest status from the hosted private signet batched ordinary-claim flow: one batch anchor, later per-name reveals, and a post-claim transfer check.</p>
+      </div>
+      <span class="summary-chip">Open batch smoke</span>
     </summary>
     <div class="collapsible-panel-body">${body}</div>
   </details>`;

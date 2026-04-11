@@ -28,4 +28,13 @@ describe("renderClientScript", () => {
     expect(script).toContain("Merkle Root");
     expect(script).toContain("Proof Chunks");
   });
+
+  it("includes private signet batch smoke status handling", () => {
+    const script = renderClientScript("");
+
+    expect(script).toContain('/api/private-batch-smoke-status');
+    expect(script).toContain("privateBatchSmokeStatus");
+    expect(script).toContain("renderPrivateBatchSmokeStatus");
+    expect(script).toContain("Batch Commit Txid");
+  });
 });

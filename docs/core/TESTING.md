@@ -306,6 +306,7 @@ That full script:
 For faster, focused checks, use:
 
 ```bash
+npm run test:private-signet-batch-smoke
 npm run test:private-signet-claim-smoke
 npm run test:private-signet-transfer-smoke
 npm run test:private-signet-value-handoff-smoke
@@ -313,9 +314,26 @@ npm run test:private-signet-value-handoff-smoke
 
 Those focused smokes cover:
 
+- `batch-smoke`: one private-signet batch anchor, two later reveals, and a later gift transfer on one of the batch-claimed names
 - `claim-smoke`: one name through commit, reveal, and claimed state
 - `transfer-smoke`: gift transfer and immature buyer-funded sale transfer
 - `value-handoff-smoke`: post-transfer value authority moving from the old owner to the new owner
+
+The batch smoke writes a local summary to:
+
+- `./.data/private-signet-demo/batch-smoke-summary.json`
+
+If `GNS_PRIVATE_SIGNET_BATCH_SMOKE_PUBLISH_REMOTE_STATUS` is not set to `0`,
+it also publishes that summary to the VPS path in
+`GNS_PRIVATE_SIGNET_BATCH_SMOKE_REMOTE_STATUS_PATH`, which defaults to:
+
+- `/var/lib/gns/private-batch-smoke-summary.json`
+
+If the private web service is configured with
+`GNS_WEB_PRIVATE_BATCH_SMOKE_STATUS_PATH=/var/lib/gns/private-batch-smoke-summary.json`,
+the site can surface that status at:
+
+- `/api/private-batch-smoke-status`
 
 Useful server-side commands:
 

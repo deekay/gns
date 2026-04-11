@@ -156,6 +156,7 @@ SERVICE
 
   if [[ -f /etc/gns/gns-private.env ]]; then
     upsert_env /etc/gns/gns-private.env GNS_WEB_PRIVATE_SIGNET_ELECTRUM_ENDPOINT "${PUBLIC_HOST}:${ELECTRUM_PORT}:t"
+    upsert_env /etc/gns/gns-private.env GNS_WEB_PRIVATE_BATCH_SMOKE_STATUS_PATH /var/lib/gns/private-batch-smoke-summary.json
   fi
 fi
 

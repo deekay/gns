@@ -147,6 +147,10 @@ Once the name is active, use the values tool to publish ordered key/value pairs 
 
 ![GNS value bundle](./docs/assets/website-values-bundle.png)
 
+### 5. Inspect the live prototype status
+
+Use the explore page to inspect recent names, provenance, and the current smoke summaries. On the hosted private signet demo, the explorer now also surfaces the latest batched ordinary-claim smoke run so you can see a real batch anchor, later reveals, and a post-claim transfer check.
+
 ## What GNS Is
 
 GNS names are first-class strings like `satoshi`, not hierarchical domains like `satoshi.com`.

@@ -48,6 +48,10 @@ const showLiveSmoke = parseBoolean(
   process.env.GNS_WEB_SHOW_LIVE_SMOKE,
   true
 );
+const showPrivateBatchSmoke = parseBoolean(
+  process.env.GNS_WEB_SHOW_PRIVATE_BATCH_SMOKE,
+  networkLabel.toLowerCase().includes("private signet")
+);
 const privateSignetFundingCommand =
   normalizeOptionalText(process.env.GNS_WEB_PRIVATE_SIGNET_FUNDING_COMMAND) ??
   "/usr/local/bin/gns-private-signet-fund";
@@ -96,6 +100,9 @@ const faviconDataUrl =
 const liveSmokeStatusPath =
   normalizeOptionalText(process.env.GNS_WEB_LIVE_SMOKE_STATUS_PATH) ??
   fileURLToPath(new URL("../../../.data/live-smoke-summary.json", import.meta.url));
+const privateBatchSmokeStatusPath =
+  normalizeOptionalText(process.env.GNS_WEB_PRIVATE_BATCH_SMOKE_STATUS_PATH) ??
+  fileURLToPath(new URL("../../../.data/private-signet-demo/batch-smoke-summary.json", import.meta.url));
 
 const server = createServer(async (request, response) => {
   const method = request.method ?? "GET";
@@ -308,6 +315,7 @@ const server = createServer(async (request, response) => {
         basePath,
         faviconDataUrl,
         includeLiveSmoke: showLiveSmoke,
+        includePrivateBatchSmoke: showPrivateBatchSmoke,
         networkLabel,
         pageKind: pathname === "/"
           ? "home"
@@ -364,6 +372,7 @@ const server = createServer(async (request, response) => {
       basePath,
       networkLabel,
       showLiveSmoke,
+      showPrivateBatchSmoke,
       privateFunding: {
         enabled: privateSignetFundingEnabled,
         amountSats: privateSignetFundingAmountSats.toString(),
@@ -380,6 +389,10 @@ const server = createServer(async (request, response) => {
 
   if (pathname === "/api/live-smoke-status") {
     return writeJson(response, 200, await readLiveSmokeStatus());
+  }
+
+  if (pathname === "/api/private-batch-smoke-status") {
+    return writeJson(response, 200, await readPrivateBatchSmokeStatus());
   }
 
   if (pathname === "/api/names") {
@@ -463,7 +476,7 @@ const server = createServer(async (request, response) => {
   return writeJson(response, 404, {
     error: "not_found",
     message:
-      "Supported paths: /, /explore, /claim, /values, /transfer, /setup, /explainer, /api/config, /api/health, /api/names, /api/pending-commits, /api/activity, /api/tx/{txid}, /api/dev-owner-key, /api/private-signet-fund, /api/claim-draft/{name}, /api/claim-plan/{name}, /api/name/{name}, /api/name/{name}/activity, /api/name/{name}/value"
+      "Supported paths: /, /explore, /claim, /values, /transfer, /setup, /explainer, /api/config, /api/health, /api/names, /api/pending-commits, /api/activity, /api/tx/{txid}, /api/dev-owner-key, /api/private-signet-fund, /api/claim-draft/{name}, /api/claim-plan/{name}, /api/name/{name}, /api/name/{name}/activity, /api/name/{name}/value, /api/live-smoke-status, /api/private-batch-smoke-status"
       + ", /api/private-signet-claim-psbts, /api/values, /claim/offline, /claim/offline/download"
   });
 });
@@ -556,6 +569,28 @@ async function readLiveSmokeStatus(): Promise<unknown> {
     return {
       status: "error",
       message: error instanceof Error ? error.message : "Unable to read live signet smoke summary."
+    };
+  }
+}
+
+async function readPrivateBatchSmokeStatus(): Promise<unknown> {
+  try {
+    return JSON.parse(await readFile(privateBatchSmokeStatusPath, "utf8"));
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      "code" in error &&
+      (error as NodeJS.ErrnoException).code === "ENOENT"
+    ) {
+      return {
+        status: "unavailable",
+        message: "No private signet batch smoke summary has been published yet."
+      };
+    }
+
+    return {
+      status: "error",
+      message: error instanceof Error ? error.message : "Unable to read private signet batch smoke summary."
     };
   }
 }

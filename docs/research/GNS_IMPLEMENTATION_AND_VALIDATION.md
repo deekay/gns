@@ -140,12 +140,22 @@ That is a strong validation milestone because it proves the protocol logic is
 not just tied to transaction construction. It correctly rejects bad batched
 reveals after they land on chain.
 
-### Live signet note
+### Live-chain note
 
 The shared public signet smoke path still exists, but it currently exercises a
 single-name live claim flow rather than the newer batched ordinary-claim path.
 So public signet remains useful as a “real external chain” smoke signal, but it
 is not yet where the strongest Merkle-batching validation comes from.
+
+We now also have a dedicated **private signet batch smoke** path that runs:
+
+- one ordinary batch anchor
+- two later batch reveals
+- and one later gift transfer on a batch-claimed name
+
+That gives us a live-chain demonstration of the explicit ordinary-lane Merkle
+path in a controlled hosted environment, without depending on public signet
+funding conditions.
 
 ## What We Can Say Confidently
 

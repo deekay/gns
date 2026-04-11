@@ -6,6 +6,7 @@ const baseOptions = {
   basePath: "",
   faviconDataUrl: "data:image/svg+xml;base64,AA==",
   includeLiveSmoke: true,
+  includePrivateBatchSmoke: true,
   networkLabel: "private signet",
   privateSignetElectrumEndpoint: "globalnamesystem.org:50001:t",
   privateSignetFundingAmountSats: 50_000n,
@@ -36,6 +37,17 @@ describe("renderPageHtml", () => {
 
     expect(html).toContain("single-name public signet path today");
     expect(html).toContain("batched ordinary-claim path is validated in fixture mode and controlled-chain regtest");
+  });
+
+  it("surfaces the private signet batch smoke panel when enabled", () => {
+    const html = renderPageHtml({
+      ...baseOptions,
+      pageKind: "explore"
+    });
+
+    expect(html).toContain("Private Signet Batch Smoke");
+    expect(html).toContain("one batch anchor, later per-name reveals");
+    expect(html).toContain("privateBatchSmokeResult");
   });
 
   it("adds the overview nav entry", () => {

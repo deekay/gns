@@ -21,6 +21,7 @@ const state = {
   claimPsbtBundle: null,
   transferDraft: null,
   liveSmokeStatus: null,
+  privateBatchSmokeStatus: null,
   nameFilter: "all",
   activityFilter: "all",
   txCache: new Map()
@@ -92,6 +93,8 @@ const elements = {
   chainSummary: document.getElementById("chainSummary"),
   liveSmokeMeta: document.getElementById("liveSmokeMeta"),
   liveSmokeResult: document.getElementById("liveSmokeResult"),
+  privateBatchSmokeMeta: document.getElementById("privateBatchSmokeMeta"),
+  privateBatchSmokeResult: document.getElementById("privateBatchSmokeResult"),
   recentNamesState: document.getElementById("recentNamesState"),
   recentNamesList: document.getElementById("recentNamesList"),
   activityFilters: document.getElementById("activityFilters"),
@@ -424,6 +427,9 @@ async function bootstrap() {
     const liveSmokeStatus = config.showLiveSmoke
       ? await fetchJson(withBasePath("/api/live-smoke-status")).catch(() => null)
       : null;
+    const privateBatchSmokeStatus = config.showPrivateBatchSmoke
+      ? await fetchJson(withBasePath("/api/private-batch-smoke-status")).catch(() => null)
+      : null;
 
     state.config = config;
     state.health = health;
@@ -431,9 +437,11 @@ async function bootstrap() {
     state.activity = Array.isArray(activityPayload.activity) ? activityPayload.activity : [];
     state.pendingCommits = Array.isArray(pendingPayload.pendingCommits) ? pendingPayload.pendingCommits : [];
     state.liveSmokeStatus = liveSmokeStatus;
+    state.privateBatchSmokeStatus = privateBatchSmokeStatus;
 
     renderHealth();
     renderLiveSmokeStatus();
+    renderPrivateBatchSmokeStatus();
     renderRecentNames();
     renderActivity();
     renderPendingCommits();
@@ -4365,6 +4373,88 @@ function escapeHtml(value) {
     .replaceAll(">", "&gt;")
     .replaceAll(String.fromCharCode(34), "&quot;")
     .replaceAll("'", "&#39;");
+}
+
+function renderPrivateBatchSmokeStatus() {
+  if (!elements.privateBatchSmokeResult) {
+    return;
+  }
+
+  const batchSmoke = state.privateBatchSmokeStatus;
+  if (!batchSmoke) {
+    elements.privateBatchSmokeResult.classList.add("empty");
+    elements.privateBatchSmokeResult.textContent = "No private signet batch smoke status is available yet.";
+    setText(
+      elements.privateBatchSmokeMeta,
+      "Waiting for the first published private signet batched ordinary-claim smoke summary."
+    );
+    return;
+  }
+
+  const status = String(batchSmoke.status ?? "unknown");
+  const alphaName = batchSmoke.names?.alpha ?? null;
+  const betaName = batchSmoke.names?.beta ?? null;
+  const transferName = batchSmoke.transfer?.name ?? null;
+  const revealTxids = batchSmoke.revealTxids && typeof batchSmoke.revealTxids === "object"
+    ? Object.values(batchSmoke.revealTxids).filter((value) => typeof value === "string")
+    : [];
+  const revealSummary =
+    revealTxids.length === 0
+      ? "Reveal txids unavailable"
+      : String(revealTxids.length) + " reveal tx" + (revealTxids.length === 1 ? "" : "s");
+
+  setText(
+    elements.privateBatchSmokeMeta,
+    [
+      "Status: " + formatLiveSmokeStatus(status),
+      batchSmoke.completedAt
+        ? "Updated " + new Date(batchSmoke.completedAt).toLocaleString()
+        : batchSmoke.startedAt
+          ? "Started " + new Date(batchSmoke.startedAt).toLocaleString()
+          : null,
+      revealSummary
+    ]
+      .filter(Boolean)
+      .join(" · ")
+  );
+
+  elements.privateBatchSmokeResult.classList.remove("empty");
+  elements.privateBatchSmokeResult.innerHTML = [
+    '<div class="result-title">',
+    '  <h3>' + escapeHtml(alphaName && betaName ? alphaName + " + " + betaName : batchSmoke.kind ?? "Private batch smoke") + '</h3>',
+    '  <span class="status-pill ' + escapeHtml(mapLiveSmokeStatusPill(status)) + '">' + escapeHtml(formatLiveSmokeStatus(status)) + '</span>',
+    '</div>',
+    '<div class="result-grid">',
+    '  <div class="result-item">',
+    "    <label>Message</label>",
+    '    <p class="field-value">' + escapeHtml(batchSmoke.message ?? "No message") + '</p>',
+    "  </div>",
+    '  <div class="result-item">',
+    "    <label>Names</label>",
+    '    <p class="field-value">' + escapeHtml([alphaName, betaName].filter(Boolean).join(", ") || "Not published") + '</p>',
+    "  </div>",
+    '  <div class="result-item">',
+    "    <label>Batch Commit Txid</label>",
+    batchSmoke.batchCommitTxid ? renderCopyableCode(batchSmoke.batchCommitTxid) : '<p class="field-value">Not published</p>',
+    "  </div>",
+    '  <div class="result-item">',
+    "    <label>Reveal Count</label>",
+    '    <p class="field-value">' + escapeHtml(String(revealTxids.length)) + '</p>',
+    "  </div>",
+    '  <div class="result-item">',
+    "    <label>Transferred Name</label>",
+    '    <p class="field-value">' + escapeHtml(transferName ?? "Not published") + '</p>',
+    "  </div>",
+    '  <div class="result-item">',
+    "    <label>Payer Funding Address</label>",
+    batchSmoke.payerFundingAddress ? renderCopyableCode(batchSmoke.payerFundingAddress) : '<p class="field-value">Not published</p>',
+    "  </div>",
+    '  <div class="result-item">',
+    "    <label>Resolver</label>",
+    '    <p class="field-value">' + escapeHtml(batchSmoke.resolverUrl ?? "Unavailable") + '</p>',
+    "  </div>",
+    "</div>"
+  ].join("");
 }
   `;
 }

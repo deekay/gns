@@ -98,6 +98,18 @@ env_value() {
   printf '%s\n' "${value:-}"
 }
 
+upsert_env() {
+  local file="$1"
+  local key="$2"
+  local value="$3"
+
+  if grep -q "^${key}=" "$file" 2>/dev/null; then
+    sed -i "s#^${key}=.*#${key}=${value}#" "$file"
+  else
+    printf '%s=%s\n' "$key" "$value" >>"$file"
+  fi
+}
+
 cleanup() {
   rm -rf "${RELEASE_DIR:?}"
 }
@@ -108,6 +120,13 @@ LOCK_PATH=/var/lock/gns-app-deploy.lock
 echo "Waiting for deploy lock: $LOCK_PATH"
 exec 9>"$LOCK_PATH"
 flock 9
+
+if [[ -f /etc/gns/gns.env ]]; then
+  upsert_env /etc/gns/gns.env GNS_WEB_PRIVATE_BATCH_SMOKE_STATUS_PATH /var/lib/gns/private-batch-smoke-summary.json
+fi
+if [[ -f /etc/gns/gns-domain.env ]]; then
+  upsert_env /etc/gns/gns-domain.env GNS_WEB_PRIVATE_BATCH_SMOKE_STATUS_PATH /var/lib/gns/private-batch-smoke-summary.json
+fi
 
 install -d /opt/gns/app
 rsync -a --delete "${RELEASE_DIR}/" /opt/gns/app/
