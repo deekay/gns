@@ -224,7 +224,7 @@ function renderHeroSection(
           Pending unlock, opening-floor pressure, live bidding, soft close, and settled winner states rendered from the current reserved-auction simulator.
         </p>
         <p class="hero-status">
-          Experimental product slice · policy, API, and website states all come from the same simulator-backed fixtures.
+          Experimental product slice · curated simulator states plus a chain-derived experimental AUCTION_BID feed.
         </p>
       </div>
     </header>`;
@@ -334,6 +334,7 @@ function renderExplorePageSections(
 
 function renderAuctionsPageSections(): string {
   return `${renderAuctionLabSection()}
+    ${renderExperimentalAuctionFeedSection()}
     ${renderAuctionLabNotesSection()}`;
 }
 
@@ -392,6 +393,23 @@ function renderAuctionLabSection(): string {
   </section>`;
 }
 
+function renderExperimentalAuctionFeedSection(): string {
+  return `<section id="experimental-auction-feed" class="panel panel-list">
+    ${renderPanelHead(
+      "Chain-Derived Experimental Bids",
+      "Resolver-backed experimental auction state derived from observed AUCTION_BID transactions.",
+      `<p>This sits one step closer to protocol behavior than the curated simulator lab above.</p>
+      <ul>
+        <li>Lots still come from the current experimental auction catalog.</li>
+        <li>Leaders and minimum next bids are derived from observed AUCTION_BID transactions.</li>
+        <li>The current slice is still experimental: bids are recorded and derived, not yet settled by a full reserved-auction engine.</li>
+      </ul>`
+    )}
+    <p id="experimentalAuctionMeta" class="helper-text">Loading chain-derived experimental auction state.</p>
+    <div id="experimentalAuctionList" class="activity-list"></div>
+  </section>`;
+}
+
 function renderAuctionLabNotesSection(): string {
   return `<section class="panel panel-guide">
     ${renderPanelHead(
@@ -406,13 +424,14 @@ function renderAuctionLabNotesSection(): string {
           <li>Single-auction and market-level simulators with bidder budget pressure.</li>
           <li>CLI commands, fixture scenarios, and this website-facing auction state view.</li>
           <li>Experimental bid-package handoffs from the CLI and directly from the auction lab page.</li>
+          <li>Chain-derived experimental auction state from observed <code>AUCTION_BID</code> transactions.</li>
         </ul>
       </article>
       <article class="guide-card">
         <h3>Still Experimental</h3>
         <ul class="guide-list">
-          <li>No on-chain reserved-auction transaction flow yet.</li>
-          <li>No live reserved-auction registry state in the explorer.</li>
+          <li>No full reserved-auction settlement engine yet.</li>
+          <li>The chain-derived feed is still an experimental prototype, not the final launch market.</li>
           <li>The values here are the current prototype defaults, not locked protocol parameters.</li>
         </ul>
       </article>

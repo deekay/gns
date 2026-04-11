@@ -13,6 +13,7 @@ import * as tinysecp from "tiny-secp256k1";
 import {
   bytesToHex,
   computeAuctionBidderCommitment,
+  computeAuctionLotCommitment,
   computeAuctionBidStateCommitment,
   computeBatchCommitLeafHash,
   computeMerkleRoot,
@@ -311,6 +312,7 @@ export interface AuctionBidArtifacts {
   readonly payloadBytes: number;
   readonly bondAddress: string;
   readonly bondVout: number;
+  readonly auctionLotCommitment: string;
   readonly bidderCommitment: string;
   readonly auctionStateCommitment: string;
 }
@@ -1145,12 +1147,21 @@ export function buildAuctionBidArtifacts(
     unlockBlock: bidPackage.unlockBlock,
     auctionCloseBlockAfter: bidPackage.auctionCloseBlockAfter,
     openingMinimumBidSats: BigInt(bidPackage.openingMinimumBidSats),
-    currentLeaderBidderId: bidPackage.currentLeaderBidderId,
+    currentLeaderBidderCommitment: bidPackage.currentLeaderBidderCommitment,
     currentHighestBidSats: bidPackage.currentHighestBidSats === null ? null : BigInt(bidPackage.currentHighestBidSats),
     currentRequiredMinimumBidSats:
       bidPackage.currentRequiredMinimumBidSats === null ? null : BigInt(bidPackage.currentRequiredMinimumBidSats),
     reservedLockBlocks: bidPackage.reservedLockBlocks
   });
+  const expectedAuctionLotCommitment = computeAuctionLotCommitment({
+    auctionId: bidPackage.auctionId,
+    name: bidPackage.name,
+    reservedClassId: bidPackage.reservedClassId,
+    unlockBlock: bidPackage.unlockBlock
+  });
+  if (bidPackage.auctionLotCommitment !== expectedAuctionLotCommitment) {
+    throw new Error("bid package auctionLotCommitment does not match the auction lot");
+  }
   if (bidPackage.auctionStateCommitment !== expectedAuctionStateCommitment) {
     throw new Error("bid package auctionStateCommitment does not match the observed auction state");
   }
@@ -1161,6 +1172,7 @@ export function buildAuctionBidArtifacts(
     bondVout,
     reservedLockBlocks: bidPackage.reservedLockBlocks,
     bidAmountSats,
+    auctionLotCommitment: bidPackage.auctionLotCommitment,
     auctionCommitment: bidPackage.auctionStateCommitment,
     bidderCommitment: bidPackage.bidderCommitment
   });
@@ -1263,6 +1275,7 @@ export function buildAuctionBidArtifacts(
     payloadBytes: payloadBytes.length,
     bondAddress,
     bondVout,
+    auctionLotCommitment: bidPackage.auctionLotCommitment,
     bidderCommitment: bidPackage.bidderCommitment,
     auctionStateCommitment: bidPackage.auctionStateCommitment
   };

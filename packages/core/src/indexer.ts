@@ -26,6 +26,14 @@ import {
   type ProvenanceEventRecord,
   refreshDerivedState
 } from "./engine.js";
+import {
+  deriveExperimentalReservedAuctionStates,
+  serializeExperimentalReservedAuctionState,
+  type ExperimentalReservedAuctionBidObservation,
+  type ExperimentalReservedAuctionCatalogEntry,
+  type SerializedExperimentalReservedAuctionState
+} from "./experimental-auction.js";
+import { createDefaultReservedAuctionPolicy, type ReservedAuctionPolicy } from "./auction-policy.js";
 
 export interface IndexerStats {
   readonly currentHeight: number | null;
@@ -33,6 +41,16 @@ export interface IndexerStats {
   readonly processedBlocks: number;
   readonly trackedNames: number;
   readonly pendingCommits: number;
+}
+
+export interface ExperimentalAuctionBidPayloadSnapshot {
+  readonly flags: number;
+  readonly bondVout: number;
+  readonly reservedLockBlocks: number;
+  readonly bidAmountSats: string;
+  readonly auctionLotCommitment: string;
+  readonly auctionCommitment: string;
+  readonly bidderCommitment: string;
 }
 
 export interface InMemoryGnsIndexerPersistedState {
@@ -88,7 +106,7 @@ export type TransactionProvenanceEventPayloadSnapshot =
   | TransferEventPayload
   | BatchAnchorEventPayload
   | RevealProofChunkEventPayload
-  | AuctionBidEventPayload;
+  | ExperimentalAuctionBidPayloadSnapshot;
 
 export interface TransactionProvenanceEventSnapshot {
   readonly vout: number;
@@ -120,6 +138,8 @@ export interface TransactionProvenanceSnapshot {
 export class InMemoryGnsIndexer {
   private readonly launchHeight: number;
   private readonly recentCheckpointLimit: number;
+  private readonly experimentalReservedAuctionCatalog: readonly ExperimentalReservedAuctionCatalogEntry[];
+  private readonly experimentalReservedAuctionPolicy: ReservedAuctionPolicy;
   private readonly state: GnsState;
   private readonly transactionProvenance: Map<string, TransactionProvenanceSnapshot>;
   private recentCheckpoints: InMemoryGnsIndexerPersistedState[];
@@ -127,9 +147,17 @@ export class InMemoryGnsIndexer {
   private currentBlockHash: string | null;
   private processedBlocks: number;
 
-  public constructor(input: { launchHeight: number; recentCheckpointLimit?: number }) {
+  public constructor(input: {
+    launchHeight: number;
+    recentCheckpointLimit?: number;
+    experimentalReservedAuctionCatalog?: readonly ExperimentalReservedAuctionCatalogEntry[];
+    experimentalReservedAuctionPolicy?: ReservedAuctionPolicy;
+  }) {
     this.launchHeight = input.launchHeight;
     this.recentCheckpointLimit = Math.max(1, input.recentCheckpointLimit ?? 100);
+    this.experimentalReservedAuctionCatalog = [...(input.experimentalReservedAuctionCatalog ?? [])];
+    this.experimentalReservedAuctionPolicy =
+      input.experimentalReservedAuctionPolicy ?? createDefaultReservedAuctionPolicy();
     this.state = createEmptyState();
     this.transactionProvenance = new Map();
     this.recentCheckpoints = [];
@@ -138,10 +166,22 @@ export class InMemoryGnsIndexer {
     this.processedBlocks = 0;
   }
 
-  public static fromSnapshot(snapshot: InMemoryGnsIndexerSnapshot): InMemoryGnsIndexer {
+  public static fromSnapshot(
+    snapshot: InMemoryGnsIndexerSnapshot,
+    options?: {
+      readonly experimentalReservedAuctionCatalog?: readonly ExperimentalReservedAuctionCatalogEntry[];
+      readonly experimentalReservedAuctionPolicy?: ReservedAuctionPolicy;
+    }
+  ): InMemoryGnsIndexer {
     const indexer = new InMemoryGnsIndexer({
       launchHeight: snapshot.launchHeight,
-      recentCheckpointLimit: Math.max(1, snapshot.recentCheckpoints?.length ?? 100)
+      recentCheckpointLimit: Math.max(1, snapshot.recentCheckpoints?.length ?? 100),
+      ...(options?.experimentalReservedAuctionCatalog === undefined
+        ? {}
+        : { experimentalReservedAuctionCatalog: options.experimentalReservedAuctionCatalog }),
+      ...(options?.experimentalReservedAuctionPolicy === undefined
+        ? {}
+        : { experimentalReservedAuctionPolicy: options.experimentalReservedAuctionPolicy })
     });
     indexer.hydrate(snapshot);
 
@@ -206,6 +246,21 @@ export class InMemoryGnsIndexer {
 
   public getTransactionProvenance(txid: string): TransactionProvenanceSnapshot | null {
     return this.transactionProvenance.get(txid) ?? null;
+  }
+
+  public listExperimentalAuctions(): SerializedExperimentalReservedAuctionState[] {
+    const currentBlockHeight = this.currentHeight ?? (this.launchHeight - 1);
+
+    return deriveExperimentalReservedAuctionStates({
+      policy: this.experimentalReservedAuctionPolicy,
+      currentBlockHeight,
+      catalog: this.experimentalReservedAuctionCatalog,
+      bidObservations: this.listAppliedAuctionBidObservations()
+    }).map((state) => serializeExperimentalReservedAuctionState(state));
+  }
+
+  public getExperimentalAuction(auctionId: string): SerializedExperimentalReservedAuctionState | null {
+    return this.listExperimentalAuctions().find((auction) => auction.auctionId === auctionId) ?? null;
   }
 
   public listRecentActivity(limit = 12): TransactionProvenanceSnapshot[] {
@@ -438,6 +493,46 @@ export class InMemoryGnsIndexer {
       )
     ].slice(0, this.recentCheckpointLimit);
   }
+
+  private listAppliedAuctionBidObservations(): ExperimentalReservedAuctionBidObservation[] {
+    return [...this.transactionProvenance.values()]
+      .flatMap((transaction) =>
+        transaction.events
+          .filter(
+            (event): event is TransactionProvenanceSnapshot["events"][number] & {
+              readonly typeName: "AUCTION_BID";
+              readonly validationStatus: "applied";
+              readonly payload: ExperimentalAuctionBidPayloadSnapshot;
+            } => event.typeName === "AUCTION_BID" && event.validationStatus === "applied"
+          )
+          .map((event) => ({
+            txid: transaction.txid,
+            blockHeight: transaction.blockHeight,
+            txIndex: transaction.txIndex,
+            vout: event.vout,
+            bidderCommitment: event.payload.bidderCommitment,
+            bidAmountSats: BigInt(event.payload.bidAmountSats),
+            reservedLockBlocks: event.payload.reservedLockBlocks,
+            auctionLotCommitment: event.payload.auctionLotCommitment,
+            auctionCommitment: event.payload.auctionCommitment
+          }))
+      )
+      .sort((left, right) => {
+        if (left.blockHeight !== right.blockHeight) {
+          return left.blockHeight - right.blockHeight;
+        }
+
+        if (left.txIndex !== right.txIndex) {
+          return left.txIndex - right.txIndex;
+        }
+
+        if (left.vout !== right.vout) {
+          return left.vout - right.vout;
+        }
+
+        return left.txid.localeCompare(right.txid);
+      });
+  }
 }
 
 function serializeTransactionProvenanceRecord(input: {
@@ -487,6 +582,13 @@ function serializeProvenancePayload(
     return {
       ...payload,
       nonce: payload.nonce.toString()
+    };
+  }
+
+  if ("auctionCommitment" in payload) {
+    return {
+      ...payload,
+      bidAmountSats: payload.bidAmountSats.toString()
     };
   }
 

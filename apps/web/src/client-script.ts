@@ -23,6 +23,7 @@ const state = {
   liveSmokeStatus: null,
   privateBatchSmokeStatus: null,
   auctionLab: null,
+  experimentalAuctions: null,
   nameFilter: "all",
   activityFilter: "all",
   txCache: new Map()
@@ -99,6 +100,8 @@ const elements = {
   auctionLabMeta: document.getElementById("auctionLabMeta"),
   auctionPolicySummary: document.getElementById("auctionPolicySummary"),
   auctionLabList: document.getElementById("auctionLabList"),
+  experimentalAuctionMeta: document.getElementById("experimentalAuctionMeta"),
+  experimentalAuctionList: document.getElementById("experimentalAuctionList"),
   recentNamesState: document.getElementById("recentNamesState"),
   recentNamesList: document.getElementById("recentNamesList"),
   activityFilters: document.getElementById("activityFilters"),
@@ -421,13 +424,14 @@ async function bootstrap() {
   updateTransferActionStates();
 
   try {
-    const [config, health, namesPayload, pendingPayload, activityPayload, auctionLabPayload] = await Promise.all([
+    const [config, health, namesPayload, pendingPayload, activityPayload, auctionLabPayload, experimentalAuctionsPayload] = await Promise.all([
       fetchJson(withBasePath("/api/config")),
       fetchJson(withBasePath("/api/health")),
       fetchJson(withBasePath("/api/names")),
       fetchJson(withBasePath("/api/pending-commits")),
       fetchJson(withBasePath("/api/activity?limit=10")),
-      isAuctionsPage() ? fetchJson(withBasePath("/api/auctions")).catch(() => null) : Promise.resolve(null)
+      isAuctionsPage() ? fetchJson(withBasePath("/api/auctions")).catch(() => null) : Promise.resolve(null),
+      isAuctionsPage() ? fetchJson(withBasePath("/api/experimental-auctions")).catch(() => null) : Promise.resolve(null)
     ]);
     const liveSmokeStatus = config.showLiveSmoke
       ? await fetchJson(withBasePath("/api/live-smoke-status")).catch(() => null)
@@ -444,11 +448,13 @@ async function bootstrap() {
     state.liveSmokeStatus = liveSmokeStatus;
     state.privateBatchSmokeStatus = privateBatchSmokeStatus;
     state.auctionLab = auctionLabPayload;
+    state.experimentalAuctions = experimentalAuctionsPayload;
 
     renderHealth();
     renderLiveSmokeStatus();
     renderPrivateBatchSmokeStatus();
     renderAuctionLab();
+    renderExperimentalAuctionFeed();
     renderRecentNames();
     renderActivity();
     renderPendingCommits();
@@ -4246,6 +4252,21 @@ function renderTxEventPayload(payload) {
   if (payload.flags !== undefined) {
     rows.push('<div class="result-item"><label>Flags</label><p class="field-value">' + escapeHtml(String(payload.flags)) + "</p></div>");
   }
+  if (payload.bidAmountSats !== undefined) {
+    rows.push('<div class="result-item"><label>Bid Amount</label><p class="field-value">' + escapeHtml(formatSats(payload.bidAmountSats)) + "</p></div>");
+  }
+  if (payload.reservedLockBlocks !== undefined) {
+    rows.push('<div class="result-item"><label>Reserved Lock</label><p class="field-value">' + escapeHtml(formatBlockWindow(payload.reservedLockBlocks)) + "</p></div>");
+  }
+  if (payload.bidderCommitment) {
+    rows.push('<div class="result-item"><label>Bidder Commitment</label>' + renderCopyableCode(payload.bidderCommitment) + "</div>");
+  }
+  if (payload.auctionLotCommitment) {
+    rows.push('<div class="result-item"><label>Auction Lot Commitment</label>' + renderCopyableCode(payload.auctionLotCommitment) + "</div>");
+  }
+  if (payload.auctionCommitment) {
+    rows.push('<div class="result-item"><label>Auction State Commitment</label>' + renderCopyableCode(payload.auctionCommitment) + "</div>");
+  }
   if (payload.leafCount !== undefined) {
     rows.push('<div class="result-item"><label>Leaf Count</label><p class="field-value">' + escapeHtml(String(payload.leafCount)) + "</p></div>");
   }
@@ -4480,6 +4501,36 @@ function renderAuctionLab() {
     .join("");
 }
 
+function renderExperimentalAuctionFeed() {
+  if (!elements.experimentalAuctionList) {
+    return;
+  }
+
+  const payload = state.experimentalAuctions;
+  if (!payload || !Array.isArray(payload.auctions)) {
+    elements.experimentalAuctionList.classList.add("empty");
+    elements.experimentalAuctionList.innerHTML = '<div class="result-card empty">No chain-derived experimental auction state is available yet.</div>';
+    setText(
+      elements.experimentalAuctionMeta,
+      "Waiting for resolver-backed experimental auction state."
+    );
+    return;
+  }
+
+  elements.experimentalAuctionList.classList.remove("empty");
+  setText(
+    elements.experimentalAuctionMeta,
+    [
+      String(payload.auctions.length) + " catalog lot" + (payload.auctions.length === 1 ? "" : "s"),
+      payload.currentBlockHeight == null ? "resolver has not reached a current block yet" : "derived at block " + String(payload.currentBlockHeight),
+      "leaders and next bids come from observed AUCTION_BID transactions"
+    ].join(" · ")
+  );
+  elements.experimentalAuctionList.innerHTML = payload.auctions
+    .map((auction) => renderExperimentalAuctionCard(auction))
+    .join("");
+}
+
 function renderAuctionPolicySummary(policy) {
   if (!policy || typeof policy !== "object") {
     return "";
@@ -4585,6 +4636,37 @@ function renderAuctionCaseCard(auctionCase) {
   ].join("");
 }
 
+function renderExperimentalAuctionCard(auction) {
+  const phase = String(auction.phase ?? "unknown");
+  const phasePill = mapAuctionPhasePill(phase);
+  const leaderLabel = phase === "settled" ? "Winner commitment" : "Leader commitment";
+
+  return [
+    '<article class="activity-card">',
+    '  <div class="result-title">',
+    '    <h3>' + escapeHtml(String(auction.title ?? auction.normalizedName ?? "Experimental auction")) + "</h3>",
+    '    <span class="status-pill ' + escapeHtml(phasePill) + '">' + escapeHtml(String(auction.phaseLabel ?? phase)) + "</span>",
+    "  </div>",
+    '  <p class="field-value">' + escapeHtml(String(auction.description ?? "")) + "</p>",
+    '  <div class="result-grid">',
+    '    <div class="result-item"><label>Name</label><p class="field-value">' + escapeHtml(String(auction.normalizedName ?? "-")) + "</p></div>",
+    '    <div class="result-item"><label>Class</label><p class="field-value">' + escapeHtml(String(auction.classLabel ?? "-")) + "</p></div>",
+    '    <div class="result-item"><label>Lot commitment</label><p class="field-value">' + escapeHtml(formatAuctionCommitment(auction.auctionLotCommitment)) + "</p></div>",
+    '    <div class="result-item"><label>Current block</label><p class="field-value">' + escapeHtml(String(auction.currentBlockHeight ?? "-")) + "</p></div>",
+    '    <div class="result-item"><label>Opening minimum</label><p class="field-value">' + escapeHtml(formatSats(auction.openingMinimumBidSats ?? "0")) + "</p></div>",
+    '    <div class="result-item"><label>' + escapeHtml(leaderLabel) + '</label><p class="field-value">' + escapeHtml(formatAuctionCommitment(auction.currentLeaderBidderCommitment)) + "</p></div>",
+    '    <div class="result-item"><label>Highest bid</label><p class="field-value">' + escapeHtml(auction.currentHighestBidSats ? formatSats(auction.currentHighestBidSats) : "None yet") + "</p></div>",
+    '    <div class="result-item"><label>Next valid bid</label><p class="field-value">' + escapeHtml(auction.currentRequiredMinimumBidSats ? formatSats(auction.currentRequiredMinimumBidSats) : "Auction settled") + "</p></div>",
+    '    <div class="result-item"><label>Accepted / rejected</label><p class="field-value">' + escapeHtml(String(auction.acceptedBidCount ?? 0) + " / " + String(auction.rejectedBidCount ?? 0)) + "</p></div>",
+    '    <div class="result-item"><label>Observed bids</label><p class="field-value">' + escapeHtml(String(auction.totalObservedBidCount ?? 0)) + "</p></div>",
+    '    <div class="result-item"><label>Blocks to unlock</label><p class="field-value">' + escapeHtml(String(auction.blocksUntilUnlock ?? 0)) + "</p></div>",
+    '    <div class="result-item"><label>Blocks to close</label><p class="field-value">' + escapeHtml(auction.blocksUntilClose == null ? "-" : String(auction.blocksUntilClose)) + "</p></div>",
+    "  </div>",
+    renderExperimentalAuctionBidHistory(auction.visibleBidOutcomes),
+    "</article>"
+  ].join("");
+}
+
 function renderAuctionBidPackageComposer(auctionCase) {
   const stateView = auctionCase.state ?? {};
   const caseId = String(auctionCase.id ?? stateView.normalizedName ?? "auction-case");
@@ -4651,6 +4733,54 @@ function renderAuctionBidHistory(outcomes) {
     "  </div>",
     "</details>"
   ].join("");
+}
+
+function renderExperimentalAuctionBidHistory(outcomes) {
+  if (!Array.isArray(outcomes) || outcomes.length === 0) {
+    return '<p class="tx-panel-note">No AUCTION_BID transactions for this catalog lot have been observed yet.</p>';
+  }
+
+  return [
+    '<details class="detail-technical">',
+    "  <summary>Observed AUCTION_BID transactions</summary>",
+    '  <div class="detail-technical-body">',
+    '    <div class="tx-event-list">',
+    outcomes
+      .map((outcome) => {
+        return [
+          '<article class="tx-event-card">',
+          '  <div class="tx-event-header">',
+          '    <strong>' + escapeHtml(formatAuctionCommitment(outcome.bidderCommitment)) + "</strong>",
+          '    <span class="status-pill ' + escapeHtml(outcome.status === "accepted" ? "status-pending" : "status-invalid") + '">' + escapeHtml(String(outcome.status)) + "</span>",
+          "  </div>",
+          '  <div class="result-grid">',
+          '    <div class="result-item"><label>Bid</label><p class="field-value">' + escapeHtml(formatSats(outcome.amountSats)) + "</p></div>",
+          '    <div class="result-item"><label>Block</label><p class="field-value">' + escapeHtml(String(outcome.blockHeight)) + "</p></div>",
+          '    <div class="result-item"><label>Outcome</label><p class="field-value">' + escapeHtml(String(outcome.reason)) + "</p></div>",
+          '    <div class="result-item"><label>Required minimum</label><p class="field-value">' + escapeHtml(formatSats(outcome.requiredMinimumBidSats)) + "</p></div>",
+          '    <div class="result-item"><label>Tx</label><p class="field-value">' + escapeHtml(shortenTxid(outcome.txid)) + "</p></div>",
+          '    <div class="result-item"><label>Close after</label><p class="field-value">' + escapeHtml(outcome.auctionCloseBlockAfter == null ? "-" : String(outcome.auctionCloseBlockAfter)) + "</p></div>",
+          "  </div>",
+          "</article>"
+        ].join("");
+      })
+      .join(""),
+    "    </div>",
+    "  </div>",
+    "</details>"
+  ].join("");
+}
+
+function formatAuctionCommitment(value) {
+  if (typeof value !== "string" || value.length === 0) {
+    return "None yet";
+  }
+
+  if (value.length <= 16) {
+    return value;
+  }
+
+  return value.slice(0, 12) + "…" + value.slice(-8);
 }
 
 function mapAuctionPhasePill(phase) {

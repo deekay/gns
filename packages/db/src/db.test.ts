@@ -148,6 +148,23 @@ describe("indexer snapshot persistence", () => {
               validationStatus: "ignored" as const,
               reason: "proof_chunk_requires_batch_reveal_header",
               affectedName: null
+            },
+            {
+              vout: 1,
+              type: 7,
+              typeName: "AUCTION_BID" as const,
+              payload: {
+                flags: 0,
+                bondVout: 0,
+                reservedLockBlocks: 525600,
+                bidAmountSats: "1700000000",
+                auctionLotCommitment: "44".repeat(16),
+                auctionCommitment: "55".repeat(32),
+                bidderCommitment: "66".repeat(16)
+              },
+              validationStatus: "applied" as const,
+              reason: "auction_bid_recorded",
+              affectedName: null
             }
           ],
           invalidatedNames: []

@@ -249,11 +249,13 @@ function applyEvent(
         affectedName: null
       };
     case GnsEventType.AuctionBid:
-      return {
-        validationStatus: "ignored",
-        reason: "auction_bid_requires_reserved_auction_engine",
-        affectedName: null
-      };
+      return applyAuctionBid(
+        state,
+        event as ParsedGnsEvent & {
+          readonly type: GnsEventType.AuctionBid;
+          readonly payload: AuctionBidEventPayload;
+        }
+      );
   }
 }
 
@@ -353,6 +355,43 @@ function applySingleBlockTransactions(
   return provenanceRecords.filter(
     (record) => record.events.length > 0 || record.invalidatedNames.length > 0
   );
+}
+
+function applyAuctionBid(
+  _state: GnsState,
+  event: ParsedGnsEvent & { readonly type: GnsEventType.AuctionBid; readonly payload: AuctionBidEventPayload }
+): EventApplicationResult {
+  const bondOutput = event.outputs[event.payload.bondVout] ?? null;
+
+  if (bondOutput === null) {
+    return {
+      validationStatus: "ignored",
+      reason: "auction_bid_missing_bond_output",
+      affectedName: null
+    };
+  }
+
+  if (bondOutput.scriptType !== "payment") {
+    return {
+      validationStatus: "ignored",
+      reason: "auction_bid_bond_output_not_payment",
+      affectedName: null
+    };
+  }
+
+  if (bondOutput.valueSats !== event.payload.bidAmountSats) {
+    return {
+      validationStatus: "ignored",
+      reason: "auction_bid_bond_value_mismatch",
+      affectedName: null
+    };
+  }
+
+  return {
+    validationStatus: "applied",
+    reason: "auction_bid_recorded",
+    affectedName: null
+  };
 }
 
 function applyCommit(state: GnsState, event: ParsedGnsEvent): EventApplicationResult {

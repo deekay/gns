@@ -10,6 +10,7 @@ import {
   AUCTION_BID_PAYLOAD_LENGTH,
   CLAIM_PACKAGE_FORMAT,
   CLAIM_PACKAGE_VERSION,
+  computeAuctionLotCommitment,
   computeAuctionBidStateCommitment,
   computeBatchCommitLeafHash,
   computeAuctionBidderCommitment,
@@ -207,6 +208,12 @@ describe("wire payloads", () => {
       bondVout: 0,
       reservedLockBlocks: 262_800,
       bidAmountSats: 200_000_000n,
+      auctionLotCommitment: computeAuctionLotCommitment({
+        auctionId: "openai-soft-close",
+        name: "openai",
+        reservedClassId: "major_existing_name",
+        unlockBlock: 840_000
+      }),
       auctionCommitment: computeAuctionBidStateCommitment({
         auctionId: "openai-soft-close",
         name: "openai",
@@ -216,7 +223,7 @@ describe("wire payloads", () => {
         unlockBlock: 840_000,
         auctionCloseBlockAfter: 844_497,
         openingMinimumBidSats: 200_000_000n,
-        currentLeaderBidderId: "gamma",
+        currentLeaderBidderCommitment: computeAuctionBidderCommitment("gamma"),
         currentHighestBidSats: 210_000_000n,
         currentRequiredMinimumBidSats: 220_500_000n,
         reservedLockBlocks: 262_800
@@ -230,6 +237,12 @@ describe("wire payloads", () => {
       bondVout: 0,
       reservedLockBlocks: 262_800,
       bidAmountSats: 200_000_000n,
+      auctionLotCommitment: computeAuctionLotCommitment({
+        auctionId: "openai-soft-close",
+        name: "openai",
+        reservedClassId: "major_existing_name",
+        unlockBlock: 840_000
+      }),
       auctionCommitment: computeAuctionBidStateCommitment({
         auctionId: "openai-soft-close",
         name: "openai",
@@ -239,7 +252,7 @@ describe("wire payloads", () => {
         unlockBlock: 840_000,
         auctionCloseBlockAfter: 844_497,
         openingMinimumBidSats: 200_000_000n,
-        currentLeaderBidderId: "gamma",
+        currentLeaderBidderCommitment: computeAuctionBidderCommitment("gamma"),
         currentHighestBidSats: 210_000_000n,
         currentRequiredMinimumBidSats: 220_500_000n,
         reservedLockBlocks: 262_800
@@ -253,6 +266,12 @@ describe("wire payloads", () => {
         bondVout: 0,
         reservedLockBlocks: 262_800,
         bidAmountSats: 200_000_000n,
+        auctionLotCommitment: computeAuctionLotCommitment({
+          auctionId: "openai-soft-close",
+          name: "openai",
+          reservedClassId: "major_existing_name",
+          unlockBlock: 840_000
+        }),
         auctionCommitment: computeAuctionBidStateCommitment({
           auctionId: "openai-soft-close",
           name: "openai",
@@ -262,7 +281,7 @@ describe("wire payloads", () => {
           unlockBlock: 840_000,
           auctionCloseBlockAfter: 844_497,
           openingMinimumBidSats: 200_000_000n,
-          currentLeaderBidderId: "gamma",
+          currentLeaderBidderCommitment: computeAuctionBidderCommitment("gamma"),
           currentHighestBidSats: 210_000_000n,
           currentRequiredMinimumBidSats: 220_500_000n,
           reservedLockBlocks: 262_800

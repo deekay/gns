@@ -1,4 +1,5 @@
 import { createServer } from "node:http";
+import { readdir, readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { resolve } from "node:path";
 import { dirname } from "node:path";
@@ -18,7 +19,15 @@ import {
   isBitcoinRpcHeadCurrent,
   loadBitcoinBlocksFromSource
 } from "@gns/bitcoin";
-import { InMemoryGnsIndexer } from "@gns/core";
+import {
+  createDefaultReservedAuctionPolicy,
+  createExperimentalReservedAuctionCatalogEntry,
+  InMemoryGnsIndexer,
+  parseReservedAuctionScenario,
+  serializeReservedAuctionPolicy,
+  type ExperimentalReservedAuctionCatalogEntry,
+  type ReservedAuctionPolicy
+} from "@gns/core";
 import {
   createDatabaseConfig,
   ensureDatabaseSchema,
@@ -57,6 +66,7 @@ const defaultPollIntervalMs = Number.parseInt(
   10
 );
 const currentDir = dirname(fileURLToPath(import.meta.url));
+const auctionFixtureDir = resolve(currentDir, "../../../fixtures/auction/lab");
 void main();
 
 async function main(): Promise<void> {
@@ -117,6 +127,11 @@ async function main(): Promise<void> {
   }
 
   let restoredFromSnapshot = false;
+  const experimentalReservedAuctionPolicy = createDefaultReservedAuctionPolicy();
+  const experimentalReservedAuctionCatalog = await loadExperimentalReservedAuctionCatalog(
+    auctionFixtureDir,
+    experimentalReservedAuctionPolicy
+  );
   let indexer: InMemoryGnsIndexer;
   const valueRecords =
     database === null
@@ -134,7 +149,13 @@ async function main(): Promise<void> {
     rpcChainInfo = await assertBitcoinRpcChain(rpc, expectedChain);
 
     try {
-      indexer = InMemoryGnsIndexer.fromSnapshot(await loadSnapshot(database, snapshotPath, snapshotDocumentKey));
+      indexer = InMemoryGnsIndexer.fromSnapshot(
+        await loadSnapshot(database, snapshotPath, snapshotDocumentKey),
+        {
+          experimentalReservedAuctionPolicy,
+          experimentalReservedAuctionCatalog
+        }
+      );
       restoredFromSnapshot = true;
     } catch {
       if (launchHeight === undefined) {
@@ -143,7 +164,11 @@ async function main(): Promise<void> {
         );
       }
 
-      indexer = new InMemoryGnsIndexer({ launchHeight });
+      indexer = new InMemoryGnsIndexer({
+        launchHeight,
+        experimentalReservedAuctionPolicy,
+        experimentalReservedAuctionCatalog
+      });
     }
 
     if (
@@ -167,7 +192,11 @@ async function main(): Promise<void> {
         }
 
         restoredFromSnapshot = false;
-        indexer = new InMemoryGnsIndexer({ launchHeight });
+        indexer = new InMemoryGnsIndexer({
+          launchHeight,
+          experimentalReservedAuctionPolicy,
+          experimentalReservedAuctionCatalog
+        });
       }
     }
 
@@ -217,7 +246,11 @@ async function main(): Promise<void> {
               return;
             }
 
-            indexer = new InMemoryGnsIndexer({ launchHeight: indexer.getLaunchHeight() });
+            indexer = new InMemoryGnsIndexer({
+              launchHeight: indexer.getLaunchHeight(),
+              experimentalReservedAuctionPolicy,
+              experimentalReservedAuctionCatalog
+            });
             const rebuildPoller = new BitcoinRpcBlockPoller({
               rpc,
               launchHeight: indexer.getLaunchHeight()
@@ -251,7 +284,13 @@ async function main(): Promise<void> {
     descriptor = esplora.baseUrl;
 
     try {
-      indexer = InMemoryGnsIndexer.fromSnapshot(await loadSnapshot(database, snapshotPath, snapshotDocumentKey));
+      indexer = InMemoryGnsIndexer.fromSnapshot(
+        await loadSnapshot(database, snapshotPath, snapshotDocumentKey),
+        {
+          experimentalReservedAuctionPolicy,
+          experimentalReservedAuctionCatalog
+        }
+      );
       restoredFromSnapshot = true;
     } catch {
       if (launchHeight === undefined) {
@@ -260,7 +299,11 @@ async function main(): Promise<void> {
         );
       }
 
-      indexer = new InMemoryGnsIndexer({ launchHeight });
+      indexer = new InMemoryGnsIndexer({
+        launchHeight,
+        experimentalReservedAuctionPolicy,
+        experimentalReservedAuctionCatalog
+      });
     }
 
     if (
@@ -287,7 +330,11 @@ async function main(): Promise<void> {
         }
 
         restoredFromSnapshot = false;
-        indexer = new InMemoryGnsIndexer({ launchHeight });
+        indexer = new InMemoryGnsIndexer({
+          launchHeight,
+          experimentalReservedAuctionPolicy,
+          experimentalReservedAuctionCatalog
+        });
       }
     }
 
@@ -343,7 +390,11 @@ async function main(): Promise<void> {
               return;
             }
 
-            indexer = new InMemoryGnsIndexer({ launchHeight: indexer.getLaunchHeight() });
+            indexer = new InMemoryGnsIndexer({
+              launchHeight: indexer.getLaunchHeight(),
+              experimentalReservedAuctionPolicy,
+              experimentalReservedAuctionCatalog
+            });
             const rebuildPoller = new BitcoinEsploraBlockPoller({
               esplora,
               launchHeight: indexer.getLaunchHeight()
@@ -383,7 +434,11 @@ async function main(): Promise<void> {
     source = loaded.source;
     descriptor = loaded.descriptor;
     syncMode = "fixture";
-    indexer = new InMemoryGnsIndexer({ launchHeight: loaded.launchHeight });
+    indexer = new InMemoryGnsIndexer({
+      launchHeight: loaded.launchHeight,
+      experimentalReservedAuctionPolicy,
+      experimentalReservedAuctionCatalog
+    });
     indexer.ingestBlocks(loaded.blocks);
   }
 
@@ -505,6 +560,15 @@ async function main(): Promise<void> {
     if (url.pathname === "/pending-commits") {
       return writeJson(response, 200, {
         pendingCommits: indexer.listPendingCommits()
+      });
+    }
+
+    if (url.pathname === "/experimental-auctions") {
+      return writeJson(response, 200, {
+        kind: "experimental_reserved_auctions",
+        policy: serializeReservedAuctionPolicy(experimentalReservedAuctionPolicy),
+        currentBlockHeight: indexer.getStats().currentHeight,
+        auctions: indexer.listExperimentalAuctions()
       });
     }
 
@@ -650,7 +714,7 @@ async function main(): Promise<void> {
     return writeJson(response, 404, {
       error: "not_found",
       message:
-        "Supported prototype endpoints: /health, /stats, /names, /pending-commits, /activity, /tx/{txid}, /claim-plan/{normalized_name}, /name/{normalized_name}, /name/{normalized_name}/activity, /name/{normalized_name}/value, POST /values"
+        "Supported prototype endpoints: /health, /stats, /names, /pending-commits, /experimental-auctions, /activity, /tx/{txid}, /claim-plan/{normalized_name}, /name/{normalized_name}, /name/{normalized_name}/activity, /name/{normalized_name}/value, POST /values"
     });
   }
 
@@ -674,6 +738,42 @@ async function main(): Promise<void> {
       `${PRODUCT_NAME} resolver listening on http://127.0.0.1:${port} (${source}/${syncMode}: ${descriptor})`
     );
   });
+}
+
+interface AuctionLabFixtureFile {
+  readonly title: string;
+  readonly description: string;
+  readonly currentBlockHeight: number;
+  readonly scenario: unknown;
+}
+
+async function loadExperimentalReservedAuctionCatalog(
+  fixtureDir: string,
+  policy: ReservedAuctionPolicy
+): Promise<ExperimentalReservedAuctionCatalogEntry[]> {
+  const fileNames = (await readdir(fixtureDir))
+    .filter((name) => name.endsWith(".json"))
+    .sort((left, right) => left.localeCompare(right));
+
+  return Promise.all(
+    fileNames.map(async (fileName) => {
+      const raw = await readFile(resolve(fixtureDir, fileName), "utf8");
+      const fixture = JSON.parse(raw) as AuctionLabFixtureFile;
+      const scenario = parseReservedAuctionScenario(fixture.scenario);
+
+      return createExperimentalReservedAuctionCatalogEntry(
+        {
+          auctionId: fileName.replace(/\.json$/u, ""),
+          title: fixture.title,
+          description: fixture.description,
+          name: scenario.name,
+          reservedClassId: scenario.reservedClassId,
+          unlockBlock: scenario.unlockBlock
+        },
+        policy
+      );
+    })
+  );
 }
 
 function writeJson(

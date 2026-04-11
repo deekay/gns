@@ -35,6 +35,7 @@ export interface AuctionBidPackage {
   readonly auctionCloseBlockAfter: number | null;
   readonly openingMinimumBidSats: string;
   readonly currentLeaderBidderId: string | null;
+  readonly currentLeaderBidderCommitment: string | null;
   readonly currentHighestBidSats: string | null;
   readonly currentRequiredMinimumBidSats: string | null;
   readonly reservedLockBlocks: number;
@@ -42,6 +43,7 @@ export interface AuctionBidPackage {
   readonly blocksUntilClose: number | null;
   readonly bidderId: string;
   readonly bidAmountSats: string;
+  readonly auctionLotCommitment: string;
   readonly auctionStateCommitment: string;
   readonly bidderCommitment: string;
   readonly previewStatus: AuctionBidPackagePreviewStatus;
@@ -62,6 +64,7 @@ export interface CreateAuctionBidPackageInput {
   readonly auctionCloseBlockAfter?: number | null;
   readonly openingMinimumBidSats: bigint | number | string;
   readonly currentLeaderBidderId?: string | null;
+  readonly currentLeaderBidderCommitment?: string | null;
   readonly currentHighestBidSats?: bigint | number | string | null;
   readonly currentRequiredMinimumBidSats?: bigint | number | string | null;
   readonly reservedLockBlocks: number;
@@ -69,6 +72,7 @@ export interface CreateAuctionBidPackageInput {
   readonly blocksUntilClose?: number | null;
   readonly bidderId: string;
   readonly bidAmountSats: bigint | number | string;
+  readonly auctionLotCommitment?: string;
   readonly auctionStateCommitment?: string;
   readonly bidderCommitment?: string;
   readonly exportedAt?: string;
@@ -85,6 +89,10 @@ export function createAuctionBidPackage(input: CreateAuctionBidPackageInput): Au
   const auctionCloseBlockAfter = parseOptionalNonNegativeSafeInteger(input.auctionCloseBlockAfter, "auctionCloseBlockAfter");
   const openingMinimumBidSats = parseBigIntLike(input.openingMinimumBidSats, "openingMinimumBidSats");
   const currentLeaderBidderId = normalizeOptionalText(input.currentLeaderBidderId);
+  const currentLeaderBidderCommitment = normalizeAuctionBidderCommitment(
+    currentLeaderBidderId,
+    input.currentLeaderBidderCommitment
+  );
   const currentHighestBidSats = parseOptionalBigIntLike(input.currentHighestBidSats, "currentHighestBidSats");
   const currentRequiredMinimumBidSats = parseOptionalBigIntLike(
     input.currentRequiredMinimumBidSats,
@@ -97,6 +105,14 @@ export function createAuctionBidPackage(input: CreateAuctionBidPackageInput): Au
   );
   const bidderId = normalizeRequiredText(input.bidderId, "bidderId");
   const bidAmountSats = parseBigIntLike(input.bidAmountSats, "bidAmountSats");
+  const auctionLotCommitment = input.auctionLotCommitment
+    ? assertHexBytes(input.auctionLotCommitment, 16, "auctionLotCommitment")
+    : computeAuctionLotCommitment({
+        auctionId,
+        name,
+        reservedClassId,
+        unlockBlock
+      });
   const auctionStateCommitment = input.auctionStateCommitment
     ? assertHexBytes(input.auctionStateCommitment, 32, "auctionStateCommitment")
     : computeAuctionBidStateCommitment({
@@ -108,7 +124,7 @@ export function createAuctionBidPackage(input: CreateAuctionBidPackageInput): Au
         unlockBlock,
         auctionCloseBlockAfter,
         openingMinimumBidSats,
-        currentLeaderBidderId,
+        currentLeaderBidderCommitment,
         currentHighestBidSats,
         currentRequiredMinimumBidSats,
         reservedLockBlocks
@@ -120,6 +136,7 @@ export function createAuctionBidPackage(input: CreateAuctionBidPackageInput): Au
   assertAuctionStateConsistency({
     phase,
     currentLeaderBidderId,
+    currentLeaderBidderCommitment,
     currentHighestBidSats,
     currentRequiredMinimumBidSats
   });
@@ -149,6 +166,7 @@ export function createAuctionBidPackage(input: CreateAuctionBidPackageInput): Au
     auctionCloseBlockAfter,
     openingMinimumBidSats: openingMinimumBidSats.toString(),
     currentLeaderBidderId,
+    currentLeaderBidderCommitment,
     currentHighestBidSats: currentHighestBidSats?.toString() ?? null,
     currentRequiredMinimumBidSats: currentRequiredMinimumBidSats?.toString() ?? null,
     reservedLockBlocks,
@@ -156,6 +174,7 @@ export function createAuctionBidPackage(input: CreateAuctionBidPackageInput): Au
     blocksUntilClose,
     bidderId,
     bidAmountSats: bidAmountSats.toString(),
+    auctionLotCommitment,
     auctionStateCommitment,
     bidderCommitment,
     previewStatus: preview.previewStatus,
@@ -199,6 +218,10 @@ export function parseAuctionBidPackage(input: unknown): AuctionBidPackage {
   const auctionCloseBlockAfter = parseOptionalNonNegativeSafeInteger(record.auctionCloseBlockAfter, "auctionCloseBlockAfter");
   const openingMinimumBidSats = parseBigIntLike(record.openingMinimumBidSats, "openingMinimumBidSats");
   const currentLeaderBidderId = parseOptionalString(record.currentLeaderBidderId, "currentLeaderBidderId");
+  const currentLeaderBidderCommitment = parseOptionalAuctionBidCommitment(
+    record.currentLeaderBidderCommitment,
+    "currentLeaderBidderCommitment"
+  );
   const currentHighestBidSats = parseOptionalBigIntLike(record.currentHighestBidSats, "currentHighestBidSats");
   const currentRequiredMinimumBidSats = parseOptionalBigIntLike(
     record.currentRequiredMinimumBidSats,
@@ -209,6 +232,11 @@ export function parseAuctionBidPackage(input: unknown): AuctionBidPackage {
   const blocksUntilClose = parseOptionalNonNegativeSafeInteger(record.blocksUntilClose, "blocksUntilClose");
   const bidderId = normalizeRequiredText(assertString(record.bidderId, "bidderId"), "bidderId");
   const bidAmountSats = parseBigIntLike(record.bidAmountSats, "bidAmountSats");
+  const auctionLotCommitment = assertHexBytes(
+    assertString(record.auctionLotCommitment, "auctionLotCommitment"),
+    16,
+    "auctionLotCommitment"
+  );
   const auctionStateCommitment = assertHexBytes(
     assertString(record.auctionStateCommitment, "auctionStateCommitment"),
     32,
@@ -231,6 +259,7 @@ export function parseAuctionBidPackage(input: unknown): AuctionBidPackage {
   assertAuctionStateConsistency({
     phase,
     currentLeaderBidderId,
+    currentLeaderBidderCommitment,
     currentHighestBidSats,
     currentRequiredMinimumBidSats
   });
@@ -264,11 +293,20 @@ export function parseAuctionBidPackage(input: unknown): AuctionBidPackage {
     unlockBlock,
     auctionCloseBlockAfter,
     openingMinimumBidSats,
-    currentLeaderBidderId,
+    currentLeaderBidderCommitment,
     currentHighestBidSats,
     currentRequiredMinimumBidSats,
     reservedLockBlocks
   });
+  const expectedAuctionLotCommitment = computeAuctionLotCommitment({
+    auctionId,
+    name,
+    reservedClassId,
+    unlockBlock
+  });
+  if (auctionLotCommitment !== expectedAuctionLotCommitment) {
+    throw new Error("auctionLotCommitment does not match the auction lot");
+  }
   if (auctionStateCommitment !== expectedAuctionStateCommitment) {
     throw new Error("auctionStateCommitment does not match the observed auction state");
   }
@@ -313,6 +351,7 @@ export function parseAuctionBidPackage(input: unknown): AuctionBidPackage {
     auctionCloseBlockAfter,
     openingMinimumBidSats: openingMinimumBidSats.toString(),
     currentLeaderBidderId,
+    currentLeaderBidderCommitment,
     currentHighestBidSats: currentHighestBidSats?.toString() ?? null,
     currentRequiredMinimumBidSats: currentRequiredMinimumBidSats?.toString() ?? null,
     reservedLockBlocks,
@@ -320,6 +359,7 @@ export function parseAuctionBidPackage(input: unknown): AuctionBidPackage {
     blocksUntilClose,
     bidderId,
     bidAmountSats: bidAmountSats.toString(),
+    auctionLotCommitment,
     auctionStateCommitment,
     bidderCommitment,
     previewStatus,
@@ -339,6 +379,26 @@ export function computeAuctionBidderCommitment(bidderId: string): string {
     .slice(0, 32);
 }
 
+export function computeAuctionLotCommitment(input: {
+  readonly auctionId: string;
+  readonly name: string;
+  readonly reservedClassId: string;
+  readonly unlockBlock: number;
+}): string {
+  return createHash("sha256")
+    .update("gns-auction-lot-v1", "utf8")
+    .update("\u0000", "utf8")
+    .update(normalizeRequiredText(input.auctionId, "auctionId"), "utf8")
+    .update("\u0000", "utf8")
+    .update(normalizeName(input.name), "utf8")
+    .update("\u0000", "utf8")
+    .update(normalizeRequiredText(input.reservedClassId, "reservedClassId"), "utf8")
+    .update("\u0000", "utf8")
+    .update(String(parseNonNegativeSafeInteger(input.unlockBlock, "unlockBlock")), "utf8")
+    .digest("hex")
+    .slice(0, 32);
+}
+
 export function computeAuctionBidStateCommitment(input: {
   readonly auctionId: string;
   readonly name: string;
@@ -348,7 +408,7 @@ export function computeAuctionBidStateCommitment(input: {
   readonly unlockBlock: number;
   readonly auctionCloseBlockAfter: number | null;
   readonly openingMinimumBidSats: bigint;
-  readonly currentLeaderBidderId: string | null;
+  readonly currentLeaderBidderCommitment: string | null;
   readonly currentHighestBidSats: bigint | null;
   readonly currentRequiredMinimumBidSats: bigint | null;
   readonly reservedLockBlocks: number;
@@ -364,7 +424,7 @@ export function computeAuctionBidStateCommitment(input: {
     String(parseNonNegativeSafeInteger(input.unlockBlock, "unlockBlock")),
     input.auctionCloseBlockAfter === null ? "" : String(parseNonNegativeSafeInteger(input.auctionCloseBlockAfter, "auctionCloseBlockAfter")),
     input.openingMinimumBidSats.toString(),
-    input.currentLeaderBidderId ?? "",
+    input.currentLeaderBidderCommitment ?? "",
     input.currentHighestBidSats?.toString() ?? "",
     input.currentRequiredMinimumBidSats?.toString() ?? "",
     String(parseNonNegativeSafeInteger(input.reservedLockBlocks, "reservedLockBlocks"))
@@ -459,11 +519,18 @@ function deriveAuctionBidPreview(input: {
 function assertAuctionStateConsistency(input: {
   readonly phase: AuctionBidPackagePhase;
   readonly currentLeaderBidderId: string | null;
+  readonly currentLeaderBidderCommitment: string | null;
   readonly currentHighestBidSats: bigint | null;
   readonly currentRequiredMinimumBidSats: bigint | null;
 }) {
   if ((input.currentLeaderBidderId === null) !== (input.currentHighestBidSats === null)) {
     throw new Error("currentLeaderBidderId and currentHighestBidSats must either both be present or both be null");
+  }
+
+  if ((input.currentLeaderBidderId === null) !== (input.currentLeaderBidderCommitment === null)) {
+    throw new Error(
+      "currentLeaderBidderId and currentLeaderBidderCommitment must either both be present or both be null"
+    );
   }
 
   if (input.phase === "pending_unlock" || input.phase === "awaiting_opening_bid") {
@@ -487,6 +554,40 @@ function assertAuctionStateConsistency(input: {
   if (input.currentRequiredMinimumBidSats === null) {
     throw new Error("active auctions must include currentRequiredMinimumBidSats");
   }
+}
+
+function normalizeAuctionBidderCommitment(
+  bidderId: string | null,
+  commitment: unknown
+): string | null {
+  const normalizedCommitment = parseOptionalAuctionBidCommitment(commitment, "currentLeaderBidderCommitment");
+
+  if (bidderId === null) {
+    if (normalizedCommitment !== null) {
+      throw new Error("currentLeaderBidderCommitment must be null when currentLeaderBidderId is null");
+    }
+
+    return null;
+  }
+
+  const expected = computeAuctionBidderCommitment(bidderId);
+  if (normalizedCommitment === null) {
+    return expected;
+  }
+
+  if (normalizedCommitment !== expected) {
+    throw new Error("currentLeaderBidderCommitment does not match currentLeaderBidderId");
+  }
+
+  return normalizedCommitment;
+}
+
+function parseOptionalAuctionBidCommitment(value: unknown, label: string): string | null {
+  if (value === undefined || value === null) {
+    return null;
+  }
+
+  return assertHexBytes(assertString(value, label), 16, label);
 }
 
 function parseAuctionBidPackagePhase(value: unknown, label: string): AuctionBidPackagePhase {

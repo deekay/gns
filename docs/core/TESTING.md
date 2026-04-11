@@ -151,6 +151,7 @@ You can inspect it in the local app at:
 The backing API is:
 
 - `/api/auctions`
+- `/api/experimental-auctions`
 
 And the most relevant automated coverage is:
 
@@ -165,6 +166,8 @@ That coverage includes:
 - market-level bidder budget behavior
 - state-at-block phase derivation
 - website loading of the curated auction-state fixtures
+- chain-derived experimental auction-state derivation from observed
+  `AUCTION_BID` transactions
 
 ### 2b. Repeatable smoke test for batched fixture mode
 

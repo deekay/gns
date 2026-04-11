@@ -449,6 +449,10 @@ const server = createServer(async (request, response) => {
     return writeJson(response, 200, await loadReservedAuctionLab());
   }
 
+  if (pathname === "/api/experimental-auctions") {
+    return proxyJson(response, `${resolverUrl}/experimental-auctions`);
+  }
+
   if (pathname === "/api/names") {
     return proxyJson(response, `${resolverUrl}/names`);
   }
@@ -531,7 +535,7 @@ const server = createServer(async (request, response) => {
     error: "not_found",
     message:
       "Supported paths: /, /explore, /auctions, /claim, /values, /transfer, /setup, /explainer, /api/config, /api/health, /api/names, /api/pending-commits, /api/activity, /api/tx/{txid}, /api/dev-owner-key, /api/private-signet-fund, /api/claim-draft/{name}, /api/claim-plan/{name}, /api/name/{name}, /api/name/{name}/activity, /api/name/{name}/value, /api/live-smoke-status, /api/private-batch-smoke-status, /api/auctions"
-      + ", /api/private-signet-claim-psbts, /api/values, /claim/offline, /claim/offline/download"
+      + ", /api/experimental-auctions, /api/private-signet-claim-psbts, /api/values, /claim/offline, /claim/offline/download"
   });
 });
 

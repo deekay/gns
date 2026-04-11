@@ -12,6 +12,8 @@ are:
 - CLI and website can now export an experimental bid package from those states
 - CLI can now turn that package into a signable experimental bid transaction
 - the protocol has an explicit experimental `AUCTION_BID` payload shape
+- the resolver and website can now derive an experimental live auction feed
+  from observed `AUCTION_BID` transactions for catalog lots
 
 That is real progress, but it is still not the same thing as a live reserved
 auction protocol.
@@ -29,8 +31,9 @@ What exists today:
 - website download utility for those bid packages
 - an experimental `AUCTION_BID` event payload in `@gns/protocol`
 - an experimental unsigned/signed auction bid artifact flow in CLI + architect
-- core/indexer compatibility so `AUCTION_BID` is parsed and recorded honestly,
-  then ignored until the real reserved-auction engine exists
+- core/indexer support for recording structurally valid `AUCTION_BID`
+  transactions and deriving lot-level experimental auction state from them
+- resolver/web exposure of that chain-derived experimental auction state
 
 That means we now have:
 
@@ -41,6 +44,11 @@ That means we now have:
   - simulator state -> bid package
   - bid package -> unsigned bid artifacts
   - unsigned bid artifacts -> signed bid transaction
+- a resolver-backed experimental auction feed that derives:
+  - current leader
+  - current minimum next bid
+  - soft-close / settled phase
+  - accepted and rejected observed bid outcomes
 
 What we do **not** yet have:
 
@@ -87,27 +95,23 @@ This is the point where the simulator becomes a real protocol.
 
 ### 3. Auction-Aware Indexer / Resolver State
 
-Today the resolver knows names and claim lifecycle state.
+Today the resolver now knows an **experimental** subset of reserved-auction
+state for catalog lots:
 
-It does **not** yet know:
-
-- active reserved auctions
-- leading bidder
+- observed `AUCTION_BID` transactions
+- current leading bidder commitment
 - current minimum next bid
 - close height
-- settled winner
-- no-bid reserved outcomes
+- settled / soft-close / pending phase
 
-Until this exists, the website auction lab remains fixture-backed rather than
-registry-backed.
+What it still does **not** know:
 
-One helpful compatibility step is already in place:
-
-- the core/indexer stack now recognizes `AUCTION_BID` payloads and records them
-  in provenance as ignored experimental events
-
-That means we can extend from a stable wire shape later instead of inventing it
-from scratch.
+- final reserved-lane settlement semantics
+- loser release / winner lock enforcement
+- rebid replacement rules against earlier live bids
+- no-bid fallback behavior
+- a fully registry-backed reserved-auction market beyond the experimental lot
+  catalog
 
 ### 4. Settlement / Release / Fallback Rules
 
@@ -124,7 +128,11 @@ Still open:
 
 ### 5. Website Bidder Flow
 
-The website can now inspect auction states and download a bid package.
+The website can now:
+
+- inspect simulator-backed auction states
+- inspect a chain-derived experimental `AUCTION_BID` feed
+- download a bid package
 
 The CLI can now go one step further and build/sign a bid transaction from that
 package.
@@ -136,8 +144,11 @@ It cannot yet:
 - broadcast bids
 - follow an auction through settlement from live resolver state
 
-So the public website is now an inspection + handoff surface, not a live
-bidder surface.
+So the public website is now:
+
+- a richer inspection surface
+- a partial bidder-prep surface
+- but still not a full live bidder surface
 
 ### 6. End-to-End Auction Testing
 
@@ -168,6 +179,12 @@ The second gap we just closed is:
 > transaction offline, using the same CLI artifact/signer flow as the rest of
 > the repo.
 
+The third gap we just closed is:
+
+> resolver and website can now derive experimental lot-level auction state from
+> observed `AUCTION_BID` transactions instead of showing only simulator
+> fixtures.
+
 That matters because it gives the next protocol step a stable boundary:
 
 - simulator state in
@@ -182,8 +199,7 @@ The next implementation order that still feels sane is:
 1. keep the bid package as the stable operator boundary
 2. keep the experimental bid artifact / transaction builder stable long enough
    to learn from it
-3. prototype reserved-auction indexing and state transitions from those bid
-   transactions
+3. deepen reserved-auction state transitions from those bid transactions
 4. only then wire the website past “download package” into a more active bidder
    flow
 

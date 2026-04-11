@@ -34,7 +34,7 @@ The shortest honest summary is:
 | Off-chain signed value records | Implemented prototype | Moderate | Works today, but broader resolver/network availability is still an ecosystem question |
 | Transfers | Implemented prototype | Moderate to high | Gift and cooperative sale flows exist; browser UX is not the full end-user story yet |
 | Ordinary-lane explicit Merkle batching | Implemented | High | Commit, reveal, negative-path rejection, and later transfer behavior are validated |
-| Reserved-lane auction flow | Experimental simulator + bid-artifact prototype | Moderate | Configurable policy, CLI simulation, fixture coverage, website state rendering, bid packages, and signable experimental bid artifacts exist; no live on-chain reserved-auction flow yet |
+| Reserved-lane auction flow | Experimental simulator + chain-derived bid prototype | Moderate | Configurable policy, CLI simulation, fixture coverage, website state rendering, bid packages, signable experimental bid artifacts, and a chain-derived AUCTION_BID feed exist; no final reserved-auction settlement engine yet |
 | Taproot annex reveal carrier | Experimental research | Moderate | Structurally plausible, custom tooling path proven, not mainline |
 
 ## What Is Implemented Today
@@ -109,6 +109,8 @@ Today the repo has:
   bid packages
 - a website-facing `/auctions` page that renders pending unlock, opening-floor,
   live bidding, soft-close, and settled states from those same fixtures
+- a resolver-backed chain-derived experimental auction feed for catalog lots,
+  derived from observed `AUCTION_BID` transactions
 - website download utilities for experimental auction bid packages derived from
   those same observed states
 
@@ -136,7 +138,10 @@ For reserved auctions specifically, this now includes:
 - state-at-block phase derivation
 - experimental bid package commitment validation
 - experimental bid artifact building and signing
+- experimental auction-state derivation from observed `AUCTION_BID`
+  transactions
 - website fixture loading and page rendering for the auction lab
+- website rendering for the chain-derived experimental auction feed
 
 ### Fixture-backed smoke tests
 
@@ -220,8 +225,8 @@ That direction is strong, but it is still a design direction rather than the
 implemented launch spec.
 
 What is implemented is the simulator-backed auction lab around that direction,
-plus an experimental signable bid-artifact layer, not the on-chain
-reserved-name market itself.
+plus an experimental signable bid-artifact layer and a chain-derived
+`AUCTION_BID` feed, not the final reserved-name market itself.
 
 ### 2. Taproot annex reveal carrier
 

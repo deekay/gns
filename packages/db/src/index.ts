@@ -92,6 +92,15 @@ export type PersistedTransactionProvenancePayload =
   | {
       readonly chunkIndex: number;
       readonly proofBytesHex: string;
+    }
+  | {
+      readonly flags: number;
+      readonly bondVout: number;
+      readonly reservedLockBlocks: number;
+      readonly bidAmountSats: string;
+      readonly auctionLotCommitment: string;
+      readonly auctionCommitment: string;
+      readonly bidderCommitment: string;
     };
 
 export interface PersistedTransactionProvenanceEvent {
@@ -103,7 +112,8 @@ export interface PersistedTransactionProvenanceEvent {
     | "TRANSFER"
     | "BATCH_ANCHOR"
     | "BATCH_REVEAL"
-    | "REVEAL_PROOF_CHUNK";
+    | "REVEAL_PROOF_CHUNK"
+    | "AUCTION_BID";
   readonly payload: PersistedTransactionProvenancePayload;
   readonly validationStatus: "applied" | "ignored";
   readonly reason: string;
@@ -526,10 +536,11 @@ function parseTransactionProvenanceEvent(
     typeName !== "TRANSFER" &&
     typeName !== "BATCH_ANCHOR" &&
     typeName !== "BATCH_REVEAL" &&
-    typeName !== "REVEAL_PROOF_CHUNK"
+    typeName !== "REVEAL_PROOF_CHUNK" &&
+    typeName !== "AUCTION_BID"
   ) {
     throw new Error(
-      "transaction provenance event typeName must be COMMIT, REVEAL, TRANSFER, BATCH_ANCHOR, BATCH_REVEAL, or REVEAL_PROOF_CHUNK"
+      "transaction provenance event typeName must be COMMIT, REVEAL, TRANSFER, BATCH_ANCHOR, BATCH_REVEAL, REVEAL_PROOF_CHUNK, or AUCTION_BID"
     );
   }
 
@@ -576,6 +587,18 @@ function parseTransactionProvenancePayload(
     return {
       chunkIndex: getRequiredInteger(input, "chunkIndex"),
       proofBytesHex: getRequiredString(input, "proofBytesHex")
+    };
+  }
+
+  if ("auctionCommitment" in input) {
+    return {
+      flags: getRequiredInteger(input, "flags"),
+      bondVout: getRequiredInteger(input, "bondVout"),
+      reservedLockBlocks: getRequiredInteger(input, "reservedLockBlocks"),
+      bidAmountSats: getRequiredString(input, "bidAmountSats"),
+      auctionLotCommitment: getRequiredString(input, "auctionLotCommitment"),
+      auctionCommitment: getRequiredString(input, "auctionCommitment"),
+      bidderCommitment: getRequiredString(input, "bidderCommitment")
     };
   }
 

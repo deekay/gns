@@ -4,6 +4,7 @@ import {
   AUCTION_BID_PACKAGE_FORMAT,
   AUCTION_BID_PACKAGE_VERSION,
   computeAuctionBidderCommitment,
+  computeAuctionLotCommitment,
   createAuctionBidPackage,
   parseAuctionBidPackage,
   PROTOCOL_NAME
@@ -38,6 +39,15 @@ describe("auction bid packages", () => {
     expect(pkg.wouldBecomeLeader).toBe(false);
     expect(pkg.previewSummary).toContain("pending unlock");
     expect(pkg.bidderCommitment).toBe(computeAuctionBidderCommitment("operator_a"));
+    expect(pkg.currentLeaderBidderCommitment).toBeNull();
+    expect(pkg.auctionLotCommitment).toBe(
+      computeAuctionLotCommitment({
+        auctionId: "01-pending-unlock-google",
+        name: "google",
+        reservedClassId: "top_collision",
+        unlockBlock: 95_144
+      })
+    );
     expect(pkg.auctionStateCommitment).toHaveLength(64);
   });
 
@@ -65,6 +75,9 @@ describe("auction bid packages", () => {
     expect(pkg.previewRequiredMinimumBidSats).toBe("1680000000");
     expect(pkg.wouldBecomeLeader).toBe(true);
     expect(pkg.wouldExtendSoftClose).toBe(true);
+    expect(pkg.currentLeaderBidderCommitment).toBe(
+      computeAuctionBidderCommitment("speculator_d")
+    );
 
     expect(parseAuctionBidPackage(pkg)).toEqual(pkg);
   });
