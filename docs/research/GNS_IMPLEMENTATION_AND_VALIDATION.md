@@ -111,6 +111,10 @@ Today the repo has:
   live bidding, soft-close, and settled states from those same fixtures
 - a resolver-backed chain-derived experimental auction feed for catalog lots,
   derived from observed `AUCTION_BID` transactions
+- stale observed-state rejection in that chain-derived feed when a bid no
+  longer matches the derived pre-bid state
+- derived accepted-bid bond-status and release summaries for both unsettled and
+  settled experimental lots
 - website download utilities for experimental auction bid packages derived from
   those same observed states
 
@@ -140,6 +144,8 @@ For reserved auctions specifically, this now includes:
 - experimental bid artifact building and signing
 - experimental auction-state derivation from observed `AUCTION_BID`
   transactions
+- stale-state rejection and settlement-summary derivation for those
+  experimental auction observations
 - website fixture loading and page rendering for the auction lab
 - website rendering for the chain-derived experimental auction feed
 

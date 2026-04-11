@@ -4523,7 +4523,7 @@ function renderExperimentalAuctionFeed() {
     [
       String(payload.auctions.length) + " catalog lot" + (payload.auctions.length === 1 ? "" : "s"),
       payload.currentBlockHeight == null ? "resolver has not reached a current block yet" : "derived at block " + String(payload.currentBlockHeight),
-      "leaders and next bids come from observed AUCTION_BID transactions"
+      "leaders, stale bid rejection, and settlement summaries come from observed AUCTION_BID transactions"
     ].join(" · ")
   );
   elements.experimentalAuctionList.innerHTML = payload.auctions
@@ -4640,6 +4640,11 @@ function renderExperimentalAuctionCard(auction) {
   const phase = String(auction.phase ?? "unknown");
   const phasePill = mapAuctionPhasePill(phase);
   const leaderLabel = phase === "settled" ? "Winner commitment" : "Leader commitment";
+  const settlementLabel = phase === "settled" ? "Winner release" : "Settlement";
+  const settlementValue =
+    phase === "settled"
+      ? (auction.winnerBondReleaseBlock == null ? "-" : "block " + String(auction.winnerBondReleaseBlock))
+      : "Not settled";
 
   return [
     '<article class="activity-card">',
@@ -4661,6 +4666,10 @@ function renderExperimentalAuctionCard(auction) {
     '    <div class="result-item"><label>Observed bids</label><p class="field-value">' + escapeHtml(String(auction.totalObservedBidCount ?? 0)) + "</p></div>",
     '    <div class="result-item"><label>Blocks to unlock</label><p class="field-value">' + escapeHtml(String(auction.blocksUntilUnlock ?? 0)) + "</p></div>",
     '    <div class="result-item"><label>Blocks to close</label><p class="field-value">' + escapeHtml(auction.blocksUntilClose == null ? "-" : String(auction.blocksUntilClose)) + "</p></div>",
+    '    <div class="result-item"><label>Accepted capital locked</label><p class="field-value">' + escapeHtml(formatSats(auction.currentlyLockedAcceptedBidAmountSats ?? "0")) + " (" + escapeHtml(String(auction.currentlyLockedAcceptedBidCount ?? 0)) + ")</p></div>",
+    '    <div class="result-item"><label>Accepted capital releasable</label><p class="field-value">' + escapeHtml(formatSats(auction.releasableAcceptedBidAmountSats ?? "0")) + " (" + escapeHtml(String(auction.releasableAcceptedBidCount ?? 0)) + ")</p></div>",
+    '    <div class="result-item"><label>' + escapeHtml(settlementLabel) + '</label><p class="field-value">' + escapeHtml(settlementValue) + "</p></div>",
+    '    <div class="result-item"><label>Winner tx</label><p class="field-value">' + escapeHtml(auction.winnerBidTxid ? shortenTxid(auction.winnerBidTxid) : "Not settled") + "</p></div>",
     "  </div>",
     renderExperimentalAuctionBidHistory(auction.visibleBidOutcomes),
     "</article>"
@@ -4760,6 +4769,9 @@ function renderExperimentalAuctionBidHistory(outcomes) {
           '    <div class="result-item"><label>Required minimum</label><p class="field-value">' + escapeHtml(formatSats(outcome.requiredMinimumBidSats)) + "</p></div>",
           '    <div class="result-item"><label>Tx</label><p class="field-value">' + escapeHtml(shortenTxid(outcome.txid)) + "</p></div>",
           '    <div class="result-item"><label>Close after</label><p class="field-value">' + escapeHtml(outcome.auctionCloseBlockAfter == null ? "-" : String(outcome.auctionCloseBlockAfter)) + "</p></div>",
+          '    <div class="result-item"><label>State commitment</label><p class="field-value">' + escapeHtml(outcome.stateCommitmentMatched ? "Matched observed state" : "Stale or mismatched") + "</p></div>",
+          '    <div class="result-item"><label>Bond status</label><p class="field-value">' + escapeHtml(formatAuctionBondStatus(outcome.bondStatus)) + "</p></div>",
+          '    <div class="result-item"><label>Bond release</label><p class="field-value">' + escapeHtml(outcome.bondReleaseBlock == null ? "-" : "block " + String(outcome.bondReleaseBlock)) + "</p></div>",
           "  </div>",
           "</article>"
         ].join("");
@@ -4781,6 +4793,25 @@ function formatAuctionCommitment(value) {
   }
 
   return value.slice(0, 12) + "…" + value.slice(-8);
+}
+
+function formatAuctionBondStatus(value) {
+  switch (value) {
+    case "rejected_not_tracked":
+      return "Rejected / not tracked";
+    case "leading_locked":
+      return "Leading bid locked";
+    case "superseded_locked_until_settlement":
+      return "Superseded until settlement";
+    case "losing_bid_releasable":
+      return "Losing bid releasable";
+    case "winner_locked":
+      return "Winner locked";
+    case "winner_releasable":
+      return "Winner releasable";
+    default:
+      return typeof value === "string" && value.length > 0 ? value : "Unknown";
+  }
 }
 
 function mapAuctionPhasePill(phase) {

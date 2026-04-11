@@ -48,6 +48,8 @@ That means we now have:
   - current leader
   - current minimum next bid
   - soft-close / settled phase
+  - stale observed-state rejection
+  - derived accepted-bid bond status and release summaries
   - accepted and rejected observed bid outcomes
 
 What we do **not** yet have:
@@ -102,12 +104,14 @@ state for catalog lots:
 - current leading bidder commitment
 - current minimum next bid
 - close height
+- stale observed-state rejection against the derived pre-bid state
+- accepted-bid bond / release summaries
 - settled / soft-close / pending phase
 
 What it still does **not** know:
 
 - final reserved-lane settlement semantics
-- loser release / winner lock enforcement
+- actual loser release / winner lock enforcement on chain
 - rebid replacement rules against earlier live bids
 - no-bid fallback behavior
 - a fully registry-backed reserved-auction market beyond the experimental lot

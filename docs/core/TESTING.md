@@ -168,6 +168,9 @@ That coverage includes:
 - website loading of the curated auction-state fixtures
 - chain-derived experimental auction-state derivation from observed
   `AUCTION_BID` transactions
+- stale-state rejection when a bid package no longer matches the derived
+  pre-bid state
+- derived accepted-bid bond / release summaries for experimental lots
 
 ### 2b. Repeatable smoke test for batched fixture mode
 

@@ -155,7 +155,8 @@ Use the explore page to inspect recent names, provenance, and the current smoke 
 Use the auction page to inspect both:
 
 - the current reserved-auction simulator states directly in the website
-- and the newer chain-derived experimental `AUCTION_BID` feed for catalog lots
+- and the newer chain-derived experimental `AUCTION_BID` feed for catalog lots,
+  including stale-bid rejection and derived bond-status summaries
 
 ## What GNS Is
 

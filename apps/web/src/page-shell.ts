@@ -401,8 +401,8 @@ function renderExperimentalAuctionFeedSection(): string {
       `<p>This sits one step closer to protocol behavior than the curated simulator lab above.</p>
       <ul>
         <li>Lots still come from the current experimental auction catalog.</li>
-        <li>Leaders and minimum next bids are derived from observed AUCTION_BID transactions.</li>
-        <li>The current slice is still experimental: bids are recorded and derived, not yet settled by a full reserved-auction engine.</li>
+        <li>Leaders, minimum next bids, stale-state rejection, and bond-status summaries are derived from observed AUCTION_BID transactions.</li>
+        <li>The current slice is still experimental: bids are derived and classified, not yet settled by a full reserved-auction engine.</li>
       </ul>`
     )}
     <p id="experimentalAuctionMeta" class="helper-text">Loading chain-derived experimental auction state.</p>
@@ -424,7 +424,7 @@ function renderAuctionLabNotesSection(): string {
           <li>Single-auction and market-level simulators with bidder budget pressure.</li>
           <li>CLI commands, fixture scenarios, and this website-facing auction state view.</li>
           <li>Experimental bid-package handoffs from the CLI and directly from the auction lab page.</li>
-          <li>Chain-derived experimental auction state from observed <code>AUCTION_BID</code> transactions.</li>
+          <li>Chain-derived experimental auction state from observed <code>AUCTION_BID</code> transactions, including stale bid rejection and derived bond-status summaries.</li>
         </ul>
       </article>
       <article class="guide-card">

@@ -532,9 +532,119 @@ describe("InMemoryGnsIndexer", () => {
         currentLeaderBidderCommitment: computeAuctionBidderCommitment("beta"),
         currentHighestBidSats: "1100000000",
         currentRequiredMinimumBidSats: "1155000000",
+        currentlyLockedAcceptedBidCount: 2,
+        currentlyLockedAcceptedBidAmountSats: "2100000000",
         acceptedBidCount: 2,
         rejectedBidCount: 0,
         totalObservedBidCount: 2
+      }
+    ]);
+  });
+
+  it("marks stale auction commitments as rejected in experimental auction state", () => {
+    const policy = createDefaultReservedAuctionPolicy();
+    const catalogEntry = createExperimentalReservedAuctionCatalogEntry(
+      {
+        auctionId: "04-soft-close-google",
+        title: "Soft close · google",
+        description: "Experimental live test lot.",
+        name: "google",
+        reservedClassId: "top_collision",
+        unlockBlock: 840_000
+      },
+      policy
+    );
+    const indexer = new InMemoryGnsIndexer({
+      launchHeight: 100,
+      experimentalReservedAuctionPolicy: policy,
+      experimentalReservedAuctionCatalog: [catalogEntry]
+    });
+
+    indexer.ingestBlocks([
+      makeBlock(840_010, [
+        {
+          txid: "11".repeat(32),
+          paymentOutputs: [1_000_000_000n],
+          payloads: [
+            encodeAuctionBidPayload({
+              flags: 0,
+              bondVout: 0,
+              reservedLockBlocks: catalogEntry.reservedLockBlocks,
+              bidAmountSats: 1_000_000_000n,
+              auctionLotCommitment: catalogEntry.auctionLotCommitment,
+              auctionCommitment: computeAuctionBidStateCommitment({
+                auctionId: catalogEntry.auctionId,
+                name: catalogEntry.normalizedName,
+                reservedClassId: catalogEntry.reservedClassId,
+                currentBlockHeight: 840_010,
+                phase: "awaiting_opening_bid",
+                unlockBlock: catalogEntry.unlockBlock,
+                auctionCloseBlockAfter: null,
+                openingMinimumBidSats: catalogEntry.openingMinimumBidSats,
+                currentLeaderBidderCommitment: null,
+                currentHighestBidSats: null,
+                currentRequiredMinimumBidSats: catalogEntry.openingMinimumBidSats,
+                reservedLockBlocks: catalogEntry.reservedLockBlocks
+              }),
+              bidderCommitment: computeAuctionBidderCommitment("alpha")
+            })
+          ]
+        }
+      ]),
+      makeBlock(840_020, [
+        {
+          txid: "22".repeat(32),
+          paymentOutputs: [1_100_000_000n],
+          payloads: [
+            encodeAuctionBidPayload({
+              flags: 0,
+              bondVout: 0,
+              reservedLockBlocks: catalogEntry.reservedLockBlocks,
+              bidAmountSats: 1_100_000_000n,
+              auctionLotCommitment: catalogEntry.auctionLotCommitment,
+              auctionCommitment: computeAuctionBidStateCommitment({
+                auctionId: catalogEntry.auctionId,
+                name: catalogEntry.normalizedName,
+                reservedClassId: catalogEntry.reservedClassId,
+                currentBlockHeight: 840_019,
+                phase: "awaiting_opening_bid",
+                unlockBlock: catalogEntry.unlockBlock,
+                auctionCloseBlockAfter: null,
+                openingMinimumBidSats: catalogEntry.openingMinimumBidSats,
+                currentLeaderBidderCommitment: null,
+                currentHighestBidSats: null,
+                currentRequiredMinimumBidSats: catalogEntry.openingMinimumBidSats,
+                reservedLockBlocks: catalogEntry.reservedLockBlocks
+              }),
+              bidderCommitment: computeAuctionBidderCommitment("beta")
+            })
+          ]
+        }
+      ])
+    ]);
+
+    expect(indexer.listExperimentalAuctions()).toMatchObject([
+      {
+        auctionId: "04-soft-close-google",
+        phase: "live_bidding",
+        currentLeaderBidderCommitment: computeAuctionBidderCommitment("alpha"),
+        currentHighestBidSats: "1000000000",
+        acceptedBidCount: 1,
+        rejectedBidCount: 1,
+        totalObservedBidCount: 2,
+        visibleBidOutcomes: [
+          {
+            txid: "11".repeat(32),
+            status: "accepted",
+            bondStatus: "leading_locked"
+          },
+          {
+            txid: "22".repeat(32),
+            status: "rejected",
+            reason: "stale_state_commitment",
+            stateCommitmentMatched: false
+          }
+        ]
       }
     ]);
   });
