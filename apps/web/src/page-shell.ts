@@ -95,7 +95,7 @@ export function renderPageHtml(options: PageShellOptions): string {
       <main class="content-grid">
         ${
           pageKind === "home"
-            ? renderHomePageSections(basePath)
+            ? renderHomePageSections(basePath, includePrivateBatchSmoke)
             : pageKind === "claim"
             ? renderClaimPageSections(basePath, privateSignetFundingEnabled, privateSignetFundingAmountSats)
             : pageKind === "values"
@@ -280,11 +280,12 @@ function renderPanelHead(title: string, summary: string, infoBody?: string): str
   </div>`;
 }
 
-function renderHomePageSections(configuredBasePath: string): string {
+function renderHomePageSections(configuredBasePath: string, includePrivateBatchSmoke: boolean): string {
   return `${renderSearchSection()}
     ${renderHomeActionsSection(configuredBasePath)}
     ${renderHomeModelSection()}
     ${renderHomeExampleSection(configuredBasePath)}
+    ${includePrivateBatchSmoke ? renderPrivateBatchSmokeSection(false) : ""}
     ${renderHomeDocsSection()}
     ${renderHomeStatusSection()}`;
 }
@@ -424,7 +425,7 @@ function renderHomeExampleSection(configuredBasePath: string): string {
   return `<section id="bundle-example" class="panel panel-guide panel-home">
     ${renderPanelHead(
       "Live Examples And Batch Path",
-      "The hosted demo still has a few seeded example names, while the newer Merkle-batched flow is now visible through the private signet batch-smoke panel and validated through the offline builder, fixture stack, and controlled-chain tests."
+      "The hosted demo still has a few seeded example names, while the newer Merkle-batched flow is now surfaced as a live proof panel below and validated through the offline builder, fixture stack, and controlled-chain tests."
     )}
     <div class="guide-grid">
       <article class="guide-card">
@@ -450,7 +451,7 @@ function renderHomeExampleSection(configuredBasePath: string): string {
         </ul>
         <div class="guide-card-actions">
           <a class="action-link secondary" href="${withBasePath("/claim/offline", configuredBasePath)}">Open offline architect</a>
-          <a class="action-link secondary" href="${withBasePath("/explore", configuredBasePath)}">Open batch smoke panel</a>
+          <a class="action-link secondary" href="${withBasePath("/explore", configuredBasePath)}">Open explorer batch smoke</a>
           <a class="action-link secondary" href="${DOC_URLS.merkleStatus}" target="_blank" rel="noreferrer noopener">Read batching status</a>
         </div>
       </article>

@@ -4402,6 +4402,22 @@ function renderPrivateBatchSmokeStatus() {
     revealTxids.length === 0
       ? "Reveal txids unavailable"
       : String(revealTxids.length) + " reveal tx" + (revealTxids.length === 1 ? "" : "s");
+  const nameLinks = [alphaName, betaName]
+    .filter((value) => typeof value === "string" && value.trim().length > 0)
+    .map((name) => renderDetailLink(name, String(name)))
+    .join(" · ");
+  const transferLink =
+    typeof transferName === "string" && transferName.trim().length > 0
+      ? renderDetailLink(transferName, transferName)
+      : null;
+  const actionLinks = [
+    alphaName ? '<a class="action-link" href="' + escapeHtml(buildNameDetailPath(alphaName)) + '">Open alpha detail</a>' : "",
+    betaName ? '<a class="action-link secondary" href="' + escapeHtml(buildNameDetailPath(betaName)) + '">Open beta detail</a>' : "",
+    '<a class="action-link secondary" href="' + escapeHtml(withBasePath("/claim/offline")) + '">Open offline architect</a>',
+    '<a class="action-link secondary" href="' + escapeHtml(withBasePath("/explore")) + '">Open explorer</a>'
+  ]
+    .filter(Boolean)
+    .join("");
 
   setText(
     elements.privateBatchSmokeMeta,
@@ -4431,7 +4447,7 @@ function renderPrivateBatchSmokeStatus() {
     "  </div>",
     '  <div class="result-item">',
     "    <label>Names</label>",
-    '    <p class="field-value">' + escapeHtml([alphaName, betaName].filter(Boolean).join(", ") || "Not published") + '</p>',
+    nameLinks ? '    <p class="field-value">' + nameLinks + '</p>' : '    <p class="field-value">Not published</p>',
     "  </div>",
     '  <div class="result-item">',
     "    <label>Batch Commit Txid</label>",
@@ -4443,7 +4459,7 @@ function renderPrivateBatchSmokeStatus() {
     "  </div>",
     '  <div class="result-item">',
     "    <label>Transferred Name</label>",
-    '    <p class="field-value">' + escapeHtml(transferName ?? "Not published") + '</p>',
+    transferLink ? '    <p class="field-value">' + transferLink + '</p>' : '    <p class="field-value">Not published</p>',
     "  </div>",
     '  <div class="result-item">',
     "    <label>Payer Funding Address</label>",
@@ -4453,7 +4469,8 @@ function renderPrivateBatchSmokeStatus() {
     "    <label>Resolver</label>",
     '    <p class="field-value">' + escapeHtml(batchSmoke.resolverUrl ?? "Unavailable") + '</p>',
     "  </div>",
-    "</div>"
+    "</div>",
+    actionLinks ? '<div class="result-actions">' + actionLinks + "</div>" : ""
   ].join("");
 }
   `;
