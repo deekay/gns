@@ -11,6 +11,10 @@ The goal here is not to lock a decision immediately. The goal is to make the tra
 For the current leading launch assumptions after this exploration, see
 [LAUNCH_SPEC_V0.md](./LAUNCH_SPEC_V0.md).
 
+For a focused comparison between the current lead two-lane direction and the
+newer one-lane universal-auction idea, see
+[ONE_LANE_VS_TWO_LANE_AUCTION_COMPARISON.md](./ONE_LANE_VS_TWO_LANE_AUCTION_COMPARISON.md).
+
 ## Design Goals
 
 Any launch allocation mechanism should be judged against a few concrete goals:
