@@ -24,6 +24,9 @@ import {
   type WalletDerivationDescriptor
 } from "./builder.js";
 import {
+  parseReservedAuctionMarketScenario,
+  serializeReservedAuctionMarketSimulationResult,
+  simulateReservedAuctionMarket,
   createDefaultReservedAuctionPolicy,
   parseReservedAuctionPolicy,
   parseReservedAuctionScenario,
@@ -119,6 +122,9 @@ async function main(): Promise<void> {
       return;
     case "simulate-reserved-auction":
       await simulateReservedAuctionCommand(args);
+      return;
+    case "simulate-reserved-auction-market":
+      await simulateReservedAuctionMarketCommand(args);
       return;
     case "build-experimental-annex-reveal-envelope":
       await buildExperimentalAnnexRevealEnvelopeCommand(args);
@@ -340,6 +346,31 @@ async function simulateReservedAuctionCommand(args: readonly string[]): Promise<
     scenario
   });
   const serializedResult = serializeReservedAuctionSimulationResult(result);
+
+  await maybeWriteJsonFile(parsed.options.get("write"), serializedResult);
+  console.log(JSON.stringify(serializedResult, null, 2));
+}
+
+async function simulateReservedAuctionMarketCommand(args: readonly string[]): Promise<void> {
+  const parsed = parseOptions(args);
+  const scenarioPath = parsed.positionals[0];
+
+  if (!scenarioPath) {
+    throw new Error("simulate-reserved-auction-market requires a path to an auction market scenario JSON file");
+  }
+
+  const scenario = parseReservedAuctionMarketScenario(
+    extractReservedAuctionScenarioInput(await loadJsonFile(scenarioPath))
+  );
+  const serializedPolicy = parsed.options.has("policy")
+    ? await loadReservedAuctionPolicy(parsed.options.get("policy"))
+    : serializeReservedAuctionPolicy(createDefaultReservedAuctionPolicy());
+  const policy = parseReservedAuctionPolicy(serializedPolicy);
+  const result = simulateReservedAuctionMarket({
+    policy,
+    scenario
+  });
+  const serializedResult = serializeReservedAuctionMarketSimulationResult(result);
 
   await maybeWriteJsonFile(parsed.options.get("write"), serializedResult);
   console.log(JSON.stringify(serializedResult, null, 2));
@@ -1926,6 +1957,9 @@ function printUsage(): void {
   console.log("");
   console.log("  simulate-reserved-auction <scenario-json> [--policy <policy-json>] [--write <path>]");
   console.log("    Run one reserved-lane auction scenario against the temporary policy defaults or a supplied override file");
+  console.log("");
+  console.log("  simulate-reserved-auction-market <scenario-json> [--policy <policy-json>] [--write <path>]");
+  console.log("    Run a multi-auction reserved-lane market scenario with bidder budget constraints and capital lock carryover");
   console.log("");
   console.log("  build-experimental-annex-reveal-envelope --name <name> --anchor-txid <txid> --bond-vout <0-255> --carrier-prevout <txid:vout:valueSats> --wif <wif> [--network signet|testnet|regtest|main] [--fee-sats <amount>] [--carrier-input-index <n>] [--change-address <addr>] [--annex-proof-hex <hex> | --annex-proof-bytes <n> [--annex-proof-fill-byte <0-255>]] [--write <path>]");
   console.log("    Experimental: build one unsigned Taproot-annex batch reveal envelope from a single carrier input");

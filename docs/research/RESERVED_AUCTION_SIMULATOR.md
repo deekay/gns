@@ -31,10 +31,13 @@ The current simulator models:
 - a combined absolute-plus-percentage minimum increment rule
 - first valid bid behavior
 - late-bid rejection after auction close
+- bidder budget constraints across multiple concurrent auctions
+- loser-capital release only after auction close
+- winner-capital persistence after auction close
+- same-auction rebids that only require additional delta capital
 
 It does **not** yet model:
 
-- bidder capital reuse across multiple concurrent auctions
 - auction-wave timing across many names
 - no-bid fallback behavior after an auction ends with no valid winner
 - transfer or settlement execution details
@@ -94,6 +97,12 @@ Run a scenario with an edited policy override:
 npm run dev:cli -- simulate-reserved-auction fixtures/auction/tylercowen-thin-market.json --policy /tmp/reserved-policy.json
 ```
 
+Run a concurrent-auction market scenario with bidder budgets:
+
+```bash
+npm run dev:cli -- simulate-reserved-auction-market fixtures/auction/market-capital-pressure.json
+```
+
 ## Included Sample Scenarios
 
 Current fixture scenarios live in:
@@ -104,6 +113,9 @@ Current fixture scenarios live in:
 - [fixtures/auction/no-bids.json](/Users/davidking/dev/gns/fixtures/auction/no-bids.json)
 - [fixtures/auction/underfloor-major-name.json](/Users/davidking/dev/gns/fixtures/auction/underfloor-major-name.json)
 - [fixtures/auction/soft-close-tail.json](/Users/davidking/dev/gns/fixtures/auction/soft-close-tail.json)
+- [fixtures/auction/market-capital-pressure.json](/Users/davidking/dev/gns/fixtures/auction/market-capital-pressure.json)
+- [fixtures/auction/market-winner-locks-capital.json](/Users/davidking/dev/gns/fixtures/auction/market-winner-locks-capital.json)
+- [fixtures/auction/market-self-raise-delta.json](/Users/davidking/dev/gns/fixtures/auction/market-self-raise-delta.json)
 
 These are meant to be illustrative:
 
@@ -122,6 +134,12 @@ These are meant to be illustrative:
   - repeated attempts fail to clear the opening minimum
 - `soft-close-tail`
   - a live auction keeps extending because meaningful late bids keep arriving
+- `market-capital-pressure`
+  - cross-auction bidding pressure when one bidder tries to chase more than one name
+- `market-winner-locks-capital`
+  - confirms that capital stays tied up after a winning auction closes
+- `market-self-raise-delta`
+  - confirms that a bidder can roll their own earlier bid upward using only incremental capital
 
 Each fixture now also carries an explicit `expected` section so the core test
 suite can lock the intended behavior in place.
@@ -135,6 +153,8 @@ The immediate purpose is to make a few questions testable:
 - does soft close behave the way we expect?
 - how sensitive are outcomes to the minimum increment rule?
 - does a public-identity lane still feel viable under a lighter burden?
+- how much do early winners constrain later bidding by the same actors?
+- does losing-capital release timing materially affect later reserved waves?
 
 This gives us a place to learn without hardcoding the economic policy all over
 the codebase.

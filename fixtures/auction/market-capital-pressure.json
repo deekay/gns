@@ -1,0 +1,91 @@
+{
+  "scenario": {
+    "bidderBudgetsSats": {
+      "alpha": "220000000",
+      "beta": "260000000",
+      "gamma": "30000000"
+    },
+    "auctions": [
+      {
+        "auctionId": "openai-main",
+        "name": "openai",
+        "reservedClassId": "major_existing_name",
+        "unlockBlock": 900000,
+        "bidAttempts": [
+          {
+            "bidderId": "alpha",
+            "blockHeight": 900010,
+            "amountSats": "200000000"
+          },
+          {
+            "bidderId": "beta",
+            "blockHeight": 900100,
+            "amountSats": "220000000"
+          }
+        ]
+      },
+      {
+        "auctionId": "tyler-side",
+        "name": "tylercowen",
+        "reservedClassId": "public_identity",
+        "unlockBlock": 900050,
+        "bidAttempts": [
+          {
+            "bidderId": "alpha",
+            "blockHeight": 900060,
+            "amountSats": "25000000"
+          },
+          {
+            "bidderId": "gamma",
+            "blockHeight": 900070,
+            "amountSats": "25000000"
+          }
+        ]
+      },
+      {
+        "auctionId": "garry-followup",
+        "name": "garrytan",
+        "reservedClassId": "public_identity",
+        "unlockBlock": 904500,
+        "bidAttempts": [
+          {
+            "bidderId": "alpha",
+            "blockHeight": 904510,
+            "amountSats": "25000000"
+          }
+        ]
+      }
+    ]
+  },
+  "expected": {
+    "auctionWinners": {
+      "openai-main": "beta",
+      "tyler-side": "gamma",
+      "garry-followup": "alpha"
+    },
+    "bidderSummaries": {
+      "alpha": {
+        "finalLockedSats": "25000000",
+        "peakLockedSats": "200000000",
+        "insufficientBudgetRejectCount": 1
+      },
+      "beta": {
+        "finalLockedSats": "220000000",
+        "peakLockedSats": "220000000",
+        "insufficientBudgetRejectCount": 0
+      },
+      "gamma": {
+        "finalLockedSats": "25000000",
+        "peakLockedSats": "25000000",
+        "insufficientBudgetRejectCount": 0
+      }
+    },
+    "chronologicalReasons": [
+      "opening_bid",
+      "insufficient_bidder_budget",
+      "opening_bid",
+      "higher_bid",
+      "opening_bid"
+    ]
+  }
+}

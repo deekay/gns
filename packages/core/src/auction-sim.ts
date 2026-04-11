@@ -43,7 +43,8 @@ export type ReservedAuctionBidRejectionReason =
   | "before_unlock"
   | "below_opening_minimum"
   | "auction_closed"
-  | "below_minimum_increment";
+  | "below_minimum_increment"
+  | "insufficient_bidder_budget";
 
 export type ReservedAuctionBidOutcomeReason =
   | ReservedAuctionBidAcceptanceReason

@@ -1,0 +1,70 @@
+{
+  "scenario": {
+    "bidderBudgetsSats": {
+      "alpha": "255000000",
+      "beta": "300000000"
+    },
+    "auctions": [
+      {
+        "auctionId": "openai-main",
+        "name": "openai",
+        "reservedClassId": "major_existing_name",
+        "unlockBlock": 920000,
+        "bidAttempts": [
+          {
+            "bidderId": "alpha",
+            "blockHeight": 920010,
+            "amountSats": "200000000"
+          },
+          {
+            "bidderId": "beta",
+            "blockHeight": 920100,
+            "amountSats": "210000000"
+          },
+          {
+            "bidderId": "alpha",
+            "blockHeight": 920110,
+            "amountSats": "230000000"
+          }
+        ]
+      },
+      {
+        "auctionId": "tyler-side",
+        "name": "tylercowen",
+        "reservedClassId": "public_identity",
+        "unlockBlock": 920000,
+        "bidAttempts": [
+          {
+            "bidderId": "alpha",
+            "blockHeight": 920020,
+            "amountSats": "25000000"
+          }
+        ]
+      }
+    ]
+  },
+  "expected": {
+    "auctionWinners": {
+      "openai-main": "alpha",
+      "tyler-side": "alpha"
+    },
+    "bidderSummaries": {
+      "alpha": {
+        "finalLockedSats": "255000000",
+        "peakLockedSats": "255000000",
+        "insufficientBudgetRejectCount": 0
+      },
+      "beta": {
+        "finalLockedSats": "0",
+        "peakLockedSats": "210000000",
+        "insufficientBudgetRejectCount": 0
+      }
+    },
+    "chronologicalReasons": [
+      "opening_bid",
+      "opening_bid",
+      "higher_bid",
+      "higher_bid"
+    ]
+  }
+}
