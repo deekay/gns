@@ -11,8 +11,8 @@ import {
 } from "./private-signet-smoke-lib.mjs";
 
 const DEMO_NAMES = {
-  plain: "simpledemo",
-  bundle: "bundledemo",
+  plain: "claimdemo",
+  bundle: "valuedemo",
   transfer: "transferdemo"
 };
 
@@ -61,9 +61,9 @@ async function main() {
       "255",
       "--payload-hex",
       encodeBundlePayloadHex([
-        { key: "site", value: "https://example.com/bundledemo" },
-        { key: "profile", value: "https://example.com/profiles/bundledemo" },
-        { key: "profile", value: "https://example.net/bundledemo" },
+        { key: "site", value: "https://example.com/valuedemo" },
+        { key: "profile", value: "https://example.com/profiles/valuedemo" },
+        { key: "profile", value: "https://example.net/valuedemo" },
         { key: "notes", value: "Example repeatable key/value pairs on the GNS demo network." }
       ]),
       "--write",

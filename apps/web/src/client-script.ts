@@ -2064,25 +2064,25 @@ function stripClientBasePath(pathname) {
   return pathname;
 }
 
-function buildNameDetailPath(name) {
-  return withBasePath("/names/" + encodeURIComponent(String(name).trim().toLowerCase()));
+function buildNameDetailPath(name, configuredBasePath = BASE_PATH) {
+  return withBasePath("/names/" + encodeURIComponent(String(name).trim().toLowerCase()), configuredBasePath);
 }
 
-function buildClaimPrepPath(name) {
+function buildClaimPrepPath(name, configuredBasePath = BASE_PATH) {
   const normalizedName = String(name ?? "").trim().toLowerCase();
-  const baseClaimPath = withBasePath("/claim");
+  const baseClaimPath = withBasePath("/claim", configuredBasePath);
   return normalizedName === "" ? baseClaimPath : baseClaimPath + "?name=" + encodeURIComponent(normalizedName);
 }
 
-function buildTransferPrepPath(name) {
+function buildTransferPrepPath(name, configuredBasePath = BASE_PATH) {
   const normalizedName = String(name ?? "").trim().toLowerCase();
-  const baseTransferPath = withBasePath("/transfer");
+  const baseTransferPath = withBasePath("/transfer", configuredBasePath);
   return normalizedName === "" ? baseTransferPath : baseTransferPath + "?name=" + encodeURIComponent(normalizedName);
 }
 
-function buildValuePublishPath(name) {
+function buildValuePublishPath(name, configuredBasePath = BASE_PATH) {
   const normalizedName = String(name ?? "").trim().toLowerCase();
-  const baseValuesPath = withBasePath("/values");
+  const baseValuesPath = withBasePath("/values", configuredBasePath);
   return normalizedName === "" ? baseValuesPath : baseValuesPath + "?name=" + encodeURIComponent(normalizedName);
 }
 
@@ -2684,24 +2684,24 @@ function renderCopyableCode(value) {
   \`;
 }
 
-function renderDetailLink(name, label) {
+function renderDetailLink(name, label, configuredBasePath = BASE_PATH) {
   const normalizedName = String(name).trim().toLowerCase();
-  return '<a class="detail-link" href="' + escapeHtml(buildNameDetailPath(normalizedName)) + '">' + escapeHtml(label) + "</a>";
+  return '<a class="detail-link" href="' + escapeHtml(buildNameDetailPath(normalizedName, configuredBasePath)) + '">' + escapeHtml(label) + "</a>";
 }
 
-function renderClaimPrepLink(name, label) {
+function renderClaimPrepLink(name, label, configuredBasePath = BASE_PATH) {
   const normalizedName = String(name).trim().toLowerCase();
-  return '<a class="detail-link" href="' + escapeHtml(buildClaimPrepPath(normalizedName)) + '">' + escapeHtml(label) + "</a>";
+  return '<a class="detail-link" href="' + escapeHtml(buildClaimPrepPath(normalizedName, configuredBasePath)) + '">' + escapeHtml(label) + "</a>";
 }
 
-function renderTransferPrepLink(name, label) {
+function renderTransferPrepLink(name, label, configuredBasePath = BASE_PATH) {
   const normalizedName = String(name).trim().toLowerCase();
-  return '<a class="detail-link" href="' + escapeHtml(buildTransferPrepPath(normalizedName)) + '">' + escapeHtml(label) + "</a>";
+  return '<a class="detail-link" href="' + escapeHtml(buildTransferPrepPath(normalizedName, configuredBasePath)) + '">' + escapeHtml(label) + "</a>";
 }
 
-function renderValuePublishLink(name, label) {
+function renderValuePublishLink(name, label, configuredBasePath = BASE_PATH) {
   const normalizedName = String(name).trim().toLowerCase();
-  return '<a class="detail-link" href="' + escapeHtml(buildValuePublishPath(normalizedName)) + '">' + escapeHtml(label) + "</a>";
+  return '<a class="detail-link" href="' + escapeHtml(buildValuePublishPath(normalizedName, configuredBasePath)) + '">' + escapeHtml(label) + "</a>";
 }
 
 function renderDetailPageMeta(record, valueRecord, currentHeight) {
@@ -4402,19 +4402,23 @@ function renderPrivateBatchSmokeStatus() {
     revealTxids.length === 0
       ? "Reveal txids unavailable"
       : String(revealTxids.length) + " reveal tx" + (revealTxids.length === 1 ? "" : "s");
+  const privateDemoBasePath =
+    typeof state.config?.privateDemoBasePath === "string" && state.config.privateDemoBasePath.length > 0
+      ? state.config.privateDemoBasePath
+      : BASE_PATH;
   const nameLinks = [alphaName, betaName]
     .filter((value) => typeof value === "string" && value.trim().length > 0)
-    .map((name) => renderDetailLink(name, String(name)))
+    .map((name) => renderDetailLink(name, String(name), privateDemoBasePath))
     .join(" · ");
   const transferLink =
     typeof transferName === "string" && transferName.trim().length > 0
-      ? renderDetailLink(transferName, transferName)
+      ? renderDetailLink(transferName, transferName, privateDemoBasePath)
       : null;
   const actionLinks = [
-    alphaName ? '<a class="action-link" href="' + escapeHtml(buildNameDetailPath(alphaName)) + '">Open alpha detail</a>' : "",
-    betaName ? '<a class="action-link secondary" href="' + escapeHtml(buildNameDetailPath(betaName)) + '">Open beta detail</a>' : "",
-    '<a class="action-link secondary" href="' + escapeHtml(withBasePath("/claim/offline")) + '">Open offline architect</a>',
-    '<a class="action-link secondary" href="' + escapeHtml(withBasePath("/explore")) + '">Open explorer</a>'
+    alphaName ? '<a class="action-link" href="' + escapeHtml(buildNameDetailPath(alphaName, privateDemoBasePath)) + '">Open alpha detail</a>' : "",
+    betaName ? '<a class="action-link secondary" href="' + escapeHtml(buildNameDetailPath(betaName, privateDemoBasePath)) + '">Open beta detail</a>' : "",
+    '<a class="action-link secondary" href="' + escapeHtml(withBasePath("/claim/offline", privateDemoBasePath)) + '">Open offline architect</a>',
+    '<a class="action-link secondary" href="' + escapeHtml(withBasePath("/explore", privateDemoBasePath)) + '">Open explorer</a>'
   ]
     .filter(Boolean)
     .join("");

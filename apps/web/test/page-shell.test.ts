@@ -29,6 +29,9 @@ describe("renderPageHtml", () => {
     expect(html).toContain("LAUNCH_SPEC_V0.md");
     expect(html).toContain("Private Signet Batch Smoke");
     expect(html).toContain("best live-chain proof for the current ordinary-lane Merkle batching path");
+    expect(html).toContain("claimdemo");
+    expect(html).toContain("valuedemo");
+    expect(html).toContain("transferdemo");
   });
 
   it("clarifies that live signet smoke is still the single-name path", () => {

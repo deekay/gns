@@ -11,6 +11,11 @@ const DOC_URLS = {
   launchSpec: `${GITHUB_BLOB_BASE_URL}/docs/research/LAUNCH_SPEC_V0.md`,
   testing: `${GITHUB_BLOB_BASE_URL}/docs/core/TESTING.md`
 } as const;
+const PRIVATE_DEMO_NAMES = {
+  claim: "claimdemo",
+  value: "valuedemo",
+  transfer: "transferdemo"
+} as const;
 
 export interface PageShellOptions {
   basePath: string,
@@ -378,7 +383,7 @@ function renderHomeActionsSection(configuredBasePath: string): string {
         </div>
       </article>
     </div>
-    <p class="tool-handoff-note">Fastest hosted loop: <a href="${withBasePath("/setup", configuredBasePath)}">Setup</a> → <a href="${withBasePath("/claim", configuredBasePath)}">Claim</a> → <a href="${withBasePath("/explore", configuredBasePath)}">Explore</a> → <a href="${withBasePath("/values?name=bundledemo", configuredBasePath)}">Values</a>.</p>
+    <p class="tool-handoff-note">Fastest hosted loop: <a href="${withBasePath("/setup", configuredBasePath)}">Setup</a> → <a href="${withBasePath("/claim", configuredBasePath)}">Claim</a> → <a href="${withBasePath("/explore", configuredBasePath)}">Explore</a> → <a href="${withBasePath(`/values?name=${PRIVATE_DEMO_NAMES.value}`, configuredBasePath)}">Values</a>.</p>
     <p class="tool-handoff-note">Best docs path: <a href="${DOC_URLS.fromZero}" target="_blank" rel="noreferrer noopener">From Zero</a> → <a href="${DOC_URLS.implementation}" target="_blank" rel="noreferrer noopener">Implementation &amp; Validation</a> → <a href="${DOC_URLS.merkleStatus}" target="_blank" rel="noreferrer noopener">Merkle Batching Status</a> → <a href="${DOC_URLS.launchSpec}" target="_blank" rel="noreferrer noopener">Launch Spec v0</a>.</p>
   </section>`;
 }
@@ -432,9 +437,9 @@ function renderHomeExampleSection(configuredBasePath: string): string {
         <h3>Hosted Demo Names</h3>
         <p>These older seeded examples are still useful for quickly inspecting claim, value, and transfer states in the hosted explorer:</p>
         <ul class="guide-list">
-          <li><strong><a class="detail-link" href="${withBasePath("/names/simpledemo", configuredBasePath)}">simpledemo</a></strong> → plain claimed name with no current value.</li>
-          <li><strong><a class="detail-link" href="${withBasePath("/names/bundledemo", configuredBasePath)}">bundledemo</a></strong> → mature name with repeatable key/value pairs.</li>
-          <li><strong><a class="detail-link" href="${withBasePath("/names/transferdemo", configuredBasePath)}">transferdemo</a></strong> → transferred name with a recipient-owned bundle.</li>
+          <li><strong><a class="detail-link" href="${withBasePath(`/names/${PRIVATE_DEMO_NAMES.claim}`, configuredBasePath)}">${PRIVATE_DEMO_NAMES.claim}</a></strong> → plain claimed name with no current value.</li>
+          <li><strong><a class="detail-link" href="${withBasePath(`/names/${PRIVATE_DEMO_NAMES.value}`, configuredBasePath)}">${PRIVATE_DEMO_NAMES.value}</a></strong> → mature name with repeatable key/value pairs.</li>
+          <li><strong><a class="detail-link" href="${withBasePath(`/names/${PRIVATE_DEMO_NAMES.transfer}`, configuredBasePath)}">${PRIVATE_DEMO_NAMES.transfer}</a></strong> → transferred name with a recipient-owned bundle.</li>
         </ul>
         <div class="guide-card-actions">
           <a class="action-link secondary" href="${withBasePath("/explore", configuredBasePath)}">Open explorer</a>
@@ -464,7 +469,7 @@ function renderHomeExampleSection(configuredBasePath: string): string {
           <li>The protocol does not need to know which services exist in advance.</li>
         </ul>
         <div class="guide-card-actions">
-          <a class="action-link secondary" href="${withBasePath("/values?name=bundledemo", configuredBasePath)}">Inspect bundledemo in values tool</a>
+          <a class="action-link secondary" href="${withBasePath(`/values?name=${PRIVATE_DEMO_NAMES.value}`, configuredBasePath)}">Inspect ${PRIVATE_DEMO_NAMES.value} in values tool</a>
         </div>
       </article>
     </div>
@@ -1411,9 +1416,9 @@ function renderValuesGuideSection(configuredBasePath: string): string {
       <article class="guide-card">
         <h3>Good Names To Inspect</h3>
         <ul class="guide-list">
-          <li><strong><a class="detail-link" href="${withBasePath("/names/simpledemo", configuredBasePath)}">simpledemo</a></strong> shows a claimed name before any value is published.</li>
-          <li><strong><a class="detail-link" href="${withBasePath("/names/bundledemo", configuredBasePath)}">bundledemo</a></strong> shows a populated key/value bundle.</li>
-          <li><strong><a class="detail-link" href="${withBasePath("/names/transferdemo", configuredBasePath)}">transferdemo</a></strong> shows a transferred name with new owner authority.</li>
+          <li><strong><a class="detail-link" href="${withBasePath(`/names/${PRIVATE_DEMO_NAMES.claim}`, configuredBasePath)}">${PRIVATE_DEMO_NAMES.claim}</a></strong> shows a claimed name before any value is published.</li>
+          <li><strong><a class="detail-link" href="${withBasePath(`/names/${PRIVATE_DEMO_NAMES.value}`, configuredBasePath)}">${PRIVATE_DEMO_NAMES.value}</a></strong> shows a populated key/value bundle.</li>
+          <li><strong><a class="detail-link" href="${withBasePath(`/names/${PRIVATE_DEMO_NAMES.transfer}`, configuredBasePath)}">${PRIVATE_DEMO_NAMES.transfer}</a></strong> shows a transferred name with new owner authority.</li>
         </ul>
       </article>
     </div>

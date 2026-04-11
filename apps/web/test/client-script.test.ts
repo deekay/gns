@@ -37,6 +37,7 @@ describe("renderClientScript", () => {
     expect(script).toContain("renderPrivateBatchSmokeStatus");
     expect(script).toContain("Batch Commit Txid");
     expect(script).toContain("Open alpha detail");
-    expect(script).toContain('withBasePath("/claim/offline")');
+    expect(script).toContain("privateDemoBasePath");
+    expect(script).toContain('withBasePath("/claim/offline", privateDemoBasePath)');
   });
 });

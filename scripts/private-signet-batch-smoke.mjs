@@ -16,6 +16,10 @@ const REMOTE_STATUS_PATH =
   ?? "/var/lib/gns/private-batch-smoke-summary.json";
 const PUBLISH_REMOTE_STATUS =
   (process.env.GNS_PRIVATE_SIGNET_BATCH_SMOKE_PUBLISH_REMOTE_STATUS ?? "1") !== "0";
+const CONFIGURED_ALPHA_NAME =
+  normalizeOptionalName(process.env.GNS_PRIVATE_SIGNET_BATCH_SMOKE_ALPHA_NAME);
+const CONFIGURED_BETA_NAME =
+  normalizeOptionalName(process.env.GNS_PRIVATE_SIGNET_BATCH_SMOKE_BETA_NAME);
 
 void main().catch((error) => {
   console.error(error instanceof Error ? error.stack ?? error.message : String(error));
@@ -38,8 +42,8 @@ async function main() {
     resolverUrl,
     rpcUrl
   }) => {
-    const alphaName = createScenarioName("pbta");
-    const betaName = createScenarioName("pbtb");
+    const alphaName = CONFIGURED_ALPHA_NAME ?? createScenarioName("pbta");
+    const betaName = CONFIGURED_BETA_NAME ?? createScenarioName("pbtb");
     const outDir = scenarioArtifactsDir(`${alphaName}-batch-smoke`);
     const alphaClaimPath = `${outDir}/${alphaName}-claim.json`;
     const betaClaimPath = `${outDir}/${betaName}-claim.json`;
@@ -146,4 +150,13 @@ async function main() {
 
 function logStep(name, message) {
   console.error(`[private-batch-smoke:${name}] ${message}`);
+}
+
+function normalizeOptionalName(value) {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const normalized = value.trim().toLowerCase();
+  return normalized.length === 0 ? null : normalized;
 }

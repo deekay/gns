@@ -83,6 +83,10 @@ const privateSignetFundingEnabled =
 const privateSignetElectrumEndpoint =
   normalizeOptionalText(process.env.GNS_WEB_PRIVATE_SIGNET_ELECTRUM_ENDPOINT)
   ?? (networkLabel.toLowerCase().includes("private signet") ? "globalnamesystem.org:50001:t" : null);
+const privateDemoBasePath = normalizeBasePath(
+  process.env.GNS_WEB_PRIVATE_DEMO_BASE_PATH
+    ?? (networkLabel.toLowerCase().includes("private signet") ? basePath : "/gns-private")
+);
 const privateSignetClaimPsbtBuilderEnabled =
   networkLabel.toLowerCase().includes("private signet") && existsSync(privateSignetBitcoinCliPath);
 const privateSignetFundingRequestTimes = new Map<string, number>();
@@ -373,6 +377,7 @@ const server = createServer(async (request, response) => {
       networkLabel,
       showLiveSmoke,
       showPrivateBatchSmoke,
+      privateDemoBasePath,
       privateFunding: {
         enabled: privateSignetFundingEnabled,
         amountSats: privateSignetFundingAmountSats.toString(),

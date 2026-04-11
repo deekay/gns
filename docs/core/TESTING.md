@@ -293,6 +293,20 @@ To seed a fresh private-signet demo state from the CLI against that VPS:
 npm run test:private-signet-demo
 ```
 
+To reset the private chain and reseed the canonical hosted-demo examples in one go:
+
+```bash
+npm run reseed:private-signet:canonical -- root@<server-ip> ~/.ssh/<your-key>
+```
+
+That canonical reseed leaves behind this deterministic set:
+
+- `claimdemo`
+- `valuedemo`
+- `transferdemo`
+- `batchalpha`
+- `batchbeta`
+
 That full script:
 
 - funds demo accounts from the VPS miner wallet

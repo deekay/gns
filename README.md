@@ -331,6 +331,12 @@ Why:
 - official Electrum still rejects this small private signet because it expects the shared public signet checkpoint height
 - broader wallet support should still get easier from here, but not every signet wallet will accept a low-height private chain
 
+If you want to reset the hosted private demo to the canonical example set, run:
+
+```bash
+npm run reseed:private-signet:canonical -- root@<server-ip> ~/.ssh/<your-key>
+```
+
 ## Quick Start
 
 ### Run the local prototype

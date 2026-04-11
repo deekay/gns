@@ -81,7 +81,7 @@ Success looks like:
 
 ### 3. Publish A Value Bundle
 
-Open [values](https://globalnamesystem.org/values?name=bundledemo) or replace the name with the one just claimed.
+Open [values](https://globalnamesystem.org/values?name=valuedemo) or replace the name with the one just claimed.
 
 Load the claimed name, then publish a few key/value pairs such as:
 
@@ -99,8 +99,8 @@ Success looks like:
 
 If they want to inspect the product before claiming, point them at:
 
-- [simpledemo](https://globalnamesystem.org/names/simpledemo): claimed name with no value yet
-- [bundledemo](https://globalnamesystem.org/names/bundledemo): claimed name with repeatable key/value pairs
+- [claimdemo](https://globalnamesystem.org/names/claimdemo): claimed name with no value yet
+- [valuedemo](https://globalnamesystem.org/names/valuedemo): claimed name with repeatable key/value pairs
 - [transferdemo](https://globalnamesystem.org/names/transferdemo): transferred name with new-owner authority
 
 ## What To Say If They Ask “What Works Today?”
@@ -130,5 +130,4 @@ Use this order:
 1. homepage: explain the product in one sentence
 2. setup: show that the wallet can connect and get demo coins
 3. claim: show the commit/reveal flow exists
-4. bundledemo: show what a claimed name can point to
-
+4. valuedemo: show what a claimed name can point to
