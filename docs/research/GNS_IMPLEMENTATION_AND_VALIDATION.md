@@ -113,6 +113,8 @@ Today the repo has:
   derived from observed `AUCTION_BID` transactions
 - stale observed-state rejection in that chain-derived feed when a bid no
   longer matches the derived pre-bid state
+- same-bidder rebid classification when the later bid spends the prior bid
+  bond outpoint
 - derived accepted-bid bond-status and release summaries for both unsettled and
   settled experimental lots
 - website download utilities for experimental auction bid packages derived from
@@ -146,6 +148,8 @@ For reserved auctions specifically, this now includes:
   transactions
 - stale-state rejection and settlement-summary derivation for those
   experimental auction observations
+- same-bidder replacement derivation when the later bid spends the prior bid
+  bond output
 - website fixture loading and page rendering for the auction lab
 - website rendering for the chain-derived experimental auction feed
 

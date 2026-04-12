@@ -330,6 +330,10 @@ async function inspectAuctionBidPackage(filePath: string | undefined): Promise<v
   console.log(`Would become leader: ${parsed.wouldBecomeLeader ? "yes" : "no"}`);
   console.log(`Would extend soft close: ${parsed.wouldExtendSoftClose ? "yes" : "no"}`);
   console.log(parsed.previewSummary);
+  console.log("");
+  console.log(
+    "If this bidder already has a standing bid for the same lot, the replacement bid should spend the prior bid bond outpoint as one of the funding inputs."
+  );
 }
 
 async function inspectTransferPackage(filePath: string | undefined): Promise<void> {
@@ -2131,6 +2135,7 @@ function printUsage(): void {
   console.log("    Build unsigned reveal transaction artifacts from a reveal-ready batch claim package");
   console.log("");
   console.log("  build-auction-bid-artifacts <auction-bid-package> --input <txid:vout:valueSats:address[:derivationPath]> [--input ...] --fee-sats <amount> --bond-address <addr> [--bond-vout <0|1>] [--flags <0-255>] [--network signet|testnet|regtest|main] [--change-address <addr>] [--wallet-master-fingerprint <hex8> --wallet-account-xpub <xpub> --wallet-account-path <path> [--wallet-scan-limit <n>]] [--write <path>]");
+  console.log("    same-bidder rebids should include the prior bid bond outpoint as one of the --input entries");
   console.log("    Build unsigned experimental auction bid artifacts from an auction bid package");
   console.log("");
   console.log("  print-reserved-auction-policy [--write <path>]");

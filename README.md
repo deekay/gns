@@ -156,7 +156,8 @@ Use the auction page to inspect both:
 
 - the current reserved-auction simulator states directly in the website
 - and the newer chain-derived experimental `AUCTION_BID` feed for catalog lots,
-  including stale-bid rejection and derived bond-status summaries
+  including stale-bid rejection, same-bidder replacement, and derived
+  bond-status summaries
 
 ## What GNS Is
 
@@ -193,6 +194,8 @@ So the right framing is not just “better DNS.” It is closer to a sovereign n
 The clearest current wording is:
 
 > use a human-readable name to say who gets paid or which Bitcoin-native counterparty or service you trust.
+
+Adjacent work is worth keeping in mind here too. Systems like Pubky / PKARR (which the old Slashtags project now points to) explore self-sovereign routing around public keys and signed DHT records while intentionally avoiding a scarce global human-readable namespace. GNS is trying to solve a different layer: Bitcoin-anchored ownership of shared human-readable names for Bitcoin payments first, then broader counterparties and services after that. For a short internal comparison note, see [docs/research/GNS_VS_PUBKY_PKARR.md](./docs/research/GNS_VS_PUBKY_PKARR.md).
 
 ## How Ownership Works
 

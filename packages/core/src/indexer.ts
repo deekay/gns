@@ -510,11 +510,21 @@ export class InMemoryGnsIndexer {
             blockHeight: transaction.blockHeight,
             txIndex: transaction.txIndex,
             vout: event.vout,
+            bondVout: event.payload.bondVout,
             bidderCommitment: event.payload.bidderCommitment,
             bidAmountSats: BigInt(event.payload.bidAmountSats),
             reservedLockBlocks: event.payload.reservedLockBlocks,
             auctionLotCommitment: event.payload.auctionLotCommitment,
-            auctionCommitment: event.payload.auctionCommitment
+            auctionCommitment: event.payload.auctionCommitment,
+            spentOutpoints: transaction.inputs
+              .filter(
+                (input): input is typeof input & { readonly txid: string; readonly vout: number } =>
+                  input.coinbase !== true && input.txid !== null && input.vout !== null
+              )
+              .map((input) => ({
+                txid: input.txid,
+                vout: input.vout
+              }))
           }))
       )
       .sort((left, right) => {

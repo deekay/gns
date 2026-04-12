@@ -324,6 +324,37 @@ describe("buildAuctionBidArtifacts", () => {
       payload
     });
   });
+
+  it("supports rebid artifacts that spend a prior bid bond input", () => {
+    const bidPackage = createAuctionBidPackageFixture();
+    const artifacts = buildAuctionBidArtifacts({
+      bidPackage,
+      fundingInputs: [
+        {
+          txid: "aa".repeat(32),
+          vout: 0,
+          valueSats: 1_160_000_000n,
+          address: createTestAddress(16)
+        },
+        {
+          txid: "bb".repeat(32),
+          vout: 1,
+          valueSats: 541_000_000n,
+          address: createTestAddress(17)
+        }
+      ],
+      feeSats: 1_000_000n,
+      network: "signet",
+      bondAddress: createTestAddress(18),
+      changeAddress: createTestAddress(19)
+    });
+
+    const transaction = Transaction.fromHex(artifacts.unsignedTransactionHex);
+    expect(transaction.ins).toHaveLength(2);
+    expect(artifacts.outputs[0]?.role).toBe("auction_bid_bond");
+    expect(artifacts.outputs[0]?.valueSats).toBe("1700000000");
+    expect(artifacts.changeValueSats).toBe("0");
+  });
 });
 
 describe("buildBatchCommitArtifacts", () => {

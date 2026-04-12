@@ -331,4 +331,45 @@ describe("signArtifacts", () => {
     const transaction = Transaction.fromHex(signed.signedTransactionHex);
     expect(transaction.ins[0]?.witness.length).toBeGreaterThan(0);
   });
+
+  it("signs replacement-style auction bid artifacts with multiple inputs", () => {
+    const { fundingKey, fundingAddress } = createClaimPackage();
+    const artifacts = buildAuctionBidArtifacts({
+      bidPackage: createAuctionBidPackageFixture(),
+      fundingInputs: [
+        {
+          txid: "aa".repeat(32),
+          vout: 0,
+          valueSats: 1_160_000_000n,
+          address: fundingAddress
+        },
+        {
+          txid: "bb".repeat(32),
+          vout: 1,
+          valueSats: 540_100_000n,
+          address: fundingAddress
+        }
+      ],
+      feeSats: 100_000n,
+      network: "signet",
+      bondAddress: payments.p2wpkh({
+        hash: Buffer.alloc(20, 9),
+        network: networks.testnet
+      }).address ?? "",
+      changeAddress: fundingAddress
+    });
+
+    const signed = signArtifacts({
+      artifacts,
+      wifs: [fundingKey.toWIF()]
+    });
+
+    expect(signed.kind).toBe("gns-signed-auction-bid-artifacts");
+    expect(signed.signedTransactionId).toBe(artifacts.bidTxid);
+
+    const transaction = Transaction.fromHex(signed.signedTransactionHex);
+    expect(transaction.ins).toHaveLength(2);
+    expect(transaction.ins[0]?.witness.length).toBeGreaterThan(0);
+    expect(transaction.ins[1]?.witness.length).toBeGreaterThan(0);
+  });
 });

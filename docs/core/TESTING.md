@@ -170,6 +170,7 @@ That coverage includes:
   `AUCTION_BID` transactions
 - stale-state rejection when a bid package no longer matches the derived
   pre-bid state
+- same-bidder replacement when the later bid spends the prior bid bond
 - derived accepted-bid bond / release summaries for experimental lots
 
 ### 2b. Repeatable smoke test for batched fixture mode

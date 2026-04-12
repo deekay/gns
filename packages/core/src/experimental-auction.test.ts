@@ -36,10 +36,12 @@ describe("experimental reserved auction derivation", () => {
           blockHeight: 840_010,
           txIndex: 0,
           vout: 1,
+          bondVout: 0,
           bidderCommitment: computeAuctionBidderCommitment("alpha"),
           bidAmountSats: 1_000_000_000n,
           reservedLockBlocks: catalogEntry.reservedLockBlocks,
           auctionLotCommitment: catalogEntry.auctionLotCommitment,
+          spentOutpoints: [],
           auctionCommitment: computeAuctionBidStateCommitment({
             auctionId: catalogEntry.auctionId,
             name: catalogEntry.normalizedName,
@@ -60,10 +62,12 @@ describe("experimental reserved auction derivation", () => {
           blockHeight: 844_210,
           txIndex: 0,
           vout: 1,
+          bondVout: 0,
           bidderCommitment: computeAuctionBidderCommitment("beta"),
           bidAmountSats: 1_100_000_000n,
           reservedLockBlocks: catalogEntry.reservedLockBlocks,
           auctionLotCommitment: catalogEntry.auctionLotCommitment,
+          spentOutpoints: [],
           auctionCommitment: computeAuctionBidStateCommitment({
             auctionId: catalogEntry.auctionId,
             name: catalogEntry.normalizedName,
@@ -84,10 +88,12 @@ describe("experimental reserved auction derivation", () => {
           blockHeight: 844_211,
           txIndex: 0,
           vout: 1,
+          bondVout: 0,
           bidderCommitment: computeAuctionBidderCommitment("gamma"),
           bidAmountSats: 1_150_000_000n,
           reservedLockBlocks: catalogEntry.reservedLockBlocks + 1,
           auctionLotCommitment: catalogEntry.auctionLotCommitment,
+          spentOutpoints: [],
           auctionCommitment: computeAuctionBidStateCommitment({
             auctionId: catalogEntry.auctionId,
             name: catalogEntry.normalizedName,
@@ -145,10 +151,12 @@ describe("experimental reserved auction derivation", () => {
           blockHeight: 840_010,
           txIndex: 0,
           vout: 1,
+          bondVout: 0,
           bidderCommitment: computeAuctionBidderCommitment("alpha"),
           bidAmountSats: 1_000_000_000n,
           reservedLockBlocks: catalogEntry.reservedLockBlocks,
           auctionLotCommitment: catalogEntry.auctionLotCommitment,
+          spentOutpoints: [],
           auctionCommitment: computeAuctionBidStateCommitment({
             auctionId: catalogEntry.auctionId,
             name: catalogEntry.normalizedName,
@@ -169,10 +177,12 @@ describe("experimental reserved auction derivation", () => {
           blockHeight: 840_020,
           txIndex: 0,
           vout: 1,
+          bondVout: 0,
           bidderCommitment: computeAuctionBidderCommitment("beta"),
           bidAmountSats: 1_100_000_000n,
           reservedLockBlocks: catalogEntry.reservedLockBlocks,
           auctionLotCommitment: catalogEntry.auctionLotCommitment,
+          spentOutpoints: [],
           auctionCommitment: computeAuctionBidStateCommitment({
             auctionId: catalogEntry.auctionId,
             name: catalogEntry.normalizedName,
@@ -226,10 +236,12 @@ describe("experimental reserved auction derivation", () => {
           blockHeight: 840_010,
           txIndex: 0,
           vout: 1,
+          bondVout: 0,
           bidderCommitment: computeAuctionBidderCommitment("alpha"),
           bidAmountSats: 1_000_000_000n,
           reservedLockBlocks: catalogEntry.reservedLockBlocks,
           auctionLotCommitment: catalogEntry.auctionLotCommitment,
+          spentOutpoints: [],
           auctionCommitment: computeAuctionBidStateCommitment({
             auctionId: catalogEntry.auctionId,
             name: catalogEntry.normalizedName,
@@ -250,10 +262,12 @@ describe("experimental reserved auction derivation", () => {
           blockHeight: 844_210,
           txIndex: 0,
           vout: 1,
+          bondVout: 0,
           bidderCommitment: computeAuctionBidderCommitment("beta"),
           bidAmountSats: 1_100_000_000n,
           reservedLockBlocks: catalogEntry.reservedLockBlocks,
           auctionLotCommitment: catalogEntry.auctionLotCommitment,
+          spentOutpoints: [],
           auctionCommitment: computeAuctionBidStateCommitment({
             auctionId: catalogEntry.auctionId,
             name: catalogEntry.normalizedName,
@@ -284,6 +298,133 @@ describe("experimental reserved auction derivation", () => {
     });
     expect(state.visibleBidOutcomes[1]).toMatchObject({
       bondStatus: "winner_releasable"
+    });
+  });
+
+  it("treats a same-bidder rebid as a replacement only when it spends the prior bid bond", () => {
+    const policy = createDefaultReservedAuctionPolicy();
+    const catalogEntry = createExperimentalReservedAuctionCatalogEntry(
+      {
+        auctionId: "04-soft-close-google",
+        title: "Soft close · google",
+        description: "Experimental live test lot.",
+        name: "google",
+        reservedClassId: "top_collision",
+        unlockBlock: 840_000
+      },
+      policy
+    );
+
+    const state = deriveExperimentalReservedAuctionState({
+      policy,
+      currentBlockHeight: 844_250,
+      catalogEntry,
+      bidObservations: [
+        {
+          txid: "11".repeat(32),
+          blockHeight: 840_010,
+          txIndex: 0,
+          vout: 1,
+          bondVout: 0,
+          bidderCommitment: computeAuctionBidderCommitment("alpha"),
+          bidAmountSats: 1_000_000_000n,
+          reservedLockBlocks: catalogEntry.reservedLockBlocks,
+          auctionLotCommitment: catalogEntry.auctionLotCommitment,
+          spentOutpoints: [],
+          auctionCommitment: computeAuctionBidStateCommitment({
+            auctionId: catalogEntry.auctionId,
+            name: catalogEntry.normalizedName,
+            reservedClassId: catalogEntry.reservedClassId,
+            currentBlockHeight: 840_010,
+            phase: "awaiting_opening_bid",
+            unlockBlock: catalogEntry.unlockBlock,
+            auctionCloseBlockAfter: null,
+            openingMinimumBidSats: catalogEntry.openingMinimumBidSats,
+            currentLeaderBidderCommitment: null,
+            currentHighestBidSats: null,
+            currentRequiredMinimumBidSats: catalogEntry.openingMinimumBidSats,
+            reservedLockBlocks: catalogEntry.reservedLockBlocks
+          })
+        },
+        {
+          txid: "22".repeat(32),
+          blockHeight: 844_210,
+          txIndex: 0,
+          vout: 1,
+          bondVout: 0,
+          bidderCommitment: computeAuctionBidderCommitment("alpha"),
+          bidAmountSats: 1_100_000_000n,
+          reservedLockBlocks: catalogEntry.reservedLockBlocks,
+          auctionLotCommitment: catalogEntry.auctionLotCommitment,
+          spentOutpoints: [
+            {
+              txid: "11".repeat(32),
+              vout: 0
+            }
+          ],
+          auctionCommitment: computeAuctionBidStateCommitment({
+            auctionId: catalogEntry.auctionId,
+            name: catalogEntry.normalizedName,
+            reservedClassId: catalogEntry.reservedClassId,
+            currentBlockHeight: 844_210,
+            phase: "soft_close",
+            unlockBlock: catalogEntry.unlockBlock,
+            auctionCloseBlockAfter: 844_330,
+            openingMinimumBidSats: catalogEntry.openingMinimumBidSats,
+            currentLeaderBidderCommitment: computeAuctionBidderCommitment("alpha"),
+            currentHighestBidSats: 1_000_000_000n,
+            currentRequiredMinimumBidSats: 1_050_000_000n,
+            reservedLockBlocks: catalogEntry.reservedLockBlocks
+          })
+        },
+        {
+          txid: "33".repeat(32),
+          blockHeight: 844_211,
+          txIndex: 0,
+          vout: 1,
+          bondVout: 0,
+          bidderCommitment: computeAuctionBidderCommitment("alpha"),
+          bidAmountSats: 1_200_000_000n,
+          reservedLockBlocks: catalogEntry.reservedLockBlocks,
+          auctionLotCommitment: catalogEntry.auctionLotCommitment,
+          spentOutpoints: [],
+          auctionCommitment: computeAuctionBidStateCommitment({
+            auctionId: catalogEntry.auctionId,
+            name: catalogEntry.normalizedName,
+            reservedClassId: catalogEntry.reservedClassId,
+            currentBlockHeight: 844_211,
+            phase: "soft_close",
+            unlockBlock: catalogEntry.unlockBlock,
+            auctionCloseBlockAfter: 844_354,
+            openingMinimumBidSats: catalogEntry.openingMinimumBidSats,
+            currentLeaderBidderCommitment: computeAuctionBidderCommitment("alpha"),
+            currentHighestBidSats: 1_100_000_000n,
+            currentRequiredMinimumBidSats: 1_155_000_000n,
+            reservedLockBlocks: catalogEntry.reservedLockBlocks
+          })
+        }
+      ]
+    });
+
+    expect(state.currentLeaderBidderCommitment).toBe(computeAuctionBidderCommitment("alpha"));
+    expect(state.currentHighestBidSats).toBe(1_100_000_000n);
+    expect(state.acceptedBidCount).toBe(2);
+    expect(state.rejectedBidCount).toBe(1);
+    expect(state.currentlyLockedAcceptedBidCount).toBe(1);
+    expect(state.currentlyLockedAcceptedBidAmountSats).toBe(1_100_000_000n);
+    expect(state.visibleBidOutcomes[0]).toMatchObject({
+      reason: "opening_bid",
+      bondStatus: "replaced_by_self_rebid",
+      bondReleaseBlock: 844_210
+    });
+    expect(state.visibleBidOutcomes[1]).toMatchObject({
+      reason: "replacement_bid_soft_close_extended",
+      bondStatus: "leading_locked"
+    });
+    expect(state.visibleBidOutcomes[2]).toMatchObject({
+      status: "rejected",
+      reason: "prior_bid_not_replaced",
+      bondStatus: "rejected_not_tracked"
     });
   });
 });

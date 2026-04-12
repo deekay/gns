@@ -16,12 +16,15 @@ export type ExperimentalReservedAuctionBidRejectionReason =
   | "auction_closed"
   | "below_minimum_increment"
   | "reserved_lock_mismatch"
-  | "stale_state_commitment";
+  | "stale_state_commitment"
+  | "prior_bid_not_replaced";
 
 export type ExperimentalReservedAuctionBidAcceptanceReason =
   | "opening_bid"
   | "higher_bid"
-  | "higher_bid_soft_close_extended";
+  | "higher_bid_soft_close_extended"
+  | "replacement_bid"
+  | "replacement_bid_soft_close_extended";
 
 export type ExperimentalReservedAuctionBidOutcomeReason =
   | ExperimentalReservedAuctionBidAcceptanceReason
@@ -29,6 +32,7 @@ export type ExperimentalReservedAuctionBidOutcomeReason =
 
 export type ExperimentalReservedAuctionBidBondStatus =
   | "rejected_not_tracked"
+  | "replaced_by_self_rebid"
   | "leading_locked"
   | "superseded_locked_until_settlement"
   | "losing_bid_releasable"
@@ -69,11 +73,16 @@ export interface ExperimentalReservedAuctionBidObservation {
   readonly blockHeight: number;
   readonly txIndex: number;
   readonly vout: number;
+  readonly bondVout: number;
   readonly bidderCommitment: string;
   readonly bidAmountSats: bigint;
   readonly reservedLockBlocks: number;
   readonly auctionLotCommitment: string;
   readonly auctionCommitment: string;
+  readonly spentOutpoints: ReadonlyArray<{
+    readonly txid: string;
+    readonly vout: number;
+  }>;
 }
 
 export interface ExperimentalReservedAuctionBidOutcome {
@@ -82,6 +91,7 @@ export interface ExperimentalReservedAuctionBidOutcome {
   readonly blockHeight: number;
   readonly txIndex: number;
   readonly vout: number;
+  readonly bondVout: number;
   readonly bidderCommitment: string;
   readonly amountSats: bigint;
   readonly status: "accepted" | "rejected";
@@ -134,6 +144,7 @@ export interface SerializedExperimentalReservedAuctionBidOutcome {
   readonly blockHeight: number;
   readonly txIndex: number;
   readonly vout: number;
+  readonly bondVout: number;
   readonly bidderCommitment: string;
   readonly amountSats: string;
   readonly status: "accepted" | "rejected";
@@ -244,10 +255,14 @@ export function deriveExperimentalReservedAuctionState(input: {
         readonly amountSats: bigint;
         readonly txid: string;
         readonly blockHeight: number;
+        readonly bondVout: number;
       }
     | null = null;
 
-  const visibleBidOutcomes = observations.map((observation, index) => {
+  const visibleBidOutcomes: ExperimentalReservedAuctionBidOutcome[] = [];
+  const standingAcceptedOutcomeIndexByBidder = new Map<string, number>();
+
+  for (const [index, observation] of observations.entries()) {
     const preBidState = createPreBidAuctionState({
       catalogEntry: input.catalogEntry,
       policy: input.policy,
@@ -257,14 +272,18 @@ export function deriveExperimentalReservedAuctionState(input: {
       currentLeader,
       observedAuctionCommitment: observation.auctionCommitment
     });
+    const standingOutcomeIndex = standingAcceptedOutcomeIndexByBidder.get(observation.bidderCommitment) ?? null;
+    const standingOutcome =
+      standingOutcomeIndex === null ? null : visibleBidOutcomes[standingOutcomeIndex] ?? null;
 
     if (observation.reservedLockBlocks !== input.catalogEntry.reservedLockBlocks) {
-      return {
+      visibleBidOutcomes.push({
         index,
         txid: observation.txid,
         blockHeight: observation.blockHeight,
         txIndex: observation.txIndex,
         vout: observation.vout,
+        bondVout: observation.bondVout,
         bidderCommitment: observation.bidderCommitment,
         amountSats: observation.bidAmountSats,
         status: "rejected" as const,
@@ -275,16 +294,18 @@ export function deriveExperimentalReservedAuctionState(input: {
         stateCommitmentMatched: false,
         bondStatus: "rejected_not_tracked" as const,
         bondReleaseBlock: null
-      };
+      });
+      continue;
     }
 
     if (observation.blockHeight < input.catalogEntry.unlockBlock) {
-      return {
+      visibleBidOutcomes.push({
         index,
         txid: observation.txid,
         blockHeight: observation.blockHeight,
         txIndex: observation.txIndex,
         vout: observation.vout,
+        bondVout: observation.bondVout,
         bidderCommitment: observation.bidderCommitment,
         amountSats: observation.bidAmountSats,
         status: "rejected" as const,
@@ -295,16 +316,18 @@ export function deriveExperimentalReservedAuctionState(input: {
         stateCommitmentMatched: preBidState.stateCommitmentMatched,
         bondStatus: "rejected_not_tracked" as const,
         bondReleaseBlock: null
-      };
+      });
+      continue;
     }
 
     if (preBidState.phase === "settled") {
-      return {
+      visibleBidOutcomes.push({
         index,
         txid: observation.txid,
         blockHeight: observation.blockHeight,
         txIndex: observation.txIndex,
         vout: observation.vout,
+        bondVout: observation.bondVout,
         bidderCommitment: observation.bidderCommitment,
         amountSats: observation.bidAmountSats,
         status: "rejected" as const,
@@ -315,16 +338,18 @@ export function deriveExperimentalReservedAuctionState(input: {
         stateCommitmentMatched: preBidState.stateCommitmentMatched,
         bondStatus: "rejected_not_tracked" as const,
         bondReleaseBlock: null
-      };
+      });
+      continue;
     }
 
     if (!preBidState.stateCommitmentMatched) {
-      return {
+      visibleBidOutcomes.push({
         index,
         txid: observation.txid,
         blockHeight: observation.blockHeight,
         txIndex: observation.txIndex,
         vout: observation.vout,
+        bondVout: observation.bondVout,
         bidderCommitment: observation.bidderCommitment,
         amountSats: observation.bidAmountSats,
         status: "rejected" as const,
@@ -335,17 +360,41 @@ export function deriveExperimentalReservedAuctionState(input: {
         stateCommitmentMatched: false,
         bondStatus: "rejected_not_tracked" as const,
         bondReleaseBlock: null
-      };
+      });
+      continue;
+    }
+
+    if (standingOutcome !== null && !didObservationSpendStandingBond(observation, standingOutcome)) {
+      visibleBidOutcomes.push({
+        index,
+        txid: observation.txid,
+        blockHeight: observation.blockHeight,
+        txIndex: observation.txIndex,
+        vout: observation.vout,
+        bondVout: observation.bondVout,
+        bidderCommitment: observation.bidderCommitment,
+        amountSats: observation.bidAmountSats,
+        status: "rejected" as const,
+        reason: "prior_bid_not_replaced" as const,
+        requiredMinimumBidSats: preBidState.requiredMinimumBidSats,
+        auctionCloseBlockAfter: finalAuctionCloseBlock,
+        highestBidSatsAfter: currentLeader?.amountSats ?? null,
+        stateCommitmentMatched: true,
+        bondStatus: "rejected_not_tracked" as const,
+        bondReleaseBlock: null
+      });
+      continue;
     }
 
     if (currentLeader === null) {
       if (observation.bidAmountSats < input.catalogEntry.openingMinimumBidSats) {
-        return {
+        visibleBidOutcomes.push({
           index,
           txid: observation.txid,
           blockHeight: observation.blockHeight,
           txIndex: observation.txIndex,
           vout: observation.vout,
+          bondVout: observation.bondVout,
           bidderCommitment: observation.bidderCommitment,
           amountSats: observation.bidAmountSats,
           status: "rejected" as const,
@@ -356,7 +405,8 @@ export function deriveExperimentalReservedAuctionState(input: {
           stateCommitmentMatched: true,
           bondStatus: "rejected_not_tracked" as const,
           bondReleaseBlock: null
-        };
+        });
+        continue;
       }
 
       auctionStartBlock = observation.blockHeight;
@@ -366,15 +416,17 @@ export function deriveExperimentalReservedAuctionState(input: {
         bidderCommitment: observation.bidderCommitment,
         amountSats: observation.bidAmountSats,
         txid: observation.txid,
-        blockHeight: observation.blockHeight
+        blockHeight: observation.blockHeight,
+        bondVout: observation.bondVout
       };
 
-      return {
+      visibleBidOutcomes.push({
         index,
         txid: observation.txid,
         blockHeight: observation.blockHeight,
         txIndex: observation.txIndex,
         vout: observation.vout,
+        bondVout: observation.bondVout,
         bidderCommitment: observation.bidderCommitment,
         amountSats: observation.bidAmountSats,
         status: "accepted" as const,
@@ -385,7 +437,9 @@ export function deriveExperimentalReservedAuctionState(input: {
         stateCommitmentMatched: true,
         bondStatus: "leading_locked" as const,
         bondReleaseBlock: null
-      };
+      });
+      standingAcceptedOutcomeIndexByBidder.set(observation.bidderCommitment, visibleBidOutcomes.length - 1);
+      continue;
     }
 
     const requiredMinimumBidSats = calculateReservedAuctionMinimumIncrementBidSats({
@@ -394,12 +448,13 @@ export function deriveExperimentalReservedAuctionState(input: {
     });
 
     if (observation.bidAmountSats < requiredMinimumBidSats) {
-      return {
+      visibleBidOutcomes.push({
         index,
         txid: observation.txid,
         blockHeight: observation.blockHeight,
         txIndex: observation.txIndex,
         vout: observation.vout,
+        bondVout: observation.bondVout,
         bidderCommitment: observation.bidderCommitment,
         amountSats: observation.bidAmountSats,
         status: "rejected" as const,
@@ -410,7 +465,8 @@ export function deriveExperimentalReservedAuctionState(input: {
         stateCommitmentMatched: true,
         bondStatus: "rejected_not_tracked" as const,
         bondReleaseBlock: null
-      };
+      });
+      continue;
     }
 
     const extendsSoftClose =
@@ -425,32 +481,46 @@ export function deriveExperimentalReservedAuctionState(input: {
       );
     }
 
+    if (standingOutcomeIndex !== null && standingOutcome !== null) {
+      visibleBidOutcomes[standingOutcomeIndex] = {
+        ...standingOutcome,
+        bondStatus: "replaced_by_self_rebid" as const,
+        bondReleaseBlock: observation.blockHeight
+      };
+    }
+
     currentLeader = {
       bidderCommitment: observation.bidderCommitment,
       amountSats: observation.bidAmountSats,
       txid: observation.txid,
-      blockHeight: observation.blockHeight
+      blockHeight: observation.blockHeight,
+      bondVout: observation.bondVout
     };
     currentStateObservedFromBlock = observation.blockHeight;
 
-    return {
+    visibleBidOutcomes.push({
       index,
       txid: observation.txid,
       blockHeight: observation.blockHeight,
       txIndex: observation.txIndex,
       vout: observation.vout,
+      bondVout: observation.bondVout,
       bidderCommitment: observation.bidderCommitment,
       amountSats: observation.bidAmountSats,
       status: "accepted" as const,
-      reason: extendsSoftClose ? "higher_bid_soft_close_extended" as const : "higher_bid" as const,
+      reason:
+        standingOutcome !== null
+          ? (extendsSoftClose ? "replacement_bid_soft_close_extended" as const : "replacement_bid" as const)
+          : (extendsSoftClose ? "higher_bid_soft_close_extended" as const : "higher_bid" as const),
       requiredMinimumBidSats,
       auctionCloseBlockAfter: finalAuctionCloseBlock,
       highestBidSatsAfter: currentLeader.amountSats,
       stateCommitmentMatched: true,
       bondStatus: "leading_locked" as const,
       bondReleaseBlock: null
-    };
-  });
+    });
+    standingAcceptedOutcomeIndexByBidder.set(observation.bidderCommitment, visibleBidOutcomes.length - 1);
+  }
 
   const phase = deriveExperimentalReservedAuctionPhase({
     currentBlockHeight: input.currentBlockHeight,
@@ -491,6 +561,10 @@ export function deriveExperimentalReservedAuctionState(input: {
   const settledReleaseBlock = finalAuctionCloseBlock === null ? null : finalAuctionCloseBlock + 1;
   const hydratedVisibleBidOutcomes = visibleBidOutcomes.map((outcome) => {
     if (outcome.status === "rejected") {
+      return outcome;
+    }
+
+    if (outcome.bondStatus === "replaced_by_self_rebid") {
       return outcome;
     }
 
@@ -615,6 +689,7 @@ export function serializeExperimentalReservedAuctionState(
       blockHeight: outcome.blockHeight,
       txIndex: outcome.txIndex,
       vout: outcome.vout,
+      bondVout: outcome.bondVout,
       bidderCommitment: outcome.bidderCommitment,
       amountSats: outcome.amountSats.toString(),
       status: outcome.status,
@@ -664,6 +739,7 @@ function createPreBidAuctionState(input: {
         readonly amountSats: bigint;
         readonly txid: string;
         readonly blockHeight: number;
+        readonly bondVout: number;
       }
     | null;
   readonly observedAuctionCommitment: string;
@@ -822,6 +898,15 @@ function matchAuctionStateCommitmentWithinWindow(input: {
 
 function sumOutcomeAmounts(outcomes: readonly ExperimentalReservedAuctionBidOutcome[]): bigint {
   return outcomes.reduce((sum, outcome) => sum + outcome.amountSats, 0n);
+}
+
+function didObservationSpendStandingBond(
+  observation: ExperimentalReservedAuctionBidObservation,
+  standingOutcome: ExperimentalReservedAuctionBidOutcome
+): boolean {
+  return observation.spentOutpoints.some(
+    (input) => input.txid === standingOutcome.txid && input.vout === standingOutcome.bondVout
+  );
 }
 
 function deriveExperimentalReservedAuctionPhase(input: {

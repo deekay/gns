@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { type BitcoinBlock } from "@gns/bitcoin";
+import { type BitcoinBlock, type BitcoinTransactionInput } from "@gns/bitcoin";
 import {
   computeAuctionBidStateCommitment,
   computeAuctionBidderCommitment,
@@ -649,6 +649,119 @@ describe("InMemoryGnsIndexer", () => {
     ]);
   });
 
+  it("derives self-replacement semantics when a bidder spends the prior bid bond", () => {
+    const policy = createDefaultReservedAuctionPolicy();
+    const catalogEntry = createExperimentalReservedAuctionCatalogEntry(
+      {
+        auctionId: "04-soft-close-google",
+        title: "Soft close · google",
+        description: "Experimental live test lot.",
+        name: "google",
+        reservedClassId: "top_collision",
+        unlockBlock: 840_000
+      },
+      policy
+    );
+    const indexer = new InMemoryGnsIndexer({
+      launchHeight: 100,
+      experimentalReservedAuctionPolicy: policy,
+      experimentalReservedAuctionCatalog: [catalogEntry]
+    });
+
+    indexer.ingestBlocks([
+      makeBlock(840_010, [
+        {
+          txid: "11".repeat(32),
+          paymentOutputs: [1_000_000_000n],
+          payloads: [
+            encodeAuctionBidPayload({
+              flags: 0,
+              bondVout: 0,
+              reservedLockBlocks: catalogEntry.reservedLockBlocks,
+              bidAmountSats: 1_000_000_000n,
+              auctionLotCommitment: catalogEntry.auctionLotCommitment,
+              auctionCommitment: computeAuctionBidStateCommitment({
+                auctionId: catalogEntry.auctionId,
+                name: catalogEntry.normalizedName,
+                reservedClassId: catalogEntry.reservedClassId,
+                currentBlockHeight: 840_010,
+                phase: "awaiting_opening_bid",
+                unlockBlock: catalogEntry.unlockBlock,
+                auctionCloseBlockAfter: null,
+                openingMinimumBidSats: catalogEntry.openingMinimumBidSats,
+                currentLeaderBidderCommitment: null,
+                currentHighestBidSats: null,
+                currentRequiredMinimumBidSats: catalogEntry.openingMinimumBidSats,
+                reservedLockBlocks: catalogEntry.reservedLockBlocks
+              }),
+              bidderCommitment: computeAuctionBidderCommitment("alpha")
+            })
+          ]
+        }
+      ]),
+      makeBlock(844_210, [
+        {
+          txid: "22".repeat(32),
+          inputs: [
+            {
+              txid: "11".repeat(32),
+              vout: 0,
+              coinbase: false
+            }
+          ],
+          paymentOutputs: [1_100_000_000n],
+          payloads: [
+            encodeAuctionBidPayload({
+              flags: 0,
+              bondVout: 0,
+              reservedLockBlocks: catalogEntry.reservedLockBlocks,
+              bidAmountSats: 1_100_000_000n,
+              auctionLotCommitment: catalogEntry.auctionLotCommitment,
+              auctionCommitment: computeAuctionBidStateCommitment({
+                auctionId: catalogEntry.auctionId,
+                name: catalogEntry.normalizedName,
+                reservedClassId: catalogEntry.reservedClassId,
+                currentBlockHeight: 844_210,
+                phase: "soft_close",
+                unlockBlock: catalogEntry.unlockBlock,
+                auctionCloseBlockAfter: 844_330,
+                openingMinimumBidSats: catalogEntry.openingMinimumBidSats,
+                currentLeaderBidderCommitment: computeAuctionBidderCommitment("alpha"),
+                currentHighestBidSats: 1_000_000_000n,
+                currentRequiredMinimumBidSats: 1_050_000_000n,
+                reservedLockBlocks: catalogEntry.reservedLockBlocks
+              }),
+              bidderCommitment: computeAuctionBidderCommitment("alpha")
+            })
+          ]
+        }
+      ])
+    ]);
+
+    expect(indexer.listExperimentalAuctions()).toMatchObject([
+      {
+        auctionId: "04-soft-close-google",
+        currentLeaderBidderCommitment: computeAuctionBidderCommitment("alpha"),
+        currentHighestBidSats: "1100000000",
+        currentlyLockedAcceptedBidCount: 1,
+        currentlyLockedAcceptedBidAmountSats: "1100000000",
+        acceptedBidCount: 2,
+        visibleBidOutcomes: [
+          {
+            txid: "11".repeat(32),
+            bondStatus: "replaced_by_self_rebid",
+            bondReleaseBlock: 844210
+          },
+          {
+            txid: "22".repeat(32),
+            reason: "replacement_bid_soft_close_extended",
+            bondStatus: "leading_locked"
+          }
+        ]
+      }
+    ]);
+  });
+
   it("lists recent activity newest first", () => {
     const ownerPubkey = "11".repeat(32);
     const indexer = new InMemoryGnsIndexer({ launchHeight: 100 });
@@ -846,6 +959,7 @@ function makeBlock(
   height: number,
   transactions: Array<{
     txid: string;
+    inputs?: readonly BitcoinTransactionInput[];
     bondOutputValueSats?: bigint;
     paymentOutputs?: ReadonlyArray<bigint>;
     payloadsFirst?: boolean;
@@ -857,7 +971,7 @@ function makeBlock(
     height,
     transactions: transactions.map((transaction) => ({
       txid: transaction.txid,
-      inputs: [],
+      inputs: [...(transaction.inputs ?? [])],
       outputs: [
         ...(
           transaction.payloadsFirst

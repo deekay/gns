@@ -4799,6 +4799,8 @@ function formatAuctionBondStatus(value) {
   switch (value) {
     case "rejected_not_tracked":
       return "Rejected / not tracked";
+    case "replaced_by_self_rebid":
+      return "Consumed by self-rebid";
     case "leading_locked":
       return "Leading bid locked";
     case "superseded_locked_until_settlement":
