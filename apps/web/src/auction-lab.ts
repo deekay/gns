@@ -36,6 +36,26 @@ export interface ReservedAuctionLabPolicyOverrides {
   readonly noBidReleaseBlocks?: number;
 }
 
+interface WebsiteAuctionBidPackageStateInput {
+  readonly auctionId: string;
+  readonly normalizedName: string;
+  readonly reservedClassId: string;
+  readonly classLabel: string;
+  readonly currentBlockHeight: number;
+  readonly phase: string;
+  readonly unlockBlock: number;
+  readonly auctionCloseBlockAfter: number | null;
+  readonly openingMinimumBidSats: string;
+  readonly currentLeaderBidderId?: string | null;
+  readonly currentLeaderBidderCommitment?: string | null;
+  readonly currentHighestBidSats: string | null;
+  readonly currentRequiredMinimumBidSats: string | null;
+  readonly reservedLockBlocks: number;
+  readonly blocksUntilUnlock: number;
+  readonly blocksUntilClose: number | null;
+  readonly ordinaryMinimumBidSats?: string;
+}
+
 const AUCTION_LAB_FIXTURE_DIR =
   process.env.GNS_EXPERIMENTAL_AUCTION_FIXTURE_DIR?.trim()
   || fileURLToPath(new URL("../../../fixtures/auction/lab", import.meta.url));
@@ -98,30 +118,41 @@ export async function createReservedAuctionLabBidPackage(input: {
     throw new Error(`Unknown auction lab case: ${input.caseId}`);
   }
 
-  if (auctionCase.state.phase === "released_to_ordinary_lane") {
-    throw new Error(
-      `Auction lot ${auctionCase.state.normalizedName} has already fallen back to the ordinary lane. Use the ordinary claim flow instead.`
-    );
-  }
-
-  return createAuctionBidPackage({
-    auctionId: auctionCase.id,
-    name: auctionCase.state.normalizedName,
-    reservedClassId: auctionCase.state.reservedClassId,
-    classLabel: auctionCase.state.classLabel,
-    currentBlockHeight: auctionCase.state.currentBlockHeight,
-    phase: auctionCase.state.phase,
-    unlockBlock: auctionCase.state.unlockBlock,
-    auctionCloseBlockAfter: auctionCase.state.auctionCloseBlockAfter,
-    openingMinimumBidSats: auctionCase.state.openingMinimumBidSats,
-    currentLeaderBidderId: auctionCase.state.currentLeaderBidderId,
-    currentHighestBidSats: auctionCase.state.currentHighestBidSats,
-    currentRequiredMinimumBidSats: auctionCase.state.currentRequiredMinimumBidSats,
-    reservedLockBlocks: auctionCase.state.reservedLockBlocks,
-    blocksUntilUnlock: auctionCase.state.blocksUntilUnlock,
-    blocksUntilClose: auctionCase.state.blocksUntilClose,
+  return createWebsiteAuctionBidPackage({
+    auctionState: {
+      auctionId: auctionCase.id,
+      normalizedName: auctionCase.state.normalizedName,
+      reservedClassId: auctionCase.state.reservedClassId,
+      classLabel: auctionCase.state.classLabel,
+      currentBlockHeight: auctionCase.state.currentBlockHeight,
+      phase: auctionCase.state.phase,
+      unlockBlock: auctionCase.state.unlockBlock,
+      auctionCloseBlockAfter: auctionCase.state.auctionCloseBlockAfter,
+      openingMinimumBidSats: auctionCase.state.openingMinimumBidSats,
+      currentLeaderBidderId: auctionCase.state.currentLeaderBidderId,
+      currentHighestBidSats: auctionCase.state.currentHighestBidSats,
+      currentRequiredMinimumBidSats: auctionCase.state.currentRequiredMinimumBidSats,
+      reservedLockBlocks: auctionCase.state.reservedLockBlocks,
+      blocksUntilUnlock: auctionCase.state.blocksUntilUnlock,
+      blocksUntilClose: auctionCase.state.blocksUntilClose,
+      ordinaryMinimumBidSats: auctionCase.state.ordinaryMinimumBidSats
+    },
     bidderId: input.bidderId,
-    bidAmountSats: input.bidAmountSats
+    bidAmountSats: input.bidAmountSats,
+    sourceLabel: `auction lab case ${auctionCase.id}`
+  });
+}
+
+export function createExperimentalAuctionFeedBidPackage(input: {
+  readonly auction: WebsiteAuctionBidPackageStateInput;
+  readonly bidderId: string;
+  readonly bidAmountSats: bigint | number | string;
+}): AuctionBidPackage {
+  return createWebsiteAuctionBidPackage({
+    auctionState: input.auction,
+    bidderId: input.bidderId,
+    bidAmountSats: input.bidAmountSats,
+    sourceLabel: `experimental auction ${input.auction.auctionId}`
   });
 }
 
@@ -140,4 +171,59 @@ function applyReservedAuctionLabPolicyOverrides(
       noBidReleaseBlocks: overrides.noBidReleaseBlocks
     }
   };
+}
+
+function createWebsiteAuctionBidPackage(input: {
+  readonly auctionState: WebsiteAuctionBidPackageStateInput;
+  readonly bidderId: string;
+  readonly bidAmountSats: bigint | number | string;
+  readonly sourceLabel: string;
+}): AuctionBidPackage {
+  assertAuctionStateAllowsWebsiteBidPackage(input.auctionState, input.sourceLabel);
+
+  return createAuctionBidPackage({
+    auctionId: input.auctionState.auctionId,
+    name: input.auctionState.normalizedName,
+    reservedClassId: input.auctionState.reservedClassId,
+    classLabel: input.auctionState.classLabel,
+    currentBlockHeight: input.auctionState.currentBlockHeight,
+    phase: input.auctionState.phase as
+      | "pending_unlock"
+      | "awaiting_opening_bid"
+      | "live_bidding"
+      | "soft_close",
+    unlockBlock: input.auctionState.unlockBlock,
+    auctionCloseBlockAfter: input.auctionState.auctionCloseBlockAfter,
+    openingMinimumBidSats: input.auctionState.openingMinimumBidSats,
+    ...(input.auctionState.currentLeaderBidderId === undefined
+      ? {}
+      : { currentLeaderBidderId: input.auctionState.currentLeaderBidderId }),
+    ...(input.auctionState.currentLeaderBidderCommitment === undefined
+      ? {}
+      : { currentLeaderBidderCommitment: input.auctionState.currentLeaderBidderCommitment }),
+    currentHighestBidSats: input.auctionState.currentHighestBidSats,
+    currentRequiredMinimumBidSats: input.auctionState.currentRequiredMinimumBidSats,
+    reservedLockBlocks: input.auctionState.reservedLockBlocks,
+    blocksUntilUnlock: input.auctionState.blocksUntilUnlock,
+    blocksUntilClose: input.auctionState.blocksUntilClose,
+    bidderId: input.bidderId,
+    bidAmountSats: input.bidAmountSats
+  });
+}
+
+function assertAuctionStateAllowsWebsiteBidPackage(
+  auctionState: WebsiteAuctionBidPackageStateInput,
+  sourceLabel: string
+): void {
+  if (auctionState.phase === "released_to_ordinary_lane") {
+    throw new Error(
+      `Auction lot ${auctionState.normalizedName} from ${sourceLabel} has already fallen back to the ordinary lane. Use the ordinary claim flow instead.`
+    );
+  }
+
+  if (auctionState.phase === "settled") {
+    throw new Error(
+      `Auction lot ${auctionState.normalizedName} from ${sourceLabel} is already settled and no longer accepts new bids.`
+    );
+  }
 }

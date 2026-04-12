@@ -62,6 +62,7 @@ describe("renderClientScript", () => {
     expect(script).toContain('/api/auctions');
     expect(script).toContain('/api/experimental-auctions');
     expect(script).toContain('/api/auction-bid-package');
+    expect(script).toContain('/api/experimental-auction-bid-package');
     expect(script).toContain("auctionNoBidReleaseBlocks");
     expect(script).toContain("auctionPolicyControls");
     expect(script).toContain("reloadAuctionLab");
@@ -70,9 +71,15 @@ describe("renderClientScript", () => {
     expect(script).toContain("renderExperimentalAuctionFeed");
     expect(script).toContain("renderAuctionPolicySummary");
     expect(script).toContain("renderExperimentalAuctionCard");
+    expect(script).toContain("Preview or download bid package");
+    expect(script).toContain("Preview bid package");
+    expect(script).toContain("renderAuctionBidPackagePreview");
+    expect(script).toContain("buildAuctionBidPackageForUi");
+    expect(script).toContain("resolver-derived state");
     expect(script).toContain("formatAuctionBondStatus");
     expect(script).toContain("formatAuctionBondSpendStatus");
     expect(script).toContain("renderAuctionBidPackageComposer");
+    expect(script).toContain("data-auction-package-preview");
     expect(script).toContain("setAuctionBidPackageMessage");
     expect(script).toContain("Released to ordinary lane");
     expect(script).toContain("Ordinary-lane floor");

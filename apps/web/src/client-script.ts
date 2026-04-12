@@ -25,6 +25,7 @@ const state = {
   privateAuctionSmokeStatus: null,
   auctionLab: null,
   experimentalAuctions: null,
+  auctionBidPackages: new Map(),
   nameFilter: "all",
   activityFilter: "all",
   txCache: new Map()
@@ -552,6 +553,27 @@ async function bootstrap() {
     }
   });
 
+  document.addEventListener("input", (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) {
+      return;
+    }
+
+    const source = target.getAttribute("data-auction-package-source");
+    const id =
+      target.getAttribute("data-auction-bidder-id")
+      ?? target.getAttribute("data-auction-bid-amount");
+
+    if (!source || !id) {
+      return;
+    }
+
+    const domKey = buildAuctionPackageDomKey(source, id);
+    state.auctionBidPackages.delete(domKey);
+    setAuctionBidPackagePreview(domKey, "");
+    setAuctionBidPackageMessage(domKey, "Inputs changed. Preview the current bid package before downloading it.");
+  });
+
   elements.regenNonceButton?.addEventListener("click", () => {
     if (elements.nonceInput) {
       elements.nonceInput.value = generateNonceHex();
@@ -988,52 +1010,71 @@ async function bootstrap() {
       return;
     }
 
-    const auctionBidPackageButton = target.closest("[data-download-auction-bid-package]");
-    if (auctionBidPackageButton instanceof HTMLElement) {
-      const caseId = auctionBidPackageButton.getAttribute("data-download-auction-bid-package");
-      if (!caseId) {
+    const auctionBidPackageActionButton = target.closest("[data-auction-package-action]");
+    if (auctionBidPackageActionButton instanceof HTMLElement) {
+      const action = auctionBidPackageActionButton.getAttribute("data-auction-package-action");
+      const source = auctionBidPackageActionButton.getAttribute("data-auction-package-source");
+      const id = auctionBidPackageActionButton.getAttribute("data-auction-package-id");
+
+      if (!action || !source || !id) {
         return;
       }
 
-      const bidderInput = document.querySelector('[data-auction-bidder-id="' + cssEscape(caseId) + '"]');
-      const amountInput = document.querySelector('[data-auction-bid-amount="' + cssEscape(caseId) + '"]');
+      const domKey = buildAuctionPackageDomKey(source, id);
+      const bidderInput = document.querySelector('[data-auction-bidder-id="' + cssEscape(id) + '"][data-auction-package-source="' + cssEscape(source) + '"]');
+      const amountInput = document.querySelector('[data-auction-bid-amount="' + cssEscape(id) + '"][data-auction-package-source="' + cssEscape(source) + '"]');
       const bidderId = bidderInput instanceof HTMLInputElement ? bidderInput.value.trim() : "";
       const amountSats = amountInput instanceof HTMLInputElement ? amountInput.value.trim() : "";
 
       if (bidderId.length === 0) {
-        setAuctionBidPackageMessage(caseId, "Enter a bidder id first.");
+        setAuctionBidPackageMessage(domKey, "Enter a bidder id first.");
         return;
       }
 
       if (amountSats.length === 0) {
-        setAuctionBidPackageMessage(caseId, "Enter a bid amount in sats first.");
+        setAuctionBidPackageMessage(domKey, "Enter a bid amount in sats first.");
         return;
       }
 
-      setAuctionBidPackageMessage(caseId, "Building bid package...");
+      const cachedPackage = state.auctionBidPackages.get(domKey);
+      const cachedMatchesInputs = cachedPackage
+        && String(cachedPackage.bidderId ?? "") === bidderId
+        && String(cachedPackage.bidAmountSats ?? "") === amountSats;
+
+      setAuctionBidPackageMessage(
+        domKey,
+        action === "preview" ? "Building bid package preview..." : "Building bid package..."
+      );
 
       try {
-        const policyOverrides = getAuctionLabPolicyOverridesFromLocation();
-        const pkg = await postJson(withBasePath("/api/auction-bid-package"), {
-          caseId,
-          bidderId,
-          bidAmountSats: amountSats,
-          ...(policyOverrides.noBidReleaseBlocks == null
-            ? {}
-            : {
-                noBidReleaseBlocks: policyOverrides.noBidReleaseBlocks
-              })
-        });
-        downloadJsonFile(
-          pkg,
-          "gns-auction-" + String(pkg.auctionId ?? caseId) + "-" + String(pkg.bidderId ?? bidderId) + "-bid-package.json"
+        const pkg = cachedMatchesInputs
+          ? cachedPackage
+          : await buildAuctionBidPackageForUi({
+              source,
+              id,
+              bidderId,
+              bidAmountSats: amountSats
+            });
+        state.auctionBidPackages.set(domKey, pkg);
+        setAuctionBidPackagePreview(
+          domKey,
+          renderAuctionBidPackagePreview(pkg, source === "experimental" ? "resolver-derived state" : "simulator state")
         );
         setAuctionBidPackageMessage(
-          caseId,
+          domKey,
           String(pkg.previewSummary ?? "Auction bid package ready.")
         );
+
+        if (action === "download") {
+          downloadJsonFile(
+            pkg,
+            "gns-auction-" + String(pkg.auctionId ?? id) + "-" + String(pkg.bidderId ?? bidderId) + "-bid-package.json"
+          );
+        }
       } catch (error) {
-        setAuctionBidPackageMessage(caseId, describeError(error));
+        state.auctionBidPackages.delete(domKey);
+        setAuctionBidPackagePreview(domKey, "");
+        setAuctionBidPackageMessage(domKey, describeError(error));
       }
       return;
     }
@@ -4758,7 +4799,15 @@ function renderAuctionPolicySummary(policy) {
 
 function renderAuctionCaseCard(auctionCase) {
   const stateView = auctionCase.state ?? {};
+  const caseId = caseIdFromAuctionState(auctionCase.id, stateView.normalizedName);
   const phase = String(stateView.phase ?? "unknown");
+  const defaultBidderId = "operator_" + caseId.replace(/[^a-z0-9]+/gi, "_").replace(/^_+|_+$/g, "").toLowerCase();
+  const defaultBidAmount = String(
+    stateView.currentRequiredMinimumBidSats
+    ?? stateView.openingMinimumBidSats
+    ?? stateView.currentHighestBidSats
+    ?? "0"
+  );
   const phasePill = mapAuctionPhasePill(phase);
   const leaderLabel = phase === "settled" ? "Winner" : "Current leader";
   const nextBidLabel =
@@ -4821,7 +4870,19 @@ function renderAuctionCaseCard(auctionCase) {
     '    <div class="result-item"><label>Blocks to unlock</label><p class="field-value">' + escapeHtml(String(stateView.blocksUntilUnlock ?? 0)) + "</p></div>",
     '    <div class="result-item"><label>' + escapeHtml(secondaryTimingLabel) + '</label><p class="field-value">' + escapeHtml(secondaryTimingValue) + "</p></div>",
     "  </div>",
-    renderAuctionBidPackageComposer(auctionCase),
+    renderAuctionBidPackageComposer({
+      source: "lab",
+      id: caseId,
+      phase,
+      normalizedName: stateView.normalizedName,
+      defaultBidAmount,
+      defaultBidderId,
+      note:
+        stateView.phase === "soft_close"
+          ? "Soft close is active. A bid from this state must clear the stronger late-extension increment."
+          : "Build a bid package from the simulator state shown on this card.",
+      fallbackPath: buildClaimPrepPath(stateView.normalizedName ?? "")
+    }),
     renderAuctionBidHistory(stateView.visibleBidOutcomes),
     "</article>"
   ].join("");
@@ -4890,33 +4951,57 @@ function renderExperimentalAuctionCard(auction) {
     '    <div class="result-item"><label>' + escapeHtml(settlementLabel) + '</label><p class="field-value">' + escapeHtml(settlementValue) + "</p></div>",
     '    <div class="result-item"><label>Winner tx</label><p class="field-value">' + escapeHtml(auction.winnerBidTxid ? shortenTxid(auction.winnerBidTxid) : "Not settled") + "</p></div>",
     "  </div>",
+    renderAuctionBidPackageComposer({
+      source: "experimental",
+      id: caseIdFromAuctionState(auction.auctionId, auction.normalizedName),
+      phase,
+      normalizedName: auction.normalizedName,
+      defaultBidAmount: String(
+        auction.currentRequiredMinimumBidSats
+        ?? auction.openingMinimumBidSats
+        ?? auction.currentHighestBidSats
+        ?? "0"
+      ),
+      defaultBidderId: "operator_" + String(auction.auctionId ?? auction.normalizedName ?? "auction")
+        .replace(/[^a-z0-9]+/gi, "_")
+        .replace(/^_+|_+$/g, "")
+        .toLowerCase(),
+      note:
+        phase === "soft_close"
+          ? "Built from current resolver-derived state. A soft-close extension bid must clear the stronger late increment and may go stale if another bid lands first."
+          : "Build a bid package from the current resolver-derived experimental auction state.",
+      fallbackPath: buildClaimPrepPath(auction.normalizedName ?? "")
+    }),
     renderExperimentalAuctionBidHistory(auction.visibleBidOutcomes),
     "</article>"
   ].join("");
 }
 
-function renderAuctionBidPackageComposer(auctionCase) {
-  const stateView = auctionCase.state ?? {};
-  const caseId = String(auctionCase.id ?? stateView.normalizedName ?? "auction-case");
-  const defaultBidderId = "operator_" + caseId.replace(/[^a-z0-9]+/gi, "_").replace(/^_+|_+$/g, "").toLowerCase();
-  const defaultBidAmount = String(
-    stateView.currentRequiredMinimumBidSats
-    ?? stateView.openingMinimumBidSats
-    ?? stateView.currentHighestBidSats
-    ?? "0"
-  );
-  const composerNote =
-    stateView.phase === "soft_close"
-      ? "Soft close is active. A bid from this state must clear the stronger late-extension increment."
-      : "Build an operator handoff package for this observed auction state.";
+function caseIdFromAuctionState(id, fallbackName) {
+  return String(id ?? fallbackName ?? "auction-case");
+}
 
-  if (stateView.phase === "released_to_ordinary_lane") {
+function renderAuctionBidPackageComposer(input) {
+  const domKey = buildAuctionPackageDomKey(input.source, input.id);
+
+  if (input.phase === "released_to_ordinary_lane") {
     return [
       '<details class="detail-technical">',
       "  <summary>Auction bid packages unavailable</summary>",
       '  <div class="detail-technical-body">',
       '    <p class="tx-panel-note">This lot attracted no valid opening bid before the release window ended, so it has fallen back to the ordinary lane.</p>',
-      '    <p><a class="action-link" href="' + escapeHtml(buildClaimPrepPath(stateView.normalizedName ?? "")) + '">Prepare an ordinary claim</a></p>',
+      '    <p><a class="action-link" href="' + escapeHtml(input.fallbackPath) + '">Prepare an ordinary claim</a></p>',
+      "  </div>",
+      "</details>"
+    ].join("");
+  }
+
+  if (input.phase === "settled") {
+    return [
+      '<details class="detail-technical">',
+      "  <summary>Auction bid packages unavailable</summary>",
+      '  <div class="detail-technical-body">',
+      '    <p class="tx-panel-note">This auction is already settled. Review the winner and release details above instead of preparing another bid package.</p>',
       "  </div>",
       "</details>"
     ].join("");
@@ -4924,23 +5009,104 @@ function renderAuctionBidPackageComposer(auctionCase) {
 
   return [
     '<details class="detail-technical">',
-    "  <summary>Download experimental bid package</summary>",
+    "  <summary>Preview or download bid package</summary>",
     '  <div class="detail-technical-body draft-grid">',
-    '    <div class="field"><label class="field-label" for="auction-bidder-' + escapeHtml(caseId) + '">Bidder id</label><input id="auction-bidder-' + escapeHtml(caseId) + '" type="text" data-auction-bidder-id="' + escapeHtml(caseId) + '" value="' + escapeHtml(defaultBidderId) + '" /></div>',
-    '    <div class="field"><label class="field-label" for="auction-amount-' + escapeHtml(caseId) + '">Bid amount (sats)</label><input id="auction-amount-' + escapeHtml(caseId) + '" type="text" inputmode="numeric" data-auction-bid-amount="' + escapeHtml(caseId) + '" value="' + escapeHtml(defaultBidAmount) + '" /></div>',
+    '    <div class="field"><label class="field-label" for="auction-bidder-' + escapeHtml(domKey) + '">Bidder id</label><input id="auction-bidder-' + escapeHtml(domKey) + '" type="text" data-auction-bidder-id="' + escapeHtml(input.id) + '" data-auction-package-source="' + escapeHtml(input.source) + '" value="' + escapeHtml(input.defaultBidderId) + '" /></div>',
+    '    <div class="field"><label class="field-label" for="auction-amount-' + escapeHtml(domKey) + '">Bid amount (sats)</label><input id="auction-amount-' + escapeHtml(domKey) + '" type="text" inputmode="numeric" data-auction-bid-amount="' + escapeHtml(input.id) + '" data-auction-package-source="' + escapeHtml(input.source) + '" value="' + escapeHtml(input.defaultBidAmount) + '" /></div>',
     '    <div class="draft-field-full">',
-    '      <div class="field-actions"><button type="button" data-download-auction-bid-package="' + escapeHtml(caseId) + '">Download bid package</button></div>',
-    '      <p class="tx-panel-note" data-auction-package-result="' + escapeHtml(caseId) + '">' + escapeHtml(composerNote) + "</p>",
+    '      <div class="field-actions">',
+    '        <button type="button" data-auction-package-action="preview" data-auction-package-source="' + escapeHtml(input.source) + '" data-auction-package-id="' + escapeHtml(input.id) + '">Preview bid package</button>',
+    '        <button type="button" class="secondary-button" data-auction-package-action="download" data-auction-package-source="' + escapeHtml(input.source) + '" data-auction-package-id="' + escapeHtml(input.id) + '">Download bid package</button>',
+    "      </div>",
+    '      <p class="tx-panel-note" data-auction-package-result="' + escapeHtml(domKey) + '">' + escapeHtml(input.note) + "</p>",
+    '      <div data-auction-package-preview="' + escapeHtml(domKey) + '"></div>',
     "    </div>",
     "  </div>",
     "</details>"
   ].join("");
 }
 
-function setAuctionBidPackageMessage(caseId, message) {
-  const node = document.querySelector('[data-auction-package-result="' + cssEscape(caseId) + '"]');
+function buildAuctionPackageDomKey(source, id) {
+  return String(source) + ":" + String(id);
+}
+
+function setAuctionBidPackageMessage(domKey, message) {
+  const node = document.querySelector('[data-auction-package-result="' + cssEscape(domKey) + '"]');
   if (node instanceof HTMLElement) {
     node.textContent = message;
+  }
+}
+
+function setAuctionBidPackagePreview(domKey, html) {
+  const node = document.querySelector('[data-auction-package-preview="' + cssEscape(domKey) + '"]');
+  if (node instanceof HTMLElement) {
+    node.innerHTML = html;
+  }
+}
+
+async function buildAuctionBidPackageForUi(input) {
+  const policyOverrides = getAuctionLabPolicyOverridesFromLocation();
+  const body = {
+    bidderId: input.bidderId,
+    bidAmountSats: input.bidAmountSats
+  };
+
+  if (input.source === "experimental") {
+    return await postJson(withBasePath("/api/experimental-auction-bid-package"), {
+      ...body,
+      auctionId: input.id
+    });
+  }
+
+  return await postJson(withBasePath("/api/auction-bid-package"), {
+    ...body,
+    caseId: input.id,
+    ...(policyOverrides.noBidReleaseBlocks == null
+      ? {}
+      : {
+          noBidReleaseBlocks: policyOverrides.noBidReleaseBlocks
+        })
+  });
+}
+
+function renderAuctionBidPackagePreview(pkg, sourceLabel) {
+  return [
+    '<article class="guide-card">',
+    "  <h3>Bid Package Preview</h3>",
+    '  <p class="field-value">' + escapeHtml(String(pkg.previewSummary ?? "Bid package ready.")) + "</p>",
+    '  <div class="result-grid">',
+    '    <div class="result-item"><label>Observed source</label><p class="field-value">' + escapeHtml(sourceLabel) + "</p></div>",
+    '    <div class="result-item"><label>Preview status</label><p class="field-value">' + escapeHtml(formatAuctionPreviewStatus(pkg.previewStatus)) + "</p></div>",
+    '    <div class="result-item"><label>Bid amount</label><p class="field-value">' + escapeHtml(formatSats(pkg.bidAmountSats ?? "0")) + "</p></div>",
+    '    <div class="result-item"><label>Required minimum</label><p class="field-value">' + escapeHtml(pkg.previewRequiredMinimumBidSats ? formatSats(pkg.previewRequiredMinimumBidSats) : "Not applicable") + "</p></div>",
+    '    <div class="result-item"><label>Would become leader</label><p class="field-value">' + escapeHtml(pkg.wouldBecomeLeader ? "Yes" : "No") + "</p></div>",
+    '    <div class="result-item"><label>Would extend soft close</label><p class="field-value">' + escapeHtml(pkg.wouldExtendSoftClose ? "Yes" : "No") + "</p></div>",
+    '    <div class="result-item"><label>Bidder commitment</label>' + renderCopyableCode(pkg.bidderCommitment) + "</div>",
+    '    <div class="result-item"><label>State commitment</label>' + renderCopyableCode(pkg.auctionStateCommitment) + "</div>",
+    '    <div class="result-item"><label>Lot commitment</label>' + renderCopyableCode(pkg.auctionLotCommitment) + "</div>",
+    '    <div class="result-item"><label>Reserved lock</label><p class="field-value">' + escapeHtml(formatBlockWindow(pkg.reservedLockBlocks)) + "</p></div>",
+    "  </div>",
+    '  <ul class="guide-list">',
+    '    <li>Save the package if you want a durable handoff from this observed auction state.</li>',
+    '    <li>Next CLI step: build the unsigned bid artifacts from this package, then sign and broadcast them with the funding wallet.</li>',
+    '    <li>If another bid lands first, rebuild the package from the latest state before signing.</li>',
+    "  </ul>",
+    "</article>"
+  ].join("");
+}
+
+function formatAuctionPreviewStatus(value) {
+  switch (value) {
+    case "too_early":
+      return "Too early";
+    case "below_minimum":
+      return "Below minimum";
+    case "currently_valid":
+      return "Currently valid";
+    case "auction_closed":
+      return "Auction closed";
+    default:
+      return typeof value === "string" && value.length > 0 ? value : "Unknown";
   }
 }
 

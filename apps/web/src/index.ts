@@ -19,7 +19,11 @@ import {
   PROTOCOL_NAME,
   REVEAL_WINDOW_BLOCKS
 } from "@gns/protocol";
-import { createReservedAuctionLabBidPackage, loadReservedAuctionLab } from "./auction-lab.js";
+import {
+  createExperimentalAuctionFeedBidPackage,
+  createReservedAuctionLabBidPackage,
+  loadReservedAuctionLab
+} from "./auction-lab.js";
 import { renderClientScript } from "./client-script.js";
 import { getOfflineClaimClientBundle } from "./offline-claim-bundle.js";
 import { renderOfflineClaimPageHtml } from "./offline-claim-page.js";
@@ -321,6 +325,73 @@ const server = createServer(async (request, response) => {
     }
   }
 
+  if (pathname === "/api/experimental-auction-bid-package") {
+    if (method !== "POST") {
+      return writeJson(response, 405, {
+        error: "method_not_allowed",
+        message: "Use POST for experimental auction bid package generation."
+      });
+    }
+
+    try {
+      const body = await readJsonBody(request);
+
+      if (!body || typeof body !== "object") {
+        return writeJson(response, 400, {
+          error: "invalid_body",
+          message: "Experimental auction bid package generation requires a JSON body."
+        });
+      }
+
+      const record = body as Record<string, unknown>;
+      const auctionId = getRequiredWebBodyString(record, "auctionId");
+      const bidderId = getRequiredWebBodyString(record, "bidderId");
+      const bidAmountSats = getRequiredWebBodySats(record, "bidAmountSats");
+      const upstream = await fetch(`${resolverUrl}/experimental-auctions`);
+
+      if (!upstream.ok) {
+        return writeJson(response, 502, {
+          error: "resolver_unavailable",
+          message: `Resolver returned ${upstream.status} while loading experimental auctions.`
+        });
+      }
+
+      const payload = await upstream.json() as {
+        readonly auctions?: readonly unknown[];
+      };
+      const auctions = Array.isArray(payload.auctions) ? payload.auctions : [];
+      const auction = auctions.find((candidate) => {
+        return candidate
+          && typeof candidate === "object"
+          && !Array.isArray(candidate)
+          && (candidate as { auctionId?: unknown }).auctionId === auctionId;
+      });
+
+      if (!auction) {
+        return writeJson(response, 404, {
+          error: "auction_not_found",
+          message: `No experimental auction with id ${auctionId} is currently visible.`
+        });
+      }
+
+      const pkg = createExperimentalAuctionFeedBidPackage({
+        auction: auction as Parameters<typeof createExperimentalAuctionFeedBidPackage>[0]["auction"],
+        bidderId,
+        bidAmountSats
+      });
+
+      return writeJson(response, 200, pkg);
+    } catch (error) {
+      return writeJson(response, 400, {
+        error: "experimental_auction_bid_package_failed",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Unable to build the experimental auction bid package."
+      });
+    }
+  }
+
   if (method !== "GET") {
     return writeJson(response, 405, {
       error: "method_not_allowed",
@@ -577,7 +648,7 @@ const server = createServer(async (request, response) => {
     error: "not_found",
     message:
       "Supported paths: /, /explore, /auctions, /claim, /values, /transfer, /setup, /explainer, /api/config, /api/health, /api/names, /api/pending-commits, /api/activity, /api/tx/{txid}, /api/dev-owner-key, /api/private-signet-fund, /api/claim-draft/{name}, /api/claim-plan/{name}, /api/name/{name}, /api/name/{name}/activity, /api/name/{name}/value, /api/live-smoke-status, /api/private-batch-smoke-status, /api/auctions"
-      + ", /api/private-auction-smoke-status, /api/experimental-auctions, /api/private-signet-claim-psbts, /api/values, /claim/offline, /claim/offline/download"
+      + ", /api/private-auction-smoke-status, /api/experimental-auctions, /api/auction-bid-package, /api/experimental-auction-bid-package, /api/private-signet-claim-psbts, /api/values, /claim/offline, /claim/offline/download"
   });
 });
 

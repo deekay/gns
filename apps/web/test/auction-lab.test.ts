@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { createReservedAuctionLabBidPackage, loadReservedAuctionLab } from "../src/auction-lab.js";
+import {
+  createExperimentalAuctionFeedBidPackage,
+  createReservedAuctionLabBidPackage,
+  loadReservedAuctionLab
+} from "../src/auction-lab.js";
 
 describe("loadReservedAuctionLab", () => {
   it("loads curated auction fixtures with visible phase coverage", async () => {
@@ -44,6 +48,61 @@ describe("loadReservedAuctionLab", () => {
         bidAmountSats: "250000000"
       })
     ).rejects.toThrow(/fallen back to the ordinary lane/i);
+  });
+
+  it("can derive a bid package from resolver-derived experimental auction state", () => {
+    const pkg = createExperimentalAuctionFeedBidPackage({
+      auction: {
+        auctionId: "private-openai",
+        normalizedName: "openai",
+        reservedClassId: "major_existing_name",
+        classLabel: "Major Existing Name",
+        currentBlockHeight: 123456,
+        phase: "soft_close",
+        unlockBlock: 123440,
+        auctionCloseBlockAfter: 123460,
+        openingMinimumBidSats: "250000000",
+        currentLeaderBidderCommitment: "11".repeat(16),
+        currentHighestBidSats: "300000000",
+        currentRequiredMinimumBidSats: "330000000",
+        reservedLockBlocks: 1440,
+        blocksUntilUnlock: 0,
+        blocksUntilClose: 4
+      },
+      bidderId: "operator_beta",
+      bidAmountSats: "330000000"
+    });
+
+    expect(pkg.auctionId).toBe("private-openai");
+    expect(pkg.previewStatus).toBe("currently_valid");
+    expect(pkg.wouldExtendSoftClose).toBe(true);
+    expect(pkg.previewRequiredMinimumBidSats).toBe("330000000");
+  });
+
+  it("refuses resolver-derived bid packages after settlement", () => {
+    expect(() =>
+      createExperimentalAuctionFeedBidPackage({
+        auction: {
+          auctionId: "private-openai",
+          normalizedName: "openai",
+          reservedClassId: "major_existing_name",
+          classLabel: "Major Existing Name",
+          currentBlockHeight: 123470,
+          phase: "settled",
+          unlockBlock: 123440,
+          auctionCloseBlockAfter: 123460,
+          openingMinimumBidSats: "250000000",
+          currentLeaderBidderCommitment: "11".repeat(16),
+          currentHighestBidSats: "330000000",
+          currentRequiredMinimumBidSats: null,
+          reservedLockBlocks: 1440,
+          blocksUntilUnlock: 0,
+          blocksUntilClose: 0
+        },
+        bidderId: "operator_beta",
+        bidAmountSats: "350000000"
+      })
+    ).toThrow(/already settled/i);
   });
 
   it("can re-simulate the lab with a custom no-bid release window", async () => {

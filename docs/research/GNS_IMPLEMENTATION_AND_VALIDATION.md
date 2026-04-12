@@ -122,8 +122,9 @@ Today the repo has:
   bond outpoint
 - derived accepted-bid bond-status plus bond spend / release summaries for both
   unsettled and settled experimental lots
-- website download utilities for experimental auction bid packages derived from
-  those same observed states
+- website bidder utilities that can preview and download experimental auction
+  bid packages from both simulator-backed cases and resolver-derived observed
+  states
 - a dedicated private signet auction smoke script that produces real hosted
   `AUCTION_BID` activity for dedicated private smoke lots, including a live
   no-bid release-valve check plus a late-bid rejection after release, and
