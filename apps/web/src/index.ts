@@ -47,7 +47,7 @@ const networkLabel =
   ?? "Public Signet";
 const showLiveSmoke = parseBoolean(
   process.env.GNS_WEB_SHOW_LIVE_SMOKE,
-  true
+  false
 );
 const showPrivateBatchSmoke = parseBoolean(
   process.env.GNS_WEB_SHOW_PRIVATE_BATCH_SMOKE,
@@ -637,13 +637,13 @@ async function readLiveSmokeStatus(): Promise<unknown> {
     ) {
       return {
         status: "unavailable",
-        message: "No live signet smoke summary has been published yet."
+        message: "No legacy public signet smoke summary has been published yet."
       };
     }
 
     return {
       status: "error",
-      message: error instanceof Error ? error.message : "Unable to read live signet smoke summary."
+      message: error instanceof Error ? error.message : "Unable to read legacy public signet smoke summary."
     };
   }
 }

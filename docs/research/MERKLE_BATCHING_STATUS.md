@@ -131,9 +131,9 @@ reveal case:
 
 ### Live-chain note
 
-The shared public signet smoke flow is still a single-name live claim path.
-That is useful as an external-chain smoke check, but it should not be confused
-with batched-claim validation.
+The shared public signet smoke flow still exists, but it is now a legacy/manual
+single-name path. It should not be confused with the current batching
+validation story.
 
 We now also have a **private signet batch smoke** flow that exercises:
 

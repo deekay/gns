@@ -562,8 +562,8 @@ function renderHomeExampleSection(configuredBasePath: string): string {
         <ul class="guide-list">
           <li>The offline architect can build a batch commit bundle and reveal-ready package per name.</li>
           <li>The website and resolver understand batch anchors and batch reveals in provenance views.</li>
-          <li>The shared public signet smoke path is still single-name today.</li>
           <li>The hosted private signet demo now publishes a dedicated batch-smoke status panel with one batch anchor, two reveals, and a later transfer check.</li>
+          <li>The old public-signet smoke runner still exists in the repo as an optional legacy script, but it is not part of the active hosted demo path.</li>
         </ul>
         <div class="guide-card-actions">
           <a class="action-link secondary" href="${withBasePath("/claim/offline", configuredBasePath)}">Open offline architect</a>
@@ -634,8 +634,8 @@ function renderHomeStatusSection(): string {
         <h3>Still Prototype</h3>
         <ul class="guide-list">
           <li>Transfers still lean on CLI and signer flow.</li>
-          <li>The public signet smoke path still exercises a single-name claim flow, not the batched path.</li>
-          <li>The private signet demo now shows a live batched ordinary-claim smoke run, but that does not yet mean the public signet path is batched too.</li>
+          <li>The active hosted live-chain proof paths today are private signet, not shared public signet.</li>
+          <li>A legacy public-signet smoke runner still exists, but it is usually unfunded and is no longer presented as the default validation path.</li>
           <li>Resolver availability is only partly decentralized in v1.</li>
           <li>Mainnet-ready usage is not the current claim.</li>
         </ul>
@@ -886,19 +886,19 @@ function renderPendingSection(collapsible = false): string {
 }
 
 function renderLiveSmokeSection(collapsible = false): string {
-  const body = `<p id="liveSmokeMeta" class="helper-text">Checking the latest public signet smoke run and funding readiness.</p>
-    <div id="liveSmokeResult" class="result-card empty">Loading the latest live signet smoke status...</div>`;
+  const body = `<p id="liveSmokeMeta" class="helper-text">Checking the optional legacy public-signet smoke summary.</p>
+    <div id="liveSmokeResult" class="result-card empty">Loading the legacy public signet smoke status...</div>`;
 
   if (!collapsible) {
     return `<section class="panel panel-live-smoke">
     ${renderPanelHead(
-      "Live Signet Smoke",
-      "Latest status from the shared public signet smoke flow.",
-      `<p>Separate from the private demo network.</p>
+      "Legacy Public Signet Smoke",
+      "Optional status from the older shared public signet smoke runner.",
+      `<p>This is no longer part of the main hosted demo or the primary validation story.</p>
       <ul>
-        <li>It shows whether the shared signet smoke wallet is funded.</li>
-        <li>It currently exercises the single-name live signet claim flow.</li>
-        <li>The newer batched ordinary-claim path is validated in fixture mode and controlled-chain regtest, not in this live smoke yet.</li>
+        <li>It only matters if you intentionally want to check the older shared public signet path.</li>
+        <li>It still exercises a single-name claim flow and usually stalls on faucet funding.</li>
+        <li>The active live demo and live proof paths now run on the hosted private signet stack instead.</li>
       </ul>`
     )}
     ${body}
@@ -908,8 +908,8 @@ function renderLiveSmokeSection(collapsible = false): string {
   return `<details class="panel panel-live-smoke panel-collapsible">
     <summary class="panel-summary">
       <div class="panel-summary-copy">
-        <h2>Live Signet Smoke</h2>
-        <p>Latest status from the shared public signet smoke flow. This is still the single-name public signet path today; the batched ordinary-claim path is validated in fixture mode and controlled-chain regtest.</p>
+        <h2>Legacy Public Signet Smoke</h2>
+        <p>Optional status from the older shared public signet smoke runner. The hosted private signet stack is the active live path today.</p>
       </div>
       <span class="summary-chip">Open smoke</span>
     </summary>

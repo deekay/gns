@@ -179,14 +179,6 @@ export function parseReservedAuctionPolicy(input: unknown): ReservedAuctionPolic
   const record = assertRecord(input, "reserved auction policy");
   const reservedClasses = assertRecord(record.reservedClasses, "reserved auction policy reservedClasses");
   const auction = assertRecord(record.auction, "reserved auction policy auction");
-  const minimumIncrementAbsoluteSats = parseBigIntLike(
-    auction.minimumIncrementAbsoluteSats,
-    "auction.minimumIncrementAbsoluteSats"
-  );
-  const minimumIncrementBasisPoints = parseNonNegativeSafeInteger(
-    auction.minimumIncrementBasisPoints,
-    "auction.minimumIncrementBasisPoints"
-  );
 
   return {
     ordinaryLockBlocks: parseNonNegativeSafeInteger(record.ordinaryLockBlocks, "ordinaryLockBlocks"),
@@ -196,22 +188,22 @@ export function parseReservedAuctionPolicy(input: unknown): ReservedAuctionPolic
         auction.softCloseExtensionBlocks,
         "auction.softCloseExtensionBlocks"
       ),
-      minimumIncrementAbsoluteSats,
-      minimumIncrementBasisPoints,
-      softCloseMinimumIncrementAbsoluteSats:
-        auction.softCloseMinimumIncrementAbsoluteSats === undefined
-          ? minimumIncrementAbsoluteSats
-          : parseBigIntLike(
-              auction.softCloseMinimumIncrementAbsoluteSats,
-              "auction.softCloseMinimumIncrementAbsoluteSats"
-            ),
-      softCloseMinimumIncrementBasisPoints:
-        auction.softCloseMinimumIncrementBasisPoints === undefined
-          ? minimumIncrementBasisPoints
-          : parseNonNegativeSafeInteger(
-              auction.softCloseMinimumIncrementBasisPoints,
-              "auction.softCloseMinimumIncrementBasisPoints"
-            )
+      minimumIncrementAbsoluteSats: parseBigIntLike(
+        auction.minimumIncrementAbsoluteSats,
+        "auction.minimumIncrementAbsoluteSats"
+      ),
+      minimumIncrementBasisPoints: parseNonNegativeSafeInteger(
+        auction.minimumIncrementBasisPoints,
+        "auction.minimumIncrementBasisPoints"
+      ),
+      softCloseMinimumIncrementAbsoluteSats: parseBigIntLike(
+        auction.softCloseMinimumIncrementAbsoluteSats,
+        "auction.softCloseMinimumIncrementAbsoluteSats"
+      ),
+      softCloseMinimumIncrementBasisPoints: parseNonNegativeSafeInteger(
+        auction.softCloseMinimumIncrementBasisPoints,
+        "auction.softCloseMinimumIncrementBasisPoints"
+      )
     },
     reservedClasses: {
       top_collision: parseReservedAuctionClassPolicy(

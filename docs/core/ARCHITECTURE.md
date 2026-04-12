@@ -40,8 +40,8 @@ The wallet is responsible for:
 
 The authoritative state is the Bitcoin-compatible chain the resolver is indexing:
 
-- public signet for shared testing
-- private signet for controlled demos
+- private signet for the hosted demo and current live proofs
+- public signet only as an optional legacy/manual smoke path
 - regtest for exhaustive automated tests
 
 ## Main Components

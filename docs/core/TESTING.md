@@ -242,12 +242,13 @@ Important note:
 - the suite uses explicit test-only maturity overrides so the mature-sale case finishes in minutes instead of requiring a full `52,000`-block wait
 - production behavior is unchanged unless `GNS_TEST_OVERRIDE_*` env vars are set
 
-## Live Public Signet Smoke Flow
+## Legacy Public Signet Smoke Flow
 
-For the shared public demo at [https://globalnamesystem.org](https://globalnamesystem.org), use:
+If you intentionally want to exercise the older shared public signet smoke
+runner, use:
 
 ```bash
-npm run test:signet-smoke
+npm run test:legacy-public-signet-smoke
 ```
 
 What it does:
@@ -274,6 +275,8 @@ Artifacts:
 
 Important note:
 
+- this is **not** the primary live validation path anymore
+- our active hosted live demos now run on the private signet stack we control
 - this script does **not** bypass faucet anti-bot protection
 - if the owner address is unfunded, the script will stop at `awaiting_funds` and leave everything ready for the moment a real signet UTXO arrives
 - the public app can surface the latest published status at [https://globalnamesystem.org/api/live-smoke-status](https://globalnamesystem.org/api/live-smoke-status) once the VPS web service is deployed with `GNS_WEB_LIVE_SMOKE_STATUS_PATH=/var/lib/gns/live-smoke-summary.json`
@@ -281,7 +284,8 @@ Important note:
 
 ## Private Signet On The Existing VPS
 
-When public faucet funding is unreliable, we can use a parallel private signet on the same VPS.
+Because public faucet funding is unreliable, the active hosted demo and live
+proof flows now use a parallel private signet on the same VPS.
 
 If you want Sparrow to talk to that private demo chain, use the dedicated setup guide:
 

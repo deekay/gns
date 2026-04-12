@@ -1687,8 +1687,8 @@ function renderLiveSmokeStatus() {
   const liveSmoke = state.liveSmokeStatus;
   if (!liveSmoke) {
     elements.liveSmokeResult.classList.add("empty");
-    elements.liveSmokeResult.textContent = "No live signet smoke status is available yet.";
-    setText(elements.liveSmokeMeta, "Waiting for the first published live signet smoke summary.");
+    elements.liveSmokeResult.textContent = "No legacy public signet smoke status is available yet.";
+    setText(elements.liveSmokeMeta, "Waiting for the first published legacy public signet smoke summary.");
     return;
   }
 
@@ -1714,7 +1714,7 @@ function renderLiveSmokeStatus() {
   elements.liveSmokeResult.classList.remove("empty");
   elements.liveSmokeResult.innerHTML = \`
     <div class="result-title">
-      <h3>\${escapeHtml(liveSmoke.name ?? "Live smoke run")}</h3>
+      <h3>\${escapeHtml(liveSmoke.name ?? "Legacy public signet smoke run")}</h3>
       <span class="status-pill \${escapeHtml(mapLiveSmokeStatusPill(status))}">\${escapeHtml(formatLiveSmokeStatus(status))}</span>
     </div>
     <div class="result-grid">

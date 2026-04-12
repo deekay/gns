@@ -38,14 +38,15 @@ describe("renderPageHtml", () => {
     expect(html).toContain("transferdemo");
   });
 
-  it("clarifies that live signet smoke is still the single-name path", () => {
+  it("treats the public signet smoke panel as a legacy optional path", () => {
     const html = renderPageHtml({
       ...baseOptions,
       pageKind: "explore"
     });
 
-    expect(html).toContain("single-name public signet path today");
-    expect(html).toContain("batched ordinary-claim path is validated in fixture mode and controlled-chain regtest");
+    expect(html).toContain("Legacy Public Signet Smoke");
+    expect(html).toContain("older shared public signet smoke runner");
+    expect(html).toContain("hosted private signet stack is the active live path today");
   });
 
   it("surfaces the private signet batch smoke panel when enabled", () => {

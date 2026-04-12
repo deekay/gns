@@ -87,7 +87,7 @@ async function main() {
     const name = requestedName ?? (await pickAvailableName());
 
     const baseSummary = {
-      kind: "gns-live-signet-smoke-summary",
+      kind: "gns-legacy-public-signet-smoke-summary",
       startedAt: new Date().toISOString(),
       ownerAccountPath: OWNER_ACCOUNT_PATH,
       recipientAccountPath: RECIPIENT_ACCOUNT_PATH,
@@ -115,7 +115,7 @@ async function main() {
         ...baseSummary,
         status: "awaiting_funds",
         message:
-          "Live signet smoke flow is ready, but the owner funding address does not yet have enough signet to cover the 50,000 sat bond plus fees.",
+          "Legacy public signet smoke flow is ready, but the owner funding address does not yet have enough signet to cover the 50,000 sat bond plus fees.",
         minClaimFundingSats: MIN_CLAIM_FUNDING_SATS.toString(),
         claimPackagePath: CLAIM_PACKAGE_PATH,
         claimPackage

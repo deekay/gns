@@ -47,9 +47,9 @@ Keep these distinctions in mind:
 
 One important testing/status distinction:
 
-- the hosted private demo is a **private signet** walkthrough for people using the site
-- the shared **public signet smoke** path is a separate VPS-backed validation flow
-- explicit Merkle batching for ordinary claims is implemented and validated in fixture mode and controlled-chain regtest today; the public signet smoke flow is still a single-name live path
+- the hosted private demo is a **private signet** walkthrough and the active live environment we maintain
+- explicit ordinary-lane Merkle batching is implemented and validated in fixture mode, controlled-chain regtest, and the hosted **private signet** batch smoke flow
+- the old shared **public signet smoke** runner still exists as optional legacy tooling, but it is not part of the main demo or validation packet because faucet funding is unreliable
 
 ## Quick Map
 
