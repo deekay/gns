@@ -134,6 +134,15 @@ export interface PersistedTransactionProvenance {
   readonly invalidatedNames: readonly string[];
 }
 
+export interface PersistedSpentOutpointObservation {
+  readonly outpointTxid: string;
+  readonly outpointVout: number;
+  readonly spentTxid: string;
+  readonly spentBlockHeight: number;
+  readonly spentTxIndex: number;
+  readonly spendingInputIndex: number;
+}
+
 export interface PersistedIndexerSnapshot {
   readonly launchHeight: number;
   readonly currentHeight: number | null;
@@ -142,6 +151,7 @@ export interface PersistedIndexerSnapshot {
   readonly names: readonly PersistedNameRecord[];
   readonly pendingCommits: readonly PersistedPendingCommit[];
   readonly pendingBatchAnchors: readonly PersistedPendingBatchAnchor[];
+  readonly spentOutpoints?: readonly PersistedSpentOutpointObservation[];
   readonly transactionProvenance: readonly PersistedTransactionProvenance[];
   readonly recentCheckpoints?: readonly PersistedIndexerSnapshotState[];
 }
@@ -154,6 +164,7 @@ export interface PersistedIndexerSnapshotState {
   readonly names: readonly PersistedNameRecord[];
   readonly pendingCommits: readonly PersistedPendingCommit[];
   readonly pendingBatchAnchors: readonly PersistedPendingBatchAnchor[];
+  readonly spentOutpoints?: readonly PersistedSpentOutpointObservation[];
   readonly transactionProvenance: readonly PersistedTransactionProvenance[];
 }
 
@@ -197,6 +208,7 @@ export function parseIndexerSnapshot(input: unknown): PersistedIndexerSnapshot {
   const names = getRequiredArray(input, "names");
   const pendingCommits = getRequiredArray(input, "pendingCommits");
   const pendingBatchAnchors = getOptionalArray(input, "pendingBatchAnchors") ?? [];
+  const spentOutpoints = getOptionalArray(input, "spentOutpoints") ?? [];
   const transactionProvenance = getOptionalArray(input, "transactionProvenance") ?? [];
   const recentCheckpoints = getOptionalArray(input, "recentCheckpoints");
 
@@ -208,6 +220,7 @@ export function parseIndexerSnapshot(input: unknown): PersistedIndexerSnapshot {
     names: names.map(parseNameRecordSnapshot),
     pendingCommits: pendingCommits.map(parsePendingCommitRecord),
     pendingBatchAnchors: pendingBatchAnchors.map(parsePendingBatchAnchorRecord),
+    spentOutpoints: spentOutpoints.map(parseSpentOutpointObservation),
     transactionProvenance: transactionProvenance.map(parseTransactionProvenanceRecord),
     ...(recentCheckpoints === undefined
       ? {}
@@ -225,6 +238,7 @@ function parseIndexerSnapshotState(input: unknown): PersistedIndexerSnapshotStat
     names: parsed.names,
     pendingCommits: parsed.pendingCommits,
     pendingBatchAnchors: parsed.pendingBatchAnchors,
+    ...(parsed.spentOutpoints === undefined ? {} : { spentOutpoints: parsed.spentOutpoints }),
     transactionProvenance: parsed.transactionProvenance
   };
 }
@@ -441,6 +455,23 @@ function parsePendingBatchAnchorRecord(
     blockHeight: getRequiredInteger(input, "blockHeight"),
     txIndex: getRequiredInteger(input, "txIndex"),
     revealDeadlineHeight: getRequiredInteger(input, "revealDeadlineHeight")
+  };
+}
+
+function parseSpentOutpointObservation(
+  input: unknown
+): PersistedSpentOutpointObservation {
+  if (!isRecord(input)) {
+    throw new Error("spent outpoint must be an object");
+  }
+
+  return {
+    outpointTxid: getRequiredString(input, "outpointTxid"),
+    outpointVout: getRequiredInteger(input, "outpointVout"),
+    spentTxid: getRequiredString(input, "spentTxid"),
+    spentBlockHeight: getRequiredInteger(input, "spentBlockHeight"),
+    spentTxIndex: getRequiredInteger(input, "spentTxIndex"),
+    spendingInputIndex: getRequiredInteger(input, "spendingInputIndex")
   };
 }
 

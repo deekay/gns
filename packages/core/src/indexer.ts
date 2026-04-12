@@ -28,6 +28,7 @@ import {
 } from "./engine.js";
 import {
   deriveExperimentalReservedAuctionStates,
+  type ExperimentalSpentOutpointObservation,
   serializeExperimentalReservedAuctionState,
   type ExperimentalReservedAuctionBidObservation,
   type ExperimentalReservedAuctionCatalogEntry,
@@ -70,6 +71,7 @@ export interface InMemoryGnsIndexerPersistedState {
       }>;
     }
   >;
+  readonly spentOutpoints?: readonly ExperimentalSpentOutpointObservation[];
   readonly transactionProvenance: readonly TransactionProvenanceSnapshot[];
 }
 
@@ -141,6 +143,7 @@ export class InMemoryGnsIndexer {
   private readonly experimentalReservedAuctionCatalog: readonly ExperimentalReservedAuctionCatalogEntry[];
   private readonly experimentalReservedAuctionPolicy: ReservedAuctionPolicy;
   private readonly state: GnsState;
+  private readonly spentOutpoints: Map<string, ExperimentalSpentOutpointObservation>;
   private readonly transactionProvenance: Map<string, TransactionProvenanceSnapshot>;
   private recentCheckpoints: InMemoryGnsIndexerPersistedState[];
   private currentHeight: number | null;
@@ -159,6 +162,7 @@ export class InMemoryGnsIndexer {
     this.experimentalReservedAuctionPolicy =
       input.experimentalReservedAuctionPolicy ?? createDefaultReservedAuctionPolicy();
     this.state = createEmptyState();
+    this.spentOutpoints = new Map();
     this.transactionProvenance = new Map();
     this.recentCheckpoints = [];
     this.currentHeight = null;
@@ -197,6 +201,7 @@ export class InMemoryGnsIndexer {
 
     const provenance = applyBlockTransactionsWithProvenance(this.state, transactions, this.launchHeight);
     refreshDerivedState(this.state, block.height);
+    this.recordSpentOutpoints(block);
 
     for (const transaction of provenance) {
       this.transactionProvenance.set(transaction.txid, serializeTransactionProvenanceRecord(transaction));
@@ -255,7 +260,8 @@ export class InMemoryGnsIndexer {
       policy: this.experimentalReservedAuctionPolicy,
       currentBlockHeight,
       catalog: this.experimentalReservedAuctionCatalog,
-      bidObservations: this.listAppliedAuctionBidObservations()
+      bidObservations: this.listAppliedAuctionBidObservations(),
+      spentOutpoints: [...this.spentOutpoints.values()]
     }).map((state) => serializeExperimentalReservedAuctionState(state));
   }
 
@@ -383,6 +389,7 @@ export class InMemoryGnsIndexer {
     this.state.names.clear();
     this.state.pendingCommits.clear();
     this.state.pendingBatchAnchors.clear();
+    this.spentOutpoints.clear();
     this.transactionProvenance.clear();
 
     for (const record of snapshot.names) {
@@ -416,6 +423,13 @@ export class InMemoryGnsIndexer {
 
     for (const transaction of snapshot.transactionProvenance) {
       this.transactionProvenance.set(transaction.txid, transaction);
+    }
+
+    for (const spentOutpoint of snapshot.spentOutpoints ?? []) {
+      this.spentOutpoints.set(
+        `${spentOutpoint.outpointTxid}:${spentOutpoint.outpointVout}`,
+        structuredClone(spentOutpoint)
+      );
     }
 
     this.currentHeight = snapshot.currentHeight;
@@ -465,6 +479,25 @@ export class InMemoryGnsIndexer {
             bondValueSats: output.bondValueSats === null ? null : output.bondValueSats.toString()
           }))
         })),
+      spentOutpoints: [...this.spentOutpoints.values()].sort((left, right) => {
+        if (left.spentBlockHeight !== right.spentBlockHeight) {
+          return left.spentBlockHeight - right.spentBlockHeight;
+        }
+
+        if (left.spentTxIndex !== right.spentTxIndex) {
+          return left.spentTxIndex - right.spentTxIndex;
+        }
+
+        if (left.spendingInputIndex !== right.spendingInputIndex) {
+          return left.spendingInputIndex - right.spendingInputIndex;
+        }
+
+        if (left.outpointTxid !== right.outpointTxid) {
+          return left.outpointTxid.localeCompare(right.outpointTxid);
+        }
+
+        return left.outpointVout - right.outpointVout;
+      }),
       transactionProvenance: [...this.transactionProvenance.values()].sort((left, right) => {
         if (left.blockHeight !== right.blockHeight) {
           return left.blockHeight - right.blockHeight;
@@ -492,6 +525,30 @@ export class InMemoryGnsIndexer {
           checkpoint.currentHeight !== snapshot.currentHeight || checkpoint.currentBlockHash !== snapshot.currentBlockHash
       )
     ].slice(0, this.recentCheckpointLimit);
+  }
+
+  private recordSpentOutpoints(block: BitcoinBlock): void {
+    for (const [txIndex, transaction] of block.transactions.entries()) {
+      for (const [inputIndex, input] of transaction.inputs.entries()) {
+        if (input.coinbase || input.txid === null || input.vout === null) {
+          continue;
+        }
+
+        const key = `${input.txid}:${input.vout}`;
+        if (this.spentOutpoints.has(key)) {
+          continue;
+        }
+
+        this.spentOutpoints.set(key, {
+          outpointTxid: input.txid,
+          outpointVout: input.vout,
+          spentTxid: transaction.txid,
+          spentBlockHeight: block.height,
+          spentTxIndex: txIndex,
+          spendingInputIndex: inputIndex
+        });
+      }
+    }
   }
 
   private listAppliedAuctionBidObservations(): ExperimentalReservedAuctionBidObservation[] {

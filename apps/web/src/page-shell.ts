@@ -401,7 +401,7 @@ function renderExperimentalAuctionFeedSection(): string {
       `<p>This sits one step closer to protocol behavior than the curated simulator lab above.</p>
       <ul>
         <li>Lots still come from the current experimental auction catalog.</li>
-        <li>Leaders, minimum next bids, stale-state rejection, and bond-status summaries are derived from observed AUCTION_BID transactions.</li>
+        <li>Leaders, minimum next bids, stale-state rejection, and bond spend/release summaries are derived from observed AUCTION_BID transactions.</li>
         <li>Same-bidder replacement is only recognized when the later bid spends the prior bid bond outpoint.</li>
         <li>The current slice is still experimental: bids are derived and classified, not yet settled by a full reserved-auction engine.</li>
       </ul>`
@@ -425,7 +425,7 @@ function renderAuctionLabNotesSection(): string {
           <li>Single-auction and market-level simulators with bidder budget pressure.</li>
           <li>CLI commands, fixture scenarios, and this website-facing auction state view.</li>
           <li>Experimental bid-package handoffs from the CLI and directly from the auction lab page.</li>
-          <li>Chain-derived experimental auction state from observed <code>AUCTION_BID</code> transactions, including stale bid rejection and derived bond-status summaries.</li>
+          <li>Chain-derived experimental auction state from observed <code>AUCTION_BID</code> transactions, including stale bid rejection and derived bond spend/release summaries.</li>
           <li>Replacement-style rebids are now recognized only when the later bid spends the earlier bid bond.</li>
         </ul>
       </article>

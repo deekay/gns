@@ -172,6 +172,8 @@ That coverage includes:
   pre-bid state
 - same-bidder replacement when the later bid spends the prior bid bond
 - derived accepted-bid bond / release summaries for experimental lots
+- early-vs-allowed bond-spend classification from observed bid bond outpoints,
+  including plain non-GNS spending transactions
 
 ### 2b. Repeatable smoke test for batched fixture mode
 

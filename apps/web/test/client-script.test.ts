@@ -52,10 +52,12 @@ describe("renderClientScript", () => {
     expect(script).toContain("renderAuctionPolicySummary");
     expect(script).toContain("renderExperimentalAuctionCard");
     expect(script).toContain("formatAuctionBondStatus");
+    expect(script).toContain("formatAuctionBondSpendStatus");
     expect(script).toContain("renderAuctionBidPackageComposer");
     expect(script).toContain("setAuctionBidPackageMessage");
     expect(script).toContain("Accepted capital locked");
     expect(script).toContain("State commitment");
+    expect(script).toContain("Bond spend");
     expect(script).toContain("isAuctionsPage");
   });
 });

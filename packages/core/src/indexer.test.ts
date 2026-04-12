@@ -762,6 +762,263 @@ describe("InMemoryGnsIndexer", () => {
     ]);
   });
 
+  it("flags non-GNS auction bond spends before release using observed outpoints", () => {
+    const policy = createDefaultReservedAuctionPolicy();
+    const catalogEntry = createExperimentalReservedAuctionCatalogEntry(
+      {
+        auctionId: "04-soft-close-google",
+        title: "Soft close · google",
+        description: "Experimental live test lot.",
+        name: "google",
+        reservedClassId: "top_collision",
+        unlockBlock: 840_000
+      },
+      policy
+    );
+    const indexer = new InMemoryGnsIndexer({
+      launchHeight: 100,
+      experimentalReservedAuctionPolicy: policy,
+      experimentalReservedAuctionCatalog: [catalogEntry]
+    });
+
+    indexer.ingestBlocks([
+      makeBlock(840_010, [
+        {
+          txid: "11".repeat(32),
+          paymentOutputs: [1_000_000_000n],
+          payloads: [
+            encodeAuctionBidPayload({
+              flags: 0,
+              bondVout: 0,
+              reservedLockBlocks: catalogEntry.reservedLockBlocks,
+              bidAmountSats: 1_000_000_000n,
+              auctionLotCommitment: catalogEntry.auctionLotCommitment,
+              auctionCommitment: computeAuctionBidStateCommitment({
+                auctionId: catalogEntry.auctionId,
+                name: catalogEntry.normalizedName,
+                reservedClassId: catalogEntry.reservedClassId,
+                currentBlockHeight: 840_010,
+                phase: "awaiting_opening_bid",
+                unlockBlock: catalogEntry.unlockBlock,
+                auctionCloseBlockAfter: null,
+                openingMinimumBidSats: catalogEntry.openingMinimumBidSats,
+                currentLeaderBidderCommitment: null,
+                currentHighestBidSats: null,
+                currentRequiredMinimumBidSats: catalogEntry.openingMinimumBidSats,
+                reservedLockBlocks: catalogEntry.reservedLockBlocks
+              }),
+              bidderCommitment: computeAuctionBidderCommitment("alpha")
+            })
+          ]
+        }
+      ]),
+      makeBlock(844_210, [
+        {
+          txid: "22".repeat(32),
+          paymentOutputs: [1_100_000_000n],
+          payloads: [
+            encodeAuctionBidPayload({
+              flags: 0,
+              bondVout: 0,
+              reservedLockBlocks: catalogEntry.reservedLockBlocks,
+              bidAmountSats: 1_100_000_000n,
+              auctionLotCommitment: catalogEntry.auctionLotCommitment,
+              auctionCommitment: computeAuctionBidStateCommitment({
+                auctionId: catalogEntry.auctionId,
+                name: catalogEntry.normalizedName,
+                reservedClassId: catalogEntry.reservedClassId,
+                currentBlockHeight: 844_210,
+                phase: "soft_close",
+                unlockBlock: catalogEntry.unlockBlock,
+                auctionCloseBlockAfter: 844_330,
+                openingMinimumBidSats: catalogEntry.openingMinimumBidSats,
+                currentLeaderBidderCommitment: computeAuctionBidderCommitment("alpha"),
+                currentHighestBidSats: 1_000_000_000n,
+                currentRequiredMinimumBidSats: 1_050_000_000n,
+                reservedLockBlocks: catalogEntry.reservedLockBlocks
+              }),
+              bidderCommitment: computeAuctionBidderCommitment("beta")
+            })
+          ]
+        }
+      ]),
+      makeBlock(844_220, [
+        {
+          txid: "33".repeat(32),
+          inputs: [
+            {
+              txid: "11".repeat(32),
+              vout: 0,
+              coinbase: false
+            },
+            {
+              txid: "22".repeat(32),
+              vout: 0,
+              coinbase: false
+            }
+          ],
+          payloads: []
+        }
+      ])
+    ]);
+
+    expect(indexer.listExperimentalAuctions()).toMatchObject([
+      {
+        auctionId: "04-soft-close-google",
+        visibleBidOutcomes: [
+          {
+            txid: "11".repeat(32),
+            bondStatus: "superseded_locked_until_settlement",
+            bondSpendStatus: "spent_before_allowed_release",
+            bondSpentTxid: "33".repeat(32),
+            bondSpentBlockHeight: 844220
+          },
+          {
+            txid: "22".repeat(32),
+            bondStatus: "leading_locked",
+            bondSpendStatus: "spent_before_allowed_release",
+            bondSpentTxid: "33".repeat(32),
+            bondSpentBlockHeight: 844220
+          }
+        ]
+      }
+    ]);
+  });
+
+  it("marks non-GNS auction bond spends after release as allowed", () => {
+    const policy = createDefaultReservedAuctionPolicy();
+    const catalogEntry = createExperimentalReservedAuctionCatalogEntry(
+      {
+        auctionId: "04-soft-close-google",
+        title: "Soft close · google",
+        description: "Experimental live test lot.",
+        name: "google",
+        reservedClassId: "top_collision",
+        unlockBlock: 840_000
+      },
+      policy
+    );
+    const winnerReleaseBlock = 844_210 + catalogEntry.reservedLockBlocks;
+    const losingReleaseBlock = 844_355;
+    const indexer = new InMemoryGnsIndexer({
+      launchHeight: 100,
+      experimentalReservedAuctionPolicy: policy,
+      experimentalReservedAuctionCatalog: [catalogEntry]
+    });
+
+    indexer.ingestBlocks([
+      makeBlock(840_010, [
+        {
+          txid: "11".repeat(32),
+          paymentOutputs: [1_000_000_000n],
+          payloads: [
+            encodeAuctionBidPayload({
+              flags: 0,
+              bondVout: 0,
+              reservedLockBlocks: catalogEntry.reservedLockBlocks,
+              bidAmountSats: 1_000_000_000n,
+              auctionLotCommitment: catalogEntry.auctionLotCommitment,
+              auctionCommitment: computeAuctionBidStateCommitment({
+                auctionId: catalogEntry.auctionId,
+                name: catalogEntry.normalizedName,
+                reservedClassId: catalogEntry.reservedClassId,
+                currentBlockHeight: 840_010,
+                phase: "awaiting_opening_bid",
+                unlockBlock: catalogEntry.unlockBlock,
+                auctionCloseBlockAfter: null,
+                openingMinimumBidSats: catalogEntry.openingMinimumBidSats,
+                currentLeaderBidderCommitment: null,
+                currentHighestBidSats: null,
+                currentRequiredMinimumBidSats: catalogEntry.openingMinimumBidSats,
+                reservedLockBlocks: catalogEntry.reservedLockBlocks
+              }),
+              bidderCommitment: computeAuctionBidderCommitment("alpha")
+            })
+          ]
+        }
+      ]),
+      makeBlock(844_210, [
+        {
+          txid: "22".repeat(32),
+          paymentOutputs: [1_100_000_000n],
+          payloads: [
+            encodeAuctionBidPayload({
+              flags: 0,
+              bondVout: 0,
+              reservedLockBlocks: catalogEntry.reservedLockBlocks,
+              bidAmountSats: 1_100_000_000n,
+              auctionLotCommitment: catalogEntry.auctionLotCommitment,
+              auctionCommitment: computeAuctionBidStateCommitment({
+                auctionId: catalogEntry.auctionId,
+                name: catalogEntry.normalizedName,
+                reservedClassId: catalogEntry.reservedClassId,
+                currentBlockHeight: 844_210,
+                phase: "soft_close",
+                unlockBlock: catalogEntry.unlockBlock,
+                auctionCloseBlockAfter: 844_330,
+                openingMinimumBidSats: catalogEntry.openingMinimumBidSats,
+                currentLeaderBidderCommitment: computeAuctionBidderCommitment("alpha"),
+                currentHighestBidSats: 1_000_000_000n,
+                currentRequiredMinimumBidSats: 1_050_000_000n,
+                reservedLockBlocks: catalogEntry.reservedLockBlocks
+              }),
+              bidderCommitment: computeAuctionBidderCommitment("beta")
+            })
+          ]
+        }
+      ]),
+      makeBlock(losingReleaseBlock, [
+        {
+          txid: "33".repeat(32),
+          inputs: [
+            {
+              txid: "11".repeat(32),
+              vout: 0,
+              coinbase: false
+            }
+          ],
+          payloads: []
+        }
+      ]),
+      makeBlock(winnerReleaseBlock, [
+        {
+          txid: "44".repeat(32),
+          inputs: [
+            {
+              txid: "22".repeat(32),
+              vout: 0,
+              coinbase: false
+            }
+          ],
+          payloads: []
+        }
+      ])
+    ]);
+
+    expect(indexer.listExperimentalAuctions()).toMatchObject([
+      {
+        auctionId: "04-soft-close-google",
+        phase: "settled",
+        visibleBidOutcomes: [
+          {
+            txid: "11".repeat(32),
+            bondStatus: "losing_bid_releasable",
+            bondSpendStatus: "spent_after_allowed_release",
+            bondSpentTxid: "33".repeat(32),
+            bondSpentBlockHeight: losingReleaseBlock
+          },
+          {
+            txid: "22".repeat(32),
+            bondStatus: "winner_releasable",
+            bondSpendStatus: "spent_after_allowed_release",
+            bondSpentTxid: "44".repeat(32),
+            bondSpentBlockHeight: winnerReleaseBlock
+          }
+        ]
+      }
+    ]);
+  });
+
   it("lists recent activity newest first", () => {
     const ownerPubkey = "11".repeat(32);
     const indexer = new InMemoryGnsIndexer({ launchHeight: 100 });

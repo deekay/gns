@@ -157,7 +157,7 @@ Use the auction page to inspect both:
 - the current reserved-auction simulator states directly in the website
 - and the newer chain-derived experimental `AUCTION_BID` feed for catalog lots,
   including stale-bid rejection, same-bidder replacement, and derived
-  bond-status summaries
+  bond spend / release summaries
 
 ## What GNS Is
 

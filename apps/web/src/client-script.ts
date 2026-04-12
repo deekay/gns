@@ -4772,6 +4772,9 @@ function renderExperimentalAuctionBidHistory(outcomes) {
           '    <div class="result-item"><label>State commitment</label><p class="field-value">' + escapeHtml(outcome.stateCommitmentMatched ? "Matched observed state" : "Stale or mismatched") + "</p></div>",
           '    <div class="result-item"><label>Bond status</label><p class="field-value">' + escapeHtml(formatAuctionBondStatus(outcome.bondStatus)) + "</p></div>",
           '    <div class="result-item"><label>Bond release</label><p class="field-value">' + escapeHtml(outcome.bondReleaseBlock == null ? "-" : "block " + String(outcome.bondReleaseBlock)) + "</p></div>",
+          '    <div class="result-item"><label>Bond spend</label><p class="field-value">' + escapeHtml(formatAuctionBondSpendStatus(outcome.bondSpendStatus)) + "</p></div>",
+          '    <div class="result-item"><label>Spent by tx</label><p class="field-value">' + escapeHtml(outcome.bondSpentTxid ? shortenTxid(outcome.bondSpentTxid) : "-") + "</p></div>",
+          '    <div class="result-item"><label>Spent at block</label><p class="field-value">' + escapeHtml(outcome.bondSpentBlockHeight == null ? "-" : String(outcome.bondSpentBlockHeight)) + "</p></div>",
           "  </div>",
           "</article>"
         ].join("");
@@ -4811,6 +4814,23 @@ function formatAuctionBondStatus(value) {
       return "Winner locked";
     case "winner_releasable":
       return "Winner releasable";
+    default:
+      return typeof value === "string" && value.length > 0 ? value : "Unknown";
+  }
+}
+
+function formatAuctionBondSpendStatus(value) {
+  switch (value) {
+    case "not_applicable":
+      return "Not tracked";
+    case "unspent":
+      return "Unspent";
+    case "replacement_spend":
+      return "Consumed by replacement rebid";
+    case "spent_after_allowed_release":
+      return "Spent after allowed release";
+    case "spent_before_allowed_release":
+      return "Spent before allowed release";
     default:
       return typeof value === "string" && value.length > 0 ? value : "Unknown";
   }

@@ -61,6 +61,16 @@ describe("indexer snapshot persistence", () => {
           revealDeadlineHeight: 107
         }
       ],
+      spentOutpoints: [
+        {
+          outpointTxid: "aa".repeat(32),
+          outpointVout: 0,
+          spentTxid: "dd".repeat(32),
+          spentBlockHeight: 102,
+          spentTxIndex: 0,
+          spendingInputIndex: 0
+        }
+      ],
       transactionProvenance: [
         {
           txid: "aa".repeat(32),
@@ -179,6 +189,7 @@ describe("indexer snapshot persistence", () => {
           names: [],
           pendingCommits: [],
           pendingBatchAnchors: [],
+          spentOutpoints: [],
           transactionProvenance: []
         }
       ]
@@ -200,6 +211,7 @@ describe("indexer snapshot persistence", () => {
         names: [],
         pendingCommits: [],
         pendingBatchAnchors: [],
+        spentOutpoints: [],
         transactionProvenance: [],
         recentCheckpoints: [
           {
@@ -210,6 +222,7 @@ describe("indexer snapshot persistence", () => {
             names: [],
             pendingCommits: [],
             pendingBatchAnchors: [],
+            spentOutpoints: [],
             transactionProvenance: []
           }
         ]
@@ -222,6 +235,7 @@ describe("indexer snapshot persistence", () => {
       names: [],
       pendingCommits: [],
       pendingBatchAnchors: [],
+      spentOutpoints: [],
       transactionProvenance: [],
       recentCheckpoints: [
         {
@@ -232,6 +246,7 @@ describe("indexer snapshot persistence", () => {
           names: [],
           pendingCommits: [],
           pendingBatchAnchors: [],
+          spentOutpoints: [],
           transactionProvenance: []
         }
       ]
@@ -249,6 +264,21 @@ describe("indexer snapshot persistence", () => {
         pendingCommits: [],
         transactionProvenance: []
       }).pendingBatchAnchors
+    ).toEqual([]);
+  });
+
+  it("defaults missing spentOutpoints to an empty array for older snapshots", () => {
+    expect(
+      parseIndexerSnapshot({
+        launchHeight: 100,
+        currentHeight: null,
+        currentBlockHash: null,
+        processedBlocks: 0,
+        names: [],
+        pendingCommits: [],
+        pendingBatchAnchors: [],
+        transactionProvenance: []
+      }).spentOutpoints
     ).toEqual([]);
   });
 

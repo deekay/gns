@@ -115,8 +115,8 @@ Today the repo has:
   longer matches the derived pre-bid state
 - same-bidder rebid classification when the later bid spends the prior bid
   bond outpoint
-- derived accepted-bid bond-status and release summaries for both unsettled and
-  settled experimental lots
+- derived accepted-bid bond-status plus bond spend / release summaries for both
+  unsettled and settled experimental lots
 - website download utilities for experimental auction bid packages derived from
   those same observed states
 
@@ -150,6 +150,8 @@ For reserved auctions specifically, this now includes:
   experimental auction observations
 - same-bidder replacement derivation when the later bid spends the prior bid
   bond output
+- early-vs-allowed bond-spend derivation from observed outpoint spends,
+  including non-GNS spending transactions
 - website fixture loading and page rendering for the auction lab
 - website rendering for the chain-derived experimental auction feed
 

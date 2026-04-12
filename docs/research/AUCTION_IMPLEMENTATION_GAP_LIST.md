@@ -50,7 +50,7 @@ That means we now have:
   - soft-close / settled phase
   - stale observed-state rejection
   - same-bidder replacement when the later bid spends the earlier bid bond
-  - derived accepted-bid bond status and release summaries
+  - derived accepted-bid bond status and bond spend / release summaries
   - accepted and rejected observed bid outcomes
 
 What we do **not** yet have:
@@ -108,6 +108,7 @@ state for catalog lots:
 - stale observed-state rejection against the derived pre-bid state
 - same-bidder replacement when the later bid spends the earlier bid bond
 - accepted-bid bond / release summaries
+- early-vs-allowed spend classification for observed bid bond outpoints
 - settled / soft-close / pending phase
 
 What it still does **not** know:

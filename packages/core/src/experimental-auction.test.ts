@@ -301,6 +301,224 @@ describe("experimental reserved auction derivation", () => {
     });
   });
 
+  it("flags accepted bid bonds spent before their release point", () => {
+    const policy = createDefaultReservedAuctionPolicy();
+    const catalogEntry = createExperimentalReservedAuctionCatalogEntry(
+      {
+        auctionId: "04-soft-close-google",
+        title: "Soft close · google",
+        description: "Experimental live test lot.",
+        name: "google",
+        reservedClassId: "top_collision",
+        unlockBlock: 840_000
+      },
+      policy
+    );
+
+    const state = deriveExperimentalReservedAuctionState({
+      policy,
+      currentBlockHeight: 844_250,
+      catalogEntry,
+      bidObservations: [
+        {
+          txid: "11".repeat(32),
+          blockHeight: 840_010,
+          txIndex: 0,
+          vout: 1,
+          bondVout: 0,
+          bidderCommitment: computeAuctionBidderCommitment("alpha"),
+          bidAmountSats: 1_000_000_000n,
+          reservedLockBlocks: catalogEntry.reservedLockBlocks,
+          auctionLotCommitment: catalogEntry.auctionLotCommitment,
+          spentOutpoints: [],
+          auctionCommitment: computeAuctionBidStateCommitment({
+            auctionId: catalogEntry.auctionId,
+            name: catalogEntry.normalizedName,
+            reservedClassId: catalogEntry.reservedClassId,
+            currentBlockHeight: 840_010,
+            phase: "awaiting_opening_bid",
+            unlockBlock: catalogEntry.unlockBlock,
+            auctionCloseBlockAfter: null,
+            openingMinimumBidSats: catalogEntry.openingMinimumBidSats,
+            currentLeaderBidderCommitment: null,
+            currentHighestBidSats: null,
+            currentRequiredMinimumBidSats: catalogEntry.openingMinimumBidSats,
+            reservedLockBlocks: catalogEntry.reservedLockBlocks
+          })
+        },
+        {
+          txid: "22".repeat(32),
+          blockHeight: 844_210,
+          txIndex: 0,
+          vout: 1,
+          bondVout: 0,
+          bidderCommitment: computeAuctionBidderCommitment("beta"),
+          bidAmountSats: 1_100_000_000n,
+          reservedLockBlocks: catalogEntry.reservedLockBlocks,
+          auctionLotCommitment: catalogEntry.auctionLotCommitment,
+          spentOutpoints: [],
+          auctionCommitment: computeAuctionBidStateCommitment({
+            auctionId: catalogEntry.auctionId,
+            name: catalogEntry.normalizedName,
+            reservedClassId: catalogEntry.reservedClassId,
+            currentBlockHeight: 844_210,
+            phase: "soft_close",
+            unlockBlock: catalogEntry.unlockBlock,
+            auctionCloseBlockAfter: 844_330,
+            openingMinimumBidSats: catalogEntry.openingMinimumBidSats,
+            currentLeaderBidderCommitment: computeAuctionBidderCommitment("alpha"),
+            currentHighestBidSats: 1_000_000_000n,
+            currentRequiredMinimumBidSats: 1_050_000_000n,
+            reservedLockBlocks: catalogEntry.reservedLockBlocks
+          })
+        }
+      ],
+      spentOutpoints: [
+        {
+          outpointTxid: "11".repeat(32),
+          outpointVout: 0,
+          spentTxid: "aa".repeat(32),
+          spentBlockHeight: 844_220,
+          spentTxIndex: 0,
+          spendingInputIndex: 0
+        },
+        {
+          outpointTxid: "22".repeat(32),
+          outpointVout: 0,
+          spentTxid: "bb".repeat(32),
+          spentBlockHeight: 844_221,
+          spentTxIndex: 0,
+          spendingInputIndex: 0
+        }
+      ]
+    });
+
+    expect(state.visibleBidOutcomes[0]).toMatchObject({
+      bondStatus: "superseded_locked_until_settlement",
+      bondReleaseBlock: 844355,
+      bondSpendStatus: "spent_before_allowed_release",
+      bondSpentTxid: "aa".repeat(32),
+      bondSpentBlockHeight: 844220
+    });
+    expect(state.visibleBidOutcomes[1]).toMatchObject({
+      bondStatus: "leading_locked",
+      bondReleaseBlock: null,
+      bondSpendStatus: "spent_before_allowed_release",
+      bondSpentTxid: "bb".repeat(32),
+      bondSpentBlockHeight: 844221
+    });
+  });
+
+  it("marks settled bid spends after their release point as allowed", () => {
+    const policy = createDefaultReservedAuctionPolicy();
+    const catalogEntry = createExperimentalReservedAuctionCatalogEntry(
+      {
+        auctionId: "04-soft-close-google",
+        title: "Soft close · google",
+        description: "Experimental live test lot.",
+        name: "google",
+        reservedClassId: "top_collision",
+        unlockBlock: 840_000
+      },
+      policy
+    );
+    const winnerReleaseBlock = 844_210 + catalogEntry.reservedLockBlocks;
+    const losingReleaseBlock = 844_355;
+
+    const state = deriveExperimentalReservedAuctionState({
+      policy,
+      currentBlockHeight: winnerReleaseBlock + 10,
+      catalogEntry,
+      bidObservations: [
+        {
+          txid: "11".repeat(32),
+          blockHeight: 840_010,
+          txIndex: 0,
+          vout: 1,
+          bondVout: 0,
+          bidderCommitment: computeAuctionBidderCommitment("alpha"),
+          bidAmountSats: 1_000_000_000n,
+          reservedLockBlocks: catalogEntry.reservedLockBlocks,
+          auctionLotCommitment: catalogEntry.auctionLotCommitment,
+          spentOutpoints: [],
+          auctionCommitment: computeAuctionBidStateCommitment({
+            auctionId: catalogEntry.auctionId,
+            name: catalogEntry.normalizedName,
+            reservedClassId: catalogEntry.reservedClassId,
+            currentBlockHeight: 840_010,
+            phase: "awaiting_opening_bid",
+            unlockBlock: catalogEntry.unlockBlock,
+            auctionCloseBlockAfter: null,
+            openingMinimumBidSats: catalogEntry.openingMinimumBidSats,
+            currentLeaderBidderCommitment: null,
+            currentHighestBidSats: null,
+            currentRequiredMinimumBidSats: catalogEntry.openingMinimumBidSats,
+            reservedLockBlocks: catalogEntry.reservedLockBlocks
+          })
+        },
+        {
+          txid: "22".repeat(32),
+          blockHeight: 844_210,
+          txIndex: 0,
+          vout: 1,
+          bondVout: 0,
+          bidderCommitment: computeAuctionBidderCommitment("beta"),
+          bidAmountSats: 1_100_000_000n,
+          reservedLockBlocks: catalogEntry.reservedLockBlocks,
+          auctionLotCommitment: catalogEntry.auctionLotCommitment,
+          spentOutpoints: [],
+          auctionCommitment: computeAuctionBidStateCommitment({
+            auctionId: catalogEntry.auctionId,
+            name: catalogEntry.normalizedName,
+            reservedClassId: catalogEntry.reservedClassId,
+            currentBlockHeight: 844_210,
+            phase: "soft_close",
+            unlockBlock: catalogEntry.unlockBlock,
+            auctionCloseBlockAfter: 844_330,
+            openingMinimumBidSats: catalogEntry.openingMinimumBidSats,
+            currentLeaderBidderCommitment: computeAuctionBidderCommitment("alpha"),
+            currentHighestBidSats: 1_000_000_000n,
+            currentRequiredMinimumBidSats: 1_050_000_000n,
+            reservedLockBlocks: catalogEntry.reservedLockBlocks
+          })
+        }
+      ],
+      spentOutpoints: [
+        {
+          outpointTxid: "11".repeat(32),
+          outpointVout: 0,
+          spentTxid: "cc".repeat(32),
+          spentBlockHeight: losingReleaseBlock,
+          spentTxIndex: 0,
+          spendingInputIndex: 0
+        },
+        {
+          outpointTxid: "22".repeat(32),
+          outpointVout: 0,
+          spentTxid: "dd".repeat(32),
+          spentBlockHeight: winnerReleaseBlock,
+          spentTxIndex: 0,
+          spendingInputIndex: 0
+        }
+      ]
+    });
+
+    expect(state.visibleBidOutcomes[0]).toMatchObject({
+      bondStatus: "losing_bid_releasable",
+      bondReleaseBlock: losingReleaseBlock,
+      bondSpendStatus: "spent_after_allowed_release",
+      bondSpentTxid: "cc".repeat(32),
+      bondSpentBlockHeight: losingReleaseBlock
+    });
+    expect(state.visibleBidOutcomes[1]).toMatchObject({
+      bondStatus: "winner_releasable",
+      bondReleaseBlock: winnerReleaseBlock,
+      bondSpendStatus: "spent_after_allowed_release",
+      bondSpentTxid: "dd".repeat(32),
+      bondSpentBlockHeight: winnerReleaseBlock
+    });
+  });
+
   it("treats a same-bidder rebid as a replacement only when it spends the prior bid bond", () => {
     const policy = createDefaultReservedAuctionPolicy();
     const catalogEntry = createExperimentalReservedAuctionCatalogEntry(

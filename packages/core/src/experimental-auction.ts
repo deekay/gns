@@ -39,6 +39,13 @@ export type ExperimentalReservedAuctionBidBondStatus =
   | "winner_locked"
   | "winner_releasable";
 
+export type ExperimentalReservedAuctionBidSpendStatus =
+  | "not_applicable"
+  | "unspent"
+  | "replacement_spend"
+  | "spent_after_allowed_release"
+  | "spent_before_allowed_release";
+
 export type ExperimentalReservedAuctionPhase =
   | "pending_unlock"
   | "awaiting_opening_bid"
@@ -85,6 +92,15 @@ export interface ExperimentalReservedAuctionBidObservation {
   }>;
 }
 
+export interface ExperimentalSpentOutpointObservation {
+  readonly outpointTxid: string;
+  readonly outpointVout: number;
+  readonly spentTxid: string;
+  readonly spentBlockHeight: number;
+  readonly spentTxIndex: number;
+  readonly spendingInputIndex: number;
+}
+
 export interface ExperimentalReservedAuctionBidOutcome {
   readonly index: number;
   readonly txid: string;
@@ -102,6 +118,9 @@ export interface ExperimentalReservedAuctionBidOutcome {
   readonly stateCommitmentMatched: boolean;
   readonly bondStatus: ExperimentalReservedAuctionBidBondStatus;
   readonly bondReleaseBlock: number | null;
+  readonly bondSpendStatus: ExperimentalReservedAuctionBidSpendStatus;
+  readonly bondSpentTxid: string | null;
+  readonly bondSpentBlockHeight: number | null;
 }
 
 export interface ExperimentalReservedAuctionState {
@@ -155,6 +174,9 @@ export interface SerializedExperimentalReservedAuctionBidOutcome {
   readonly stateCommitmentMatched: boolean;
   readonly bondStatus: ExperimentalReservedAuctionBidBondStatus;
   readonly bondReleaseBlock: number | null;
+  readonly bondSpendStatus: ExperimentalReservedAuctionBidSpendStatus;
+  readonly bondSpentTxid: string | null;
+  readonly bondSpentBlockHeight: number | null;
 }
 
 export interface SerializedExperimentalReservedAuctionState {
@@ -225,13 +247,15 @@ export function deriveExperimentalReservedAuctionStates(input: {
   readonly currentBlockHeight: number;
   readonly catalog: readonly ExperimentalReservedAuctionCatalogEntry[];
   readonly bidObservations: readonly ExperimentalReservedAuctionBidObservation[];
+  readonly spentOutpoints?: readonly ExperimentalSpentOutpointObservation[];
 }): ExperimentalReservedAuctionState[] {
   return input.catalog.map((entry) =>
     deriveExperimentalReservedAuctionState({
       policy: input.policy,
       currentBlockHeight: input.currentBlockHeight,
       catalogEntry: entry,
-      bidObservations: input.bidObservations
+      bidObservations: input.bidObservations,
+      spentOutpoints: input.spentOutpoints ?? []
     })
   );
 }
@@ -241,10 +265,14 @@ export function deriveExperimentalReservedAuctionState(input: {
   readonly currentBlockHeight: number;
   readonly catalogEntry: ExperimentalReservedAuctionCatalogEntry;
   readonly bidObservations: readonly ExperimentalReservedAuctionBidObservation[];
+  readonly spentOutpoints?: readonly ExperimentalSpentOutpointObservation[];
 }): ExperimentalReservedAuctionState {
   const observations = input.bidObservations
     .filter((observation) => observation.auctionLotCommitment === input.catalogEntry.auctionLotCommitment)
     .sort(compareBidObservations);
+  const spentOutpointMap = new Map(
+    (input.spentOutpoints ?? []).map((observation) => [toOutpointKey(observation.outpointTxid, observation.outpointVout), observation])
+  );
 
   let auctionStartBlock: number | null = null;
   let finalAuctionCloseBlock: number | null = null;
@@ -293,7 +321,10 @@ export function deriveExperimentalReservedAuctionState(input: {
         highestBidSatsAfter: currentLeader?.amountSats ?? null,
         stateCommitmentMatched: false,
         bondStatus: "rejected_not_tracked" as const,
-        bondReleaseBlock: null
+        bondReleaseBlock: null,
+        bondSpendStatus: "not_applicable" as const,
+        bondSpentTxid: null,
+        bondSpentBlockHeight: null
       });
       continue;
     }
@@ -315,7 +346,10 @@ export function deriveExperimentalReservedAuctionState(input: {
         highestBidSatsAfter: currentLeader?.amountSats ?? null,
         stateCommitmentMatched: preBidState.stateCommitmentMatched,
         bondStatus: "rejected_not_tracked" as const,
-        bondReleaseBlock: null
+        bondReleaseBlock: null,
+        bondSpendStatus: "not_applicable" as const,
+        bondSpentTxid: null,
+        bondSpentBlockHeight: null
       });
       continue;
     }
@@ -337,7 +371,10 @@ export function deriveExperimentalReservedAuctionState(input: {
         highestBidSatsAfter: currentLeader?.amountSats ?? null,
         stateCommitmentMatched: preBidState.stateCommitmentMatched,
         bondStatus: "rejected_not_tracked" as const,
-        bondReleaseBlock: null
+        bondReleaseBlock: null,
+        bondSpendStatus: "not_applicable" as const,
+        bondSpentTxid: null,
+        bondSpentBlockHeight: null
       });
       continue;
     }
@@ -359,7 +396,10 @@ export function deriveExperimentalReservedAuctionState(input: {
         highestBidSatsAfter: currentLeader?.amountSats ?? null,
         stateCommitmentMatched: false,
         bondStatus: "rejected_not_tracked" as const,
-        bondReleaseBlock: null
+        bondReleaseBlock: null,
+        bondSpendStatus: "not_applicable" as const,
+        bondSpentTxid: null,
+        bondSpentBlockHeight: null
       });
       continue;
     }
@@ -381,7 +421,10 @@ export function deriveExperimentalReservedAuctionState(input: {
         highestBidSatsAfter: currentLeader?.amountSats ?? null,
         stateCommitmentMatched: true,
         bondStatus: "rejected_not_tracked" as const,
-        bondReleaseBlock: null
+        bondReleaseBlock: null,
+        bondSpendStatus: "not_applicable" as const,
+        bondSpentTxid: null,
+        bondSpentBlockHeight: null
       });
       continue;
     }
@@ -404,7 +447,10 @@ export function deriveExperimentalReservedAuctionState(input: {
           highestBidSatsAfter: null,
           stateCommitmentMatched: true,
           bondStatus: "rejected_not_tracked" as const,
-          bondReleaseBlock: null
+          bondReleaseBlock: null,
+          bondSpendStatus: "not_applicable" as const,
+          bondSpentTxid: null,
+          bondSpentBlockHeight: null
         });
         continue;
       }
@@ -436,7 +482,10 @@ export function deriveExperimentalReservedAuctionState(input: {
         highestBidSatsAfter: currentLeader.amountSats,
         stateCommitmentMatched: true,
         bondStatus: "leading_locked" as const,
-        bondReleaseBlock: null
+        bondReleaseBlock: null,
+        bondSpendStatus: "unspent" as const,
+        bondSpentTxid: null,
+        bondSpentBlockHeight: null
       });
       standingAcceptedOutcomeIndexByBidder.set(observation.bidderCommitment, visibleBidOutcomes.length - 1);
       continue;
@@ -464,7 +513,10 @@ export function deriveExperimentalReservedAuctionState(input: {
         highestBidSatsAfter: currentLeader.amountSats,
         stateCommitmentMatched: true,
         bondStatus: "rejected_not_tracked" as const,
-        bondReleaseBlock: null
+        bondReleaseBlock: null,
+        bondSpendStatus: "not_applicable" as const,
+        bondSpentTxid: null,
+        bondSpentBlockHeight: null
       });
       continue;
     }
@@ -485,7 +537,10 @@ export function deriveExperimentalReservedAuctionState(input: {
       visibleBidOutcomes[standingOutcomeIndex] = {
         ...standingOutcome,
         bondStatus: "replaced_by_self_rebid" as const,
-        bondReleaseBlock: observation.blockHeight
+        bondReleaseBlock: observation.blockHeight,
+        bondSpendStatus: "replacement_spend" as const,
+        bondSpentTxid: observation.txid,
+        bondSpentBlockHeight: observation.blockHeight
       };
     }
 
@@ -517,7 +572,10 @@ export function deriveExperimentalReservedAuctionState(input: {
       highestBidSatsAfter: currentLeader.amountSats,
       stateCommitmentMatched: true,
       bondStatus: "leading_locked" as const,
-      bondReleaseBlock: null
+      bondReleaseBlock: null,
+      bondSpendStatus: "unspent" as const,
+      bondSpentTxid: null,
+      bondSpentBlockHeight: null
     });
     standingAcceptedOutcomeIndexByBidder.set(observation.bidderCommitment, visibleBidOutcomes.length - 1);
   }
@@ -568,12 +626,21 @@ export function deriveExperimentalReservedAuctionState(input: {
       return outcome;
     }
 
+    const spendObservation = spentOutpointMap.get(toOutpointKey(outcome.txid, outcome.bondVout)) ?? null;
     const isWinningBid = currentLeader !== null && outcome.txid === currentLeader.txid;
     if (phase !== "settled") {
+      const nextBondStatus = isWinningBid ? "leading_locked" as const : "superseded_locked_until_settlement" as const;
+      const nextReleaseBlock = isWinningBid ? null : settledReleaseBlock;
       return {
         ...outcome,
-        bondStatus: isWinningBid ? "leading_locked" as const : "superseded_locked_until_settlement" as const,
-        bondReleaseBlock: isWinningBid ? null : settledReleaseBlock
+        bondStatus: nextBondStatus,
+        bondReleaseBlock: nextReleaseBlock,
+        bondSpendStatus:
+          spendObservation === null
+            ? "unspent" as const
+            : "spent_before_allowed_release" as const,
+        bondSpentTxid: spendObservation?.spentTxid ?? null,
+        bondSpentBlockHeight: spendObservation?.spentBlockHeight ?? null
       };
     }
 
@@ -585,14 +652,30 @@ export function deriveExperimentalReservedAuctionState(input: {
           winnerRelease !== null && input.currentBlockHeight >= winnerRelease
             ? "winner_releasable" as const
             : "winner_locked" as const,
-        bondReleaseBlock: winnerRelease
+        bondReleaseBlock: winnerRelease,
+        bondSpendStatus:
+          spendObservation === null
+            ? "unspent" as const
+            : winnerRelease !== null && spendObservation.spentBlockHeight >= winnerRelease
+              ? "spent_after_allowed_release" as const
+              : "spent_before_allowed_release" as const,
+        bondSpentTxid: spendObservation?.spentTxid ?? null,
+        bondSpentBlockHeight: spendObservation?.spentBlockHeight ?? null
       };
     }
 
     return {
       ...outcome,
       bondStatus: "losing_bid_releasable" as const,
-      bondReleaseBlock: settledReleaseBlock
+      bondReleaseBlock: settledReleaseBlock,
+      bondSpendStatus:
+        spendObservation === null
+          ? "unspent" as const
+          : settledReleaseBlock !== null && spendObservation.spentBlockHeight >= settledReleaseBlock
+            ? "spent_after_allowed_release" as const
+            : "spent_before_allowed_release" as const,
+      bondSpentTxid: spendObservation?.spentTxid ?? null,
+      bondSpentBlockHeight: spendObservation?.spentBlockHeight ?? null
     };
   });
   const currentlyLockedAcceptedOutcomes = hydratedVisibleBidOutcomes.filter(
@@ -699,7 +782,10 @@ export function serializeExperimentalReservedAuctionState(
       highestBidSatsAfter: outcome.highestBidSatsAfter?.toString() ?? null,
       stateCommitmentMatched: outcome.stateCommitmentMatched,
       bondStatus: outcome.bondStatus,
-      bondReleaseBlock: outcome.bondReleaseBlock
+      bondReleaseBlock: outcome.bondReleaseBlock,
+      bondSpendStatus: outcome.bondSpendStatus,
+      bondSpentTxid: outcome.bondSpentTxid,
+      bondSpentBlockHeight: outcome.bondSpentBlockHeight
     }))
   };
 }
@@ -907,6 +993,10 @@ function didObservationSpendStandingBond(
   return observation.spentOutpoints.some(
     (input) => input.txid === standingOutcome.txid && input.vout === standingOutcome.bondVout
   );
+}
+
+function toOutpointKey(txid: string, vout: number): string {
+  return `${txid}:${vout}`;
 }
 
 function deriveExperimentalReservedAuctionPhase(input: {
