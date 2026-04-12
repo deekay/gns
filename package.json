@@ -35,6 +35,7 @@
     "selfhost:up": "docker compose up --build",
     "test:signet-smoke": "node ./scripts/live-signet-smoke.mjs",
     "test:private-signet-batch-smoke": "node ./scripts/private-signet-batch-smoke.mjs",
+    "test:private-signet-auction-smoke": "node ./scripts/private-signet-auction-smoke.mjs",
     "test:private-signet-claim-smoke": "node ./scripts/private-signet-claim-smoke.mjs",
     "test:private-signet-demo": "node ./scripts/private-signet-demo.mjs",
     "test:private-signet-transfer-smoke": "node ./scripts/private-signet-transfer-smoke.mjs",

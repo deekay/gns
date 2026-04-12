@@ -123,9 +123,12 @@ flock 9
 
 if [[ -f /etc/gns/gns.env ]]; then
   upsert_env /etc/gns/gns.env GNS_WEB_PRIVATE_BATCH_SMOKE_STATUS_PATH /var/lib/gns/private-batch-smoke-summary.json
+  upsert_env /etc/gns/gns.env GNS_WEB_PRIVATE_AUCTION_SMOKE_STATUS_PATH /var/lib/gns/private-auction-smoke-summary.json
 fi
 if [[ -f /etc/gns/gns-domain.env ]]; then
+  upsert_env /etc/gns/gns-domain.env GNS_WEB_PRIVATE_DEMO_BASE_PATH /gns-private
   upsert_env /etc/gns/gns-domain.env GNS_WEB_PRIVATE_BATCH_SMOKE_STATUS_PATH /var/lib/gns/private-batch-smoke-summary.json
+  upsert_env /etc/gns/gns-domain.env GNS_WEB_PRIVATE_AUCTION_SMOKE_STATUS_PATH /var/lib/gns/private-auction-smoke-summary.json
 fi
 
 install -d /opt/gns/app

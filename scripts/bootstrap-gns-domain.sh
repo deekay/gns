@@ -116,7 +116,9 @@ GNS_WEB_BASE_PATH=
 GNS_WEB_RESOLVER_URL=http://127.0.0.1:${RESOLVER_PORT}
 GNS_WEB_NETWORK_LABEL=${NETWORK_LABEL}
 GNS_WEB_SHOW_LIVE_SMOKE=${SHOW_LIVE_SMOKE}
+GNS_WEB_PRIVATE_DEMO_BASE_PATH=/gns-private
 GNS_WEB_PRIVATE_BATCH_SMOKE_STATUS_PATH=/var/lib/gns/private-batch-smoke-summary.json
+GNS_WEB_PRIVATE_AUCTION_SMOKE_STATUS_PATH=/var/lib/gns/private-auction-smoke-summary.json
 GNS_WEB_PRIVATE_SIGNET_FUNDING_COMMAND=${FUND_COMMAND}
 GNS_WEB_PRIVATE_SIGNET_FUNDING_ENABLED=${FUND_ENABLED}
 GNS_WEB_PRIVATE_SIGNET_FUNDING_AMOUNT_SATS=${FUND_AMOUNT_SATS}
@@ -153,7 +155,14 @@ SERVICE
 cat >/etc/caddy/Caddyfile <<CADDYFILE
 ${DOMAIN} {
   encode zstd gzip
-  reverse_proxy 127.0.0.1:3002
+  @private_demo path /gns-private /gns-private/*
+  handle @private_demo {
+    reverse_proxy 127.0.0.1:3001
+  }
+
+  handle {
+    reverse_proxy 127.0.0.1:3002
+  }
 }
 
 ${WWW_DOMAIN} {

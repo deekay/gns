@@ -155,8 +155,10 @@ SERVICE
   GNS_PRIVATE_SIGNET_ELECTRUM_PORT="${ELECTRUM_PORT}" /usr/local/bin/install-private-signet-electrum
 
   if [[ -f /etc/gns/gns-private.env ]]; then
+    upsert_env /etc/gns/gns-private.env GNS_EXPERIMENTAL_AUCTION_FIXTURE_DIR /opt/gns/app/fixtures/auction/private-signet-lab
     upsert_env /etc/gns/gns-private.env GNS_WEB_PRIVATE_SIGNET_ELECTRUM_ENDPOINT "${PUBLIC_HOST}:${ELECTRUM_PORT}:t"
     upsert_env /etc/gns/gns-private.env GNS_WEB_PRIVATE_BATCH_SMOKE_STATUS_PATH /var/lib/gns/private-batch-smoke-summary.json
+    upsert_env /etc/gns/gns-private.env GNS_WEB_PRIVATE_AUCTION_SMOKE_STATUS_PATH /var/lib/gns/private-auction-smoke-summary.json
   fi
 fi
 

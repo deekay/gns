@@ -7,6 +7,7 @@ const baseOptions = {
   faviconDataUrl: "data:image/svg+xml;base64,AA==",
   includeLiveSmoke: true,
   includePrivateBatchSmoke: true,
+  includePrivateAuctionSmoke: true,
   networkLabel: "private signet",
   privateSignetElectrumEndpoint: "globalnamesystem.org:50001:t",
   privateSignetFundingAmountSats: 50_000n,
@@ -29,7 +30,9 @@ describe("renderPageHtml", () => {
     expect(html).toContain("MERKLE_BATCHING_STATUS.md");
     expect(html).toContain("LAUNCH_SPEC_V0.md");
     expect(html).toContain("Private Signet Batch Smoke");
+    expect(html).toContain("Private Signet Auction Smoke");
     expect(html).toContain("best live-chain proof for the current ordinary-lane Merkle batching path");
+    expect(html).toContain("current live-chain proof for the experimental reserved-auction slice");
     expect(html).toContain("claimdemo");
     expect(html).toContain("valuedemo");
     expect(html).toContain("transferdemo");
@@ -79,6 +82,7 @@ describe("renderPageHtml", () => {
     expect(html).toContain("auctionLabList");
     expect(html).toContain("Chain-Derived Experimental Bids");
     expect(html).toContain("experimentalAuctionList");
+    expect(html).toContain("privateAuctionSmokeResult");
     expect(html).toContain("What This Covers");
     expect(html).toContain("Experimental bid-package handoffs");
     expect(html).toContain("Same-bidder replacement");

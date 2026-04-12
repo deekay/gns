@@ -31,7 +31,9 @@ export interface ReservedAuctionLabPayload {
   readonly cases: ReadonlyArray<AuctionLabCase>;
 }
 
-const AUCTION_LAB_FIXTURE_DIR = fileURLToPath(new URL("../../../fixtures/auction/lab", import.meta.url));
+const AUCTION_LAB_FIXTURE_DIR =
+  process.env.GNS_EXPERIMENTAL_AUCTION_FIXTURE_DIR?.trim()
+  || fileURLToPath(new URL("../../../fixtures/auction/lab", import.meta.url));
 
 export async function loadReservedAuctionLab(): Promise<ReservedAuctionLabPayload> {
   const policy = createDefaultReservedAuctionPolicy();

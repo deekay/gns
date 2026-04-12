@@ -1,0 +1,27 @@
+{
+  "title": "Private demo lot · openai (settled)",
+  "description": "Private signet lot kept around so the curated auction lab still shows a fully settled auction lifecycle.",
+  "currentBlockHeight": 4600,
+  "scenario": {
+    "name": "openai",
+    "reservedClassId": "major_existing_name",
+    "unlockBlock": 110,
+    "bidAttempts": [
+      {
+        "bidderId": "private_speculator_a",
+        "blockHeight": 111,
+        "amountSats": "200000000"
+      },
+      {
+        "bidderId": "private_speculator_b",
+        "blockHeight": 4311,
+        "amountSats": "220000000"
+      },
+      {
+        "bidderId": "private_speculator_c",
+        "blockHeight": 4451,
+        "amountSats": "250000000"
+      }
+    ]
+  }
+}

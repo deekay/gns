@@ -22,6 +22,7 @@ const state = {
   transferDraft: null,
   liveSmokeStatus: null,
   privateBatchSmokeStatus: null,
+  privateAuctionSmokeStatus: null,
   auctionLab: null,
   experimentalAuctions: null,
   nameFilter: "all",
@@ -97,6 +98,8 @@ const elements = {
   liveSmokeResult: document.getElementById("liveSmokeResult"),
   privateBatchSmokeMeta: document.getElementById("privateBatchSmokeMeta"),
   privateBatchSmokeResult: document.getElementById("privateBatchSmokeResult"),
+  privateAuctionSmokeMeta: document.getElementById("privateAuctionSmokeMeta"),
+  privateAuctionSmokeResult: document.getElementById("privateAuctionSmokeResult"),
   auctionLabMeta: document.getElementById("auctionLabMeta"),
   auctionPolicySummary: document.getElementById("auctionPolicySummary"),
   auctionLabList: document.getElementById("auctionLabList"),
@@ -439,6 +442,9 @@ async function bootstrap() {
     const privateBatchSmokeStatus = config.showPrivateBatchSmoke
       ? await fetchJson(withBasePath("/api/private-batch-smoke-status")).catch(() => null)
       : null;
+    const privateAuctionSmokeStatus = config.showPrivateAuctionSmoke
+      ? await fetchJson(withBasePath("/api/private-auction-smoke-status")).catch(() => null)
+      : null;
 
     state.config = config;
     state.health = health;
@@ -447,12 +453,14 @@ async function bootstrap() {
     state.pendingCommits = Array.isArray(pendingPayload.pendingCommits) ? pendingPayload.pendingCommits : [];
     state.liveSmokeStatus = liveSmokeStatus;
     state.privateBatchSmokeStatus = privateBatchSmokeStatus;
+    state.privateAuctionSmokeStatus = privateAuctionSmokeStatus;
     state.auctionLab = auctionLabPayload;
     state.experimentalAuctions = experimentalAuctionsPayload;
 
     renderHealth();
     renderLiveSmokeStatus();
     renderPrivateBatchSmokeStatus();
+    renderPrivateAuctionSmokeStatus();
     renderAuctionLab();
     renderExperimentalAuctionFeed();
     renderRecentNames();
@@ -4873,6 +4881,12 @@ function formatBlockWindow(value) {
   return String(blocks) + " blocks";
 }
 
+function getPrivateDemoBasePath() {
+  return typeof state.config?.privateDemoBasePath === "string" && state.config.privateDemoBasePath.length > 0
+    ? state.config.privateDemoBasePath
+    : BASE_PATH;
+}
+
 function renderPrivateBatchSmokeStatus() {
   if (!elements.privateBatchSmokeResult) {
     return;
@@ -4900,10 +4914,7 @@ function renderPrivateBatchSmokeStatus() {
     revealTxids.length === 0
       ? "Reveal txids unavailable"
       : String(revealTxids.length) + " reveal tx" + (revealTxids.length === 1 ? "" : "s");
-  const privateDemoBasePath =
-    typeof state.config?.privateDemoBasePath === "string" && state.config.privateDemoBasePath.length > 0
-      ? state.config.privateDemoBasePath
-      : BASE_PATH;
+  const privateDemoBasePath = getPrivateDemoBasePath();
   const nameLinks = [alphaName, betaName]
     .filter((value) => typeof value === "string" && value.trim().length > 0)
     .map((name) => renderDetailLink(name, String(name), privateDemoBasePath))
@@ -4970,6 +4981,116 @@ function renderPrivateBatchSmokeStatus() {
     '  <div class="result-item">',
     "    <label>Resolver</label>",
     '    <p class="field-value">' + escapeHtml(batchSmoke.resolverUrl ?? "Unavailable") + '</p>',
+    "  </div>",
+    "</div>",
+    actionLinks ? '<div class="result-actions">' + actionLinks + "</div>" : ""
+  ].join("");
+}
+
+function renderPrivateAuctionSmokeStatus() {
+  if (!elements.privateAuctionSmokeResult) {
+    return;
+  }
+
+  const auctionSmoke = state.privateAuctionSmokeStatus;
+  if (!auctionSmoke) {
+    elements.privateAuctionSmokeResult.classList.add("empty");
+    elements.privateAuctionSmokeResult.textContent = "No private signet auction smoke status is available yet.";
+    setText(
+      elements.privateAuctionSmokeMeta,
+      "Waiting for the first published private signet experimental auction smoke summary."
+    );
+    return;
+  }
+
+  const status = String(auctionSmoke.status ?? "unknown");
+  const privateDemoBasePath = getPrivateDemoBasePath();
+  const auction = auctionSmoke.auction && typeof auctionSmoke.auction === "object" ? auctionSmoke.auction : {};
+  const finalState = auctionSmoke.finalState && typeof auctionSmoke.finalState === "object" ? auctionSmoke.finalState : {};
+  const phaseLabel =
+    typeof finalState.phaseLabel === "string" && finalState.phaseLabel.length > 0
+      ? finalState.phaseLabel
+      : typeof finalState.phase === "string" && finalState.phase.length > 0
+        ? finalState.phase
+        : "State unavailable";
+  const acceptedBidCount = Number(finalState.acceptedBidCount ?? 0);
+  const totalObservedBidCount = Number(finalState.totalObservedBidCount ?? 0);
+  const highestBidText = finalState.currentHighestBidSats ? formatSats(finalState.currentHighestBidSats) : "None yet";
+  const nextBidText = finalState.currentRequiredMinimumBidSats ? formatSats(finalState.currentRequiredMinimumBidSats) : "Auction settled";
+  const actionLinks = [
+    '<a class="action-link" href="' + escapeHtml(withBasePath("/auctions", privateDemoBasePath)) + '">Open private auction lab</a>',
+    '<a class="action-link secondary" href="' + escapeHtml(withBasePath("/explore", privateDemoBasePath)) + '">Open private explorer</a>'
+  ]
+    .filter(Boolean)
+    .join("");
+
+  setText(
+    elements.privateAuctionSmokeMeta,
+    [
+      "Status: " + formatLiveSmokeStatus(status),
+      auctionSmoke.completedAt
+        ? "Updated " + new Date(auctionSmoke.completedAt).toLocaleString()
+        : auctionSmoke.startedAt
+          ? "Started " + new Date(auctionSmoke.startedAt).toLocaleString()
+          : null,
+      acceptedBidCount > 0 || totalObservedBidCount > 0
+        ? String(acceptedBidCount) + " accepted / " + String(totalObservedBidCount) + " observed bids"
+        : null
+    ]
+      .filter(Boolean)
+      .join(" · ")
+  );
+
+  elements.privateAuctionSmokeResult.classList.remove("empty");
+  elements.privateAuctionSmokeResult.innerHTML = [
+    '<div class="result-title">',
+    '  <h3>' + escapeHtml(String(auction.title ?? finalState.title ?? auctionSmoke.kind ?? "Private auction smoke")) + '</h3>',
+    '  <span class="status-pill ' + escapeHtml(mapLiveSmokeStatusPill(status)) + '">' + escapeHtml(formatLiveSmokeStatus(status)) + '</span>',
+    '</div>',
+    '<div class="result-grid">',
+    '  <div class="result-item">',
+    "    <label>Message</label>",
+    '    <p class="field-value">' + escapeHtml(auctionSmoke.message ?? "No message") + '</p>',
+    "  </div>",
+    '  <div class="result-item">',
+    "    <label>Lot</label>",
+    '    <p class="field-value">' + escapeHtml(String(auction.auctionId ?? finalState.auctionId ?? "Not published")) + '</p>',
+    "  </div>",
+    '  <div class="result-item">',
+    "    <label>Name / class</label>",
+    '    <p class="field-value">' + escapeHtml(String(auction.normalizedName ?? finalState.normalizedName ?? "-")) + " · " + escapeHtml(String(finalState.classLabel ?? auction.reservedClassId ?? "-")) + '</p>',
+    "  </div>",
+    '  <div class="result-item">',
+    "    <label>Phase</label>",
+    '    <p class="field-value">' + escapeHtml(String(phaseLabel)) + '</p>',
+    "  </div>",
+    '  <div class="result-item">',
+    "    <label>Highest / next bid</label>",
+    '    <p class="field-value">' + escapeHtml(highestBidText) + " / " + escapeHtml(nextBidText) + '</p>',
+    "  </div>",
+    '  <div class="result-item">',
+    "    <label>Accepted / observed bids</label>",
+    '    <p class="field-value">' + escapeHtml(String(acceptedBidCount) + " / " + String(totalObservedBidCount)) + '</p>',
+    "  </div>",
+    '  <div class="result-item">',
+    "    <label>Opening Bid Txid</label>",
+    auctionSmoke.alphaBid?.bidTxid ? renderCopyableCode(auctionSmoke.alphaBid.bidTxid) : '<p class="field-value">Not published</p>',
+    "  </div>",
+    '  <div class="result-item">',
+    "    <label>Higher Bid Txid</label>",
+    auctionSmoke.betaBid?.bidTxid ? renderCopyableCode(auctionSmoke.betaBid.bidTxid) : '<p class="field-value">Not published</p>',
+    "  </div>",
+    '  <div class="result-item">',
+    "    <label>Early Spend Txid</label>",
+    auctionSmoke.earlySpendTxid ? renderCopyableCode(auctionSmoke.earlySpendTxid) : '<p class="field-value">Not published</p>',
+    "  </div>",
+    '  <div class="result-item">',
+    "    <label>Alpha spend status</label>",
+    '    <p class="field-value">' + escapeHtml(formatAuctionBondSpendStatus(auctionSmoke.highlight?.alphaBondSpendStatus ?? null)) + '</p>',
+    "  </div>",
+    '  <div class="result-item">',
+    "    <label>Beta bond status</label>",
+    '    <p class="field-value">' + escapeHtml(formatAuctionBondStatus(auctionSmoke.highlight?.betaBondStatus ?? null)) + '</p>',
     "  </div>",
     "</div>",
     actionLinks ? '<div class="result-actions">' + actionLinks + "</div>" : ""

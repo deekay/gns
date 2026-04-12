@@ -82,6 +82,35 @@ describe("auction bid packages", () => {
     expect(parseAuctionBidPackage(pkg)).toEqual(pkg);
   });
 
+  it("allows live-state packages that know only the current leader commitment", () => {
+    const pkg = createAuctionBidPackage({
+      auctionId: "03-live-openai",
+      name: "openai",
+      reservedClassId: "major_existing_name",
+      classLabel: "Major existing name",
+      currentBlockHeight: 128,
+      phase: "live_bidding",
+      unlockBlock: 110,
+      auctionCloseBlockAfter: 4431,
+      openingMinimumBidSats: 200_000_000n,
+      currentLeaderBidderId: null,
+      currentLeaderBidderCommitment: computeAuctionBidderCommitment("unknown_live_leader"),
+      currentHighestBidSats: 220_000_000n,
+      currentRequiredMinimumBidSats: 231_000_000n,
+      reservedLockBlocks: 262_800,
+      bidderId: "operator_from_live_feed",
+      bidAmountSats: 231_000_000n,
+      exportedAt: "2026-04-11T19:00:00.000Z"
+    });
+
+    expect(pkg.currentLeaderBidderId).toBeNull();
+    expect(pkg.currentLeaderBidderCommitment).toBe(
+      computeAuctionBidderCommitment("unknown_live_leader")
+    );
+    expect(pkg.previewStatus).toBe("currently_valid");
+    expect(parseAuctionBidPackage(pkg)).toEqual(pkg);
+  });
+
   it("rejects packages whose preview fields no longer match the observed state", () => {
     const pkg = createAuctionBidPackage({
       auctionId: "02-awaiting-opening",

@@ -41,6 +41,18 @@ describe("renderClientScript", () => {
     expect(script).toContain('withBasePath("/claim/offline", privateDemoBasePath)');
   });
 
+  it("includes private signet auction smoke status handling", () => {
+    const script = renderClientScript("");
+
+    expect(script).toContain('/api/private-auction-smoke-status');
+    expect(script).toContain("privateAuctionSmokeStatus");
+    expect(script).toContain("renderPrivateAuctionSmokeStatus");
+    expect(script).toContain("Opening Bid Txid");
+    expect(script).toContain("Higher Bid Txid");
+    expect(script).toContain("Open private auction lab");
+    expect(script).toContain("getPrivateDemoBasePath");
+  });
+
   it("includes auction lab handling", () => {
     const script = renderClientScript("");
 

@@ -523,25 +523,21 @@ function assertAuctionStateConsistency(input: {
   readonly currentHighestBidSats: bigint | null;
   readonly currentRequiredMinimumBidSats: bigint | null;
 }) {
-  if ((input.currentLeaderBidderId === null) !== (input.currentHighestBidSats === null)) {
-    throw new Error("currentLeaderBidderId and currentHighestBidSats must either both be present or both be null");
-  }
-
-  if ((input.currentLeaderBidderId === null) !== (input.currentLeaderBidderCommitment === null)) {
+  if ((input.currentLeaderBidderCommitment === null) !== (input.currentHighestBidSats === null)) {
     throw new Error(
-      "currentLeaderBidderId and currentLeaderBidderCommitment must either both be present or both be null"
+      "currentLeaderBidderCommitment and currentHighestBidSats must either both be present or both be null"
     );
   }
 
   if (input.phase === "pending_unlock" || input.phase === "awaiting_opening_bid") {
-    if (input.currentLeaderBidderId !== null || input.currentHighestBidSats !== null) {
+    if (input.currentLeaderBidderCommitment !== null || input.currentHighestBidSats !== null) {
       throw new Error(`${input.phase} auctions must not include a current leader or highest bid`);
     }
   }
 
   if ((input.phase === "live_bidding" || input.phase === "soft_close" || input.phase === "settled")
-    && (input.currentLeaderBidderId === null || input.currentHighestBidSats === null)) {
-    throw new Error(`${input.phase} auctions must include a current leader and highest bid`);
+    && (input.currentLeaderBidderCommitment === null || input.currentHighestBidSats === null)) {
+    throw new Error(`${input.phase} auctions must include a current leader commitment and highest bid`);
   }
 
   if (input.phase === "settled") {
@@ -563,11 +559,7 @@ function normalizeAuctionBidderCommitment(
   const normalizedCommitment = parseOptionalAuctionBidCommitment(commitment, "currentLeaderBidderCommitment");
 
   if (bidderId === null) {
-    if (normalizedCommitment !== null) {
-      throw new Error("currentLeaderBidderCommitment must be null when currentLeaderBidderId is null");
-    }
-
-    return null;
+    return normalizedCommitment;
   }
 
   const expected = computeAuctionBidderCommitment(bidderId);

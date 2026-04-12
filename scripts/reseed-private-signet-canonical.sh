@@ -62,10 +62,14 @@ echo "[2/3] Seed canonical single-claim/value/transfer examples"
 node ./scripts/private-signet-reseed-demo.mjs
 
 echo
-echo "[3/3] Seed canonical batched claim proof"
+echo "[3/4] Seed canonical batched claim proof"
 GNS_PRIVATE_SIGNET_BATCH_SMOKE_ALPHA_NAME="$ALPHA_NAME" \
 GNS_PRIVATE_SIGNET_BATCH_SMOKE_BETA_NAME="$BETA_NAME" \
 node ./scripts/private-signet-batch-smoke.mjs
+
+echo
+echo "[4/4] Seed canonical auction smoke lot"
+node ./scripts/private-signet-auction-smoke.mjs
 
 echo
 echo "Canonical private signet reseed complete."
@@ -75,3 +79,4 @@ echo "  valuedemo"
 echo "  transferdemo"
 echo "  ${ALPHA_NAME}"
 echo "  ${BETA_NAME}"
+echo "  private auction smoke lots (see /auctions)"

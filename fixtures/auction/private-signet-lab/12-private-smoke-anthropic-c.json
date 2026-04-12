@@ -1,0 +1,11 @@
+{
+  "title": "Private smoke lot · anthropic C",
+  "description": "Private signet experimental reserved-auction lot reserved for hosted smoke runs with real AUCTION_BID transactions.",
+  "currentBlockHeight": 128,
+  "scenario": {
+    "name": "anthropic",
+    "reservedClassId": "major_existing_name",
+    "unlockBlock": 117,
+    "bidAttempts": []
+  }
+}

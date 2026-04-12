@@ -22,6 +22,7 @@ export interface PageShellOptions {
   faviconDataUrl: string,
   includeLiveSmoke: boolean,
   includePrivateBatchSmoke: boolean,
+  includePrivateAuctionSmoke: boolean,
   networkLabel: string,
   pageKind: PageKind,
   privateSignetElectrumEndpoint: string | null,
@@ -35,6 +36,7 @@ export function renderPageHtml(options: PageShellOptions): string {
     faviconDataUrl,
     includeLiveSmoke,
     includePrivateBatchSmoke,
+    includePrivateAuctionSmoke,
     networkLabel,
     pageKind,
     privateSignetElectrumEndpoint,
@@ -104,9 +106,9 @@ export function renderPageHtml(options: PageShellOptions): string {
       <main class="content-grid">
         ${
           pageKind === "home"
-            ? renderHomePageSections(basePath, includePrivateBatchSmoke)
+            ? renderHomePageSections(basePath, includePrivateBatchSmoke, includePrivateAuctionSmoke)
             : pageKind === "auctions"
-            ? renderAuctionsPageSections()
+            ? renderAuctionsPageSections(includePrivateAuctionSmoke)
             : pageKind === "claim"
             ? renderClaimPageSections(basePath, privateSignetFundingEnabled, privateSignetFundingAmountSats)
             : pageKind === "values"
@@ -307,12 +309,17 @@ function renderPanelHead(title: string, summary: string, infoBody?: string): str
   </div>`;
 }
 
-function renderHomePageSections(configuredBasePath: string, includePrivateBatchSmoke: boolean): string {
+function renderHomePageSections(
+  configuredBasePath: string,
+  includePrivateBatchSmoke: boolean,
+  includePrivateAuctionSmoke: boolean
+): string {
   return `${renderSearchSection()}
     ${renderHomeActionsSection(configuredBasePath)}
     ${renderHomeModelSection()}
     ${renderHomeExampleSection(configuredBasePath)}
     ${includePrivateBatchSmoke ? renderPrivateBatchSmokeSection(false) : ""}
+    ${includePrivateAuctionSmoke ? renderPrivateAuctionSmokeSection(false) : ""}
     ${renderHomeDocsSection()}
     ${renderHomeStatusSection()}`;
 }
@@ -332,9 +339,10 @@ function renderExplorePageSections(
     ${renderNetworkDetailsSection(true)}`;
 }
 
-function renderAuctionsPageSections(): string {
+function renderAuctionsPageSections(includePrivateAuctionSmoke: boolean): string {
   return `${renderAuctionLabSection()}
     ${renderExperimentalAuctionFeedSection()}
+    ${includePrivateAuctionSmoke ? renderPrivateAuctionSmokeSection(false) : ""}
     ${renderAuctionLabNotesSection()}`;
 }
 
@@ -934,6 +942,38 @@ function renderPrivateBatchSmokeSection(collapsible = false): string {
         <p>Latest status from the hosted private signet batched ordinary-claim flow: one batch anchor, later per-name reveals, and a post-claim transfer check.</p>
       </div>
       <span class="summary-chip">Open batch smoke</span>
+    </summary>
+    <div class="collapsible-panel-body">${body}</div>
+  </details>`;
+}
+
+function renderPrivateAuctionSmokeSection(collapsible = false): string {
+  const body = `<p id="privateAuctionSmokeMeta" class="helper-text">Checking the latest private signet experimental auction smoke run.</p>
+    <div id="privateAuctionSmokeResult" class="result-card empty">Loading the latest private signet auction smoke status...</div>`;
+
+  if (!collapsible) {
+    return `<section class="panel panel-live-smoke">
+    ${renderPanelHead(
+      "Private Signet Auction Smoke",
+      "Latest status from the hosted private signet experimental auction flow.",
+      `<p>This is the current live-chain proof for the experimental reserved-auction slice.</p>
+      <ul>
+        <li>It starts with an empty dedicated smoke lot from the private auction catalog.</li>
+        <li>It submits an opening bid, then a higher bid, then spends the losing bond early to prove the chain-derived feed flags that violation.</li>
+        <li>The resulting website feed shows accepted bid history, current leader, next minimum, and the early-spend bond status.</li>
+      </ul>`
+    )}
+    ${body}
+  </section>`;
+  }
+
+  return `<details class="panel panel-live-smoke panel-collapsible">
+    <summary class="panel-summary">
+      <div class="panel-summary-copy">
+        <h2>Private Signet Auction Smoke</h2>
+        <p>Latest status from the hosted private signet experimental auction flow: one opening bid, one higher bid, and one early losing-bond spend.</p>
+      </div>
+      <span class="summary-chip">Open auction smoke</span>
     </summary>
     <div class="collapsible-panel-body">${body}</div>
   </details>`;

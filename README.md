@@ -158,6 +158,9 @@ Use the auction page to inspect both:
 - and the newer chain-derived experimental `AUCTION_BID` feed for catalog lots,
   including stale-bid rejection, same-bidder replacement, and derived
   bond spend / release summaries
+- plus the hosted private signet auction-smoke summary showing a real opening
+  bid, higher bid, and intentionally early losing-bond spend on a dedicated
+  smoke lot
 
 ## What GNS Is
 

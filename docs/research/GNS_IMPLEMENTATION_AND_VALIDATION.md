@@ -119,6 +119,9 @@ Today the repo has:
   unsettled and settled experimental lots
 - website download utilities for experimental auction bid packages derived from
   those same observed states
+- a dedicated private signet auction smoke script that produces real hosted
+  `AUCTION_BID` activity for dedicated low-height smoke lots and publishes a
+  summary the website can surface directly
 
 This is still explicitly an experimental layer rather than the launch protocol,
 but it is now implemented enough to inspect and test end to end.
@@ -205,6 +208,17 @@ We now also have a dedicated **private signet batch smoke** path that runs:
 That gives us a live-chain demonstration of the explicit ordinary-lane Merkle
 path in a controlled hosted environment, without depending on public signet
 funding conditions.
+
+For the auction side, we now also have a dedicated **private signet auction
+smoke** path that runs:
+
+- one opening `AUCTION_BID`
+- one higher `AUCTION_BID`
+- and one intentionally early losing-bond spend
+
+That gives us a live hosted proof that the chain-derived experimental auction
+feed is not just rendering fixtures. It can observe real bid transactions and
+classify a real early bond spend as `spent_before_allowed_release`.
 
 ## What We Can Say Confidently
 

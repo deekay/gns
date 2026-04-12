@@ -66,7 +66,9 @@ const defaultPollIntervalMs = Number.parseInt(
   10
 );
 const currentDir = dirname(fileURLToPath(import.meta.url));
-const auctionFixtureDir = resolve(currentDir, "../../../fixtures/auction/lab");
+const auctionFixtureDir =
+  normalizeOptionalText(process.env.GNS_EXPERIMENTAL_AUCTION_FIXTURE_DIR)
+  ?? resolve(currentDir, "../../../fixtures/auction/lab");
 void main();
 
 async function main(): Promise<void> {
@@ -812,6 +814,19 @@ function parsePort(value: string, envName: string): number {
   }
 
   return parsed;
+}
+
+function normalizeOptionalText(value: string | undefined): string | null {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const normalized = value.trim();
+  if (normalized.length === 0) {
+    return null;
+  }
+
+  return resolve(process.cwd(), normalized);
 }
 
 function parseNonNegativeInteger(value: string, label: string): number {

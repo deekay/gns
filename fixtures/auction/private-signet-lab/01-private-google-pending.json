@@ -1,0 +1,17 @@
+{
+  "title": "Private demo lot · google (pending)",
+  "description": "Private signet catalog lot with a near-term unlock height. Used to keep the hosted auction lab grounded near the private demo chain height.",
+  "currentBlockHeight": 128,
+  "scenario": {
+    "name": "google",
+    "reservedClassId": "top_collision",
+    "unlockBlock": 140,
+    "bidAttempts": [
+      {
+        "bidderId": "private_alpha",
+        "blockHeight": 141,
+        "amountSats": "1000000000"
+      }
+    ]
+  }
+}
