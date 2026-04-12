@@ -395,6 +395,19 @@ function renderAuctionLabSection(): string {
         <li>This is where we can review pending unlock, opening floor, no-bid release, live bidding, soft close, and settled outcomes in one place.</li>
       </ul>`
     )}
+    <form id="auctionPolicyControls" class="draft-grid" autocomplete="off">
+      <div class="field">
+        <label class="field-label" for="auctionNoBidReleaseBlocksInput">No-bid release blocks</label>
+        <input id="auctionNoBidReleaseBlocksInput" type="text" inputmode="numeric" placeholder="Use current default" />
+      </div>
+      <div class="draft-field-full">
+        <div class="field-actions">
+          <button type="submit">Apply simulator override</button>
+          <button id="auctionPolicyResetButton" type="button">Reset defaults</button>
+        </div>
+        <p id="auctionPolicyControlsResult" class="tx-panel-note">This only changes the simulator-backed auction lab and bid-package previews on this page.</p>
+      </div>
+    </form>
     <p id="auctionLabMeta" class="helper-text">Loading the current reserved-auction policy and state fixtures.</p>
     <div id="auctionPolicySummary" class="guide-grid"></div>
     <div id="auctionLabList" class="activity-list"></div>

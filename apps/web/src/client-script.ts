@@ -100,6 +100,10 @@ const elements = {
   privateBatchSmokeResult: document.getElementById("privateBatchSmokeResult"),
   privateAuctionSmokeMeta: document.getElementById("privateAuctionSmokeMeta"),
   privateAuctionSmokeResult: document.getElementById("privateAuctionSmokeResult"),
+  auctionPolicyControls: document.getElementById("auctionPolicyControls"),
+  auctionNoBidReleaseBlocksInput: document.getElementById("auctionNoBidReleaseBlocksInput"),
+  auctionPolicyResetButton: document.getElementById("auctionPolicyResetButton"),
+  auctionPolicyControlsResult: document.getElementById("auctionPolicyControlsResult"),
   auctionLabMeta: document.getElementById("auctionLabMeta"),
   auctionPolicySummary: document.getElementById("auctionPolicySummary"),
   auctionLabList: document.getElementById("auctionLabList"),
@@ -433,7 +437,7 @@ async function bootstrap() {
       fetchJson(withBasePath("/api/names")),
       fetchJson(withBasePath("/api/pending-commits")),
       fetchJson(withBasePath("/api/activity?limit=10")),
-      isAuctionsPage() ? fetchJson(withBasePath("/api/auctions")).catch(() => null) : Promise.resolve(null),
+      isAuctionsPage() ? fetchJson(getAuctionLabApiPath()).catch(() => null) : Promise.resolve(null),
       isAuctionsPage() ? fetchJson(withBasePath("/api/experimental-auctions")).catch(() => null) : Promise.resolve(null)
     ]);
     const liveSmokeStatus = config.showLiveSmoke
@@ -512,6 +516,40 @@ async function bootstrap() {
     await resolveNameLookup(rawName, {
       updateHistory: true
     });
+  });
+
+  elements.auctionPolicyControls?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    try {
+      const overrides = readAuctionLabPolicyOverridesFromControls();
+      applyAuctionLabPolicyOverridesToHistory(overrides);
+      await reloadAuctionLab();
+      setAuctionPolicyControlsMessage(
+        overrides.noBidReleaseBlocks == null
+          ? "Using the current default release window."
+          : "Applied a custom no-bid release window to the simulator view."
+      );
+    } catch (error) {
+      setAuctionPolicyControlsMessage(describeError(error));
+    }
+  });
+
+  elements.auctionPolicyResetButton?.addEventListener("click", async () => {
+    if (elements.auctionNoBidReleaseBlocksInput instanceof HTMLInputElement) {
+      elements.auctionNoBidReleaseBlocksInput.value = "";
+    }
+
+    applyAuctionLabPolicyOverridesToHistory({
+      noBidReleaseBlocks: null
+    });
+
+    try {
+      await reloadAuctionLab();
+      setAuctionPolicyControlsMessage("Reset the simulator policy back to the current defaults.");
+    } catch (error) {
+      setAuctionPolicyControlsMessage(describeError(error));
+    }
   });
 
   elements.regenNonceButton?.addEventListener("click", () => {
@@ -975,10 +1013,16 @@ async function bootstrap() {
       setAuctionBidPackageMessage(caseId, "Building bid package...");
 
       try {
+        const policyOverrides = getAuctionLabPolicyOverridesFromLocation();
         const pkg = await postJson(withBasePath("/api/auction-bid-package"), {
           caseId,
           bidderId,
-          bidAmountSats: amountSats
+          bidAmountSats: amountSats,
+          ...(policyOverrides.noBidReleaseBlocks == null
+            ? {}
+            : {
+                noBidReleaseBlocks: policyOverrides.noBidReleaseBlocks
+              })
         });
         downloadJsonFile(
           pkg,
@@ -2061,6 +2105,104 @@ function withBasePath(path) {
   }
 
   return BASE_PATH + path;
+}
+
+function getAuctionLabPolicyOverridesFromLocation() {
+  const currentUrl = new URL(window.location.href);
+  const rawNoBidReleaseBlocks = currentUrl.searchParams.get("auctionNoBidReleaseBlocks");
+
+  if (rawNoBidReleaseBlocks === null || rawNoBidReleaseBlocks.trim() === "") {
+    return {
+      noBidReleaseBlocks: null
+    };
+  }
+
+  const parsed = Number.parseInt(rawNoBidReleaseBlocks, 10);
+  if (!Number.isSafeInteger(parsed) || parsed < 0) {
+    return {
+      noBidReleaseBlocks: null
+    };
+  }
+
+  return {
+    noBidReleaseBlocks: parsed
+  };
+}
+
+function readAuctionLabPolicyOverridesFromControls() {
+  if (!(elements.auctionNoBidReleaseBlocksInput instanceof HTMLInputElement)) {
+    return {
+      noBidReleaseBlocks: null
+    };
+  }
+
+  const rawValue = elements.auctionNoBidReleaseBlocksInput.value.trim();
+  if (rawValue === "") {
+    return {
+      noBidReleaseBlocks: null
+    };
+  }
+
+  const parsed = Number.parseInt(rawValue, 10);
+  if (!Number.isSafeInteger(parsed) || parsed < 0) {
+    throw new Error("No-bid release blocks must be a non-negative integer.");
+  }
+
+  return {
+    noBidReleaseBlocks: parsed
+  };
+}
+
+function syncAuctionPolicyControlsFromState() {
+  if (!(elements.auctionNoBidReleaseBlocksInput instanceof HTMLInputElement)) {
+    return;
+  }
+
+  const activeOverrides = getAuctionLabPolicyOverridesFromLocation();
+  const fallbackValue =
+    state.auctionLab?.policy?.auction?.noBidReleaseBlocks == null
+      ? ""
+      : String(state.auctionLab.policy.auction.noBidReleaseBlocks);
+
+  elements.auctionNoBidReleaseBlocksInput.value =
+    activeOverrides.noBidReleaseBlocks == null ? fallbackValue : String(activeOverrides.noBidReleaseBlocks);
+}
+
+function setAuctionPolicyControlsMessage(message) {
+  setText(elements.auctionPolicyControlsResult, message);
+}
+
+function getAuctionLabApiPath() {
+  const query = new URLSearchParams();
+  const activeOverrides = getAuctionLabPolicyOverridesFromLocation();
+
+  if (activeOverrides.noBidReleaseBlocks != null) {
+    query.set("noBidReleaseBlocks", String(activeOverrides.noBidReleaseBlocks));
+  }
+
+  const queryString = query.toString();
+  return withBasePath("/api/auctions" + (queryString ? "?" + queryString : ""));
+}
+
+function applyAuctionLabPolicyOverridesToHistory(overrides) {
+  const currentUrl = new URL(window.location.href);
+
+  if (overrides.noBidReleaseBlocks == null) {
+    currentUrl.searchParams.delete("auctionNoBidReleaseBlocks");
+  } else {
+    currentUrl.searchParams.set("auctionNoBidReleaseBlocks", String(overrides.noBidReleaseBlocks));
+  }
+
+  const nextPath =
+    currentUrl.pathname
+    + (currentUrl.searchParams.toString() ? "?" + currentUrl.searchParams.toString() : "")
+    + currentUrl.hash;
+  window.history.replaceState({}, "", nextPath);
+}
+
+async function reloadAuctionLab() {
+  state.auctionLab = await fetchJson(getAuctionLabApiPath());
+  renderAuctionLab();
 }
 
 function cssEscape(value) {
@@ -4493,14 +4635,18 @@ function renderAuctionLab() {
   }
 
   elements.auctionLabList.classList.remove("empty");
+  syncAuctionPolicyControlsFromState();
   if (elements.auctionPolicySummary) {
     elements.auctionPolicySummary.innerHTML = renderAuctionPolicySummary(auctionLab.policy ?? null);
   }
+  const activeOverrides = getAuctionLabPolicyOverridesFromLocation();
   setText(
     elements.auctionLabMeta,
     [
       String(auctionLab.cases.length) + " experimental auction state" + (auctionLab.cases.length === 1 ? "" : "s"),
-      "using current stub reserved-class floors and lock durations",
+      activeOverrides.noBidReleaseBlocks == null
+        ? "using current stub reserved-class floors and lock durations"
+        : "using a custom no-bid release window override",
       "website/API/tests are all reading the same fixture set"
     ].join(" · ")
   );

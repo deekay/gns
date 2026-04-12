@@ -45,4 +45,18 @@ describe("loadReservedAuctionLab", () => {
       })
     ).rejects.toThrow(/fallen back to the ordinary lane/i);
   });
+
+  it("can re-simulate the lab with a custom no-bid release window", async () => {
+    const payload = await loadReservedAuctionLab({
+      policyOverrides: {
+        noBidReleaseBlocks: 10_000
+      }
+    });
+
+    expect(payload.policy.auction.noBidReleaseBlocks).toBe(10_000);
+    expect(payload.cases[5]?.id).toBe("06-released-sequoia");
+    expect(payload.cases[5]?.state.phase).toBe("awaiting_opening_bid");
+    expect(payload.cases[5]?.state.noBidReleaseBlock).toBe(890000);
+    expect(payload.cases[5]?.state.currentRequiredMinimumBidSats).toBe("200000000");
+  });
 });

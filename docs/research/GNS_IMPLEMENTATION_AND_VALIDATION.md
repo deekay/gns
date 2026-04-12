@@ -109,6 +109,8 @@ Today the repo has:
   bid packages
 - a website-facing `/auctions` page that renders pending unlock, opening-floor,
   live bidding, soft-close, and settled states from those same fixtures
+- a website-side simulator override for the no-bid release window, so the
+  auction lab can be re-run against the same fixture set without editing code
 - a resolver-backed chain-derived experimental auction feed for catalog lots,
   derived from observed `AUCTION_BID` transactions
 - stale observed-state rejection in that chain-derived feed when a bid no

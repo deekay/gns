@@ -81,6 +81,9 @@ describe("renderPageHtml", () => {
     expect(html).toContain("Experimental Reserved Auction Lab");
     expect(html).toContain("Reserved Auction States");
     expect(html).toContain("auctionLabList");
+    expect(html).toContain("auctionPolicyControls");
+    expect(html).toContain("No-bid release blocks");
+    expect(html).toContain("Apply simulator override");
     expect(html).toContain("Chain-Derived Experimental Bids");
     expect(html).toContain("experimentalAuctionList");
     expect(html).toContain("privateAuctionSmokeResult");

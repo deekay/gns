@@ -8,6 +8,7 @@ import {
   serializeReservedAuctionPolicy,
   serializeReservedAuctionStateAtBlock,
   simulateReservedAuctionStateAtBlock,
+  type ReservedAuctionPolicy,
   type SerializedReservedAuctionPolicy
 } from "@gns/core";
 
@@ -31,12 +32,21 @@ export interface ReservedAuctionLabPayload {
   readonly cases: ReadonlyArray<AuctionLabCase>;
 }
 
+export interface ReservedAuctionLabPolicyOverrides {
+  readonly noBidReleaseBlocks?: number;
+}
+
 const AUCTION_LAB_FIXTURE_DIR =
   process.env.GNS_EXPERIMENTAL_AUCTION_FIXTURE_DIR?.trim()
   || fileURLToPath(new URL("../../../fixtures/auction/lab", import.meta.url));
 
-export async function loadReservedAuctionLab(): Promise<ReservedAuctionLabPayload> {
-  const policy = createDefaultReservedAuctionPolicy();
+export async function loadReservedAuctionLab(input?: {
+  readonly policyOverrides?: ReservedAuctionLabPolicyOverrides;
+}): Promise<ReservedAuctionLabPayload> {
+  const policy = applyReservedAuctionLabPolicyOverrides(
+    createDefaultReservedAuctionPolicy(),
+    input?.policyOverrides
+  );
   const policyPayload = serializeReservedAuctionPolicy(policy);
   const fixtureFileNames = (await readdir(AUCTION_LAB_FIXTURE_DIR))
     .filter((name) => name.endsWith(".json"))
@@ -73,8 +83,15 @@ export async function createReservedAuctionLabBidPackage(input: {
   readonly caseId: string;
   readonly bidderId: string;
   readonly bidAmountSats: bigint | number | string;
+  readonly policyOverrides?: ReservedAuctionLabPolicyOverrides;
 }): Promise<AuctionBidPackage> {
-  const payload = await loadReservedAuctionLab();
+  const payload = await loadReservedAuctionLab(
+    input.policyOverrides === undefined
+      ? undefined
+      : {
+          policyOverrides: input.policyOverrides
+        }
+  );
   const auctionCase = payload.cases.find((entry) => entry.id === input.caseId);
 
   if (!auctionCase) {
@@ -106,4 +123,21 @@ export async function createReservedAuctionLabBidPackage(input: {
     bidderId: input.bidderId,
     bidAmountSats: input.bidAmountSats
   });
+}
+
+function applyReservedAuctionLabPolicyOverrides(
+  policy: ReservedAuctionPolicy,
+  overrides: ReservedAuctionLabPolicyOverrides | undefined
+): ReservedAuctionPolicy {
+  if (!overrides || overrides.noBidReleaseBlocks === undefined) {
+    return policy;
+  }
+
+  return {
+    ...policy,
+    auction: {
+      ...policy.auction,
+      noBidReleaseBlocks: overrides.noBidReleaseBlocks
+    }
+  };
 }

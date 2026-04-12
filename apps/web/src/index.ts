@@ -295,10 +295,18 @@ const server = createServer(async (request, response) => {
       const caseId = getRequiredWebBodyString(record, "caseId");
       const bidderId = getRequiredWebBodyString(record, "bidderId");
       const bidAmountSats = getRequiredWebBodySats(record, "bidAmountSats");
+      const noBidReleaseBlocks = getOptionalWebBodyInteger(record, "noBidReleaseBlocks");
       const pkg = await createReservedAuctionLabBidPackage({
         caseId,
         bidderId,
-        bidAmountSats
+        bidAmountSats,
+        ...(noBidReleaseBlocks === undefined
+          ? {}
+          : {
+              policyOverrides: {
+                noBidReleaseBlocks
+              }
+            })
       });
 
       return writeJson(response, 200, pkg);
@@ -459,7 +467,28 @@ const server = createServer(async (request, response) => {
   }
 
   if (pathname === "/api/auctions") {
-    return writeJson(response, 200, await loadReservedAuctionLab());
+    try {
+      const noBidReleaseBlocks = getOptionalQueryInteger(url.searchParams, "noBidReleaseBlocks");
+
+      return writeJson(
+        response,
+        200,
+        await loadReservedAuctionLab({
+          ...(noBidReleaseBlocks === undefined
+            ? {}
+            : {
+                policyOverrides: {
+                  noBidReleaseBlocks
+                }
+              })
+        })
+      );
+    } catch (error) {
+      return writeJson(response, 400, {
+        error: "invalid_auction_policy_override",
+        message: error instanceof Error ? error.message : "Unable to apply the auction policy override."
+      });
+    }
   }
 
   if (pathname === "/api/experimental-auctions") {
@@ -822,6 +851,23 @@ function getOptionalWebBodyInteger(
   }
 
   return value;
+}
+
+function getOptionalQueryInteger(
+  searchParams: URLSearchParams,
+  key: string
+): number | undefined {
+  const raw = searchParams.get(key);
+  if (raw === null || raw.trim() === "") {
+    return undefined;
+  }
+
+  const parsed = Number.parseInt(raw, 10);
+  if (!Number.isSafeInteger(parsed) || parsed < 0) {
+    throw new Error(`${key} must be a non-negative integer`);
+  }
+
+  return parsed;
 }
 
 function getOptionalWebBodySats(

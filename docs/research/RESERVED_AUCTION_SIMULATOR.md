@@ -155,6 +155,8 @@ That page renders a curated set of stateful fixtures so we can inspect:
 So the current public surface is:
 
 - simulator-backed state inspection on the website
+- one focused website override for `noBidReleaseBlocks`, so we can re-simulate
+  the release window directly from `/auctions`
 - bid-package handoff on the website
 - bid-artifact building/signing in CLI
 
