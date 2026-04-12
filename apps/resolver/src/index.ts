@@ -841,22 +841,97 @@ function parseNonNegativeInteger(value: string, label: string): number {
 
 function resolveExperimentalReservedAuctionPolicy(): ReservedAuctionPolicy {
   const basePolicy = createDefaultReservedAuctionPolicy();
-  const noBidReleaseBlocks = process.env.GNS_EXPERIMENTAL_AUCTION_NO_BID_RELEASE_BLOCKS;
-
-  if (noBidReleaseBlocks === undefined || noBidReleaseBlocks.trim() === "") {
-    return basePolicy;
-  }
+  const baseWindowBlocks = readOptionalExperimentalAuctionInteger("GNS_EXPERIMENTAL_AUCTION_BASE_WINDOW_BLOCKS");
+  const softCloseExtensionBlocks = readOptionalExperimentalAuctionInteger(
+    "GNS_EXPERIMENTAL_AUCTION_SOFT_CLOSE_EXTENSION_BLOCKS"
+  );
+  const noBidReleaseBlocks = readOptionalExperimentalAuctionInteger(
+    "GNS_EXPERIMENTAL_AUCTION_NO_BID_RELEASE_BLOCKS"
+  );
+  const minimumIncrementAbsoluteSats = readOptionalExperimentalAuctionBigInt(
+    "GNS_EXPERIMENTAL_AUCTION_MINIMUM_INCREMENT_ABSOLUTE_SATS"
+  );
+  const minimumIncrementBasisPoints = readOptionalExperimentalAuctionInteger(
+    "GNS_EXPERIMENTAL_AUCTION_MINIMUM_INCREMENT_BASIS_POINTS"
+  );
+  const softCloseMinimumIncrementAbsoluteSats = readOptionalExperimentalAuctionBigInt(
+    "GNS_EXPERIMENTAL_AUCTION_SOFT_CLOSE_MINIMUM_INCREMENT_ABSOLUTE_SATS"
+  );
+  const softCloseMinimumIncrementBasisPoints = readOptionalExperimentalAuctionInteger(
+    "GNS_EXPERIMENTAL_AUCTION_SOFT_CLOSE_MINIMUM_INCREMENT_BASIS_POINTS"
+  );
+  const topCollisionLockBlocks = readOptionalExperimentalAuctionInteger(
+    "GNS_EXPERIMENTAL_AUCTION_TOP_COLLISION_LOCK_BLOCKS"
+  );
+  const majorExistingNameLockBlocks = readOptionalExperimentalAuctionInteger(
+    "GNS_EXPERIMENTAL_AUCTION_MAJOR_EXISTING_NAME_LOCK_BLOCKS"
+  );
+  const publicIdentityLockBlocks = readOptionalExperimentalAuctionInteger(
+    "GNS_EXPERIMENTAL_AUCTION_PUBLIC_IDENTITY_LOCK_BLOCKS"
+  );
 
   return {
     ...basePolicy,
     auction: {
       ...basePolicy.auction,
-      noBidReleaseBlocks: parseNonNegativeInteger(
-        noBidReleaseBlocks,
-        "GNS_EXPERIMENTAL_AUCTION_NO_BID_RELEASE_BLOCKS"
-      )
+      ...(baseWindowBlocks === undefined ? {} : { baseWindowBlocks }),
+      ...(softCloseExtensionBlocks === undefined ? {} : { softCloseExtensionBlocks }),
+      ...(noBidReleaseBlocks === undefined ? {} : { noBidReleaseBlocks }),
+      ...(minimumIncrementAbsoluteSats === undefined ? {} : { minimumIncrementAbsoluteSats }),
+      ...(minimumIncrementBasisPoints === undefined ? {} : { minimumIncrementBasisPoints }),
+      ...(softCloseMinimumIncrementAbsoluteSats === undefined
+        ? {}
+        : { softCloseMinimumIncrementAbsoluteSats }),
+      ...(softCloseMinimumIncrementBasisPoints === undefined
+        ? {}
+        : { softCloseMinimumIncrementBasisPoints })
+    },
+    reservedClasses: {
+      ...basePolicy.reservedClasses,
+      top_collision: {
+        ...basePolicy.reservedClasses.top_collision,
+        ...(topCollisionLockBlocks === undefined ? {} : { lockBlocks: topCollisionLockBlocks })
+      },
+      major_existing_name: {
+        ...basePolicy.reservedClasses.major_existing_name,
+        ...(majorExistingNameLockBlocks === undefined ? {} : { lockBlocks: majorExistingNameLockBlocks })
+      },
+      public_identity: {
+        ...basePolicy.reservedClasses.public_identity,
+        ...(publicIdentityLockBlocks === undefined ? {} : { lockBlocks: publicIdentityLockBlocks })
+      }
     }
   };
+}
+
+function readOptionalExperimentalAuctionInteger(envName: string): number | undefined {
+  const value = process.env[envName];
+
+  if (value === undefined || value.trim() === "") {
+    return undefined;
+  }
+
+  return parseNonNegativeInteger(value, envName);
+}
+
+function readOptionalExperimentalAuctionBigInt(envName: string): bigint | undefined {
+  const value = process.env[envName];
+
+  if (value === undefined || value.trim() === "") {
+    return undefined;
+  }
+
+  return parseNonNegativeBigInt(value, envName);
+}
+
+function parseNonNegativeBigInt(value: string, label: string): bigint {
+  const parsed = BigInt(value);
+
+  if (parsed < 0n) {
+    throw new Error(`${label} must be a non-negative integer`);
+  }
+
+  return parsed;
 }
 
 function parseExpectedChain(value: string): BitcoinRpcChain {

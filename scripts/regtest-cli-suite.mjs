@@ -36,6 +36,14 @@ const TSX_BIN = resolve(ROOT, "node_modules/.bin/tsx");
 const CLI_ENTRY = "apps/cli/src/index.ts";
 const RESOLVER_ENTRY = "apps/resolver/src/index.ts";
 const MINE_BATCH_SIZE = 1_000;
+const AUCTION_FIXTURE_DIR = resolve(ROOT, "fixtures/auction/regtest-lab");
+const REGTEST_AUCTION_ID = "10-regtest-openai-major";
+const REGTEST_AUCTION_BASE_WINDOW_BLOCKS = 6;
+const REGTEST_AUCTION_SOFT_CLOSE_EXTENSION_BLOCKS = 2;
+const REGTEST_AUCTION_NO_BID_RELEASE_BLOCKS = 5;
+const REGTEST_AUCTION_MAJOR_LOCK_BLOCKS = 6;
+const AUCTION_BID_FEE_SATS = 1_000n;
+const AUCTION_BID_FUNDING_PADDING_SATS = 20_000n;
 
 const suiteState = {
   artifactDir: "",
@@ -67,6 +75,7 @@ async function main() {
     const summary = {
       rpc: {},
       names: {},
+      auctions: {},
       failures: {},
       values: {}
     };
@@ -85,6 +94,9 @@ async function main() {
     await expectFreshAvailability(missingName);
     await expectInvalidNameFeedback();
     await expectMissingNameFeedback(missingName);
+
+    const auctionLifecycle = await runAuctionLifecycleScenario();
+    summary.auctions[REGTEST_AUCTION_ID] = auctionLifecycle;
 
     const insufficientAccount = await createLiveAccount("insufficient-account");
     const insufficientClaim = await createClaimPackage({
@@ -875,7 +887,18 @@ async function startResolver() {
       GNS_TEST_OVERRIDE_MIN_MATURITY_BLOCKS: String(TEST_INITIAL_MATURITY_BLOCKS),
       GNS_RESOLVER_PORT: String(RESOLVER_PORT),
       GNS_SNAPSHOT_PATH: snapshotPath,
-      GNS_VALUE_STORE_PATH: valueStorePath
+      GNS_VALUE_STORE_PATH: valueStorePath,
+      GNS_EXPERIMENTAL_AUCTION_FIXTURE_DIR: AUCTION_FIXTURE_DIR,
+      GNS_EXPERIMENTAL_AUCTION_BASE_WINDOW_BLOCKS: String(REGTEST_AUCTION_BASE_WINDOW_BLOCKS),
+      GNS_EXPERIMENTAL_AUCTION_SOFT_CLOSE_EXTENSION_BLOCKS: String(
+        REGTEST_AUCTION_SOFT_CLOSE_EXTENSION_BLOCKS
+      ),
+      GNS_EXPERIMENTAL_AUCTION_NO_BID_RELEASE_BLOCKS: String(
+        REGTEST_AUCTION_NO_BID_RELEASE_BLOCKS
+      ),
+      GNS_EXPERIMENTAL_AUCTION_MAJOR_EXISTING_NAME_LOCK_BLOCKS: String(
+        REGTEST_AUCTION_MAJOR_LOCK_BLOCKS
+      )
     },
     stdio: ["ignore", "pipe", "pipe"]
   });
@@ -948,6 +971,305 @@ async function expectMissingNameFeedback(name) {
     }
   );
   assertContains(result.stdout, "\"name_not_found\"", "missing-name response");
+}
+
+async function runAuctionLifecycleScenario() {
+  logStep("Auction flow: settlement, soft close, and bond release");
+
+  const alphaBidder = await createLiveAccount("auction-alpha");
+  const betaBidder = await createLiveAccount("auction-beta");
+  const initialState = await waitForExperimentalAuction(REGTEST_AUCTION_ID, (auction) => auction !== null, 120_000);
+  assertEqual(initialState.phase, "pending_unlock", "auction initial phase");
+
+  await mineBlocks(1, "auction-unlock");
+  await waitForResolverHeight(await rpcCall("getblockcount"));
+
+  const unlockedState = await waitForExperimentalAuction(
+    REGTEST_AUCTION_ID,
+    (auction) => auction?.phase === "awaiting_opening_bid"
+  );
+  const openingBidAmountSats = BigInt(unlockedState.currentRequiredMinimumBidSats ?? unlockedState.openingMinimumBidSats);
+  const openingBid = await submitAuctionBid({
+    label: "auction-opening",
+    auctionState: unlockedState,
+    bidderId: "auction-alpha",
+    bidderAccount: alphaBidder,
+    bidAmountSats: openingBidAmountSats
+  });
+
+  await mineBlocks(1, "confirm-auction-opening-bid");
+  await waitForResolverHeight(await rpcCall("getblockcount"));
+
+  const liveState = await waitForExperimentalAuction(
+    REGTEST_AUCTION_ID,
+    (auction) => auction?.acceptedBidCount === 1 && auction.phase === "live_bidding"
+  );
+  assertEqual(liveState.currentHighestBidSats, openingBidAmountSats.toString(), "auction live highest bid");
+
+  const blocksUntilSoftClose = Math.max(
+    0,
+    Number(liveState.auctionCloseBlockAfter ?? 0) - REGTEST_AUCTION_SOFT_CLOSE_EXTENSION_BLOCKS - liveState.currentBlockHeight
+  );
+  if (blocksUntilSoftClose > 0) {
+    await mineBlocks(blocksUntilSoftClose, "auction-enter-soft-close");
+    await waitForResolverHeight(await rpcCall("getblockcount"));
+  }
+
+  const softCloseState = await waitForExperimentalAuction(
+    REGTEST_AUCTION_ID,
+    (auction) => auction?.phase === "soft_close"
+  );
+  const softCloseBidAmountSats = BigInt(
+    softCloseState.currentRequiredMinimumBidSats ?? softCloseState.openingMinimumBidSats
+  );
+  const softCloseBid = await submitAuctionBid({
+    label: "auction-soft-close-rebid",
+    auctionState: softCloseState,
+    bidderId: "auction-beta",
+    bidderAccount: betaBidder,
+    bidAmountSats: softCloseBidAmountSats
+  });
+
+  await mineBlocks(1, "confirm-auction-soft-close-bid");
+  await waitForResolverHeight(await rpcCall("getblockcount"));
+
+  const afterSoftCloseBidState = await waitForExperimentalAuction(
+    REGTEST_AUCTION_ID,
+    (auction) => auction?.acceptedBidCount === 2 && auction.phase === "soft_close"
+  );
+  const softCloseOutcome = afterSoftCloseBidState.visibleBidOutcomes.find(
+    (outcome) => outcome.txid === softCloseBid.bidTxid
+  );
+  assertEqual(
+    softCloseOutcome?.reason,
+    "higher_bid_soft_close_extended",
+    "soft-close bid extension reason"
+  );
+
+  const blocksUntilSettled = Math.max(
+    0,
+    Number(afterSoftCloseBidState.auctionCloseBlockAfter ?? 0) - afterSoftCloseBidState.currentBlockHeight + 1
+  );
+  if (blocksUntilSettled > 0) {
+    await mineBlocks(blocksUntilSettled, "auction-settle");
+    await waitForResolverHeight(await rpcCall("getblockcount"));
+  }
+
+  const settledState = await waitForExperimentalAuction(
+    REGTEST_AUCTION_ID,
+    (auction) => auction?.phase === "settled"
+  );
+  const settledOpeningOutcome = getAuctionOutcome(settledState, openingBid.bidTxid);
+  const settledWinningOutcome = getAuctionOutcome(settledState, softCloseBid.bidTxid);
+  assertEqual(settledOpeningOutcome.bondStatus, "losing_bid_releasable", "losing bond releasable after settlement");
+  assertEqual(settledWinningOutcome.bondStatus, "winner_locked", "winner bond locked after settlement");
+
+  const losingSpendTxid = await spendAuctionBondWithRpc({
+    bidTxid: openingBid.bidTxid,
+    bidBondVout: openingBid.bondVout,
+    bidBondValueSats: openingBidAmountSats,
+    destinationAddress: alphaBidder.fundingAddress,
+    signingWif: alphaBidder.fundingWif
+  });
+
+  await mineBlocks(1, "confirm-losing-auction-bond-release");
+  await waitForResolverHeight(await rpcCall("getblockcount"));
+
+  const afterLosingSpendState = await waitForExperimentalAuction(
+    REGTEST_AUCTION_ID,
+    (auction) =>
+      getAuctionOutcome(auction, openingBid.bidTxid).bondSpendStatus === "spent_after_allowed_release"
+  );
+  const losingSpentOutcome = getAuctionOutcome(afterLosingSpendState, openingBid.bidTxid);
+  const winnerStillLockedOutcome = getAuctionOutcome(afterLosingSpendState, softCloseBid.bidTxid);
+  assertEqual(losingSpentOutcome.bondSpentTxid, losingSpendTxid, "losing bond spend txid");
+  assertEqual(winnerStillLockedOutcome.bondStatus, "winner_locked", "winner bond still locked after loser release");
+
+  const winnerReleaseBlock = Number(afterLosingSpendState.winnerBondReleaseBlock ?? 0);
+  const blocksUntilWinnerRelease = Math.max(0, winnerReleaseBlock - afterLosingSpendState.currentBlockHeight);
+  if (blocksUntilWinnerRelease > 0) {
+    await mineBlocks(blocksUntilWinnerRelease, "auction-winner-release-height");
+    await waitForResolverHeight(await rpcCall("getblockcount"));
+  }
+
+  const releasableWinnerState = await waitForExperimentalAuction(
+    REGTEST_AUCTION_ID,
+    (auction) => getAuctionOutcome(auction, softCloseBid.bidTxid).bondStatus === "winner_releasable"
+  );
+  const winningSpendTxid = await spendAuctionBondWithRpc({
+    bidTxid: softCloseBid.bidTxid,
+    bidBondVout: softCloseBid.bondVout,
+    bidBondValueSats: softCloseBidAmountSats,
+    destinationAddress: betaBidder.fundingAddress,
+    signingWif: betaBidder.fundingWif
+  });
+
+  await mineBlocks(1, "confirm-winning-auction-bond-release");
+  await waitForResolverHeight(await rpcCall("getblockcount"));
+
+  const finalAuctionState = await waitForExperimentalAuction(
+    REGTEST_AUCTION_ID,
+    (auction) =>
+      getAuctionOutcome(auction, softCloseBid.bidTxid).bondSpendStatus === "spent_after_allowed_release"
+  );
+  const finalWinningOutcome = getAuctionOutcome(finalAuctionState, softCloseBid.bidTxid);
+  assertEqual(finalWinningOutcome.bondSpentTxid, winningSpendTxid, "winner bond spend txid");
+
+  return {
+    openingBidTxid: openingBid.bidTxid,
+    openingSpendTxid: losingSpendTxid,
+    softCloseBidTxid: softCloseBid.bidTxid,
+    winnerSpendTxid: winningSpendTxid,
+    finalPhase: finalAuctionState.phase,
+    finalWinnerBondStatus: finalWinningOutcome.bondStatus,
+    finalWinnerBondSpendStatus: finalWinningOutcome.bondSpendStatus,
+    loserBondSpendStatus: getAuctionOutcome(finalAuctionState, openingBid.bidTxid).bondSpendStatus
+  };
+}
+
+async function submitAuctionBid(input) {
+  const bidPackagePath = join(suiteState.artifactDir, `${input.label}-bid-package.json`);
+  const artifactsPath = join(suiteState.artifactDir, `${input.label}-bid-artifacts.json`);
+  const signedPath = join(suiteState.artifactDir, `${input.label}-signed-bid-artifacts.json`);
+  const fundingInput = await fundAddress(
+    input.bidderAccount.fundingAddress,
+    input.bidAmountSats + AUCTION_BID_FEE_SATS + AUCTION_BID_FUNDING_PADDING_SATS
+  );
+  const { createAuctionBidPackage } = await import("@gns/protocol");
+  const bidPackage = createAuctionBidPackage({
+    auctionId: input.auctionState.auctionId,
+    name: input.auctionState.normalizedName,
+    reservedClassId: input.auctionState.reservedClassId,
+    classLabel: input.auctionState.classLabel,
+    currentBlockHeight: input.auctionState.currentBlockHeight,
+    phase: input.auctionState.phase,
+    unlockBlock: input.auctionState.unlockBlock,
+    auctionCloseBlockAfter: input.auctionState.auctionCloseBlockAfter,
+    openingMinimumBidSats: input.auctionState.openingMinimumBidSats,
+    currentLeaderBidderCommitment: input.auctionState.currentLeaderBidderCommitment,
+    currentHighestBidSats: input.auctionState.currentHighestBidSats,
+    currentRequiredMinimumBidSats: input.auctionState.currentRequiredMinimumBidSats,
+    reservedLockBlocks: input.auctionState.reservedLockBlocks,
+    blocksUntilUnlock: input.auctionState.blocksUntilUnlock,
+    blocksUntilClose: input.auctionState.blocksUntilClose,
+    bidderId: input.bidderId,
+    bidAmountSats: input.bidAmountSats
+  });
+  await writeFile(bidPackagePath, JSON.stringify(bidPackage, null, 2) + "\n", "utf8");
+
+  const artifacts = await cliJson([
+    "build-auction-bid-artifacts",
+    bidPackagePath,
+    "--input",
+    formatDescriptor(fundingInput),
+    "--fee-sats",
+    AUCTION_BID_FEE_SATS.toString(),
+    "--network",
+    "regtest",
+    "--bond-address",
+    input.bidderAccount.fundingAddress,
+    "--change-address",
+    input.bidderAccount.fundingAddress,
+    "--write",
+    artifactsPath
+  ]);
+  const signed = await cliJson([
+    "sign-artifacts",
+    artifactsPath,
+    "--wif",
+    input.bidderAccount.fundingWif,
+    "--write",
+    signedPath
+  ]);
+  assertEqual(signed.signedTransactionId, artifacts.bidTxid, `${input.label} signed txid`);
+
+  const broadcast = await cliJson([
+    "broadcast-transaction",
+    signedPath,
+    "--expected-chain",
+    "regtest"
+  ]);
+  assertEqual(broadcast.broadcastedTxid, artifacts.bidTxid, `${input.label} broadcast txid`);
+
+  return {
+    bidTxid: artifacts.bidTxid,
+    bondVout: artifacts.bondVout,
+    bidAmountSats: input.bidAmountSats.toString()
+  };
+}
+
+async function fetchExperimentalAuction(auctionId) {
+  const feed = await resolverJson("/experimental-auctions");
+  const auctions = Array.isArray(feed.auctions) ? feed.auctions : [];
+  return auctions.find((auction) => auction.auctionId === auctionId) ?? null;
+}
+
+async function waitForExperimentalAuction(auctionId, predicate, timeoutMs = 120_000) {
+  return await waitFor(async () => {
+    const auction = await fetchExperimentalAuction(auctionId);
+    if (auction === null) {
+      return false;
+    }
+
+    return predicate(auction) ? auction : false;
+  }, timeoutMs, `experimental auction ${auctionId}`);
+}
+
+function getAuctionOutcome(auction, txid) {
+  const outcome = (auction.visibleBidOutcomes ?? []).find((candidate) => candidate.txid === txid);
+
+  if (!outcome) {
+    throw new Error(`missing auction outcome for ${txid}`);
+  }
+
+  return outcome;
+}
+
+async function spendAuctionBondWithRpc(input) {
+  if (input.bidBondValueSats <= TRANSFER_FEE_SATS) {
+    throw new Error("auction bond value is too small to spend after fee");
+  }
+
+  const transaction = await rpcCall("getrawtransaction", [input.bidTxid, true]);
+  const output = Array.isArray(transaction?.vout)
+    ? transaction.vout.find((candidate) => candidate?.n === input.bidBondVout)
+    : null;
+
+  if (!output?.scriptPubKey?.hex) {
+    throw new Error(`missing scriptPubKey for auction bond ${input.bidTxid}:${input.bidBondVout}`);
+  }
+
+  const spendAmountSats = input.bidBondValueSats - TRANSFER_FEE_SATS;
+  const rawTransactionHex = await rpcCall("createrawtransaction", [
+    [
+      {
+        txid: input.bidTxid,
+        vout: input.bidBondVout
+      }
+    ],
+    {
+      [input.destinationAddress]: satsToBtcString(spendAmountSats)
+    }
+  ]);
+
+  const signed = await rpcCall("signrawtransactionwithkey", [
+    rawTransactionHex,
+    [input.signingWif],
+    [
+      {
+        txid: input.bidTxid,
+        vout: input.bidBondVout,
+        scriptPubKey: output.scriptPubKey.hex,
+        amount: satsToBtcString(input.bidBondValueSats)
+      }
+    ]
+  ]);
+
+  if (signed.complete !== true || typeof signed.hex !== "string" || signed.hex.length === 0) {
+    throw new Error(`unable to sign auction bond spend for ${input.bidTxid}:${input.bidBondVout}`);
+  }
+
+  return await rpcCall("sendrawtransaction", [signed.hex]);
 }
 
 async function createLiveAccount(label) {

@@ -463,6 +463,11 @@ async function createAuctionBidPackageCommand(args: readonly string[]): Promise<
     scenario,
     currentBlockHeight
   });
+  if (state.phase === "released_to_ordinary_lane") {
+    throw new Error(
+      "this reserved lot has already been released to the ordinary lane and no longer accepts auction bids"
+    );
+  }
   const auctionBidPackage = createAuctionBidPackage({
     auctionId:
       parsed.options.get("auction-id")

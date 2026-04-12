@@ -219,6 +219,12 @@ What it covers today:
 - invalid-name feedback
 - missing-name feedback
 - insufficient bond funding for a claim
+- experimental reserved-auction lifecycle coverage with:
+  - opening bid acceptance
+  - soft-close extension under the stronger late increment rule
+  - settlement into winner / loser bond states
+  - loser bond release and allowed post-settlement spend
+  - winner lock until release height and allowed post-release spend
 - successful claim commit/reveal flow
 - successful ordinary-lane batched claim flow with one batch anchor and two queued reveals
 - successful immature gift transfer for a name originally claimed through a batch anchor

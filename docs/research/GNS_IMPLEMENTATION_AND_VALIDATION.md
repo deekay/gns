@@ -182,6 +182,12 @@ It already covers:
 
 - successful ordinary claims
 - successful batched ordinary claims
+- experimental reserved-auction lifecycle coverage with:
+  - opening bid acceptance
+  - soft-close extension
+  - settlement into winner / loser bond states
+  - loser bond release and allowed post-settlement spend
+  - winner lock until release height and allowed post-release spend
 - later transfer behavior
 - value publishing
 - sale flows
@@ -193,6 +199,10 @@ And now, importantly, it also covers:
 - a **Bitcoin-valid but GNS-invalid** batched reveal that confirms on-chain and
   is ignored by the GNS state machine because the Merkle proof does not match
   the anchored root
+- a controlled-chain experimental auction lifecycle where real `AUCTION_BID`
+  transactions open an auction, extend soft close, settle into winner / loser
+  bond states, and then prove both loser release and later winner release on
+  chain
 
 That is a strong validation milestone because it proves the protocol logic is
 not just tied to transaction construction. It correctly rejects bad batched
