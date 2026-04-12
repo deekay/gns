@@ -3,6 +3,7 @@ import { normalizeName } from "@gns/protocol";
 import {
   calculateReservedAuctionMinimumIncrementBidSats,
   getReservedAuctionOpeningRequirements,
+  isReservedAuctionSoftCloseWindow,
   type ReservedAuctionPolicy
 } from "./auction-policy.js";
 import {
@@ -549,9 +550,15 @@ function processChronologicalBidEvent(input: {
     });
   }
 
+  const extendsSoftClose = isReservedAuctionSoftCloseWindow({
+    currentBlockHeight: attempt.blockHeight,
+    auctionCloseBlockAfter: runtime.finalAuctionCloseBlock,
+    policy: input.policy
+  });
   const requiredMinimumBidSats = calculateReservedAuctionMinimumIncrementBidSats({
     currentBidSats: runtime.winner.amountSats,
-    policy: input.policy
+    policy: input.policy,
+    useSoftCloseIncrement: extendsSoftClose
   });
   if (attempt.amountSats < requiredMinimumBidSats) {
     return buildChronologicalOutcome({
@@ -588,10 +595,6 @@ function processChronologicalBidEvent(input: {
     amountSats: attempt.amountSats
   };
 
-  const extendsSoftClose =
-    runtime.finalAuctionCloseBlock !== null &&
-    input.policy.auction.softCloseExtensionBlocks > 0 &&
-    attempt.blockHeight >= runtime.finalAuctionCloseBlock - input.policy.auction.softCloseExtensionBlocks;
   const acceptanceReason: ReservedAuctionBidAcceptanceReason = extendsSoftClose
     ? "higher_bid_soft_close_extended"
     : "higher_bid";

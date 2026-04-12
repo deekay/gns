@@ -20,6 +20,8 @@ export interface ReservedAuctionSettings {
   readonly softCloseExtensionBlocks: number;
   readonly minimumIncrementAbsoluteSats: bigint;
   readonly minimumIncrementBasisPoints: number;
+  readonly softCloseMinimumIncrementAbsoluteSats: bigint;
+  readonly softCloseMinimumIncrementBasisPoints: number;
 }
 
 export interface ReservedAuctionPolicy {
@@ -41,6 +43,8 @@ export interface SerializedReservedAuctionPolicy {
     readonly softCloseExtensionBlocks: number;
     readonly minimumIncrementAbsoluteSats: string;
     readonly minimumIncrementBasisPoints: number;
+    readonly softCloseMinimumIncrementAbsoluteSats: string;
+    readonly softCloseMinimumIncrementBasisPoints: number;
   };
   readonly reservedClasses: Readonly<Record<ReservedAuctionClassId, SerializedReservedAuctionClassPolicy>>;
 }
@@ -61,7 +65,9 @@ export function createDefaultReservedAuctionPolicy(): ReservedAuctionPolicy {
       baseWindowBlocks: 4_320,
       softCloseExtensionBlocks: 144,
       minimumIncrementAbsoluteSats: 1_000_000n,
-      minimumIncrementBasisPoints: 500
+      minimumIncrementBasisPoints: 500,
+      softCloseMinimumIncrementAbsoluteSats: 1_000_000n,
+      softCloseMinimumIncrementBasisPoints: 1_000
     },
     reservedClasses: {
       top_collision: {
@@ -117,15 +123,35 @@ export function getReservedAuctionOpeningRequirements(input: {
 export function calculateReservedAuctionMinimumIncrementBidSats(input: {
   readonly currentBidSats: bigint;
   readonly policy: ReservedAuctionPolicy;
+  readonly useSoftCloseIncrement?: boolean;
 }): bigint {
-  const absoluteMinimum = input.currentBidSats + input.policy.auction.minimumIncrementAbsoluteSats;
+  const minimumIncrementAbsoluteSats = input.useSoftCloseIncrement
+    ? input.policy.auction.softCloseMinimumIncrementAbsoluteSats
+    : input.policy.auction.minimumIncrementAbsoluteSats;
+  const minimumIncrementBasisPoints = input.useSoftCloseIncrement
+    ? input.policy.auction.softCloseMinimumIncrementBasisPoints
+    : input.policy.auction.minimumIncrementBasisPoints;
+  const absoluteMinimum = input.currentBidSats + minimumIncrementAbsoluteSats;
   const percentageMinimum = divideCeil(
-    input.currentBidSats * BigInt(10_000 + input.policy.auction.minimumIncrementBasisPoints),
+    input.currentBidSats * BigInt(10_000 + minimumIncrementBasisPoints),
     10_000n
   );
   const minimum = absoluteMinimum > percentageMinimum ? absoluteMinimum : percentageMinimum;
 
   return minimum > input.currentBidSats ? minimum : input.currentBidSats + 1n;
+}
+
+export function isReservedAuctionSoftCloseWindow(input: {
+  readonly currentBlockHeight: number;
+  readonly auctionCloseBlockAfter: number | null;
+  readonly policy: ReservedAuctionPolicy;
+}): boolean {
+  return (
+    input.auctionCloseBlockAfter !== null
+    && input.policy.auction.softCloseExtensionBlocks > 0
+    && input.currentBlockHeight >= input.auctionCloseBlockAfter - input.policy.auction.softCloseExtensionBlocks
+    && input.currentBlockHeight <= input.auctionCloseBlockAfter
+  );
 }
 
 export function serializeReservedAuctionPolicy(
@@ -137,7 +163,9 @@ export function serializeReservedAuctionPolicy(
       baseWindowBlocks: policy.auction.baseWindowBlocks,
       softCloseExtensionBlocks: policy.auction.softCloseExtensionBlocks,
       minimumIncrementAbsoluteSats: policy.auction.minimumIncrementAbsoluteSats.toString(),
-      minimumIncrementBasisPoints: policy.auction.minimumIncrementBasisPoints
+      minimumIncrementBasisPoints: policy.auction.minimumIncrementBasisPoints,
+      softCloseMinimumIncrementAbsoluteSats: policy.auction.softCloseMinimumIncrementAbsoluteSats.toString(),
+      softCloseMinimumIncrementBasisPoints: policy.auction.softCloseMinimumIncrementBasisPoints
     },
     reservedClasses: {
       top_collision: serializeReservedAuctionClass(policy.reservedClasses.top_collision),
@@ -151,6 +179,14 @@ export function parseReservedAuctionPolicy(input: unknown): ReservedAuctionPolic
   const record = assertRecord(input, "reserved auction policy");
   const reservedClasses = assertRecord(record.reservedClasses, "reserved auction policy reservedClasses");
   const auction = assertRecord(record.auction, "reserved auction policy auction");
+  const minimumIncrementAbsoluteSats = parseBigIntLike(
+    auction.minimumIncrementAbsoluteSats,
+    "auction.minimumIncrementAbsoluteSats"
+  );
+  const minimumIncrementBasisPoints = parseNonNegativeSafeInteger(
+    auction.minimumIncrementBasisPoints,
+    "auction.minimumIncrementBasisPoints"
+  );
 
   return {
     ordinaryLockBlocks: parseNonNegativeSafeInteger(record.ordinaryLockBlocks, "ordinaryLockBlocks"),
@@ -160,14 +196,22 @@ export function parseReservedAuctionPolicy(input: unknown): ReservedAuctionPolic
         auction.softCloseExtensionBlocks,
         "auction.softCloseExtensionBlocks"
       ),
-      minimumIncrementAbsoluteSats: parseBigIntLike(
-        auction.minimumIncrementAbsoluteSats,
-        "auction.minimumIncrementAbsoluteSats"
-      ),
-      minimumIncrementBasisPoints: parseNonNegativeSafeInteger(
-        auction.minimumIncrementBasisPoints,
-        "auction.minimumIncrementBasisPoints"
-      )
+      minimumIncrementAbsoluteSats,
+      minimumIncrementBasisPoints,
+      softCloseMinimumIncrementAbsoluteSats:
+        auction.softCloseMinimumIncrementAbsoluteSats === undefined
+          ? minimumIncrementAbsoluteSats
+          : parseBigIntLike(
+              auction.softCloseMinimumIncrementAbsoluteSats,
+              "auction.softCloseMinimumIncrementAbsoluteSats"
+            ),
+      softCloseMinimumIncrementBasisPoints:
+        auction.softCloseMinimumIncrementBasisPoints === undefined
+          ? minimumIncrementBasisPoints
+          : parseNonNegativeSafeInteger(
+              auction.softCloseMinimumIncrementBasisPoints,
+              "auction.softCloseMinimumIncrementBasisPoints"
+            )
     },
     reservedClasses: {
       top_collision: parseReservedAuctionClassPolicy(

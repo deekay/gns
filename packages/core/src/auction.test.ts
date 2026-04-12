@@ -35,6 +35,13 @@ describe("reserved auction policy", () => {
         policy
       })
     ).toBe(11_000_000n);
+    expect(
+      calculateReservedAuctionMinimumIncrementBidSats({
+        currentBidSats: 1_100_000_000n,
+        policy,
+        useSoftCloseIncrement: true
+      })
+    ).toBe(1_210_000_000n);
   });
 });
 
@@ -95,7 +102,7 @@ describe("simulateReservedAuction", () => {
           {
             bidderId: "gamma",
             blockHeight: 844_353,
-            amountSats: 1_160_000_000n
+            amountSats: 1_210_000_000n
           },
           {
             bidderId: "late",
@@ -119,7 +126,7 @@ describe("simulateReservedAuction", () => {
     expect(result.winner).toEqual({
       bidderId: "gamma",
       blockHeight: 844_353,
-      amountSats: 1_160_000_000n
+      amountSats: 1_210_000_000n
     });
   });
 

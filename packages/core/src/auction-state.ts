@@ -1,5 +1,6 @@
 import {
   calculateReservedAuctionMinimumIncrementBidSats,
+  isReservedAuctionSoftCloseWindow,
   type ReservedAuctionPolicy
 } from "./auction-policy.js";
 import {
@@ -103,7 +104,12 @@ export function simulateReservedAuctionStateAtBlock(input: {
         ? partialResult.openingMinimumBidSats
         : calculateReservedAuctionMinimumIncrementBidSats({
             currentBidSats: partialResult.winner.amountSats,
-            policy: input.policy
+            policy: input.policy,
+            useSoftCloseIncrement: isReservedAuctionSoftCloseWindow({
+              currentBlockHeight: input.currentBlockHeight,
+              auctionCloseBlockAfter: partialResult.finalAuctionCloseBlock,
+              policy: input.policy
+            })
           });
 
   return {

@@ -27,7 +27,7 @@
       {
         "bidderId": "gamma",
         "blockHeight": 844353,
-        "amountSats": "1160000000"
+        "amountSats": "1210000000"
       },
       {
         "bidderId": "late",
@@ -39,7 +39,7 @@
   "expected": {
     "status": "settled",
     "winnerBidderId": "gamma",
-    "winnerAmountSats": "1160000000",
+    "winnerAmountSats": "1210000000",
     "initialAuctionCloseBlock": 844330,
     "finalAuctionCloseBlock": 844497,
     "reasons": [

@@ -146,11 +146,11 @@ function createAuctionBidPackageFixture() {
     auctionCloseBlockAfter: 844_497,
     openingMinimumBidSats: 1_000_000_000n,
     currentLeaderBidderId: "gamma",
-    currentHighestBidSats: 1_160_000_000n,
-    currentRequiredMinimumBidSats: 1_218_000_000n,
+    currentHighestBidSats: 1_210_000_000n,
+    currentRequiredMinimumBidSats: 1_331_000_000n,
     reservedLockBlocks: 525_600,
     bidderId: "operator_alpha",
-    bidAmountSats: 1_700_000_000n,
+    bidAmountSats: 1_340_000_000n,
     exportedAt: "2026-04-11T22:00:00.000Z"
   });
 }
@@ -307,7 +307,7 @@ describe("signArtifacts", () => {
         {
           txid: "cc".repeat(32),
           vout: 0,
-          valueSats: 1_800_100_000n,
+          valueSats: 1_340_100_000n,
           address: fundingAddress
         }
       ],
@@ -340,13 +340,13 @@ describe("signArtifacts", () => {
         {
           txid: "aa".repeat(32),
           vout: 0,
-          valueSats: 1_160_000_000n,
+          valueSats: 1_210_000_000n,
           address: fundingAddress
         },
         {
           txid: "bb".repeat(32),
           vout: 1,
-          valueSats: 540_100_000n,
+          valueSats: 130_100_000n,
           address: fundingAddress
         }
       ],

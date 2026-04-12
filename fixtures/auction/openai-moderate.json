@@ -17,19 +17,19 @@
       {
         "bidderId": "speculator_c",
         "blockHeight": 854320,
-        "amountSats": "231000000"
+        "amountSats": "242000000"
       },
       {
         "bidderId": "speculator_d",
         "blockHeight": 854450,
-        "amountSats": "250000000"
+        "amountSats": "267000000"
       }
     ]
   },
   "expected": {
     "status": "settled",
     "winnerBidderId": "speculator_d",
-    "winnerAmountSats": "250000000",
+    "winnerAmountSats": "267000000",
     "initialAuctionCloseBlock": 854330,
     "finalAuctionCloseBlock": 854594,
     "reasons": [

@@ -80,7 +80,7 @@ describe("simulateReservedAuctionStateAtBlock", () => {
         bidAttempts: [
           { bidderId: "alpha", blockHeight: 840_010, amountSats: "1000000000" },
           { bidderId: "beta", blockHeight: 844_210, amountSats: "1100000000" },
-          { bidderId: "gamma", blockHeight: 844_353, amountSats: "1160000000" }
+          { bidderId: "gamma", blockHeight: 844_353, amountSats: "1210000000" }
         ]
       })
     });
@@ -89,6 +89,7 @@ describe("simulateReservedAuctionStateAtBlock", () => {
     expect(state.currentLeaderBidderId).toBe("gamma");
     expect(state.auctionCloseBlockAfter).toBe(844_497);
     expect(state.blocksUntilClose).toBe(137);
+    expect(state.currentRequiredMinimumBidSats?.toString()).toBe("1331000000");
   });
 
   it("reports settled after the closing block passes", () => {
@@ -102,8 +103,8 @@ describe("simulateReservedAuctionStateAtBlock", () => {
         bidAttempts: [
           { bidderId: "speculator_a", blockHeight: 850_010, amountSats: "200000000" },
           { bidderId: "speculator_b", blockHeight: 851_500, amountSats: "220000000" },
-          { bidderId: "speculator_c", blockHeight: 854_320, amountSats: "231000000" },
-          { bidderId: "speculator_d", blockHeight: 854_450, amountSats: "250000000" }
+          { bidderId: "speculator_c", blockHeight: 854_320, amountSats: "242000000" },
+          { bidderId: "speculator_d", blockHeight: 854_450, amountSats: "267000000" }
         ]
       })
     });

@@ -225,7 +225,7 @@ describe("wire payloads", () => {
         openingMinimumBidSats: 200_000_000n,
         currentLeaderBidderCommitment: computeAuctionBidderCommitment("gamma"),
         currentHighestBidSats: 210_000_000n,
-        currentRequiredMinimumBidSats: 220_500_000n,
+        currentRequiredMinimumBidSats: 231_000_000n,
         reservedLockBlocks: 262_800
       }),
       bidderCommitment: computeAuctionBidderCommitment("operator_alpha")
@@ -254,7 +254,7 @@ describe("wire payloads", () => {
         openingMinimumBidSats: 200_000_000n,
         currentLeaderBidderCommitment: computeAuctionBidderCommitment("gamma"),
         currentHighestBidSats: 210_000_000n,
-        currentRequiredMinimumBidSats: 220_500_000n,
+        currentRequiredMinimumBidSats: 231_000_000n,
         reservedLockBlocks: 262_800
       }),
       bidderCommitment: computeAuctionBidderCommitment("operator_alpha")
@@ -283,7 +283,7 @@ describe("wire payloads", () => {
           openingMinimumBidSats: 200_000_000n,
           currentLeaderBidderCommitment: computeAuctionBidderCommitment("gamma"),
           currentHighestBidSats: 210_000_000n,
-          currentRequiredMinimumBidSats: 220_500_000n,
+          currentRequiredMinimumBidSats: 231_000_000n,
           reservedLockBlocks: 262_800
         }),
         bidderCommitment: computeAuctionBidderCommitment("operator_alpha")

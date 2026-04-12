@@ -237,6 +237,8 @@ The current leading auction defaults are:
 
 - late higher bids extend the auction window
 - no brittle single final block
+- bids that would extend the auction should probably face a stronger increment
+  rule than ordinary mid-auction bidding
 
 ### One active bid per bidder per auction
 
@@ -250,6 +252,7 @@ The current bias is:
 
 - require an increment that is economically meaningful
 - likely some combination of absolute floor plus percentage increment
+- and likely a stronger increment for bids that actually extend soft close
 
 This is how we prevent cheap endless extensions.
 

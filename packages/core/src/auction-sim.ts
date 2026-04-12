@@ -3,6 +3,7 @@ import { normalizeName } from "@gns/protocol";
 import {
   calculateReservedAuctionMinimumIncrementBidSats,
   getReservedAuctionOpeningRequirements,
+  isReservedAuctionSoftCloseWindow,
   parseReservedAuctionPolicy,
   type ReservedAuctionClassId,
   type ReservedAuctionPolicy
@@ -215,9 +216,15 @@ export function simulateReservedAuction(input: {
       };
     }
 
+    const extendsSoftClose = isReservedAuctionSoftCloseWindow({
+      currentBlockHeight: attempt.blockHeight,
+      auctionCloseBlockAfter: finalAuctionCloseBlock,
+      policy: input.policy
+    });
     const requiredMinimumBidSats = calculateReservedAuctionMinimumIncrementBidSats({
       currentBidSats: winningBid.amountSats,
-      policy: input.policy
+      policy: input.policy,
+      useSoftCloseIncrement: extendsSoftClose
     });
 
     if (attempt.amountSats < requiredMinimumBidSats) {
@@ -240,10 +247,6 @@ export function simulateReservedAuction(input: {
       amountSats: attempt.amountSats
     };
 
-    const extendsSoftClose =
-      finalAuctionCloseBlock !== null &&
-      input.policy.auction.softCloseExtensionBlocks > 0 &&
-      attempt.blockHeight >= finalAuctionCloseBlock - input.policy.auction.softCloseExtensionBlocks;
     const acceptanceReason: ReservedAuctionBidAcceptanceReason = extendsSoftClose
       ? "higher_bid_soft_close_extended"
       : "higher_bid";

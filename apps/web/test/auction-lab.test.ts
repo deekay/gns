@@ -23,13 +23,13 @@ describe("loadReservedAuctionLab", () => {
     const pkg = await createReservedAuctionLabBidPackage({
       caseId: "04-soft-close-google",
       bidderId: "operator_alpha",
-      bidAmountSats: "1700000000"
+      bidAmountSats: "1340000000"
     });
 
     expect(pkg.auctionId).toBe("04-soft-close-google");
     expect(pkg.name).toBe("google");
     expect(pkg.previewStatus).toBe("currently_valid");
     expect(pkg.wouldExtendSoftClose).toBe(true);
-    expect(pkg.previewRequiredMinimumBidSats).toBe("1218000000");
+    expect(pkg.previewRequiredMinimumBidSats).toBe("1331000000");
   });
 });

@@ -499,7 +499,7 @@ describe("InMemoryGnsIndexer", () => {
                 openingMinimumBidSats: catalogEntry.openingMinimumBidSats,
                 currentLeaderBidderCommitment: computeAuctionBidderCommitment("alpha"),
                 currentHighestBidSats: 1_000_000_000n,
-                currentRequiredMinimumBidSats: 1_050_000_000n,
+                currentRequiredMinimumBidSats: 1_100_000_000n,
                 reservedLockBlocks: catalogEntry.reservedLockBlocks
               }),
               bidderCommitment: computeAuctionBidderCommitment("beta")
@@ -531,7 +531,7 @@ describe("InMemoryGnsIndexer", () => {
         phase: "soft_close",
         currentLeaderBidderCommitment: computeAuctionBidderCommitment("beta"),
         currentHighestBidSats: "1100000000",
-        currentRequiredMinimumBidSats: "1155000000",
+        currentRequiredMinimumBidSats: "1210000000",
         currentlyLockedAcceptedBidCount: 2,
         currentlyLockedAcceptedBidAmountSats: "2100000000",
         acceptedBidCount: 2,
@@ -728,7 +728,7 @@ describe("InMemoryGnsIndexer", () => {
                 openingMinimumBidSats: catalogEntry.openingMinimumBidSats,
                 currentLeaderBidderCommitment: computeAuctionBidderCommitment("alpha"),
                 currentHighestBidSats: 1_000_000_000n,
-                currentRequiredMinimumBidSats: 1_050_000_000n,
+                currentRequiredMinimumBidSats: 1_100_000_000n,
                 reservedLockBlocks: catalogEntry.reservedLockBlocks
               }),
               bidderCommitment: computeAuctionBidderCommitment("alpha")
@@ -834,7 +834,7 @@ describe("InMemoryGnsIndexer", () => {
                 openingMinimumBidSats: catalogEntry.openingMinimumBidSats,
                 currentLeaderBidderCommitment: computeAuctionBidderCommitment("alpha"),
                 currentHighestBidSats: 1_000_000_000n,
-                currentRequiredMinimumBidSats: 1_050_000_000n,
+                currentRequiredMinimumBidSats: 1_100_000_000n,
                 reservedLockBlocks: catalogEntry.reservedLockBlocks
               }),
               bidderCommitment: computeAuctionBidderCommitment("beta")
@@ -959,7 +959,7 @@ describe("InMemoryGnsIndexer", () => {
                 openingMinimumBidSats: catalogEntry.openingMinimumBidSats,
                 currentLeaderBidderCommitment: computeAuctionBidderCommitment("alpha"),
                 currentHighestBidSats: 1_000_000_000n,
-                currentRequiredMinimumBidSats: 1_050_000_000n,
+                currentRequiredMinimumBidSats: 1_100_000_000n,
                 reservedLockBlocks: catalogEntry.reservedLockBlocks
               }),
               bidderCommitment: computeAuctionBidderCommitment("beta")

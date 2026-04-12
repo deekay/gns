@@ -86,6 +86,7 @@ describe("renderPageHtml", () => {
     expect(html).toContain("What This Covers");
     expect(html).toContain("Experimental bid-package handoffs");
     expect(html).toContain("Same-bidder replacement");
+    expect(html).toContain("stronger soft-close increment rule");
     expect(html).toContain("bond spend/release summaries");
   });
 });

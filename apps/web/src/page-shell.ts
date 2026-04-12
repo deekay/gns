@@ -410,6 +410,7 @@ function renderExperimentalAuctionFeedSection(): string {
       <ul>
         <li>Lots still come from the current experimental auction catalog.</li>
         <li>Leaders, minimum next bids, stale-state rejection, and bond spend/release summaries are derived from observed AUCTION_BID transactions.</li>
+        <li>Bids that merely clear the normal increment are not enough during soft close if they would extend the auction. Late extension bids use the stronger soft-close increment rule.</li>
         <li>Same-bidder replacement is only recognized when the later bid spends the prior bid bond outpoint.</li>
         <li>The current slice is still experimental: bids are derived and classified, not yet settled by a full reserved-auction engine.</li>
       </ul>`
@@ -430,6 +431,7 @@ function renderAuctionLabNotesSection(): string {
         <h3>Implemented</h3>
         <ul class="guide-list">
           <li>Configurable reserved classes, opening floors, soft close, and minimum increments.</li>
+          <li>A stronger soft-close increment rule so bids that extend the clock must escalate more than ordinary mid-auction bids.</li>
           <li>Single-auction and market-level simulators with bidder budget pressure.</li>
           <li>CLI commands, fixture scenarios, and this website-facing auction state view.</li>
           <li>Experimental bid-package handoffs from the CLI and directly from the auction lab page.</li>

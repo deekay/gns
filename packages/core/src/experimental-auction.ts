@@ -6,6 +6,7 @@ import {
 import {
   calculateReservedAuctionMinimumIncrementBidSats,
   getReservedAuctionOpeningRequirements,
+  isReservedAuctionSoftCloseWindow,
   type ReservedAuctionClassId,
   type ReservedAuctionPolicy
 } from "./auction-policy.js";
@@ -491,9 +492,15 @@ export function deriveExperimentalReservedAuctionState(input: {
       continue;
     }
 
+    const extendsSoftClose = isReservedAuctionSoftCloseWindow({
+      currentBlockHeight: observation.blockHeight,
+      auctionCloseBlockAfter: finalAuctionCloseBlock,
+      policy: input.policy
+    });
     const requiredMinimumBidSats = calculateReservedAuctionMinimumIncrementBidSats({
       currentBidSats: currentLeader.amountSats,
-      policy: input.policy
+      policy: input.policy,
+      useSoftCloseIncrement: extendsSoftClose
     });
 
     if (observation.bidAmountSats < requiredMinimumBidSats) {
@@ -520,11 +527,6 @@ export function deriveExperimentalReservedAuctionState(input: {
       });
       continue;
     }
-
-    const extendsSoftClose =
-      finalAuctionCloseBlock !== null &&
-      input.policy.auction.softCloseExtensionBlocks > 0 &&
-      observation.blockHeight >= finalAuctionCloseBlock - input.policy.auction.softCloseExtensionBlocks;
 
     if (extendsSoftClose) {
       finalAuctionCloseBlock = Math.max(
@@ -604,7 +606,12 @@ export function deriveExperimentalReservedAuctionState(input: {
         ? input.catalogEntry.openingMinimumBidSats
         : calculateReservedAuctionMinimumIncrementBidSats({
             currentBidSats: currentHighestBidSats,
-            policy: input.policy
+            policy: input.policy,
+            useSoftCloseIncrement: isReservedAuctionSoftCloseWindow({
+              currentBlockHeight: input.currentBlockHeight,
+              auctionCloseBlockAfter: finalAuctionCloseBlock,
+              policy: input.policy
+            })
           });
   const winningAcceptedOutcome =
     phase === "settled"
@@ -902,16 +909,17 @@ function createPreBidAuctionState(input: {
     };
   }
 
-  const requiredMinimumBidSats = calculateReservedAuctionMinimumIncrementBidSats({
-    currentBidSats: input.currentLeader.amountSats,
-    policy: input.policy
-  });
   const softCloseStartBlock =
     input.finalAuctionCloseBlock === null || input.policy.auction.softCloseExtensionBlocks <= 0
       ? Number.MAX_SAFE_INTEGER
       : input.finalAuctionCloseBlock - input.policy.auction.softCloseExtensionBlocks;
   const phase: ExperimentalReservedAuctionPhase =
     input.observationBlockHeight >= softCloseStartBlock ? "soft_close" : "live_bidding";
+  const requiredMinimumBidSats = calculateReservedAuctionMinimumIncrementBidSats({
+    currentBidSats: input.currentLeader.amountSats,
+    policy: input.policy,
+    useSoftCloseIncrement: phase === "soft_close"
+  });
   const phaseStartBlock = phase === "soft_close"
     ? Math.max(input.currentStateObservedFromBlock, softCloseStartBlock)
     : input.currentStateObservedFromBlock;

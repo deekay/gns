@@ -79,7 +79,7 @@ describe("experimental reserved auction derivation", () => {
             openingMinimumBidSats: catalogEntry.openingMinimumBidSats,
             currentLeaderBidderCommitment: computeAuctionBidderCommitment("alpha"),
             currentHighestBidSats: 1_000_000_000n,
-            currentRequiredMinimumBidSats: 1_050_000_000n,
+            currentRequiredMinimumBidSats: 1_100_000_000n,
             reservedLockBlocks: catalogEntry.reservedLockBlocks
           })
         },
@@ -105,7 +105,7 @@ describe("experimental reserved auction derivation", () => {
             openingMinimumBidSats: catalogEntry.openingMinimumBidSats,
             currentLeaderBidderCommitment: computeAuctionBidderCommitment("beta"),
             currentHighestBidSats: 1_100_000_000n,
-            currentRequiredMinimumBidSats: 1_155_000_000n,
+            currentRequiredMinimumBidSats: 1_210_000_000n,
             reservedLockBlocks: catalogEntry.reservedLockBlocks + 1
           })
         }
@@ -115,7 +115,7 @@ describe("experimental reserved auction derivation", () => {
     expect(state.phase).toBe("soft_close");
     expect(state.currentLeaderBidderCommitment).toBe(computeAuctionBidderCommitment("beta"));
     expect(state.currentHighestBidSats).toBe(1_100_000_000n);
-    expect(state.currentRequiredMinimumBidSats).toBe(1_155_000_000n);
+    expect(state.currentRequiredMinimumBidSats).toBe(1_210_000_000n);
     expect(state.acceptedBidCount).toBe(2);
     expect(state.rejectedBidCount).toBe(1);
     expect(state.currentlyLockedAcceptedBidCount).toBe(2);
@@ -279,7 +279,7 @@ describe("experimental reserved auction derivation", () => {
             openingMinimumBidSats: catalogEntry.openingMinimumBidSats,
             currentLeaderBidderCommitment: computeAuctionBidderCommitment("alpha"),
             currentHighestBidSats: 1_000_000_000n,
-            currentRequiredMinimumBidSats: 1_050_000_000n,
+            currentRequiredMinimumBidSats: 1_100_000_000n,
             reservedLockBlocks: catalogEntry.reservedLockBlocks
           })
         }
@@ -368,7 +368,7 @@ describe("experimental reserved auction derivation", () => {
             openingMinimumBidSats: catalogEntry.openingMinimumBidSats,
             currentLeaderBidderCommitment: computeAuctionBidderCommitment("alpha"),
             currentHighestBidSats: 1_000_000_000n,
-            currentRequiredMinimumBidSats: 1_050_000_000n,
+            currentRequiredMinimumBidSats: 1_100_000_000n,
             reservedLockBlocks: catalogEntry.reservedLockBlocks
           })
         }
@@ -478,7 +478,7 @@ describe("experimental reserved auction derivation", () => {
             openingMinimumBidSats: catalogEntry.openingMinimumBidSats,
             currentLeaderBidderCommitment: computeAuctionBidderCommitment("alpha"),
             currentHighestBidSats: 1_000_000_000n,
-            currentRequiredMinimumBidSats: 1_050_000_000n,
+            currentRequiredMinimumBidSats: 1_100_000_000n,
             reservedLockBlocks: catalogEntry.reservedLockBlocks
           })
         }
@@ -591,7 +591,7 @@ describe("experimental reserved auction derivation", () => {
             openingMinimumBidSats: catalogEntry.openingMinimumBidSats,
             currentLeaderBidderCommitment: computeAuctionBidderCommitment("alpha"),
             currentHighestBidSats: 1_000_000_000n,
-            currentRequiredMinimumBidSats: 1_050_000_000n,
+            currentRequiredMinimumBidSats: 1_100_000_000n,
             reservedLockBlocks: catalogEntry.reservedLockBlocks
           })
         },
@@ -617,7 +617,7 @@ describe("experimental reserved auction derivation", () => {
             openingMinimumBidSats: catalogEntry.openingMinimumBidSats,
             currentLeaderBidderCommitment: computeAuctionBidderCommitment("alpha"),
             currentHighestBidSats: 1_100_000_000n,
-            currentRequiredMinimumBidSats: 1_155_000_000n,
+            currentRequiredMinimumBidSats: 1_210_000_000n,
             reservedLockBlocks: catalogEntry.reservedLockBlocks
           })
         }

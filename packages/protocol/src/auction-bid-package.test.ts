@@ -64,15 +64,15 @@ describe("auction bid packages", () => {
       openingMinimumBidSats: 1_000_000_000n,
       currentLeaderBidderId: "speculator_d",
       currentHighestBidSats: 1_600_000_000n,
-      currentRequiredMinimumBidSats: 1_680_000_000n,
+      currentRequiredMinimumBidSats: 1_760_000_000n,
       reservedLockBlocks: 525_600,
       bidderId: "operator_b",
-      bidAmountSats: 1_700_000_000n,
+      bidAmountSats: 1_800_000_000n,
       exportedAt: "2026-04-11T19:00:00.000Z"
     });
 
     expect(pkg.previewStatus).toBe("currently_valid");
-    expect(pkg.previewRequiredMinimumBidSats).toBe("1680000000");
+    expect(pkg.previewRequiredMinimumBidSats).toBe("1760000000");
     expect(pkg.wouldBecomeLeader).toBe(true);
     expect(pkg.wouldExtendSoftClose).toBe(true);
     expect(pkg.currentLeaderBidderCommitment).toBe(

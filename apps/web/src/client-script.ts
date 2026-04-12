@@ -4563,6 +4563,14 @@ function renderAuctionPolicySummary(policy) {
         " or " +
         String((Number(policy.auction?.minimumIncrementBasisPoints ?? 0) / 100).toFixed(2)) +
         "%"
+    },
+    {
+      title: "Soft-close increment",
+      value:
+        formatSats(policy.auction?.softCloseMinimumIncrementAbsoluteSats ?? "0") +
+        " or " +
+        String((Number(policy.auction?.softCloseMinimumIncrementBasisPoints ?? 0) / 100).toFixed(2)) +
+        "%"
     }
   ];
 
@@ -4603,6 +4611,7 @@ function renderAuctionCaseCard(auctionCase) {
   const phase = String(stateView.phase ?? "unknown");
   const phasePill = mapAuctionPhasePill(phase);
   const leaderLabel = phase === "settled" ? "Winner" : "Current leader";
+  const nextBidLabel = phase === "soft_close" ? "Next valid bid (extends close)" : "Next valid bid";
   const closeLabel = phase === "pending_unlock"
     ? "Unlock block"
     : phase === "awaiting_opening_bid"
@@ -4632,7 +4641,7 @@ function renderAuctionCaseCard(auctionCase) {
     '    <div class="result-item"><label>Opening minimum</label><p class="field-value">' + escapeHtml(formatSats(stateView.openingMinimumBidSats ?? "0")) + "</p></div>",
     '    <div class="result-item"><label>' + escapeHtml(leaderLabel) + '</label><p class="field-value">' + escapeHtml(stateView.currentLeaderBidderId ?? "None yet") + "</p></div>",
     '    <div class="result-item"><label>Highest bid</label><p class="field-value">' + escapeHtml(stateView.currentHighestBidSats ? formatSats(stateView.currentHighestBidSats) : "None yet") + "</p></div>",
-    '    <div class="result-item"><label>Next valid bid</label><p class="field-value">' + escapeHtml(stateView.currentRequiredMinimumBidSats ? formatSats(stateView.currentRequiredMinimumBidSats) : "Auction settled") + "</p></div>",
+    '    <div class="result-item"><label>' + escapeHtml(nextBidLabel) + '</label><p class="field-value">' + escapeHtml(stateView.currentRequiredMinimumBidSats ? formatSats(stateView.currentRequiredMinimumBidSats) : "Auction settled") + "</p></div>",
     '    <div class="result-item"><label>Accepted / rejected</label><p class="field-value">' + escapeHtml(String(stateView.acceptedBidCount ?? 0) + " / " + String(stateView.rejectedBidCount ?? 0)) + "</p></div>",
     '    <div class="result-item"><label>Reserved lock</label><p class="field-value">' + escapeHtml(formatBlockWindow(stateView.reservedLockBlocks)) + "</p></div>",
     '    <div class="result-item"><label>Blocks to unlock</label><p class="field-value">' + escapeHtml(String(stateView.blocksUntilUnlock ?? 0)) + "</p></div>",
@@ -4648,6 +4657,7 @@ function renderExperimentalAuctionCard(auction) {
   const phase = String(auction.phase ?? "unknown");
   const phasePill = mapAuctionPhasePill(phase);
   const leaderLabel = phase === "settled" ? "Winner commitment" : "Leader commitment";
+  const nextBidLabel = phase === "soft_close" ? "Next valid bid (extends close)" : "Next valid bid";
   const settlementLabel = phase === "settled" ? "Winner release" : "Settlement";
   const settlementValue =
     phase === "settled"
@@ -4669,7 +4679,7 @@ function renderExperimentalAuctionCard(auction) {
     '    <div class="result-item"><label>Opening minimum</label><p class="field-value">' + escapeHtml(formatSats(auction.openingMinimumBidSats ?? "0")) + "</p></div>",
     '    <div class="result-item"><label>' + escapeHtml(leaderLabel) + '</label><p class="field-value">' + escapeHtml(formatAuctionCommitment(auction.currentLeaderBidderCommitment)) + "</p></div>",
     '    <div class="result-item"><label>Highest bid</label><p class="field-value">' + escapeHtml(auction.currentHighestBidSats ? formatSats(auction.currentHighestBidSats) : "None yet") + "</p></div>",
-    '    <div class="result-item"><label>Next valid bid</label><p class="field-value">' + escapeHtml(auction.currentRequiredMinimumBidSats ? formatSats(auction.currentRequiredMinimumBidSats) : "Auction settled") + "</p></div>",
+    '    <div class="result-item"><label>' + escapeHtml(nextBidLabel) + '</label><p class="field-value">' + escapeHtml(auction.currentRequiredMinimumBidSats ? formatSats(auction.currentRequiredMinimumBidSats) : "Auction settled") + "</p></div>",
     '    <div class="result-item"><label>Accepted / rejected</label><p class="field-value">' + escapeHtml(String(auction.acceptedBidCount ?? 0) + " / " + String(auction.rejectedBidCount ?? 0)) + "</p></div>",
     '    <div class="result-item"><label>Observed bids</label><p class="field-value">' + escapeHtml(String(auction.totalObservedBidCount ?? 0)) + "</p></div>",
     '    <div class="result-item"><label>Blocks to unlock</label><p class="field-value">' + escapeHtml(String(auction.blocksUntilUnlock ?? 0)) + "</p></div>",
@@ -4694,6 +4704,10 @@ function renderAuctionBidPackageComposer(auctionCase) {
     ?? stateView.currentHighestBidSats
     ?? "0"
   );
+  const composerNote =
+    stateView.phase === "soft_close"
+      ? "Soft close is active. A bid from this state must clear the stronger late-extension increment."
+      : "Build an operator handoff package for this observed auction state.";
 
   return [
     '<details class="detail-technical">',
@@ -4703,7 +4717,7 @@ function renderAuctionBidPackageComposer(auctionCase) {
     '    <div class="field"><label class="field-label" for="auction-amount-' + escapeHtml(caseId) + '">Bid amount (sats)</label><input id="auction-amount-' + escapeHtml(caseId) + '" type="text" inputmode="numeric" data-auction-bid-amount="' + escapeHtml(caseId) + '" value="' + escapeHtml(defaultBidAmount) + '" /></div>',
     '    <div class="draft-field-full">',
     '      <div class="field-actions"><button type="button" data-download-auction-bid-package="' + escapeHtml(caseId) + '">Download bid package</button></div>',
-    '      <p class="tx-panel-note" data-auction-package-result="' + escapeHtml(caseId) + '">Build an operator handoff package for this observed auction state.</p>',
+    '      <p class="tx-panel-note" data-auction-package-result="' + escapeHtml(caseId) + '">' + escapeHtml(composerNote) + "</p>",
     "    </div>",
     "  </div>",
     "</details>"

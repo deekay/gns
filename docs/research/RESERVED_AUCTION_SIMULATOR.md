@@ -57,6 +57,8 @@ The current defaults are intentionally coarse and easy to change:
 - soft close extension: `144` blocks
 - minimum increment absolute floor: `1,000,000` sats
 - minimum increment percentage floor: `500` basis points (`5%`)
+- soft-close extension minimum absolute floor: `1,000,000` sats
+- soft-close extension minimum percentage floor: `1,000` basis points (`10%`)
 
 Reserved classes:
 
@@ -72,6 +74,14 @@ Reserved classes:
 
 These are **stub temporary numbers**. They exist so we can start testing the
 mechanics now.
+
+The current closure bias is:
+
+- a normal higher bid must clear the ordinary increment rule
+- a bid that would extend the auction during soft close must clear the
+  stronger soft-close increment rule
+
+So late extensions do not just add time. They also demand a larger price move.
 
 ## Current CLI Surface
 
@@ -172,6 +182,7 @@ These are meant to be illustrative:
   - opening floor pressure
   - minimum increment rejection
   - soft-close extension
+  - stronger late-bid escalation once the extension window is active
   - late bid rejection after close
 - `openai-moderate`
   - a competitive but less extreme major-name auction
@@ -212,6 +223,8 @@ The immediate purpose is to make a few questions testable:
 - are the default floors obviously too weak or too harsh?
 - does soft close behave the way we expect?
 - how sensitive are outcomes to the minimum increment rule?
+- does the stronger soft-close increment create enough closure pressure without
+  making legitimate late bidding feel too brittle?
 - does a public-identity lane still feel viable under a lighter burden?
 - how much do early winners constrain later bidding by the same actors?
 - does losing-capital release timing materially affect later reserved waves?
