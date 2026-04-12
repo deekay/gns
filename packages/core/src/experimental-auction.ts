@@ -5,6 +5,7 @@ import {
 
 import {
   calculateReservedAuctionMinimumIncrementBidSats,
+  getReservedAuctionNoBidReleaseBlock,
   getReservedAuctionOpeningRequirements,
   isReservedAuctionSoftCloseWindow,
   type ReservedAuctionClassId,
@@ -13,6 +14,7 @@ import {
 
 export type ExperimentalReservedAuctionBidRejectionReason =
   | "before_unlock"
+  | "released_to_ordinary_lane"
   | "below_opening_minimum"
   | "auction_closed"
   | "below_minimum_increment"
@@ -50,9 +52,15 @@ export type ExperimentalReservedAuctionBidSpendStatus =
 export type ExperimentalReservedAuctionPhase =
   | "pending_unlock"
   | "awaiting_opening_bid"
+  | "released_to_ordinary_lane"
   | "live_bidding"
   | "soft_close"
   | "settled";
+
+type ExperimentalAuctionCommitmentPhase = Exclude<
+  ExperimentalReservedAuctionPhase,
+  "released_to_ordinary_lane"
+>;
 
 export interface ExperimentalReservedAuctionCatalogEntryInput {
   readonly auctionId: string;
@@ -71,6 +79,7 @@ export interface ExperimentalReservedAuctionCatalogEntry {
   readonly reservedClassId: ReservedAuctionClassId;
   readonly classLabel: string;
   readonly unlockBlock: number;
+  readonly ordinaryMinimumBidSats: bigint;
   readonly openingMinimumBidSats: bigint;
   readonly reservedLockBlocks: number;
   readonly auctionLotCommitment: string;
@@ -136,11 +145,14 @@ export interface ExperimentalReservedAuctionState {
   readonly reservedClassId: ReservedAuctionClassId;
   readonly classLabel: string;
   readonly unlockBlock: number;
+  readonly ordinaryMinimumBidSats: bigint;
   readonly openingMinimumBidSats: bigint;
   readonly reservedLockBlocks: number;
+  readonly noBidReleaseBlock: number | null;
   readonly auctionStartBlock: number | null;
   readonly auctionCloseBlockAfter: number | null;
   readonly blocksUntilUnlock: number;
+  readonly blocksUntilNoBidRelease: number | null;
   readonly blocksUntilClose: number | null;
   readonly currentLeaderBidderCommitment: string | null;
   readonly currentHighestBidSats: bigint | null;
@@ -192,11 +204,14 @@ export interface SerializedExperimentalReservedAuctionState {
   readonly reservedClassId: ReservedAuctionClassId;
   readonly classLabel: string;
   readonly unlockBlock: number;
+  readonly ordinaryMinimumBidSats: string;
   readonly openingMinimumBidSats: string;
   readonly reservedLockBlocks: number;
+  readonly noBidReleaseBlock: number | null;
   readonly auctionStartBlock: number | null;
   readonly auctionCloseBlockAfter: number | null;
   readonly blocksUntilUnlock: number;
+  readonly blocksUntilNoBidRelease: number | null;
   readonly blocksUntilClose: number | null;
   readonly currentLeaderBidderCommitment: string | null;
   readonly currentHighestBidSats: string | null;
@@ -232,6 +247,7 @@ export function createExperimentalReservedAuctionCatalogEntry(
     reservedClassId: input.reservedClassId,
     classLabel: openingRequirements.classLabel,
     unlockBlock: input.unlockBlock,
+    ordinaryMinimumBidSats: openingRequirements.ordinaryMinimumBidSats,
     openingMinimumBidSats: openingRequirements.openingMinimumBidSats,
     reservedLockBlocks: openingRequirements.reservedLockBlocks,
     auctionLotCommitment: computeAuctionLotCommitment({
@@ -271,6 +287,11 @@ export function deriveExperimentalReservedAuctionState(input: {
   const observations = input.bidObservations
     .filter((observation) => observation.auctionLotCommitment === input.catalogEntry.auctionLotCommitment)
     .sort(compareBidObservations);
+  const noBidReleaseBlock =
+    getReservedAuctionNoBidReleaseBlock({
+      unlockBlock: input.catalogEntry.unlockBlock,
+      policy: input.policy
+    });
   const spentOutpointMap = new Map(
     (input.spentOutpoints ?? []).map((observation) => [toOutpointKey(observation.outpointTxid, observation.outpointVout), observation])
   );
@@ -346,6 +367,31 @@ export function deriveExperimentalReservedAuctionState(input: {
         auctionCloseBlockAfter: finalAuctionCloseBlock,
         highestBidSatsAfter: currentLeader?.amountSats ?? null,
         stateCommitmentMatched: preBidState.stateCommitmentMatched,
+        bondStatus: "rejected_not_tracked" as const,
+        bondReleaseBlock: null,
+        bondSpendStatus: "not_applicable" as const,
+        bondSpentTxid: null,
+        bondSpentBlockHeight: null
+      });
+      continue;
+    }
+
+    if (preBidState.phase === "released_to_ordinary_lane") {
+      visibleBidOutcomes.push({
+        index,
+        txid: observation.txid,
+        blockHeight: observation.blockHeight,
+        txIndex: observation.txIndex,
+        vout: observation.vout,
+        bondVout: observation.bondVout,
+        bidderCommitment: observation.bidderCommitment,
+        amountSats: observation.bidAmountSats,
+        status: "rejected" as const,
+        reason: "released_to_ordinary_lane" as const,
+        requiredMinimumBidSats: input.catalogEntry.ordinaryMinimumBidSats,
+        auctionCloseBlockAfter: finalAuctionCloseBlock,
+        highestBidSatsAfter: currentLeader?.amountSats ?? null,
+        stateCommitmentMatched: false,
         bondStatus: "rejected_not_tracked" as const,
         bondReleaseBlock: null,
         bondSpendStatus: "not_applicable" as const,
@@ -585,6 +631,7 @@ export function deriveExperimentalReservedAuctionState(input: {
   const phase = deriveExperimentalReservedAuctionPhase({
     currentBlockHeight: input.currentBlockHeight,
     unlockBlock: input.catalogEntry.unlockBlock,
+    noBidReleaseBlock,
     auctionCloseBlockAfter: finalAuctionCloseBlock,
     softCloseExtensionBlocks: input.policy.auction.softCloseExtensionBlocks,
     winnerPresent: currentLeader !== null
@@ -600,7 +647,7 @@ export function deriveExperimentalReservedAuctionState(input: {
   const currentLeaderBidderCommitment = lastAcceptedOutcome?.bidderCommitment ?? null;
   const currentHighestBidSats = lastAcceptedOutcome?.highestBidSatsAfter ?? null;
   const currentRequiredMinimumBidSats =
-    phase === "settled"
+    phase === "settled" || phase === "released_to_ordinary_lane"
       ? null
       : currentHighestBidSats === null
         ? input.catalogEntry.openingMinimumBidSats
@@ -715,11 +762,15 @@ export function deriveExperimentalReservedAuctionState(input: {
     reservedClassId: input.catalogEntry.reservedClassId,
     classLabel: input.catalogEntry.classLabel,
     unlockBlock: input.catalogEntry.unlockBlock,
+    ordinaryMinimumBidSats: input.catalogEntry.ordinaryMinimumBidSats,
     openingMinimumBidSats: input.catalogEntry.openingMinimumBidSats,
     reservedLockBlocks: input.catalogEntry.reservedLockBlocks,
+    noBidReleaseBlock: currentLeader === null ? noBidReleaseBlock : null,
     auctionStartBlock,
     auctionCloseBlockAfter,
     blocksUntilUnlock: Math.max(0, input.catalogEntry.unlockBlock - input.currentBlockHeight),
+    blocksUntilNoBidRelease:
+      currentLeader === null ? Math.max(0, noBidReleaseBlock - input.currentBlockHeight) : null,
     blocksUntilClose:
       auctionCloseBlockAfter === null ? null : Math.max(0, auctionCloseBlockAfter - input.currentBlockHeight),
     currentLeaderBidderCommitment,
@@ -754,11 +805,14 @@ export function serializeExperimentalReservedAuctionState(
     reservedClassId: state.reservedClassId,
     classLabel: state.classLabel,
     unlockBlock: state.unlockBlock,
+    ordinaryMinimumBidSats: state.ordinaryMinimumBidSats.toString(),
     openingMinimumBidSats: state.openingMinimumBidSats.toString(),
     reservedLockBlocks: state.reservedLockBlocks,
+    noBidReleaseBlock: state.noBidReleaseBlock,
     auctionStartBlock: state.auctionStartBlock,
     auctionCloseBlockAfter: state.auctionCloseBlockAfter,
     blocksUntilUnlock: state.blocksUntilUnlock,
+    blocksUntilNoBidRelease: state.blocksUntilNoBidRelease,
     blocksUntilClose: state.blocksUntilClose,
     currentLeaderBidderCommitment: state.currentLeaderBidderCommitment,
     currentHighestBidSats: state.currentHighestBidSats?.toString() ?? null,
@@ -805,6 +859,8 @@ export function formatExperimentalReservedAuctionPhaseLabel(
       return "Pending unlock";
     case "awaiting_opening_bid":
       return "Awaiting opening bid";
+    case "released_to_ordinary_lane":
+      return "Released to ordinary lane";
     case "live_bidding":
       return "Live bidding";
     case "soft_close":
@@ -861,6 +917,20 @@ function createPreBidAuctionState(input: {
   }
 
   if (input.currentLeader === null) {
+    if (
+      input.observationBlockHeight
+      > getReservedAuctionNoBidReleaseBlock({
+        unlockBlock: input.catalogEntry.unlockBlock,
+        policy: input.policy
+      })
+    ) {
+      return {
+        phase: "released_to_ordinary_lane",
+        requiredMinimumBidSats: input.catalogEntry.ordinaryMinimumBidSats,
+        stateCommitmentMatched: false
+      };
+    }
+
     return {
       phase: "awaiting_opening_bid",
       requiredMinimumBidSats: input.catalogEntry.openingMinimumBidSats,
@@ -957,7 +1027,7 @@ function matchAuctionStateCommitmentWithinWindow(input: {
   readonly currentLeaderBidderCommitment: string | null;
   readonly currentHighestBidSats: bigint | null;
   readonly currentRequiredMinimumBidSats: bigint | null;
-  readonly phase: ExperimentalReservedAuctionPhase;
+  readonly phase: ExperimentalAuctionCommitmentPhase;
   readonly auctionCloseBlockAfter: number | null;
   readonly minObservedBlockHeight: number;
   readonly maxObservedBlockHeight: number;
@@ -1010,6 +1080,7 @@ function toOutpointKey(txid: string, vout: number): string {
 function deriveExperimentalReservedAuctionPhase(input: {
   readonly currentBlockHeight: number;
   readonly unlockBlock: number;
+  readonly noBidReleaseBlock: number | null;
   readonly auctionCloseBlockAfter: number | null;
   readonly softCloseExtensionBlocks: number;
   readonly winnerPresent: boolean;
@@ -1019,6 +1090,10 @@ function deriveExperimentalReservedAuctionPhase(input: {
   }
 
   if (!input.winnerPresent) {
+    if (input.noBidReleaseBlock !== null && input.currentBlockHeight > input.noBidReleaseBlock) {
+      return "released_to_ordinary_lane";
+    }
+
     return "awaiting_opening_bid";
   }
 

@@ -81,6 +81,12 @@ export async function createReservedAuctionLabBidPackage(input: {
     throw new Error(`Unknown auction lab case: ${input.caseId}`);
   }
 
+  if (auctionCase.state.phase === "released_to_ordinary_lane") {
+    throw new Error(
+      `Auction lot ${auctionCase.state.normalizedName} has already fallen back to the ordinary lane. Use the ordinary claim flow instead.`
+    );
+  }
+
   return createAuctionBidPackage({
     auctionId: auctionCase.id,
     name: auctionCase.state.normalizedName,

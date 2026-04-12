@@ -67,6 +67,9 @@ describe("renderClientScript", () => {
     expect(script).toContain("formatAuctionBondSpendStatus");
     expect(script).toContain("renderAuctionBidPackageComposer");
     expect(script).toContain("setAuctionBidPackageMessage");
+    expect(script).toContain("Released to ordinary lane");
+    expect(script).toContain("Ordinary-lane floor");
+    expect(script).toContain("Prepare an ordinary claim");
     expect(script).toContain("Soft-close increment");
     expect(script).toContain("Next valid bid (extends close)");
     expect(script).toContain("Accepted capital locked");

@@ -649,6 +649,47 @@ describe("InMemoryGnsIndexer", () => {
     ]);
   });
 
+  it("surfaces released-to-ordinary-lane state for no-bid lots once the release window passes", () => {
+    const policy = createDefaultReservedAuctionPolicy();
+    const catalogEntry = createExperimentalReservedAuctionCatalogEntry(
+      {
+        auctionId: "02-awaiting-opening-sequoia",
+        title: "Awaiting opening bid · sequoia",
+        description: "Major existing name after unlock but before a valid opening bid.",
+        name: "sequoia",
+        reservedClassId: "major_existing_name",
+        unlockBlock: 880_000
+      },
+      policy
+    );
+    const indexer = new InMemoryGnsIndexer({
+      launchHeight: 100,
+      experimentalReservedAuctionCatalog: [catalogEntry]
+    });
+
+    indexer.ingestBlocks([
+      makeBlock(884_321, [
+        {
+          txid: "aa".repeat(32),
+          payloads: []
+        }
+      ])
+    ]);
+
+    expect(indexer.listExperimentalAuctions()).toMatchObject([
+      {
+        auctionId: "02-awaiting-opening-sequoia",
+        phase: "released_to_ordinary_lane",
+        ordinaryMinimumBidSats: "1562500",
+        currentRequiredMinimumBidSats: null,
+        noBidReleaseBlock: 884_320,
+        blocksUntilNoBidRelease: 0,
+        acceptedBidCount: 0,
+        rejectedBidCount: 0
+      }
+    ]);
+  });
+
   it("derives self-replacement semantics when a bidder spends the prior bid bond", () => {
     const policy = createDefaultReservedAuctionPolicy();
     const catalogEntry = createExperimentalReservedAuctionCatalogEntry(

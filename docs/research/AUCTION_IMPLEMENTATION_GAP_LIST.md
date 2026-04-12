@@ -47,7 +47,7 @@ That means we now have:
 - a resolver-backed experimental auction feed that derives:
   - current leader
   - current minimum next bid
-  - soft-close / settled phase
+  - pending / released / live / soft-close / settled phase
   - stale observed-state rejection
   - same-bidder replacement when the later bid spends the earlier bid bond
   - derived accepted-bid bond status and bond spend / release summaries
@@ -117,7 +117,8 @@ What it still does **not** know:
 - actual loser release / winner lock enforcement on chain
 - full rebid replacement enforcement on chain beyond the current experimental
   derivation
-- no-bid fallback behavior
+- fully chain-enforced no-bid fallback behavior beyond the current experimental
+  release-valve derivation
 - a fully registry-backed reserved-auction market beyond the experimental lot
   catalog
 
@@ -130,8 +131,8 @@ Still open:
 
 - when loser capital unlocks
 - how winner capital remains locked
-- whether no-bid reserved names fall back to the ordinary lane
-- how over-reserved names get a release valve
+- whether the current no-bid release window is the right default
+- how over-reserved names should tune that release valve
 - whether transfers before maturity are allowed and under what constraints
 
 ### 5. Website Bidder Flow

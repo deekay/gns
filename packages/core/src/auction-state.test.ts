@@ -48,6 +48,31 @@ describe("simulateReservedAuctionStateAtBlock", () => {
     expect(state.currentRequiredMinimumBidSats?.toString()).toBe("200000000");
   });
 
+  it("releases a no-bid lot back to the ordinary lane after the release window passes", () => {
+    const state = simulateReservedAuctionStateAtBlock({
+      policy,
+      currentBlockHeight: 884_321,
+      scenario: parseReservedAuctionScenario({
+        name: "sequoia",
+        reservedClassId: "major_existing_name",
+        unlockBlock: 880_000,
+        bidAttempts: [
+          { bidderId: "speculator_a", blockHeight: 880_015, amountSats: "150000000" },
+          { bidderId: "speculator_b", blockHeight: 880_020, amountSats: "180000000" },
+          { bidderId: "speculator_c", blockHeight: 880_030, amountSats: "199999999" }
+        ]
+      })
+    });
+
+    expect(state.phase).toBe("released_to_ordinary_lane");
+    expect(state.noBidReleaseBlock).toBe(884_320);
+    expect(state.blocksUntilNoBidRelease).toBe(0);
+    expect(state.ordinaryMinimumBidSats).toBe(1_562_500n);
+    expect(state.currentRequiredMinimumBidSats).toBeNull();
+    expect(state.acceptedBidCount).toBe(0);
+    expect(state.rejectedBidCount).toBe(3);
+  });
+
   it("reports live bidding after a valid opening bid before soft close", () => {
     const state = simulateReservedAuctionStateAtBlock({
       policy,

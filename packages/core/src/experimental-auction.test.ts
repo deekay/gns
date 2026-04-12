@@ -212,6 +212,82 @@ describe("experimental reserved auction derivation", () => {
     });
   });
 
+  it("releases a no-bid lot to the ordinary lane and rejects later auction bids", () => {
+    const policy = createDefaultReservedAuctionPolicy();
+    const catalogEntry = createExperimentalReservedAuctionCatalogEntry(
+      {
+        auctionId: "02-awaiting-opening-sequoia",
+        title: "Awaiting opening bid · sequoia",
+        description: "Major existing name after unlock but before a valid opening bid.",
+        name: "sequoia",
+        reservedClassId: "major_existing_name",
+        unlockBlock: 880_000
+      },
+      policy
+    );
+
+    const state = deriveExperimentalReservedAuctionState({
+      policy,
+      currentBlockHeight: 884_321,
+      catalogEntry,
+      bidObservations: [
+        {
+          txid: "11".repeat(32),
+          blockHeight: 880_015,
+          txIndex: 0,
+          vout: 1,
+          bondVout: 0,
+          bidderCommitment: computeAuctionBidderCommitment("speculator_a"),
+          bidAmountSats: 150_000_000n,
+          reservedLockBlocks: catalogEntry.reservedLockBlocks,
+          auctionLotCommitment: catalogEntry.auctionLotCommitment,
+          spentOutpoints: [],
+          auctionCommitment: computeAuctionBidStateCommitment({
+            auctionId: catalogEntry.auctionId,
+            name: catalogEntry.normalizedName,
+            reservedClassId: catalogEntry.reservedClassId,
+            currentBlockHeight: 880_015,
+            phase: "awaiting_opening_bid",
+            unlockBlock: catalogEntry.unlockBlock,
+            auctionCloseBlockAfter: null,
+            openingMinimumBidSats: catalogEntry.openingMinimumBidSats,
+            currentLeaderBidderCommitment: null,
+            currentHighestBidSats: null,
+            currentRequiredMinimumBidSats: catalogEntry.openingMinimumBidSats,
+            reservedLockBlocks: catalogEntry.reservedLockBlocks
+          })
+        },
+        {
+          txid: "22".repeat(32),
+          blockHeight: 884_321,
+          txIndex: 0,
+          vout: 1,
+          bondVout: 0,
+          bidderCommitment: computeAuctionBidderCommitment("speculator_b"),
+          bidAmountSats: 250_000_000n,
+          reservedLockBlocks: catalogEntry.reservedLockBlocks,
+          auctionLotCommitment: catalogEntry.auctionLotCommitment,
+          spentOutpoints: [],
+          auctionCommitment: "00".repeat(32)
+        }
+      ]
+    });
+
+    expect(state.phase).toBe("released_to_ordinary_lane");
+    expect(state.currentRequiredMinimumBidSats).toBeNull();
+    expect(state.ordinaryMinimumBidSats).toBe(1_562_500n);
+    expect(state.noBidReleaseBlock).toBe(884_320);
+    expect(state.blocksUntilNoBidRelease).toBe(0);
+    expect(state.acceptedBidCount).toBe(0);
+    expect(state.rejectedBidCount).toBe(2);
+    expect(state.visibleBidOutcomes[1]).toMatchObject({
+      status: "rejected",
+      reason: "released_to_ordinary_lane",
+      stateCommitmentMatched: false,
+      bondStatus: "rejected_not_tracked"
+    });
+  });
+
   it("derives settlement and release status for accepted bids after close", () => {
     const policy = createDefaultReservedAuctionPolicy();
     const catalogEntry = createExperimentalReservedAuctionCatalogEntry(

@@ -28,6 +28,7 @@ The current simulator models:
 - class-specific floor amounts
 - class-specific lock durations
 - one opening window for the auction
+- an explicit no-bid release window back to the ordinary lane
 - soft-close extensions
 - a combined absolute-plus-percentage minimum increment rule
 - first valid bid behavior
@@ -40,7 +41,6 @@ The current simulator models:
 It does **not** yet model:
 
 - auction-wave timing across many names
-- no-bid fallback behavior after an auction ends with no valid winner
 - transfer or settlement execution details
 - the real reserved-auction state machine that would accept or reject bid
   transactions on chain
@@ -54,6 +54,7 @@ The current defaults are intentionally coarse and easy to change:
 
 - ordinary lock: `52,560` blocks
 - auction window: `4,320` blocks
+- no-bid release window: `4,320` blocks
 - soft close extension: `144` blocks
 - minimum increment absolute floor: `1,000,000` sats
 - minimum increment percentage floor: `500` basis points (`5%`)
@@ -145,6 +146,7 @@ That page renders a curated set of stateful fixtures so we can inspect:
 
 - pending unlock
 - awaiting opening bid
+- released to ordinary lane
 - live bidding
 - soft close
 - settled winner
@@ -211,6 +213,7 @@ The website-facing auction lab fixtures live separately in:
 - [fixtures/auction/lab/03-live-bidding-openai.json](/Users/davidking/dev/gns/fixtures/auction/lab/03-live-bidding-openai.json)
 - [fixtures/auction/lab/04-soft-close-google.json](/Users/davidking/dev/gns/fixtures/auction/lab/04-soft-close-google.json)
 - [fixtures/auction/lab/05-settled-openai.json](/Users/davidking/dev/gns/fixtures/auction/lab/05-settled-openai.json)
+- [fixtures/auction/lab/06-released-sequoia.json](/Users/davidking/dev/gns/fixtures/auction/lab/06-released-sequoia.json)
 
 These are intentionally curated around visible auction phases rather than only
 final outcomes.
@@ -222,6 +225,7 @@ The immediate purpose is to make a few questions testable:
 - do `3` coarse reserved classes feel better than one universal reserved lane?
 - are the default floors obviously too weak or too harsh?
 - does soft close behave the way we expect?
+- does the no-bid release valve feel too eager or too lax?
 - how sensitive are outcomes to the minimum increment rule?
 - does the stronger soft-close increment create enough closure pressure without
   making legitimate late bidding feel too brittle?

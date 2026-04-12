@@ -4553,6 +4553,10 @@ function renderAuctionPolicySummary(policy) {
       value: formatBlockWindow(policy.auction?.baseWindowBlocks)
     },
     {
+      title: "No-bid release",
+      value: formatBlockWindow(policy.auction?.noBidReleaseBlocks)
+    },
+    {
       title: "Soft close",
       value: formatBlockWindow(policy.auction?.softCloseExtensionBlocks)
     },
@@ -4611,20 +4615,43 @@ function renderAuctionCaseCard(auctionCase) {
   const phase = String(stateView.phase ?? "unknown");
   const phasePill = mapAuctionPhasePill(phase);
   const leaderLabel = phase === "settled" ? "Winner" : "Current leader";
-  const nextBidLabel = phase === "soft_close" ? "Next valid bid (extends close)" : "Next valid bid";
+  const nextBidLabel =
+    phase === "released_to_ordinary_lane"
+      ? "Ordinary-lane floor"
+      : phase === "soft_close"
+        ? "Next valid bid (extends close)"
+        : "Next valid bid";
   const closeLabel = phase === "pending_unlock"
     ? "Unlock block"
+    : phase === "released_to_ordinary_lane"
+      ? "Released at block"
     : phase === "awaiting_opening_bid"
-      ? "Current block"
+      ? "No-bid release"
       : "Auction close";
   const closeValue =
     phase === "pending_unlock"
       ? String(stateView.unlockBlock ?? "-")
+      : phase === "released_to_ordinary_lane"
+        ? String(stateView.noBidReleaseBlock ?? "-")
       : phase === "awaiting_opening_bid"
-        ? String(stateView.currentBlockHeight ?? "-")
+        ? String(stateView.noBidReleaseBlock ?? "-")
         : stateView.auctionCloseBlockAfter == null
           ? "-"
           : String(stateView.auctionCloseBlockAfter);
+  const nextBidValue =
+    phase === "released_to_ordinary_lane"
+      ? formatSats(stateView.ordinaryMinimumBidSats ?? "0")
+      : stateView.currentRequiredMinimumBidSats
+        ? formatSats(stateView.currentRequiredMinimumBidSats)
+        : "Auction settled";
+  const secondaryTimingLabel =
+    phase === "awaiting_opening_bid" || phase === "released_to_ordinary_lane"
+      ? "Blocks to release"
+      : "Blocks to close";
+  const secondaryTimingValue =
+    phase === "awaiting_opening_bid" || phase === "released_to_ordinary_lane"
+      ? (stateView.blocksUntilNoBidRelease == null ? "-" : String(stateView.blocksUntilNoBidRelease))
+      : (stateView.blocksUntilClose == null ? "-" : String(stateView.blocksUntilClose));
 
   return [
     '<article class="activity-card">',
@@ -4638,14 +4665,15 @@ function renderAuctionCaseCard(auctionCase) {
     '    <div class="result-item"><label>Class</label><p class="field-value">' + escapeHtml(String(stateView.classLabel ?? "-")) + "</p></div>",
     '    <div class="result-item"><label>Observed block</label><p class="field-value">' + escapeHtml(String(stateView.currentBlockHeight ?? "-")) + "</p></div>",
     '    <div class="result-item"><label>' + escapeHtml(closeLabel) + '</label><p class="field-value">' + escapeHtml(closeValue) + "</p></div>",
+    '    <div class="result-item"><label>Ordinary-lane floor</label><p class="field-value">' + escapeHtml(formatSats(stateView.ordinaryMinimumBidSats ?? "0")) + "</p></div>",
     '    <div class="result-item"><label>Opening minimum</label><p class="field-value">' + escapeHtml(formatSats(stateView.openingMinimumBidSats ?? "0")) + "</p></div>",
     '    <div class="result-item"><label>' + escapeHtml(leaderLabel) + '</label><p class="field-value">' + escapeHtml(stateView.currentLeaderBidderId ?? "None yet") + "</p></div>",
     '    <div class="result-item"><label>Highest bid</label><p class="field-value">' + escapeHtml(stateView.currentHighestBidSats ? formatSats(stateView.currentHighestBidSats) : "None yet") + "</p></div>",
-    '    <div class="result-item"><label>' + escapeHtml(nextBidLabel) + '</label><p class="field-value">' + escapeHtml(stateView.currentRequiredMinimumBidSats ? formatSats(stateView.currentRequiredMinimumBidSats) : "Auction settled") + "</p></div>",
+    '    <div class="result-item"><label>' + escapeHtml(nextBidLabel) + '</label><p class="field-value">' + escapeHtml(nextBidValue) + "</p></div>",
     '    <div class="result-item"><label>Accepted / rejected</label><p class="field-value">' + escapeHtml(String(stateView.acceptedBidCount ?? 0) + " / " + String(stateView.rejectedBidCount ?? 0)) + "</p></div>",
     '    <div class="result-item"><label>Reserved lock</label><p class="field-value">' + escapeHtml(formatBlockWindow(stateView.reservedLockBlocks)) + "</p></div>",
     '    <div class="result-item"><label>Blocks to unlock</label><p class="field-value">' + escapeHtml(String(stateView.blocksUntilUnlock ?? 0)) + "</p></div>",
-    '    <div class="result-item"><label>Blocks to close</label><p class="field-value">' + escapeHtml(stateView.blocksUntilClose == null ? "-" : String(stateView.blocksUntilClose)) + "</p></div>",
+    '    <div class="result-item"><label>' + escapeHtml(secondaryTimingLabel) + '</label><p class="field-value">' + escapeHtml(secondaryTimingValue) + "</p></div>",
     "  </div>",
     renderAuctionBidPackageComposer(auctionCase),
     renderAuctionBidHistory(stateView.visibleBidOutcomes),
@@ -4657,12 +4685,38 @@ function renderExperimentalAuctionCard(auction) {
   const phase = String(auction.phase ?? "unknown");
   const phasePill = mapAuctionPhasePill(phase);
   const leaderLabel = phase === "settled" ? "Winner commitment" : "Leader commitment";
-  const nextBidLabel = phase === "soft_close" ? "Next valid bid (extends close)" : "Next valid bid";
-  const settlementLabel = phase === "settled" ? "Winner release" : "Settlement";
+  const nextBidLabel =
+    phase === "released_to_ordinary_lane"
+      ? "Ordinary-lane floor"
+      : phase === "soft_close"
+        ? "Next valid bid (extends close)"
+        : "Next valid bid";
+  const nextBidValue =
+    phase === "released_to_ordinary_lane"
+      ? formatSats(auction.ordinaryMinimumBidSats ?? "0")
+      : auction.currentRequiredMinimumBidSats
+        ? formatSats(auction.currentRequiredMinimumBidSats)
+        : "Auction settled";
+  const settlementLabel =
+    phase === "released_to_ordinary_lane"
+      ? "Ordinary lane"
+      : phase === "settled"
+        ? "Winner release"
+        : "Settlement";
   const settlementValue =
-    phase === "settled"
+    phase === "released_to_ordinary_lane"
+      ? (auction.noBidReleaseBlock == null ? "Released to ordinary lane" : "released at block " + String(auction.noBidReleaseBlock))
+      : phase === "settled"
       ? (auction.winnerBondReleaseBlock == null ? "-" : "block " + String(auction.winnerBondReleaseBlock))
       : "Not settled";
+  const closeLabel =
+    phase === "released_to_ordinary_lane"
+      ? "Released at block"
+      : "Blocks to close";
+  const closeValue =
+    phase === "released_to_ordinary_lane"
+      ? String(auction.noBidReleaseBlock ?? "-")
+      : (auction.blocksUntilClose == null ? "-" : String(auction.blocksUntilClose));
 
   return [
     '<article class="activity-card">',
@@ -4676,14 +4730,15 @@ function renderExperimentalAuctionCard(auction) {
     '    <div class="result-item"><label>Class</label><p class="field-value">' + escapeHtml(String(auction.classLabel ?? "-")) + "</p></div>",
     '    <div class="result-item"><label>Lot commitment</label><p class="field-value">' + escapeHtml(formatAuctionCommitment(auction.auctionLotCommitment)) + "</p></div>",
     '    <div class="result-item"><label>Current block</label><p class="field-value">' + escapeHtml(String(auction.currentBlockHeight ?? "-")) + "</p></div>",
+    '    <div class="result-item"><label>Ordinary-lane floor</label><p class="field-value">' + escapeHtml(formatSats(auction.ordinaryMinimumBidSats ?? "0")) + "</p></div>",
     '    <div class="result-item"><label>Opening minimum</label><p class="field-value">' + escapeHtml(formatSats(auction.openingMinimumBidSats ?? "0")) + "</p></div>",
     '    <div class="result-item"><label>' + escapeHtml(leaderLabel) + '</label><p class="field-value">' + escapeHtml(formatAuctionCommitment(auction.currentLeaderBidderCommitment)) + "</p></div>",
     '    <div class="result-item"><label>Highest bid</label><p class="field-value">' + escapeHtml(auction.currentHighestBidSats ? formatSats(auction.currentHighestBidSats) : "None yet") + "</p></div>",
-    '    <div class="result-item"><label>' + escapeHtml(nextBidLabel) + '</label><p class="field-value">' + escapeHtml(auction.currentRequiredMinimumBidSats ? formatSats(auction.currentRequiredMinimumBidSats) : "Auction settled") + "</p></div>",
+    '    <div class="result-item"><label>' + escapeHtml(nextBidLabel) + '</label><p class="field-value">' + escapeHtml(nextBidValue) + "</p></div>",
     '    <div class="result-item"><label>Accepted / rejected</label><p class="field-value">' + escapeHtml(String(auction.acceptedBidCount ?? 0) + " / " + String(auction.rejectedBidCount ?? 0)) + "</p></div>",
     '    <div class="result-item"><label>Observed bids</label><p class="field-value">' + escapeHtml(String(auction.totalObservedBidCount ?? 0)) + "</p></div>",
     '    <div class="result-item"><label>Blocks to unlock</label><p class="field-value">' + escapeHtml(String(auction.blocksUntilUnlock ?? 0)) + "</p></div>",
-    '    <div class="result-item"><label>Blocks to close</label><p class="field-value">' + escapeHtml(auction.blocksUntilClose == null ? "-" : String(auction.blocksUntilClose)) + "</p></div>",
+    '    <div class="result-item"><label>' + escapeHtml(closeLabel) + '</label><p class="field-value">' + escapeHtml(closeValue) + "</p></div>",
     '    <div class="result-item"><label>Accepted capital locked</label><p class="field-value">' + escapeHtml(formatSats(auction.currentlyLockedAcceptedBidAmountSats ?? "0")) + " (" + escapeHtml(String(auction.currentlyLockedAcceptedBidCount ?? 0)) + ")</p></div>",
     '    <div class="result-item"><label>Accepted capital releasable</label><p class="field-value">' + escapeHtml(formatSats(auction.releasableAcceptedBidAmountSats ?? "0")) + " (" + escapeHtml(String(auction.releasableAcceptedBidCount ?? 0)) + ")</p></div>",
     '    <div class="result-item"><label>' + escapeHtml(settlementLabel) + '</label><p class="field-value">' + escapeHtml(settlementValue) + "</p></div>",
@@ -4708,6 +4763,18 @@ function renderAuctionBidPackageComposer(auctionCase) {
     stateView.phase === "soft_close"
       ? "Soft close is active. A bid from this state must clear the stronger late-extension increment."
       : "Build an operator handoff package for this observed auction state.";
+
+  if (stateView.phase === "released_to_ordinary_lane") {
+    return [
+      '<details class="detail-technical">',
+      "  <summary>Auction bid packages unavailable</summary>",
+      '  <div class="detail-technical-body">',
+      '    <p class="tx-panel-note">This lot attracted no valid opening bid before the release window ended, so it has fallen back to the ordinary lane.</p>',
+      '    <p><a class="action-link" href="' + escapeHtml(buildClaimPrepPath(stateView.normalizedName ?? "")) + '">Prepare an ordinary claim</a></p>',
+      "  </div>",
+      "</details>"
+    ].join("");
+  }
 
   return [
     '<details class="detail-technical">',
@@ -4863,6 +4930,8 @@ function mapAuctionPhasePill(phase) {
     case "pending_unlock":
       return "pending";
     case "awaiting_opening_bid":
+      return "available";
+    case "released_to_ordinary_lane":
       return "available";
     case "live_bidding":
       return "immature";

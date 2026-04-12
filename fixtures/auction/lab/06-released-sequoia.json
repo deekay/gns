@@ -1,0 +1,27 @@
+{
+  "title": "Released to ordinary lane · sequoia",
+  "description": "Major existing name after the no-bid release window passed without any valid opening bid. Auction bidding is over and the ordinary claim path can take over.",
+  "currentBlockHeight": 884321,
+  "scenario": {
+    "name": "sequoia",
+    "reservedClassId": "major_existing_name",
+    "unlockBlock": 880000,
+    "bidAttempts": [
+      {
+        "bidderId": "speculator_a",
+        "blockHeight": 880015,
+        "amountSats": "150000000"
+      },
+      {
+        "bidderId": "speculator_b",
+        "blockHeight": 880020,
+        "amountSats": "180000000"
+      },
+      {
+        "bidderId": "speculator_c",
+        "blockHeight": 880030,
+        "amountSats": "199999999"
+      }
+    ]
+  }
+}

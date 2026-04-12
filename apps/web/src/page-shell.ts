@@ -65,7 +65,7 @@ export function renderPageHtml(options: PageShellOptions): string {
       : pageKind === "claim"
       ? "Prepare a Global Name System claim package, then finish the commit and reveal flow in Sparrow or another external signer."
       : pageKind === "auctions"
-      ? "Experimental reserved-auction lab showing pending, live, soft-close, and settled states from the current auction simulator."
+      ? "Experimental reserved-auction lab showing pending, released, live, soft-close, and settled states from the current auction simulator."
       : pageKind === "values"
         ? "Sign a Global Name System value record locally in the browser, then publish the signed record to the resolver."
       : pageKind === "transfer"
@@ -223,7 +223,7 @@ function renderHeroSection(
         <p class="eyebrow"><a class="eyebrow-link" href="${withBasePath("/", configuredBasePath)}">Global Name System</a> · ${escapeHtml(configuredNetworkLabel)}</p>
         <h1>Experimental Reserved Auction Lab</h1>
         <p class="lede">
-          Pending unlock, opening-floor pressure, live bidding, soft close, and settled winner states rendered from the current reserved-auction simulator.
+          Pending unlock, opening-floor pressure, no-bid release to the ordinary lane, live bidding, soft close, and settled winner states rendered from the current reserved-auction simulator.
         </p>
         <p class="hero-status">
           Experimental product slice · curated simulator states plus a chain-derived experimental AUCTION_BID feed.
@@ -392,7 +392,7 @@ function renderAuctionLabSection(): string {
       <ul>
         <li>The policy values are temporary and intentionally easy to change.</li>
         <li>The states come from the same simulator and fixtures used in automated tests.</li>
-        <li>This is where we can review pending unlock, opening floor, live bidding, soft close, and settled outcomes in one place.</li>
+        <li>This is where we can review pending unlock, opening floor, no-bid release, live bidding, soft close, and settled outcomes in one place.</li>
       </ul>`
     )}
     <p id="auctionLabMeta" class="helper-text">Loading the current reserved-auction policy and state fixtures.</p>
@@ -410,6 +410,7 @@ function renderExperimentalAuctionFeedSection(): string {
       <ul>
         <li>Lots still come from the current experimental auction catalog.</li>
         <li>Leaders, minimum next bids, stale-state rejection, and bond spend/release summaries are derived from observed AUCTION_BID transactions.</li>
+        <li>Lots that attract no valid opening bid through the release window are marked as released back to the ordinary lane.</li>
         <li>Bids that merely clear the normal increment are not enough during soft close if they would extend the auction. Late extension bids use the stronger soft-close increment rule.</li>
         <li>Same-bidder replacement is only recognized when the later bid spends the prior bid bond outpoint.</li>
         <li>The current slice is still experimental: bids are derived and classified, not yet settled by a full reserved-auction engine.</li>
@@ -431,6 +432,7 @@ function renderAuctionLabNotesSection(): string {
         <h3>Implemented</h3>
         <ul class="guide-list">
           <li>Configurable reserved classes, opening floors, soft close, and minimum increments.</li>
+          <li>An explicit no-bid release valve so lots can fall back to the ordinary lane instead of staying open forever.</li>
           <li>A stronger soft-close increment rule so bids that extend the clock must escalate more than ordinary mid-auction bids.</li>
           <li>Single-auction and market-level simulators with bidder budget pressure.</li>
           <li>CLI commands, fixture scenarios, and this website-facing auction state view.</li>

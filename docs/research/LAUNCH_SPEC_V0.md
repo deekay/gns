@@ -339,8 +339,15 @@ We still need to finalize:
 
 - how long after launch reserved auctions begin
 - whether the best structure is `pilot + main`
-- whether over-reserved names need a later release valve if they attract no
-  bids
+- the exact release-valve policy if over-reserved names attract no bids
+
+Current implementation note:
+
+- the experimental auction prototype now models one explicit no-bid release
+  valve, where a reserved lot can fall back to the ordinary lane after a
+  configurable window with no valid opening bid
+- that policy shape is now implemented for testing, but the timing remains
+  provisional
 
 ### 5. Final reserved-list breadth
 

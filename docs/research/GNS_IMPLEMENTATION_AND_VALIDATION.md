@@ -113,6 +113,9 @@ Today the repo has:
   derived from observed `AUCTION_BID` transactions
 - stale observed-state rejection in that chain-derived feed when a bid no
   longer matches the derived pre-bid state
+- an explicit no-bid release valve in both the simulator-backed and
+  chain-derived experimental auction states so lots can fall back to the
+  ordinary lane instead of staying open forever
 - same-bidder rebid classification when the later bid spends the prior bid
   bond outpoint
 - derived accepted-bid bond-status plus bond spend / release summaries for both
