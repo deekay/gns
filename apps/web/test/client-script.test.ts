@@ -49,6 +49,9 @@ describe("renderClientScript", () => {
     expect(script).toContain("renderPrivateAuctionSmokeStatus");
     expect(script).toContain("Opening Bid Txid");
     expect(script).toContain("Higher Bid Txid");
+    expect(script).toContain("Release Lot");
+    expect(script).toContain("Late Bid Txid");
+    expect(script).toContain("Late Bid Outcome");
     expect(script).toContain("Open private auction lab");
     expect(script).toContain("getPrivateDemoBasePath");
   });

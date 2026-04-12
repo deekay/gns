@@ -31,7 +31,8 @@ const REMOTE_STATUS_PATH =
   ?? "/var/lib/gns/private-auction-smoke-summary.json";
 const PUBLISH_REMOTE_STATUS =
   (process.env.GNS_PRIVATE_SIGNET_AUCTION_SMOKE_PUBLISH_REMOTE_STATUS ?? "1") !== "0";
-const SMOKE_AUCTION_ID_PREFIXES = ["10-", "11-", "12-"];
+const BIDDING_SMOKE_AUCTION_ID_PREFIXES = ["10-", "11-", "12-", "14-", "15-", "16-"];
+const RELEASE_SMOKE_AUCTION_ID_PREFIX = "13-";
 
 void main().catch((error) => {
   console.error(error instanceof Error ? error.stack ?? error.message : String(error));
@@ -58,12 +59,14 @@ async function main() {
 
     try {
       const beforeFeed = await fetchExperimentalAuctionFeed();
-      const targetAuction = selectAvailableSmokeAuction(beforeFeed.auctions);
+      const targetAuction = await ensureAuctionReadyForOpeningBid(
+        selectAvailableBiddingSmokeAuction(beforeFeed.auctions)
+      );
 
       logStep(targetAuction.auctionId, "building and broadcasting the opening bid");
       const alphaBidderId = `${targetAuction.normalizedName}-alpha`;
       const alphaBidAmountSats = BigInt(targetAuction.currentRequiredMinimumBidSats ?? targetAuction.openingMinimumBidSats);
-      const alphaBid = await buildAndBroadcastAuctionBid({
+      const alphaBid = await buildAndMaybeBroadcastAuctionBid({
         outDir,
         fileStem: "alpha",
         auctionState: targetAuction,
@@ -86,7 +89,7 @@ async function main() {
       logStep(targetAuction.auctionId, "building and broadcasting the higher bid");
       const betaBidderId = `${targetAuction.normalizedName}-beta`;
       const betaBidAmountSats = BigInt(alphaState.currentRequiredMinimumBidSats ?? alphaState.openingMinimumBidSats);
-      const betaBid = await buildAndBroadcastAuctionBid({
+      const betaBid = await buildAndMaybeBroadcastAuctionBid({
         outDir,
         fileStem: "beta",
         auctionState: alphaState,
@@ -135,9 +138,55 @@ async function main() {
         throw new Error(`expected ${targetAuction.auctionId} to keep the higher bid accepted`);
       }
 
+      const releaseTargetBefore = await ensureAuctionReadyForRelease(
+        selectReleaseSmokeAuction(beforeFeed.auctions)
+      );
+
+      logStep(releaseTargetBefore.auctionId, "building a late bid before the no-bid release window closes");
+      const releaseBidderId = `${releaseTargetBefore.normalizedName}-late`;
+      const releaseBidAmountSats = BigInt(
+        releaseTargetBefore.currentRequiredMinimumBidSats ?? releaseTargetBefore.openingMinimumBidSats
+      );
+      const lateBid = await buildAndMaybeBroadcastAuctionBid({
+        outDir,
+        fileStem: "release-late",
+        auctionState: releaseTargetBefore,
+        bidderId: releaseBidderId,
+        bidAmountSats: releaseBidAmountSats,
+        fundingAddress: owner.fundingAddress,
+        fundingWif: owner.fundingWif,
+        rpcPassword,
+        broadcastNow: false
+      });
+
+      const releasedState = await ensureAuctionReleasedToOrdinaryLane(releaseTargetBefore);
+
+      logStep(releasedState.auctionId, "broadcasting the prebuilt late bid after the lot has released");
+      const lateBidTxid = await broadcastSignedAuctionBid({
+        signedPath: lateBid.signedPath,
+        rpcPassword,
+        expectedTxid: lateBid.bidTxid
+      });
+
+      const afterLateBidBlock = await getBlockCount();
+      await mineBlocks(1);
+      await waitForResolverHeight(afterLateBidBlock + 1);
+
+      const releaseFinalState = await fetchExperimentalAuctionById(releasedState.auctionId);
+      if (!releaseFinalState) {
+        throw new Error(`missing released final state for ${releasedState.auctionId}`);
+      }
+
+      const lateBidOutcome =
+        releaseFinalState.visibleBidOutcomes.find((outcome) => outcome.txid === lateBidTxid) ?? null;
+
+      if (!lateBidOutcome || lateBidOutcome.reason !== "released_to_ordinary_lane") {
+        throw new Error(`expected ${releasedState.auctionId} to reject the late bid after release`);
+      }
+
       summary.status = "complete";
       summary.message =
-        "Private signet experimental auction smoke succeeded with one opening bid, one higher bid, and one early losing-bond spend.";
+        "Private signet experimental auction smoke succeeded with live bidding, early losing-bond enforcement, and no-bid release-valve rejection.";
       summary.completedAt = new Date().toISOString();
       summary.resolverUrl = privateResolverUrl;
       summary.rpcUrl = rpcUrl;
@@ -157,6 +206,22 @@ async function main() {
         alphaBondSpentTxid: alphaOutcome.bondSpentTxid,
         betaBondStatus: betaOutcome.bondStatus,
         betaBondSpendStatus: betaOutcome.bondSpendStatus
+      };
+      summary.releaseCheck = {
+        auctionId: releaseTargetBefore.auctionId,
+        title: releaseTargetBefore.title,
+        normalizedName: releaseTargetBefore.normalizedName,
+        unlockBlock: releaseTargetBefore.unlockBlock,
+        noBidReleaseBlock: releaseTargetBefore.noBidReleaseBlock,
+        preparedAtPhase: releaseTargetBefore.phase,
+        lateBidAmountSats: releaseBidAmountSats.toString(),
+        lateBidTxid,
+        finalState: releaseFinalState,
+        highlight: {
+          releasePhase: releasedState.phase,
+          lateBidReason: lateBidOutcome.reason,
+          lateBidStatus: lateBidOutcome.status
+        }
       };
     } catch (error) {
       summary.status = "error";
@@ -190,7 +255,7 @@ async function fetchExperimentalAuctionById(auctionId) {
   return feed.auctions.find((entry) => entry.auctionId === auctionId) ?? null;
 }
 
-function selectAvailableSmokeAuction(auctions) {
+function selectAvailableBiddingSmokeAuction(auctions) {
   if (!Array.isArray(auctions)) {
     throw new Error("experimental auction feed is missing auctions");
   }
@@ -200,11 +265,11 @@ function selectAvailableSmokeAuction(auctions) {
       return false;
     }
 
-    if (!SMOKE_AUCTION_ID_PREFIXES.some((prefix) => String(entry.auctionId ?? "").startsWith(prefix))) {
+    if (!BIDDING_SMOKE_AUCTION_ID_PREFIXES.some((prefix) => String(entry.auctionId ?? "").startsWith(prefix))) {
       return false;
     }
 
-    if (entry.phase !== "awaiting_opening_bid") {
+    if (entry.phase !== "awaiting_opening_bid" && entry.phase !== "pending_unlock") {
       return false;
     }
 
@@ -220,7 +285,88 @@ function selectAvailableSmokeAuction(auctions) {
   return candidate;
 }
 
-async function buildAndBroadcastAuctionBid({
+function selectReleaseSmokeAuction(auctions) {
+  if (!Array.isArray(auctions)) {
+    throw new Error("experimental auction feed is missing auctions");
+  }
+
+  const candidate = auctions.find((entry) => {
+    if (!entry || typeof entry !== "object") {
+      return false;
+    }
+
+    if (!String(entry.auctionId ?? "").startsWith(RELEASE_SMOKE_AUCTION_ID_PREFIX)) {
+      return false;
+    }
+
+    return Number(entry.totalObservedBidCount ?? 0) === 0;
+  });
+
+  if (!candidate) {
+    throw new Error("no dedicated private release smoke lot is available");
+  }
+
+  return candidate;
+}
+
+async function ensureAuctionReadyForOpeningBid(auctionState) {
+  if (auctionState.phase === "awaiting_opening_bid") {
+    return auctionState;
+  }
+
+  if (auctionState.phase !== "pending_unlock") {
+    throw new Error(`expected ${auctionState.auctionId} to be pending unlock or awaiting opening bid`);
+  }
+
+  const blocksToMine = Math.max(1, auctionState.unlockBlock - auctionState.currentBlockHeight);
+  logStep(auctionState.auctionId, `mining ${blocksToMine} block${blocksToMine === 1 ? "" : "s"} until unlock`);
+  const currentHeight = await getBlockCount();
+  await mineBlocks(blocksToMine);
+  await waitForResolverHeight(currentHeight + blocksToMine);
+
+  const refreshed = await fetchExperimentalAuctionById(auctionState.auctionId);
+  if (!refreshed || refreshed.phase !== "awaiting_opening_bid") {
+    throw new Error(`expected ${auctionState.auctionId} to reach awaiting_opening_bid after unlock`);
+  }
+
+  return refreshed;
+}
+
+async function ensureAuctionReadyForRelease(auctionState) {
+  if (auctionState.phase === "released_to_ordinary_lane") {
+    return auctionState;
+  }
+
+  return await ensureAuctionReadyForOpeningBid(auctionState);
+}
+
+async function ensureAuctionReleasedToOrdinaryLane(auctionState) {
+  if (auctionState.phase === "released_to_ordinary_lane") {
+    return auctionState;
+  }
+
+  if (auctionState.noBidReleaseBlock === null) {
+    throw new Error(`expected ${auctionState.auctionId} to expose a no-bid release block`);
+  }
+
+  const blocksToMine = Math.max(1, auctionState.noBidReleaseBlock - auctionState.currentBlockHeight + 1);
+  logStep(
+    auctionState.auctionId,
+    `mining ${blocksToMine} block${blocksToMine === 1 ? "" : "s"} to cross the no-bid release window`
+  );
+  const currentHeight = await getBlockCount();
+  await mineBlocks(blocksToMine);
+  await waitForResolverHeight(currentHeight + blocksToMine);
+
+  const refreshed = await fetchExperimentalAuctionById(auctionState.auctionId);
+  if (!refreshed || refreshed.phase !== "released_to_ordinary_lane") {
+    throw new Error(`expected ${auctionState.auctionId} to release to the ordinary lane`);
+  }
+
+  return refreshed;
+}
+
+async function buildAndMaybeBroadcastAuctionBid({
   outDir,
   fileStem,
   auctionState,
@@ -228,7 +374,8 @@ async function buildAndBroadcastAuctionBid({
   bidAmountSats,
   fundingAddress,
   fundingWif,
-  rpcPassword
+  rpcPassword,
+  broadcastNow = true
 }) {
   const packagePath = join(outDir, `${fileStem}-auction-bid-package.json`);
   const artifactsPath = join(outDir, `${fileStem}-auction-bid-artifacts.json`);
@@ -287,21 +434,12 @@ async function buildAndBroadcastAuctionBid({
     throw new Error(`signed auction bid txid mismatch for ${auctionState.auctionId}`);
   }
 
-  const broadcast = await cliJson([
-    "broadcast-transaction",
-    signedPath,
-    "--rpc-url",
-    localRpcUrl(),
-    "--rpc-username",
-    "gnsrpcprivate",
-    "--rpc-password",
-    rpcPassword,
-    "--expected-chain",
-    "signet"
-  ]);
-
-  if (broadcast.broadcastedTxid !== artifacts.bidTxid) {
-    throw new Error(`broadcast auction bid txid mismatch for ${auctionState.auctionId}`);
+  if (broadcastNow) {
+    await broadcastSignedAuctionBid({
+      signedPath,
+      rpcPassword,
+      expectedTxid: artifacts.bidTxid
+    });
   }
 
   return {
@@ -315,6 +453,31 @@ async function buildAndBroadcastAuctionBid({
     artifactsPath,
     signedPath
   };
+}
+
+async function broadcastSignedAuctionBid({
+  signedPath,
+  rpcPassword,
+  expectedTxid
+}) {
+  const broadcast = await cliJson([
+    "broadcast-transaction",
+    signedPath,
+    "--rpc-url",
+    localRpcUrl(),
+    "--rpc-username",
+    "gnsrpcprivate",
+    "--rpc-password",
+    rpcPassword,
+    "--expected-chain",
+    "signet"
+  ]);
+
+  if (broadcast.broadcastedTxid !== expectedTxid) {
+    throw new Error(`broadcast auction bid txid mismatch for ${expectedTxid}`);
+  }
+
+  return broadcast.broadcastedTxid;
 }
 
 async function spendBidBondWithRpc({

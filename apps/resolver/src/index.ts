@@ -129,7 +129,7 @@ async function main(): Promise<void> {
   }
 
   let restoredFromSnapshot = false;
-  const experimentalReservedAuctionPolicy = createDefaultReservedAuctionPolicy();
+  const experimentalReservedAuctionPolicy = resolveExperimentalReservedAuctionPolicy();
   const experimentalReservedAuctionCatalog = await loadExperimentalReservedAuctionCatalog(
     auctionFixtureDir,
     experimentalReservedAuctionPolicy
@@ -837,6 +837,26 @@ function parseNonNegativeInteger(value: string, label: string): number {
   }
 
   return parsed;
+}
+
+function resolveExperimentalReservedAuctionPolicy(): ReservedAuctionPolicy {
+  const basePolicy = createDefaultReservedAuctionPolicy();
+  const noBidReleaseBlocks = process.env.GNS_EXPERIMENTAL_AUCTION_NO_BID_RELEASE_BLOCKS;
+
+  if (noBidReleaseBlocks === undefined || noBidReleaseBlocks.trim() === "") {
+    return basePolicy;
+  }
+
+  return {
+    ...basePolicy,
+    auction: {
+      ...basePolicy.auction,
+      noBidReleaseBlocks: parseNonNegativeInteger(
+        noBidReleaseBlocks,
+        "GNS_EXPERIMENTAL_AUCTION_NO_BID_RELEASE_BLOCKS"
+      )
+    }
+  };
 }
 
 function parseExpectedChain(value: string): BitcoinRpcChain {

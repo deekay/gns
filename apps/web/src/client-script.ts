@@ -5246,6 +5246,14 @@ function renderPrivateAuctionSmokeStatus() {
   const totalObservedBidCount = Number(finalState.totalObservedBidCount ?? 0);
   const highestBidText = finalState.currentHighestBidSats ? formatSats(finalState.currentHighestBidSats) : "None yet";
   const nextBidText = finalState.currentRequiredMinimumBidSats ? formatSats(finalState.currentRequiredMinimumBidSats) : "Auction settled";
+  const releaseCheck =
+    auctionSmoke.releaseCheck && typeof auctionSmoke.releaseCheck === "object"
+      ? auctionSmoke.releaseCheck
+      : null;
+  const releaseFinalState =
+    releaseCheck?.finalState && typeof releaseCheck.finalState === "object"
+      ? releaseCheck.finalState
+      : {};
   const actionLinks = [
     '<a class="action-link" href="' + escapeHtml(withBasePath("/auctions", privateDemoBasePath)) + '">Open private auction lab</a>',
     '<a class="action-link secondary" href="' + escapeHtml(withBasePath("/explore", privateDemoBasePath)) + '">Open private explorer</a>'
@@ -5264,6 +5272,9 @@ function renderPrivateAuctionSmokeStatus() {
           : null,
       acceptedBidCount > 0 || totalObservedBidCount > 0
         ? String(acceptedBidCount) + " accepted / " + String(totalObservedBidCount) + " observed bids"
+        : null,
+      releaseCheck?.highlight?.lateBidReason
+        ? "Release check: " + formatAuctionReason(releaseCheck.highlight.lateBidReason)
         : null
     ]
       .filter(Boolean)
@@ -5320,6 +5331,26 @@ function renderPrivateAuctionSmokeStatus() {
     '  <div class="result-item">',
     "    <label>Beta bond status</label>",
     '    <p class="field-value">' + escapeHtml(formatAuctionBondStatus(auctionSmoke.highlight?.betaBondStatus ?? null)) + '</p>',
+    "  </div>",
+    '  <div class="result-item">',
+    "    <label>Release Lot</label>",
+    '    <p class="field-value">' + escapeHtml(String(releaseCheck?.auctionId ?? "Not published")) + '</p>',
+    "  </div>",
+    '  <div class="result-item">',
+    "    <label>Release Phase</label>",
+    '    <p class="field-value">' + escapeHtml(String(releaseFinalState.phaseLabel ?? releaseCheck?.highlight?.releasePhase ?? "Not published")) + '</p>',
+    "  </div>",
+    '  <div class="result-item">',
+    "    <label>No-Bid Release Block</label>",
+    '    <p class="field-value">' + escapeHtml(String(releaseCheck?.noBidReleaseBlock ?? "Not published")) + '</p>',
+    "  </div>",
+    '  <div class="result-item">',
+    "    <label>Late Bid Txid</label>",
+    releaseCheck?.lateBidTxid ? renderCopyableCode(releaseCheck.lateBidTxid) : '<p class="field-value">Not published</p>',
+    "  </div>",
+    '  <div class="result-item">',
+    "    <label>Late Bid Outcome</label>",
+    '    <p class="field-value">' + escapeHtml(formatAuctionReason(releaseCheck?.highlight?.lateBidReason ?? null)) + '</p>',
     "  </div>",
     "</div>",
     actionLinks ? '<div class="result-actions">' + actionLinks + "</div>" : ""

@@ -125,8 +125,9 @@ Today the repo has:
 - website download utilities for experimental auction bid packages derived from
   those same observed states
 - a dedicated private signet auction smoke script that produces real hosted
-  `AUCTION_BID` activity for dedicated low-height smoke lots and publishes a
-  summary the website can surface directly
+  `AUCTION_BID` activity for dedicated private smoke lots, including a live
+  no-bid release-valve check plus a late-bid rejection after release, and
+  publishes a summary the website can surface directly
 
 This is still explicitly an experimental layer rather than the launch protocol,
 but it is now implemented enough to inspect and test end to end.
@@ -218,10 +219,14 @@ smoke** path that runs:
 - one opening `AUCTION_BID`
 - one higher `AUCTION_BID`
 - and one intentionally early losing-bond spend
+- plus a dedicated no-bid lot through release to the ordinary lane, followed
+  by a deliberately late bid that gets rejected as `released_to_ordinary_lane`
 
 That gives us a live hosted proof that the chain-derived experimental auction
 feed is not just rendering fixtures. It can observe real bid transactions and
-classify a real early bond spend as `spent_before_allowed_release`.
+classify a real early bond spend as `spent_before_allowed_release`, while also
+proving the live release valve and late-bid rejection path on the controlled
+private chain.
 
 ## What We Can Say Confidently
 

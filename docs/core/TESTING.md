@@ -374,7 +374,9 @@ Those focused smokes cover:
 - `auction-smoke`: one empty dedicated smoke lot through an opening bid, a
   higher bid, and an intentionally early spend of the losing bond so the
   chain-derived experimental auction feed can flag
-  `spent_before_allowed_release`
+  `spent_before_allowed_release`; the same smoke also holds a second dedicated
+  lot open until the no-bid release window expires, then broadcasts a
+  prebuilt late bid so the feed can reject it as `released_to_ordinary_lane`
 - `batch-smoke`: one private-signet batch anchor, two later reveals, and a later gift transfer on one of the batch-claimed names
 - `claim-smoke`: one name through commit, reveal, and claimed state
 - `transfer-smoke`: gift transfer and immature buyer-funded sale transfer
@@ -391,6 +393,11 @@ it also publishes that summary to the VPS path in
 
 - `/var/lib/gns/private-batch-smoke-summary.json`
 - `/var/lib/gns/private-auction-smoke-summary.json`
+
+On the private signet deployment, the experimental auction feed now uses a
+shorter `GNS_EXPERIMENTAL_AUCTION_NO_BID_RELEASE_BLOCKS` override than the
+default research policy so the hosted release-valve smoke can complete quickly
+without mining thousands of demo blocks.
 
 If the private web service is configured with
 `GNS_WEB_PRIVATE_BATCH_SMOKE_STATUS_PATH=/var/lib/gns/private-batch-smoke-summary.json`,

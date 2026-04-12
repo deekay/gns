@@ -1,0 +1,11 @@
+{
+  "title": "Private smoke lot · figma D",
+  "description": "Private signet experimental reserved-auction lot reserved for hosted smoke runs with real AUCTION_BID transactions.",
+  "currentBlockHeight": 128,
+  "scenario": {
+    "name": "figma",
+    "reservedClassId": "major_existing_name",
+    "unlockBlock": 200,
+    "bidAttempts": []
+  }
+}
