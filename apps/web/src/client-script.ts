@@ -4992,6 +4992,10 @@ function renderExperimentalAuctionCard(auction) {
     phase === "released_to_ordinary_lane"
       ? String(auction.noBidReleaseBlock ?? "-")
       : (auction.blocksUntilClose == null ? "-" : String(auction.blocksUntilClose));
+  const settledHandoff =
+    phase === "settled"
+      ? renderSettledAuctionHandoff(auction)
+      : "";
 
   return [
     '<article class="activity-card">',
@@ -5022,9 +5026,7 @@ function renderExperimentalAuctionCard(auction) {
       ? '    <div class="result-item"><label>Winner owner</label>' + renderCopyableCode(String(auction.winnerOwnerPubkey)) + "</div>"
       : ""),
     "  </div>",
-    (phase === "settled"
-      ? '<p class="result-meta">' + renderDetailLink(auction.normalizedName, "Open winner detail page") + " · " + renderTransferPrepLink(auction.normalizedName, "Prepare transfer") + "</p>"
-      : ""),
+    settledHandoff,
     renderAuctionBidPackageComposer({
       source: "experimental",
       id: caseIdFromAuctionState(auction.auctionId, auction.normalizedName),
@@ -5048,6 +5050,59 @@ function renderExperimentalAuctionCard(auction) {
     }),
     renderExperimentalAuctionBidHistory(auction.visibleBidOutcomes),
     "</article>"
+  ].join("");
+}
+
+function renderSettledAuctionHandoff(auction, configuredBasePath = BASE_PATH) {
+  const normalizedName =
+    typeof auction?.normalizedName === "string" && auction.normalizedName.trim().length > 0
+      ? auction.normalizedName.trim().toLowerCase()
+      : "";
+
+  if (!normalizedName) {
+    return "";
+  }
+
+  const currentBlockHeight = Number(auction.currentBlockHeight ?? NaN);
+  const winnerBondReleaseBlock = Number(auction.winnerBondReleaseBlock ?? NaN);
+  const hasReleaseHeight = Number.isFinite(winnerBondReleaseBlock);
+  const blocksUntilRelease =
+    Number.isFinite(currentBlockHeight) && hasReleaseHeight
+      ? Math.max(0, winnerBondReleaseBlock - currentBlockHeight)
+      : null;
+  const lockIsActive = blocksUntilRelease !== null && blocksUntilRelease > 0;
+  const headline = lockIsActive
+    ? "This settled lot is already a live name, but the post-auction lock is still active."
+    : "This settled lot is already a live name with a normal owner workflow.";
+  const copy = lockIsActive
+    ? "Use the detail page for the current owner-visible state, publish a value if you want a destination or profile attached, and only transfer with bond continuity until the release height clears."
+    : "Use the detail page for the current owner-visible state, publish or update the off-chain value, and treat transfer prep the same way you would for any other mature name.";
+  const releaseCopy =
+    blocksUntilRelease === null
+      ? "Winner release height is not available in this snapshot."
+      : blocksUntilRelease === 0
+        ? "The post-auction lock has cleared."
+        : String(blocksUntilRelease) + " blocks remain before the post-auction lock clears.";
+  const actions = [
+    renderDetailLink(normalizedName, "Open live name detail page", configuredBasePath),
+    renderValuePublishLink(normalizedName, "Publish or update value", configuredBasePath),
+    renderTransferPrepLink(
+      normalizedName,
+      lockIsActive ? "Prepare transfer (lock active)" : "Prepare transfer",
+      configuredBasePath
+    )
+  ].join(" · ");
+
+  return [
+    '<div class="step-list">',
+    '  <p class="step-list-label">After Settlement</p>',
+    '  <p class="field-value">' + escapeHtml(headline) + "</p>",
+    '  <ol>',
+    '    <li>' + escapeHtml(copy) + "</li>",
+    '    <li>' + escapeHtml(releaseCopy) + "</li>",
+    '  </ol>',
+    '  <p class="result-meta">' + actions + "</p>",
+    "</div>"
   ].join("");
 }
 
@@ -5503,6 +5558,15 @@ function renderPrivateAuctionSmokeStatus() {
       ? releaseCheck.finalState
       : {};
   const actionLinks = [
+    finalState.phase === "settled" && typeof finalState.normalizedName === "string" && finalState.normalizedName.trim().length > 0
+      ? '<a class="action-link" href="' + escapeHtml(buildNameDetailPath(finalState.normalizedName, privateDemoBasePath)) + '">Open settled name</a>'
+      : "",
+    finalState.phase === "settled" && typeof finalState.normalizedName === "string" && finalState.normalizedName.trim().length > 0
+      ? '<a class="action-link secondary" href="' + escapeHtml(buildValuePublishPath(finalState.normalizedName, privateDemoBasePath)) + '">Publish value</a>'
+      : "",
+    finalState.phase === "settled" && typeof finalState.normalizedName === "string" && finalState.normalizedName.trim().length > 0
+      ? '<a class="action-link secondary" href="' + escapeHtml(buildTransferPrepPath(finalState.normalizedName, privateDemoBasePath)) + '">Prepare transfer</a>'
+      : "",
     '<a class="action-link" href="' + escapeHtml(withBasePath("/auctions", privateDemoBasePath)) + '">Open private auction lab</a>',
     '<a class="action-link secondary" href="' + escapeHtml(withBasePath("/explore", privateDemoBasePath)) + '">Open private explorer</a>'
   ]
@@ -5551,6 +5615,10 @@ function renderPrivateAuctionSmokeStatus() {
     '  <div class="result-item">',
     "    <label>Phase</label>",
     '    <p class="field-value">' + escapeHtml(String(phaseLabel)) + '</p>',
+    "  </div>",
+    '  <div class="result-item">',
+    "    <label>Winner handoff</label>",
+    '    <p class="field-value">' + escapeHtml(renderPrivateAuctionWinnerHandoffCopy(finalState)) + '</p>',
     "  </div>",
     '  <div class="result-item">',
     "    <label>Highest / next bid</label>",
@@ -5603,6 +5671,23 @@ function renderPrivateAuctionSmokeStatus() {
     "</div>",
     actionLinks ? '<div class="result-actions">' + actionLinks + "</div>" : ""
   ].join("");
+}
+
+function renderPrivateAuctionWinnerHandoffCopy(finalState) {
+  if (String(finalState?.phase ?? "") !== "settled") {
+    return "This smoke panel is still focused on the auction state rather than a live owned name.";
+  }
+
+  const currentBlockHeight = Number(finalState.currentBlockHeight ?? NaN);
+  const winnerBondReleaseBlock = Number(finalState.winnerBondReleaseBlock ?? NaN);
+  if (!Number.isFinite(currentBlockHeight) || !Number.isFinite(winnerBondReleaseBlock)) {
+    return "The lot has settled and should now appear as a live name record.";
+  }
+
+  const blocksUntilRelease = Math.max(0, winnerBondReleaseBlock - currentBlockHeight);
+  return blocksUntilRelease > 0
+    ? "The lot has settled into a live name record, but the post-auction lock remains active for about " + String(blocksUntilRelease) + " more blocks."
+    : "The lot has settled into a live name record and the post-auction lock has cleared.";
 }
   `;
 }

@@ -52,6 +52,9 @@ describe("renderClientScript", () => {
     expect(script).toContain("Release Lot");
     expect(script).toContain("Late Bid Txid");
     expect(script).toContain("Late Bid Outcome");
+    expect(script).toContain("Winner handoff");
+    expect(script).toContain("Open settled name");
+    expect(script).toContain("renderPrivateAuctionWinnerHandoffCopy");
     expect(script).toContain("Open private auction lab");
     expect(script).toContain("getPrivateDemoBasePath");
   });
@@ -89,6 +92,11 @@ describe("renderClientScript", () => {
     expect(script).toContain("Accepted capital locked");
     expect(script).toContain("State commitment");
     expect(script).toContain("Bond spend");
+    expect(script).toContain("After Settlement");
+    expect(script).toContain("Open live name detail page");
+    expect(script).toContain("Publish or update value");
+    expect(script).toContain("Prepare transfer (lock active)");
+    expect(script).toContain("renderSettledAuctionHandoff");
     expect(script).toContain("isAuctionsPage");
   });
 });
