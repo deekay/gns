@@ -7,7 +7,7 @@ import {
   computeAuctionLotCommitment,
   computeBatchCommitLeafHash,
   computeCommitHash,
-  encodeAuctionBidPayload,
+  encodeAuctionBidPayload as encodeAuctionBidPayloadWithOwner,
   encodeBatchAnchorPayload,
   encodeBatchRevealPayload,
   encodeCommitPayload,
@@ -17,6 +17,18 @@ import {
 import { createDefaultReservedAuctionPolicy } from "./auction-policy.js";
 import { createExperimentalReservedAuctionCatalogEntry } from "./experimental-auction.js";
 import { InMemoryGnsIndexer } from "./indexer.js";
+
+function encodeAuctionBidPayload(
+  input: Omit<Parameters<typeof encodeAuctionBidPayloadWithOwner>[0], "ownerPubkey"> & {
+    readonly ownerPubkey?: string;
+  }
+) {
+  const { ownerPubkey = "11".repeat(32), ...rest } = input;
+  return encodeAuctionBidPayloadWithOwner({
+    ...rest,
+    ownerPubkey
+  });
+}
 
 describe("InMemoryGnsIndexer", () => {
   it("indexes a name from commit/reveal flow", () => {
@@ -538,6 +550,119 @@ describe("InMemoryGnsIndexer", () => {
         rejectedBidCount: 0,
         totalObservedBidCount: 2
       }
+    ]);
+  });
+
+  it("materializes a settled auction winner as a live name record", () => {
+    const policy = createDefaultReservedAuctionPolicy();
+    const catalogEntry = createExperimentalReservedAuctionCatalogEntry(
+      {
+        auctionId: "04-soft-close-google",
+        title: "Soft close · google",
+        description: "Experimental live test lot.",
+        name: "google",
+        reservedClassId: "top_collision",
+        unlockBlock: 840_000
+      },
+      policy
+    );
+    const winnerOwnerPubkey = "22".repeat(32);
+    const extendedCloseBlock = 844_210 + policy.auction.softCloseExtensionBlocks;
+    const settlementHeight = extendedCloseBlock + 1;
+    const indexer = new InMemoryGnsIndexer({
+      launchHeight: 100,
+      experimentalReservedAuctionPolicy: policy,
+      experimentalReservedAuctionCatalog: [catalogEntry]
+    });
+
+    indexer.ingestBlocks([
+      makeBlock(840_010, [
+        {
+          txid: "11".repeat(32),
+          paymentOutputs: [1_000_000_000n],
+          payloads: [
+            encodeAuctionBidPayload({
+              flags: 0,
+              bondVout: 0,
+              reservedLockBlocks: catalogEntry.reservedLockBlocks,
+              bidAmountSats: 1_000_000_000n,
+              auctionLotCommitment: catalogEntry.auctionLotCommitment,
+              auctionCommitment: computeAuctionBidStateCommitment({
+                auctionId: catalogEntry.auctionId,
+                name: catalogEntry.normalizedName,
+                reservedClassId: catalogEntry.reservedClassId,
+                currentBlockHeight: 840_010,
+                phase: "awaiting_opening_bid",
+                unlockBlock: catalogEntry.unlockBlock,
+                auctionCloseBlockAfter: null,
+                openingMinimumBidSats: catalogEntry.openingMinimumBidSats,
+                currentLeaderBidderCommitment: null,
+                currentHighestBidSats: null,
+                currentRequiredMinimumBidSats: catalogEntry.openingMinimumBidSats,
+                reservedLockBlocks: catalogEntry.reservedLockBlocks
+              }),
+              bidderCommitment: computeAuctionBidderCommitment("alpha")
+            })
+          ]
+        }
+      ]),
+      makeBlock(844_210, [
+        {
+          txid: "22".repeat(32),
+          paymentOutputs: [1_100_000_000n],
+          payloads: [
+            encodeAuctionBidPayload({
+              flags: 0,
+              bondVout: 0,
+              ownerPubkey: winnerOwnerPubkey,
+              reservedLockBlocks: catalogEntry.reservedLockBlocks,
+              bidAmountSats: 1_100_000_000n,
+              auctionLotCommitment: catalogEntry.auctionLotCommitment,
+              auctionCommitment: computeAuctionBidStateCommitment({
+                auctionId: catalogEntry.auctionId,
+                name: catalogEntry.normalizedName,
+                reservedClassId: catalogEntry.reservedClassId,
+                currentBlockHeight: 844_210,
+                phase: "soft_close",
+                unlockBlock: catalogEntry.unlockBlock,
+                auctionCloseBlockAfter: 844_330,
+                openingMinimumBidSats: catalogEntry.openingMinimumBidSats,
+                currentLeaderBidderCommitment: computeAuctionBidderCommitment("alpha"),
+                currentHighestBidSats: 1_000_000_000n,
+                currentRequiredMinimumBidSats: 1_100_000_000n,
+                reservedLockBlocks: catalogEntry.reservedLockBlocks
+              }),
+              bidderCommitment: computeAuctionBidderCommitment("beta")
+            })
+          ]
+        }
+      ]),
+      makeBlock(settlementHeight, [
+        {
+          txid: "33".repeat(32),
+          payloads: []
+        }
+      ])
+    ]);
+
+    expect(indexer.getName("google")).toMatchObject({
+      name: "google",
+      acquisitionKind: "auction",
+      acquisitionAuctionId: catalogEntry.auctionId,
+      acquisitionAuctionBidTxid: "22".repeat(32),
+      acquisitionAuctionBidderCommitment: computeAuctionBidderCommitment("beta"),
+      currentOwnerPubkey: winnerOwnerPubkey,
+      claimHeight: settlementHeight,
+      currentBondTxid: "22".repeat(32),
+      currentBondVout: 0,
+      currentBondValueSats: 1_100_000_000n,
+      requiredBondSats: 1_100_000_000n,
+      status: "immature"
+    });
+
+    expect(indexer.listRecentActivityForName("google").map((record) => record.txid)).toEqual([
+      "22".repeat(32),
+      "11".repeat(32)
     ]);
   });
 

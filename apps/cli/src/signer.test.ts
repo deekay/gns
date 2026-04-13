@@ -150,6 +150,7 @@ function createAuctionBidPackageFixture() {
     currentRequiredMinimumBidSats: 1_331_000_000n,
     reservedLockBlocks: 525_600,
     bidderId: "operator_alpha",
+    ownerPubkey: "33".repeat(32),
     bidAmountSats: 1_340_000_000n,
     exportedAt: "2026-04-11T22:00:00.000Z"
   });

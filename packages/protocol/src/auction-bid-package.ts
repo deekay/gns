@@ -5,7 +5,7 @@ import { PROTOCOL_NAME } from "./constants.js";
 import { normalizeName } from "./names.js";
 
 export const AUCTION_BID_PACKAGE_FORMAT = "gns-auction-bid-package";
-export const AUCTION_BID_PACKAGE_VERSION = 1;
+export const AUCTION_BID_PACKAGE_VERSION = 2;
 
 export type AuctionBidPackagePhase =
   | "pending_unlock"
@@ -42,6 +42,7 @@ export interface AuctionBidPackage {
   readonly blocksUntilUnlock: number;
   readonly blocksUntilClose: number | null;
   readonly bidderId: string;
+  readonly ownerPubkey: string;
   readonly bidAmountSats: string;
   readonly auctionLotCommitment: string;
   readonly auctionStateCommitment: string;
@@ -71,6 +72,7 @@ export interface CreateAuctionBidPackageInput {
   readonly blocksUntilUnlock?: number;
   readonly blocksUntilClose?: number | null;
   readonly bidderId: string;
+  readonly ownerPubkey: string;
   readonly bidAmountSats: bigint | number | string;
   readonly auctionLotCommitment?: string;
   readonly auctionStateCommitment?: string;
@@ -104,6 +106,7 @@ export function createAuctionBidPackage(input: CreateAuctionBidPackageInput): Au
     auctionCloseBlockAfter === null ? null : Math.max(0, auctionCloseBlockAfter - currentBlockHeight)
   );
   const bidderId = normalizeRequiredText(input.bidderId, "bidderId");
+  const ownerPubkey = assertHexBytes(input.ownerPubkey, 32, "ownerPubkey");
   const bidAmountSats = parseBigIntLike(input.bidAmountSats, "bidAmountSats");
   const auctionLotCommitment = input.auctionLotCommitment
     ? assertHexBytes(input.auctionLotCommitment, 16, "auctionLotCommitment")
@@ -173,6 +176,7 @@ export function createAuctionBidPackage(input: CreateAuctionBidPackageInput): Au
     blocksUntilUnlock,
     blocksUntilClose,
     bidderId,
+    ownerPubkey,
     bidAmountSats: bidAmountSats.toString(),
     auctionLotCommitment,
     auctionStateCommitment,
@@ -231,6 +235,7 @@ export function parseAuctionBidPackage(input: unknown): AuctionBidPackage {
   const blocksUntilUnlock = parseNonNegativeSafeInteger(record.blocksUntilUnlock, "blocksUntilUnlock");
   const blocksUntilClose = parseOptionalNonNegativeSafeInteger(record.blocksUntilClose, "blocksUntilClose");
   const bidderId = normalizeRequiredText(assertString(record.bidderId, "bidderId"), "bidderId");
+  const ownerPubkey = assertHexBytes(assertString(record.ownerPubkey, "ownerPubkey"), 32, "ownerPubkey");
   const bidAmountSats = parseBigIntLike(record.bidAmountSats, "bidAmountSats");
   const auctionLotCommitment = assertHexBytes(
     assertString(record.auctionLotCommitment, "auctionLotCommitment"),
@@ -358,6 +363,7 @@ export function parseAuctionBidPackage(input: unknown): AuctionBidPackage {
     blocksUntilUnlock,
     blocksUntilClose,
     bidderId,
+    ownerPubkey,
     bidAmountSats: bidAmountSats.toString(),
     auctionLotCommitment,
     auctionStateCommitment,

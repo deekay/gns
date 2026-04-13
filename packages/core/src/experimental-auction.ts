@@ -92,6 +92,7 @@ export interface ExperimentalReservedAuctionBidObservation {
   readonly vout: number;
   readonly bondVout: number;
   readonly bidderCommitment: string;
+  readonly ownerPubkey?: string;
   readonly bidAmountSats: bigint;
   readonly reservedLockBlocks: number;
   readonly auctionLotCommitment: string;
@@ -119,6 +120,7 @@ export interface ExperimentalReservedAuctionBidOutcome {
   readonly vout: number;
   readonly bondVout: number;
   readonly bidderCommitment: string;
+  readonly ownerPubkey: string | null;
   readonly amountSats: bigint;
   readonly status: "accepted" | "rejected";
   readonly reason: ExperimentalReservedAuctionBidOutcomeReason;
@@ -159,6 +161,9 @@ export interface ExperimentalReservedAuctionState {
   readonly currentRequiredMinimumBidSats: bigint | null;
   readonly winnerBidTxid: string | null;
   readonly winnerBidderCommitment: string | null;
+  readonly winnerOwnerPubkey: string | null;
+  readonly winnerBondVout: number | null;
+  readonly settlementHeight: number | null;
   readonly winnerBondReleaseBlock: number | null;
   readonly currentlyLockedAcceptedBidCount: number;
   readonly currentlyLockedAcceptedBidAmountSats: bigint;
@@ -178,6 +183,7 @@ export interface SerializedExperimentalReservedAuctionBidOutcome {
   readonly vout: number;
   readonly bondVout: number;
   readonly bidderCommitment: string;
+  readonly ownerPubkey: string | null;
   readonly amountSats: string;
   readonly status: "accepted" | "rejected";
   readonly reason: ExperimentalReservedAuctionBidOutcomeReason;
@@ -218,6 +224,9 @@ export interface SerializedExperimentalReservedAuctionState {
   readonly currentRequiredMinimumBidSats: string | null;
   readonly winnerBidTxid: string | null;
   readonly winnerBidderCommitment: string | null;
+  readonly winnerOwnerPubkey: string | null;
+  readonly winnerBondVout: number | null;
+  readonly settlementHeight: number | null;
   readonly winnerBondReleaseBlock: number | null;
   readonly currentlyLockedAcceptedBidCount: number;
   readonly currentlyLockedAcceptedBidAmountSats: string;
@@ -335,6 +344,7 @@ export function deriveExperimentalReservedAuctionState(input: {
         vout: observation.vout,
         bondVout: observation.bondVout,
         bidderCommitment: observation.bidderCommitment,
+        ownerPubkey: observation.ownerPubkey ?? null,
         amountSats: observation.bidAmountSats,
         status: "rejected" as const,
         reason: "reserved_lock_mismatch" as const,
@@ -360,6 +370,7 @@ export function deriveExperimentalReservedAuctionState(input: {
         vout: observation.vout,
         bondVout: observation.bondVout,
         bidderCommitment: observation.bidderCommitment,
+        ownerPubkey: observation.ownerPubkey ?? null,
         amountSats: observation.bidAmountSats,
         status: "rejected" as const,
         reason: "before_unlock" as const,
@@ -385,6 +396,7 @@ export function deriveExperimentalReservedAuctionState(input: {
         vout: observation.vout,
         bondVout: observation.bondVout,
         bidderCommitment: observation.bidderCommitment,
+        ownerPubkey: observation.ownerPubkey ?? null,
         amountSats: observation.bidAmountSats,
         status: "rejected" as const,
         reason: "released_to_ordinary_lane" as const,
@@ -410,6 +422,7 @@ export function deriveExperimentalReservedAuctionState(input: {
         vout: observation.vout,
         bondVout: observation.bondVout,
         bidderCommitment: observation.bidderCommitment,
+        ownerPubkey: observation.ownerPubkey ?? null,
         amountSats: observation.bidAmountSats,
         status: "rejected" as const,
         reason: "auction_closed" as const,
@@ -435,6 +448,7 @@ export function deriveExperimentalReservedAuctionState(input: {
         vout: observation.vout,
         bondVout: observation.bondVout,
         bidderCommitment: observation.bidderCommitment,
+        ownerPubkey: observation.ownerPubkey ?? null,
         amountSats: observation.bidAmountSats,
         status: "rejected" as const,
         reason: "stale_state_commitment" as const,
@@ -460,6 +474,7 @@ export function deriveExperimentalReservedAuctionState(input: {
         vout: observation.vout,
         bondVout: observation.bondVout,
         bidderCommitment: observation.bidderCommitment,
+        ownerPubkey: observation.ownerPubkey ?? null,
         amountSats: observation.bidAmountSats,
         status: "rejected" as const,
         reason: "prior_bid_not_replaced" as const,
@@ -486,6 +501,7 @@ export function deriveExperimentalReservedAuctionState(input: {
           vout: observation.vout,
           bondVout: observation.bondVout,
           bidderCommitment: observation.bidderCommitment,
+          ownerPubkey: observation.ownerPubkey ?? null,
           amountSats: observation.bidAmountSats,
           status: "rejected" as const,
           reason: "below_opening_minimum" as const,
@@ -521,6 +537,7 @@ export function deriveExperimentalReservedAuctionState(input: {
         vout: observation.vout,
         bondVout: observation.bondVout,
         bidderCommitment: observation.bidderCommitment,
+        ownerPubkey: observation.ownerPubkey ?? null,
         amountSats: observation.bidAmountSats,
         status: "accepted" as const,
         reason: "opening_bid" as const,
@@ -558,6 +575,7 @@ export function deriveExperimentalReservedAuctionState(input: {
         vout: observation.vout,
         bondVout: observation.bondVout,
         bidderCommitment: observation.bidderCommitment,
+        ownerPubkey: observation.ownerPubkey ?? null,
         amountSats: observation.bidAmountSats,
         status: "rejected" as const,
         reason: "below_minimum_increment" as const,
@@ -605,11 +623,12 @@ export function deriveExperimentalReservedAuctionState(input: {
       index,
       txid: observation.txid,
       blockHeight: observation.blockHeight,
-      txIndex: observation.txIndex,
-      vout: observation.vout,
-      bondVout: observation.bondVout,
-      bidderCommitment: observation.bidderCommitment,
-      amountSats: observation.bidAmountSats,
+        txIndex: observation.txIndex,
+        vout: observation.vout,
+        bondVout: observation.bondVout,
+        bidderCommitment: observation.bidderCommitment,
+        ownerPubkey: observation.ownerPubkey ?? null,
+        amountSats: observation.bidAmountSats,
       status: "accepted" as const,
       reason:
         standingOutcome !== null
@@ -666,11 +685,14 @@ export function deriveExperimentalReservedAuctionState(input: {
       : null;
   const winnerBidTxid = winningAcceptedOutcome?.txid ?? null;
   const winnerBidderCommitment = phase === "settled" ? currentLeaderBidderCommitment : null;
+  const winnerOwnerPubkey = winningAcceptedOutcome?.ownerPubkey ?? null;
+  const winnerBondVout = winningAcceptedOutcome?.bondVout ?? null;
   const winnerBondReleaseBlock =
     winningAcceptedOutcome !== null
       ? winningAcceptedOutcome.blockHeight + input.catalogEntry.reservedLockBlocks
       : null;
   const settledReleaseBlock = finalAuctionCloseBlock === null ? null : finalAuctionCloseBlock + 1;
+  const settlementHeight = phase === "settled" ? settledReleaseBlock : null;
   const hydratedVisibleBidOutcomes = visibleBidOutcomes.map((outcome) => {
     if (outcome.status === "rejected") {
       return outcome;
@@ -778,6 +800,9 @@ export function deriveExperimentalReservedAuctionState(input: {
     currentRequiredMinimumBidSats,
     winnerBidTxid,
     winnerBidderCommitment,
+    winnerOwnerPubkey,
+    winnerBondVout,
+    settlementHeight,
     winnerBondReleaseBlock,
     currentlyLockedAcceptedBidCount: currentlyLockedAcceptedOutcomes.length,
     currentlyLockedAcceptedBidAmountSats: sumOutcomeAmounts(currentlyLockedAcceptedOutcomes),
@@ -819,6 +844,9 @@ export function serializeExperimentalReservedAuctionState(
     currentRequiredMinimumBidSats: state.currentRequiredMinimumBidSats?.toString() ?? null,
     winnerBidTxid: state.winnerBidTxid,
     winnerBidderCommitment: state.winnerBidderCommitment,
+    winnerOwnerPubkey: state.winnerOwnerPubkey,
+    winnerBondVout: state.winnerBondVout,
+    settlementHeight: state.settlementHeight,
     winnerBondReleaseBlock: state.winnerBondReleaseBlock,
     currentlyLockedAcceptedBidCount: state.currentlyLockedAcceptedBidCount,
     currentlyLockedAcceptedBidAmountSats: state.currentlyLockedAcceptedBidAmountSats.toString(),
@@ -835,6 +863,7 @@ export function serializeExperimentalReservedAuctionState(
       vout: outcome.vout,
       bondVout: outcome.bondVout,
       bidderCommitment: outcome.bidderCommitment,
+      ownerPubkey: outcome.ownerPubkey ?? null,
       amountSats: outcome.amountSats.toString(),
       status: outcome.status,
       reason: outcome.reason,

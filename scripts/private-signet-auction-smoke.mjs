@@ -31,8 +31,8 @@ const REMOTE_STATUS_PATH =
   ?? "/var/lib/gns/private-auction-smoke-summary.json";
 const PUBLISH_REMOTE_STATUS =
   (process.env.GNS_PRIVATE_SIGNET_AUCTION_SMOKE_PUBLISH_REMOTE_STATUS ?? "1") !== "0";
-const BIDDING_SMOKE_AUCTION_ID_PREFIXES = ["10-", "11-", "12-", "14-", "15-", "16-"];
-const RELEASE_SMOKE_AUCTION_ID_PREFIX = "13-";
+const BIDDING_SMOKE_AUCTION_ID_PREFIXES = ["10-", "11-", "12-", "14-", "15-", "16-", "18-"];
+const RELEASE_SMOKE_AUCTION_ID_PREFIXES = ["13-", "17-"];
 
 void main().catch((error) => {
   console.error(error instanceof Error ? error.stack ?? error.message : String(error));
@@ -71,6 +71,7 @@ async function main() {
         fileStem: "alpha",
         auctionState: targetAuction,
         bidderId: alphaBidderId,
+        ownerPubkey: owner.ownerPubkey,
         bidAmountSats: alphaBidAmountSats,
         fundingAddress: owner.fundingAddress,
         fundingWif: owner.fundingWif,
@@ -94,6 +95,7 @@ async function main() {
         fileStem: "beta",
         auctionState: alphaState,
         bidderId: betaBidderId,
+        ownerPubkey: recipient.ownerPubkey,
         bidAmountSats: betaBidAmountSats,
         fundingAddress: recipient.fundingAddress,
         fundingWif: recipient.fundingWif,
@@ -138,6 +140,24 @@ async function main() {
         throw new Error(`expected ${targetAuction.auctionId} to keep the higher bid accepted`);
       }
 
+      const settledState = await ensureAuctionSettled(finalState);
+      const settledNameRecord = await fetchNameRecordByName(targetAuction.normalizedName);
+      if (!settledNameRecord) {
+        throw new Error(`expected ${targetAuction.normalizedName} to materialize as a live name after auction settlement`);
+      }
+
+      if (settledNameRecord.currentOwnerPubkey !== recipient.ownerPubkey) {
+        throw new Error(`expected ${targetAuction.normalizedName} to be owned by the winning bidder pubkey`);
+      }
+
+      if (String(settledNameRecord.acquisitionKind ?? "") !== "auction") {
+        throw new Error(`expected ${targetAuction.normalizedName} to be marked as auction-acquired`);
+      }
+
+      if (settledNameRecord.currentBondTxid !== betaBid.bidTxid) {
+        throw new Error(`expected ${targetAuction.normalizedName} to anchor its live bond to the winning bid`);
+      }
+
       const releaseTargetBefore = await ensureAuctionReadyForRelease(
         selectReleaseSmokeAuction(beforeFeed.auctions)
       );
@@ -152,6 +172,7 @@ async function main() {
         fileStem: "release-late",
         auctionState: releaseTargetBefore,
         bidderId: releaseBidderId,
+        ownerPubkey: owner.ownerPubkey,
         bidAmountSats: releaseBidAmountSats,
         fundingAddress: owner.fundingAddress,
         fundingWif: owner.fundingWif,
@@ -201,11 +222,14 @@ async function main() {
       summary.betaBid = betaBid;
       summary.earlySpendTxid = earlySpendTxid;
       summary.finalState = finalState;
+      summary.settledState = settledState;
+      summary.settledNameRecord = settledNameRecord;
       summary.highlight = {
         alphaBondSpendStatus: alphaOutcome.bondSpendStatus,
         alphaBondSpentTxid: alphaOutcome.bondSpentTxid,
         betaBondStatus: betaOutcome.bondStatus,
-        betaBondSpendStatus: betaOutcome.bondSpendStatus
+        betaBondSpendStatus: betaOutcome.bondSpendStatus,
+        settledOwnerPubkey: settledNameRecord.currentOwnerPubkey
       };
       summary.releaseCheck = {
         auctionId: releaseTargetBefore.auctionId,
@@ -295,7 +319,11 @@ function selectReleaseSmokeAuction(auctions) {
       return false;
     }
 
-    if (!String(entry.auctionId ?? "").startsWith(RELEASE_SMOKE_AUCTION_ID_PREFIX)) {
+    if (!RELEASE_SMOKE_AUCTION_ID_PREFIXES.some((prefix) => String(entry.auctionId ?? "").startsWith(prefix))) {
+      return false;
+    }
+
+    if (entry.phase !== "awaiting_opening_bid" && entry.phase !== "pending_unlock") {
       return false;
     }
 
@@ -366,11 +394,50 @@ async function ensureAuctionReleasedToOrdinaryLane(auctionState) {
   return refreshed;
 }
 
+async function ensureAuctionSettled(auctionState) {
+  if (auctionState.phase === "settled") {
+    return auctionState;
+  }
+
+  if (auctionState.auctionCloseBlockAfter === null) {
+    throw new Error(`expected ${auctionState.auctionId} to expose an auction close height`);
+  }
+
+  const blocksToMine = Math.max(1, auctionState.auctionCloseBlockAfter - auctionState.currentBlockHeight + 1);
+  logStep(
+    auctionState.auctionId,
+    `mining ${blocksToMine} block${blocksToMine === 1 ? "" : "s"} to cross auction settlement`
+  );
+  const currentHeight = await getBlockCount();
+  await mineBlocks(blocksToMine);
+  await waitForResolverHeight(currentHeight + blocksToMine);
+
+  const refreshed = await fetchExperimentalAuctionById(auctionState.auctionId);
+  if (!refreshed || refreshed.phase !== "settled") {
+    throw new Error(`expected ${auctionState.auctionId} to settle after the close window`);
+  }
+
+  return refreshed;
+}
+
+async function fetchNameRecordByName(name) {
+  try {
+    return await fetchJson(`${resolverUrl()}/name/${encodeURIComponent(name)}`);
+  } catch (error) {
+    if (error instanceof Error && /404/.test(error.message)) {
+      return null;
+    }
+
+    throw error;
+  }
+}
+
 async function buildAndMaybeBroadcastAuctionBid({
   outDir,
   fileStem,
   auctionState,
   bidderId,
+  ownerPubkey,
   bidAmountSats,
   fundingAddress,
   fundingWif,
@@ -397,6 +464,7 @@ async function buildAndMaybeBroadcastAuctionBid({
     blocksUntilUnlock: auctionState.blocksUntilUnlock,
     blocksUntilClose: auctionState.blocksUntilClose,
     bidderId,
+    ownerPubkey,
     bidAmountSats
   });
   await writeJsonFile(packagePath, bidPackage);

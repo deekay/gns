@@ -14,6 +14,8 @@ are:
 - the protocol has an explicit experimental `AUCTION_BID` payload shape
 - the resolver and website can now derive an experimental live auction feed
   from observed `AUCTION_BID` transactions for catalog lots
+- settled winning bids can now materialize into real owned names in registry
+  state
 
 That is real progress, but it is still not the same thing as a live reserved
 auction protocol.
@@ -33,6 +35,8 @@ What exists today:
 - an experimental unsigned/signed auction bid artifact flow in CLI + architect
 - core/indexer support for recording structurally valid `AUCTION_BID`
   transactions and deriving lot-level experimental auction state from them
+- experimental settled-winner materialization into a real owned name record,
+  using the winning bid's owner key and bond outpoint
 - resolver/web exposure of that chain-derived experimental auction state
 
 That means we now have:
@@ -52,12 +56,15 @@ That means we now have:
   - same-bidder replacement when the later bid spends the earlier bid bond
   - derived accepted-bid bond status and bond spend / release summaries
   - accepted and rejected observed bid outcomes
+  - an experimental settled winner becoming a real owned name in registry state
 
 What we do **not** yet have:
 
-- on-chain auction indexing
-- registry-backed auction state transitions
-- settlement and fallback rules running end to end
+- a final reserved-auction protocol we are ready to freeze
+- strict chain-enforced consequences for every currently experimental derived
+  rule
+- a full website/operator flow that carries bidders from live auction state all
+  the way through broadcast and post-win management
 
 ## Gap Categories
 
@@ -98,8 +105,8 @@ This is the point where the simulator becomes a real protocol.
 
 ### 3. Auction-Aware Indexer / Resolver State
 
-Today the resolver now knows an **experimental** subset of reserved-auction
-state for catalog lots:
+Today the resolver now knows an **experimental** reserved-auction slice for
+catalog lots:
 
 - observed `AUCTION_BID` transactions
 - current leading bidder commitment
@@ -110,30 +117,31 @@ state for catalog lots:
 - accepted-bid bond / release summaries
 - early-vs-allowed spend classification for observed bid bond outpoints
 - settled / soft-close / pending phase
+- settled-winner ownership materialization for names that do not already exist
+  in the registry state
 
 What it still does **not** know:
 
-- final reserved-lane settlement semantics
-- actual loser release / winner lock enforcement on chain
-- full rebid replacement enforcement on chain beyond the current experimental
-  derivation
-- fully chain-enforced no-bid fallback behavior beyond the current experimental
-  release-valve derivation
+- final launch semantics for reserved-lane settlement
+- whether every currently derived consequence should be promoted to stricter
+  chain-enforced behavior
 - a fully registry-backed reserved-auction market beyond the experimental lot
   catalog
 
 ### 4. Settlement / Release / Fallback Rules
 
-Some of the most important reserved-lane rules are still policy notes rather
-than executable logic.
+Some of the most important reserved-lane rules are now executable in the
+experimental path, but not all of them are final protocol commitments.
 
 Still open:
 
-- when loser capital unlocks
-- how winner capital remains locked
+- whether the current loser-release / winner-lock timing is the right final
+  rule set
 - whether the current no-bid release window is the right default
 - how over-reserved names should tune that release valve
 - whether transfers before maturity are allowed and under what constraints
+- whether any explicit post-win settlement or acknowledgement step is still
+  desirable despite the current winner-owned-name materialization path
 
 ### 5. Website Bidder Flow
 
@@ -170,10 +178,9 @@ Current coverage is good for the simulator layer:
 
 Missing higher-confidence layers:
 
-- regtest prototype for bid transaction lifecycle
-- controlled-chain settlement tests
 - negative-path on-chain auction tests
-- private signet or other hosted live auction smoke, if we go that far
+- more bidder-state / rebid-path controlled-chain tests
+- additional hosted live auction sequences beyond the current smoke lots
 
 ## What We Just Closed
 
@@ -193,6 +200,12 @@ The third gap we just closed is:
 > resolver and website can now derive experimental lot-level auction state from
 > observed `AUCTION_BID` transactions instead of showing only simulator
 > fixtures.
+
+The fourth gap we just closed is:
+
+> a settled winning bid can now materialize into a real owned name record,
+> making reserved-auction settlement a genuine registry-state transition rather
+> than just an informational feed.
 
 That matters because it gives the next protocol step a stable boundary:
 

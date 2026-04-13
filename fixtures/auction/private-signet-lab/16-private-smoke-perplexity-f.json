@@ -5,7 +5,7 @@
   "scenario": {
     "name": "perplexity",
     "reservedClassId": "major_existing_name",
-    "unlockBlock": 320,
+    "unlockBlock": 280,
     "bidAttempts": []
   }
 }

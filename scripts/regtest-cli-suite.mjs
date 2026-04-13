@@ -1063,6 +1063,11 @@ async function runAuctionLifecycleScenario() {
   const settledWinningOutcome = getAuctionOutcome(settledState, softCloseBid.bidTxid);
   assertEqual(settledOpeningOutcome.bondStatus, "losing_bid_releasable", "losing bond releasable after settlement");
   assertEqual(settledWinningOutcome.bondStatus, "winner_locked", "winner bond locked after settlement");
+  const settledNameRecord = await waitForName(settledState.normalizedName, 120_000);
+  assertEqual(settledNameRecord.currentOwnerPubkey, betaBidder.ownerPubkey, "auction winner owner");
+  assertEqual(String(settledNameRecord.acquisitionKind ?? ""), "auction", "auction acquisition kind");
+  assertEqual(settledNameRecord.currentBondTxid, softCloseBid.bidTxid, "auction winner bond txid");
+  assertEqual(settledNameRecord.currentBondVout, softCloseBid.bondVout, "auction winner bond vout");
 
   const losingSpendTxid = await spendAuctionBondWithRpc({
     bidTxid: openingBid.bidTxid,
@@ -1153,6 +1158,7 @@ async function submitAuctionBid(input) {
     blocksUntilUnlock: input.auctionState.blocksUntilUnlock,
     blocksUntilClose: input.auctionState.blocksUntilClose,
     bidderId: input.bidderId,
+    ownerPubkey: input.bidderAccount.ownerPubkey,
     bidAmountSats: input.bidAmountSats
   });
   await writeFile(bidPackagePath, JSON.stringify(bidPackage, null, 2) + "\n", "utf8");

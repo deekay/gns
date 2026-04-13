@@ -1172,6 +1172,7 @@ export function buildAuctionBidArtifacts(
     bondVout,
     reservedLockBlocks: bidPackage.reservedLockBlocks,
     bidAmountSats,
+    ownerPubkey: bidPackage.ownerPubkey,
     auctionLotCommitment: bidPackage.auctionLotCommitment,
     auctionCommitment: bidPackage.auctionStateCommitment,
     bidderCommitment: bidPackage.bidderCommitment

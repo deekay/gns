@@ -30,6 +30,7 @@ describe("loadReservedAuctionLab", () => {
     const pkg = await createReservedAuctionLabBidPackage({
       caseId: "04-soft-close-google",
       bidderId: "operator_alpha",
+      ownerPubkey: "11".repeat(32),
       bidAmountSats: "1340000000"
     });
 
@@ -70,6 +71,7 @@ describe("loadReservedAuctionLab", () => {
         blocksUntilClose: 4
       },
       bidderId: "operator_beta",
+      ownerPubkey: "22".repeat(32),
       bidAmountSats: "330000000"
     });
 

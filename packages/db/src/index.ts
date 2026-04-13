@@ -13,6 +13,12 @@ export interface PersistedNameRecord {
   readonly name: string;
   readonly status: "pending" | "immature" | "mature" | "invalid";
   readonly currentOwnerPubkey: string;
+  readonly acquisitionKind?: "claim" | "auction";
+  readonly acquisitionAuctionId?: string;
+  readonly acquisitionAuctionLotCommitment?: string;
+  readonly acquisitionAuctionBidTxid?: string;
+  readonly acquisitionAuctionBidderCommitment?: string;
+  readonly acquisitionBondReleaseHeight?: number;
   readonly claimCommitTxid: string;
   readonly claimRevealTxid: string;
   readonly claimHeight: number;
@@ -98,6 +104,7 @@ export type PersistedTransactionProvenancePayload =
       readonly bondVout: number;
       readonly reservedLockBlocks: number;
       readonly bidAmountSats: string;
+      readonly ownerPubkey: string;
       readonly auctionLotCommitment: string;
       readonly auctionCommitment: string;
       readonly bidderCommitment: string;
@@ -331,10 +338,23 @@ function parseNameRecordSnapshot(input: unknown): PersistedIndexerSnapshot["name
     throw new Error("name record snapshot must be an object");
   }
 
+  const acquisitionKind = getOptionalAuctionAcquisitionKind(input, "acquisitionKind");
+  const acquisitionAuctionId = getOptionalString(input, "acquisitionAuctionId");
+  const acquisitionAuctionLotCommitment = getOptionalString(input, "acquisitionAuctionLotCommitment");
+  const acquisitionAuctionBidTxid = getOptionalString(input, "acquisitionAuctionBidTxid");
+  const acquisitionAuctionBidderCommitment = getOptionalString(input, "acquisitionAuctionBidderCommitment");
+  const acquisitionBondReleaseHeight = getOptionalInteger(input, "acquisitionBondReleaseHeight");
+
   return {
     name: getRequiredString(input, "name"),
     status: getRequiredNameStatus(input, "status"),
     currentOwnerPubkey: getRequiredString(input, "currentOwnerPubkey"),
+    ...(acquisitionKind === undefined ? {} : { acquisitionKind }),
+    ...(acquisitionAuctionId === undefined ? {} : { acquisitionAuctionId }),
+    ...(acquisitionAuctionLotCommitment === undefined ? {} : { acquisitionAuctionLotCommitment }),
+    ...(acquisitionAuctionBidTxid === undefined ? {} : { acquisitionAuctionBidTxid }),
+    ...(acquisitionAuctionBidderCommitment === undefined ? {} : { acquisitionAuctionBidderCommitment }),
+    ...(acquisitionBondReleaseHeight === undefined ? {} : { acquisitionBondReleaseHeight }),
     claimCommitTxid: getRequiredString(input, "claimCommitTxid"),
     claimRevealTxid: getRequiredString(input, "claimRevealTxid"),
     claimHeight: getRequiredInteger(input, "claimHeight"),
@@ -627,6 +647,7 @@ function parseTransactionProvenancePayload(
       bondVout: getRequiredInteger(input, "bondVout"),
       reservedLockBlocks: getRequiredInteger(input, "reservedLockBlocks"),
       bidAmountSats: getRequiredString(input, "bidAmountSats"),
+      ownerPubkey: getRequiredString(input, "ownerPubkey"),
       auctionLotCommitment: getRequiredString(input, "auctionLotCommitment"),
       auctionCommitment: getRequiredString(input, "auctionCommitment"),
       bidderCommitment: getRequiredString(input, "bidderCommitment")
@@ -744,6 +765,34 @@ function getNullableString(input: Record<string, unknown>, key: string): string 
   return value;
 }
 
+function getOptionalInteger(input: Record<string, unknown>, key: string): number | undefined {
+  const value = input[key];
+
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if (typeof value !== "number" || !Number.isInteger(value)) {
+    throw new Error(`${key} must be an integer when present`);
+  }
+
+  return value;
+}
+
+function getOptionalString(input: Record<string, unknown>, key: string): string | undefined {
+  const value = input[key];
+
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if (typeof value !== "string") {
+    throw new Error(`${key} must be a string when present`);
+  }
+
+  return value;
+}
+
 function getRequiredNameStatus(
   input: Record<string, unknown>,
   key: string
@@ -752,6 +801,23 @@ function getRequiredNameStatus(
 
   if (value !== "pending" && value !== "immature" && value !== "mature" && value !== "invalid") {
     throw new Error(`${key} must be a valid claimed name status`);
+  }
+
+  return value;
+}
+
+function getOptionalAuctionAcquisitionKind(
+  input: Record<string, unknown>,
+  key: string
+): PersistedIndexerSnapshot["names"][number]["acquisitionKind"] {
+  const value = input[key];
+
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if (value !== "claim" && value !== "auction") {
+    throw new Error(`${key} must be claim or auction when present`);
   }
 
   return value;

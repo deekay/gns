@@ -51,6 +51,7 @@ export interface AuctionBidEventPayload {
   readonly bondVout: number;
   readonly reservedLockBlocks: number;
   readonly bidAmountSats: bigint;
+  readonly ownerPubkey: string;
   readonly auctionLotCommitment: string;
   readonly auctionCommitment: string;
   readonly bidderCommitment: string;
@@ -229,6 +230,7 @@ export function createAuctionBidPayload(input: {
   readonly bondVout: number;
   readonly reservedLockBlocks: number;
   readonly bidAmountSats: bigint;
+  readonly ownerPubkey: string;
   readonly auctionLotCommitment: string;
   readonly auctionCommitment: string;
   readonly bidderCommitment: string;
@@ -256,6 +258,7 @@ export function createAuctionBidPayload(input: {
     bondVout: input.bondVout,
     reservedLockBlocks: input.reservedLockBlocks,
     bidAmountSats: input.bidAmountSats,
+    ownerPubkey: assertHexBytes(input.ownerPubkey, 32, "ownerPubkey"),
     auctionLotCommitment: assertHexBytes(input.auctionLotCommitment, 16, "auctionLotCommitment"),
     auctionCommitment: assertHexBytes(input.auctionCommitment, 32, "auctionCommitment"),
     bidderCommitment: assertHexBytes(input.bidderCommitment, 16, "bidderCommitment")

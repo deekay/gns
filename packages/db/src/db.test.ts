@@ -168,6 +168,7 @@ describe("indexer snapshot persistence", () => {
                 bondVout: 0,
                 reservedLockBlocks: 525600,
                 bidAmountSats: "1700000000",
+                ownerPubkey: "77".repeat(32),
                 auctionLotCommitment: "44".repeat(16),
                 auctionCommitment: "55".repeat(32),
                 bidderCommitment: "66".repeat(16)

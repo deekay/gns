@@ -441,6 +441,11 @@ async function createAuctionBidPackageCommand(args: readonly string[]): Promise<
     throw new Error("--bidder-id is required");
   }
 
+  const ownerPubkey = parsed.options.get("owner-pubkey");
+  if (!ownerPubkey) {
+    throw new Error("--owner-pubkey is required");
+  }
+
   const bidAmountSats = parseRequiredBigInt(parsed.options.get("amount-sats"), "amount-sats");
   const rawInput = await loadJsonFile(scenarioPath);
   const scenario = parseReservedAuctionScenario(extractReservedAuctionScenarioInput(rawInput));
@@ -487,6 +492,7 @@ async function createAuctionBidPackageCommand(args: readonly string[]): Promise<
     blocksUntilUnlock: state.blocksUntilUnlock,
     blocksUntilClose: state.blocksUntilClose,
     bidderId,
+    ownerPubkey,
     bidAmountSats
   });
 

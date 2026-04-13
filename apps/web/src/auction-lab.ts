@@ -102,6 +102,7 @@ export async function loadReservedAuctionLab(input?: {
 export async function createReservedAuctionLabBidPackage(input: {
   readonly caseId: string;
   readonly bidderId: string;
+  readonly ownerPubkey: string;
   readonly bidAmountSats: bigint | number | string;
   readonly policyOverrides?: ReservedAuctionLabPolicyOverrides;
 }): Promise<AuctionBidPackage> {
@@ -138,6 +139,7 @@ export async function createReservedAuctionLabBidPackage(input: {
       ordinaryMinimumBidSats: auctionCase.state.ordinaryMinimumBidSats
     },
     bidderId: input.bidderId,
+    ownerPubkey: input.ownerPubkey,
     bidAmountSats: input.bidAmountSats,
     sourceLabel: `auction lab case ${auctionCase.id}`
   });
@@ -146,11 +148,13 @@ export async function createReservedAuctionLabBidPackage(input: {
 export function createExperimentalAuctionFeedBidPackage(input: {
   readonly auction: WebsiteAuctionBidPackageStateInput;
   readonly bidderId: string;
+  readonly ownerPubkey: string;
   readonly bidAmountSats: bigint | number | string;
 }): AuctionBidPackage {
   return createWebsiteAuctionBidPackage({
     auctionState: input.auction,
     bidderId: input.bidderId,
+    ownerPubkey: input.ownerPubkey,
     bidAmountSats: input.bidAmountSats,
     sourceLabel: `experimental auction ${input.auction.auctionId}`
   });
@@ -176,6 +180,7 @@ function applyReservedAuctionLabPolicyOverrides(
 function createWebsiteAuctionBidPackage(input: {
   readonly auctionState: WebsiteAuctionBidPackageStateInput;
   readonly bidderId: string;
+  readonly ownerPubkey: string;
   readonly bidAmountSats: bigint | number | string;
   readonly sourceLabel: string;
 }): AuctionBidPackage {
@@ -207,6 +212,7 @@ function createWebsiteAuctionBidPackage(input: {
     blocksUntilUnlock: input.auctionState.blocksUntilUnlock,
     blocksUntilClose: input.auctionState.blocksUntilClose,
     bidderId: input.bidderId,
+    ownerPubkey: input.ownerPubkey,
     bidAmountSats: input.bidAmountSats
   });
 }

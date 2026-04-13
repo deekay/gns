@@ -291,11 +291,13 @@ const server = createServer(async (request, response) => {
       const record = body as Record<string, unknown>;
       const caseId = getRequiredWebBodyString(record, "caseId");
       const bidderId = getRequiredWebBodyString(record, "bidderId");
+      const ownerPubkey = getRequiredWebBodyString(record, "ownerPubkey");
       const bidAmountSats = getRequiredWebBodySats(record, "bidAmountSats");
       const noBidReleaseBlocks = getOptionalWebBodyInteger(record, "noBidReleaseBlocks");
       const pkg = await createReservedAuctionLabBidPackage({
         caseId,
         bidderId,
+        ownerPubkey,
         bidAmountSats,
         ...(noBidReleaseBlocks === undefined
           ? {}
@@ -339,6 +341,7 @@ const server = createServer(async (request, response) => {
       const record = body as Record<string, unknown>;
       const auctionId = getRequiredWebBodyString(record, "auctionId");
       const bidderId = getRequiredWebBodyString(record, "bidderId");
+      const ownerPubkey = getRequiredWebBodyString(record, "ownerPubkey");
       const bidAmountSats = getRequiredWebBodySats(record, "bidAmountSats");
       const upstream = await fetch(`${resolverUrl}/experimental-auctions`);
 
@@ -370,6 +373,7 @@ const server = createServer(async (request, response) => {
       const pkg = createExperimentalAuctionFeedBidPackage({
         auction: auction as Parameters<typeof createExperimentalAuctionFeedBidPackage>[0]["auction"],
         bidderId,
+        ownerPubkey,
         bidAmountSats
       });
 

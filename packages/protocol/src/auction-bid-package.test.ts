@@ -27,6 +27,7 @@ describe("auction bid packages", () => {
       currentRequiredMinimumBidSats: 1_000_000_000n,
       reservedLockBlocks: 525_600,
       bidderId: "operator_a",
+      ownerPubkey: "11".repeat(32),
       bidAmountSats: 1_000_000_000n,
       exportedAt: "2026-04-11T19:00:00.000Z"
     });
@@ -67,6 +68,7 @@ describe("auction bid packages", () => {
       currentRequiredMinimumBidSats: 1_760_000_000n,
       reservedLockBlocks: 525_600,
       bidderId: "operator_b",
+      ownerPubkey: "22".repeat(32),
       bidAmountSats: 1_800_000_000n,
       exportedAt: "2026-04-11T19:00:00.000Z"
     });
@@ -99,6 +101,7 @@ describe("auction bid packages", () => {
       currentRequiredMinimumBidSats: 231_000_000n,
       reservedLockBlocks: 262_800,
       bidderId: "operator_from_live_feed",
+      ownerPubkey: "33".repeat(32),
       bidAmountSats: 231_000_000n,
       exportedAt: "2026-04-11T19:00:00.000Z"
     });
@@ -127,6 +130,7 @@ describe("auction bid packages", () => {
       currentRequiredMinimumBidSats: 200_000_000n,
       reservedLockBlocks: 262_800,
       bidderId: "operator_c",
+      ownerPubkey: "44".repeat(32),
       bidAmountSats: 150_000_000n,
       exportedAt: "2026-04-11T19:00:00.000Z"
     });

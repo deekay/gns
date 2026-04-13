@@ -208,6 +208,7 @@ describe("wire payloads", () => {
       bondVout: 0,
       reservedLockBlocks: 262_800,
       bidAmountSats: 200_000_000n,
+      ownerPubkey: "ab".repeat(32),
       auctionLotCommitment: computeAuctionLotCommitment({
         auctionId: "openai-soft-close",
         name: "openai",
@@ -237,6 +238,7 @@ describe("wire payloads", () => {
       bondVout: 0,
       reservedLockBlocks: 262_800,
       bidAmountSats: 200_000_000n,
+      ownerPubkey: "ab".repeat(32),
       auctionLotCommitment: computeAuctionLotCommitment({
         auctionId: "openai-soft-close",
         name: "openai",
@@ -266,6 +268,7 @@ describe("wire payloads", () => {
         bondVout: 0,
         reservedLockBlocks: 262_800,
         bidAmountSats: 200_000_000n,
+        ownerPubkey: "ab".repeat(32),
         auctionLotCommitment: computeAuctionLotCommitment({
           auctionId: "openai-soft-close",
           name: "openai",

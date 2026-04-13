@@ -1,0 +1,11 @@
+{
+  "title": "Private smoke lot · release G",
+  "description": "Additional private signet experimental reserved-auction lot reserved for repeatable no-bid release-valve smoke coverage and late-bid rejection after release.",
+  "currentBlockHeight": 128,
+  "scenario": {
+    "name": "brex",
+    "reservedClassId": "major_existing_name",
+    "unlockBlock": 284,
+    "bidAttempts": []
+  }
+}

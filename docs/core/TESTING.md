@@ -176,6 +176,8 @@ That coverage includes:
 - derived accepted-bid bond / release summaries for experimental lots
 - early-vs-allowed bond-spend classification from observed bid bond outpoints,
   including plain non-GNS spending transactions
+- settled-winner materialization into a real name record once the auction
+  reaches settlement
 
 ### 2b. Repeatable smoke test for batched fixture mode
 
@@ -223,6 +225,7 @@ What it covers today:
   - opening bid acceptance
   - soft-close extension under the stronger late increment rule
   - settlement into winner / loser bond states
+  - winner materialization into a live owned name record
   - loser bond release and allowed post-settlement spend
   - winner lock until release height and allowed post-release spend
 - successful claim commit/reveal flow
@@ -342,7 +345,9 @@ Those focused smokes cover:
   chain-derived experimental auction feed can flag
   `spent_before_allowed_release`; the same smoke also holds a second dedicated
   lot open until the no-bid release window expires, then broadcasts a
-  prebuilt late bid so the feed can reject it as `released_to_ordinary_lane`
+  prebuilt late bid so the feed can reject it as `released_to_ordinary_lane`;
+  it also checks that a settled winner resolves as a real owned name with the
+  expected owner key and winning bond anchor
 - `batch-smoke`: one private-signet batch anchor, two later reveals, and a later gift transfer on one of the batch-claimed names
 - `claim-smoke`: one name through commit, reveal, and claimed state
 - `transfer-smoke`: gift transfer and immature buyer-funded sale transfer
@@ -361,9 +366,14 @@ it also publishes that summary to the VPS path in
 - `/var/lib/gns/private-auction-smoke-summary.json`
 
 On the private signet deployment, the experimental auction feed now uses a
-shorter `GNS_EXPERIMENTAL_AUCTION_NO_BID_RELEASE_BLOCKS` override than the
-default research policy so the hosted release-valve smoke can complete quickly
-without mining thousands of demo blocks.
+shorter hosted-demo overrides than the default research policy:
+
+- `GNS_EXPERIMENTAL_AUCTION_BASE_WINDOW_BLOCKS=8`
+- `GNS_EXPERIMENTAL_AUCTION_SOFT_CLOSE_EXTENSION_BLOCKS=4`
+- `GNS_EXPERIMENTAL_AUCTION_NO_BID_RELEASE_BLOCKS=16`
+
+That keeps the private auction smoke practical while preserving the same
+auction-state machinery.
 
 If the private web service is configured with
 `GNS_WEB_PRIVATE_BATCH_SMOKE_STATUS_PATH=/var/lib/gns/private-batch-smoke-summary.json`,

@@ -13,6 +13,7 @@ Related notes:
 - [GNS_FROM_ZERO.md](/Users/davidking/dev/gns/docs/core/GNS_FROM_ZERO.md)
 - [TESTING.md](/Users/davidking/dev/gns/docs/core/TESTING.md)
 - [MERKLE_BATCHING_STATUS.md](/Users/davidking/dev/gns/docs/research/MERKLE_BATCHING_STATUS.md)
+- [AUCTION_SETTLEMENT_AND_OWNERSHIP.md](/Users/davidking/dev/gns/docs/research/AUCTION_SETTLEMENT_AND_OWNERSHIP.md)
 
 ## Snapshot
 
@@ -34,7 +35,7 @@ The shortest honest summary is:
 | Off-chain signed value records | Implemented prototype | Moderate | Works today, but broader resolver/network availability is still an ecosystem question |
 | Transfers | Implemented prototype | Moderate to high | Gift and cooperative sale flows exist; browser UX is not the full end-user story yet |
 | Ordinary-lane explicit Merkle batching | Implemented | High | Commit, reveal, negative-path rejection, and later transfer behavior are validated |
-| Reserved-lane auction flow | Experimental simulator + chain-derived bid prototype | Moderate | Configurable policy, CLI simulation, fixture coverage, website state rendering, bid packages, signable experimental bid artifacts, and a chain-derived AUCTION_BID feed exist; no final reserved-auction settlement engine yet |
+| Reserved-lane auction flow | Experimental simulator + chain-derived bid prototype | Moderate | Configurable policy, CLI simulation, fixture coverage, website state rendering, bid packages, signable experimental bid artifacts, chain-derived `AUCTION_BID` state, and an experimental settled-winner-to-owned-name path now exist; this is still not the final reserved-auction protocol |
 | Taproot annex reveal carrier | Experimental research | Moderate | Structurally plausible, custom tooling path proven, not mainline |
 
 ## What Is Implemented Today
@@ -122,6 +123,9 @@ Today the repo has:
   bond outpoint
 - derived accepted-bid bond-status plus bond spend / release summaries for both
   unsettled and settled experimental lots
+- settled-winner materialization into a real owned name record, using the
+  winning bid's `ownerPubkey` and bond outpoint as the live post-auction name
+  state
 - website bidder utilities that can preview and download experimental auction
   bid packages from both simulator-backed cases and resolver-derived observed
   states
@@ -162,6 +166,8 @@ For reserved auctions specifically, this now includes:
   bond output
 - early-vs-allowed bond-spend derivation from observed outpoint spends,
   including non-GNS spending transactions
+- settled-winner materialization into a real owned name record once the auction
+  reaches settlement
 - website fixture loading and page rendering for the auction lab
 - website rendering for the chain-derived experimental auction feed
 
@@ -187,6 +193,7 @@ It already covers:
   - opening bid acceptance
   - soft-close extension
   - settlement into winner / loser bond states
+  - winner materialization into a live owned name record
   - loser bond release and allowed post-settlement spend
   - winner lock until release height and allowed post-release spend
 - later transfer behavior
@@ -202,8 +209,8 @@ And now, importantly, it also covers:
   the anchored root
 - a controlled-chain experimental auction lifecycle where real `AUCTION_BID`
   transactions open an auction, extend soft close, settle into winner / loser
-  bond states, and then prove both loser release and later winner release on
-  chain
+  bond states, materialize the winner as a live owned name, and then prove
+  both loser release and later winner release on chain
 
 That is a strong validation milestone because it proves the protocol logic is
 not just tied to transaction construction. It correctly rejects bad batched
@@ -235,8 +242,8 @@ smoke** path that runs:
 That gives us a live hosted proof that the chain-derived experimental auction
 feed is not just rendering fixtures. It can observe real bid transactions and
 classify a real early bond spend as `spent_before_allowed_release`, while also
-proving the live release valve and late-bid rejection path on the controlled
-private chain.
+proving the live release valve, late-bid rejection path, and settled-winner
+ownership materialization on the controlled private chain.
 
 ## What We Can Say Confidently
 

@@ -25,7 +25,7 @@ export const MAX_REVEAL_NAME_LENGTH = 32;
 export const BATCH_ANCHOR_PAYLOAD_LENGTH = 3 + 1 + 1 + 1 + 1 + 32;
 export const BATCH_REVEAL_MIN_PAYLOAD_LENGTH = 3 + 1 + 1 + 32 + 32 + 8 + 1 + 2 + 1 + 1;
 export const REVEAL_PROOF_CHUNK_MIN_PAYLOAD_LENGTH = 3 + 1 + 1 + 1;
-export const AUCTION_BID_PAYLOAD_LENGTH = 3 + 1 + 1 + 1 + 1 + 4 + 8 + 16 + 32 + 16;
+export const AUCTION_BID_PAYLOAD_LENGTH = 3 + 1 + 1 + 1 + 1 + 4 + 8 + 32 + 16 + 32 + 16;
 
 export type DecodedGnsPayload =
   | { readonly type: GnsEventType.Commit; readonly payload: CommitEventPayload }
@@ -217,6 +217,7 @@ export function encodeAuctionBidPayload(payload: AuctionBidEventPayload): Uint8A
     ),
     uint32ToBytes(normalized.reservedLockBlocks),
     bigIntToUint64Bytes(normalized.bidAmountSats),
+    hexToBytes(normalized.ownerPubkey),
     hexToBytes(normalized.auctionLotCommitment),
     hexToBytes(normalized.auctionCommitment),
     hexToBytes(normalized.bidderCommitment)
@@ -231,9 +232,10 @@ export function decodeAuctionBidPayload(payload: Uint8Array): AuctionBidEventPay
     bondVout: payload[6] ?? 0,
     reservedLockBlocks: uint32FromBytes(payload.slice(7, 11)),
     bidAmountSats: uint64BytesToBigInt(payload.slice(11, 19)),
-    auctionLotCommitment: bytesToHex(payload.slice(19, 35)),
-    auctionCommitment: bytesToHex(payload.slice(35, 67)),
-    bidderCommitment: bytesToHex(payload.slice(67, 83))
+    ownerPubkey: bytesToHex(payload.slice(19, 51)),
+    auctionLotCommitment: bytesToHex(payload.slice(51, 67)),
+    auctionCommitment: bytesToHex(payload.slice(67, 99)),
+    bidderCommitment: bytesToHex(payload.slice(99, 115))
   });
 }
 

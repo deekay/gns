@@ -55,6 +55,12 @@ export interface NameRecord {
   readonly name: string;
   readonly status: "pending" | "immature" | "mature" | "invalid";
   readonly currentOwnerPubkey: string;
+  readonly acquisitionKind?: "claim" | "auction";
+  readonly acquisitionAuctionId?: string;
+  readonly acquisitionAuctionLotCommitment?: string;
+  readonly acquisitionAuctionBidTxid?: string;
+  readonly acquisitionAuctionBidderCommitment?: string;
+  readonly acquisitionBondReleaseHeight?: number;
   readonly claimCommitTxid: string;
   readonly claimRevealTxid: string;
   readonly claimHeight: number;

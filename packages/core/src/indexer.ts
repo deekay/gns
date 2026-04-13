@@ -26,6 +26,7 @@ import {
   type ProvenanceEventRecord,
   refreshDerivedState
 } from "./engine.js";
+import { getClaimedNameStatus } from "./state.js";
 import {
   deriveExperimentalReservedAuctionStates,
   type ExperimentalSpentOutpointObservation,
@@ -49,6 +50,7 @@ export interface ExperimentalAuctionBidPayloadSnapshot {
   readonly bondVout: number;
   readonly reservedLockBlocks: number;
   readonly bidAmountSats: string;
+  readonly ownerPubkey: string;
   readonly auctionLotCommitment: string;
   readonly auctionCommitment: string;
   readonly bidderCommitment: string;
@@ -193,6 +195,7 @@ export class InMemoryGnsIndexer {
   }
 
   public ingestBlock(block: BitcoinBlock): void {
+    this.reconcileExperimentalAuctionOwnedNames(block.height);
     const transactions = block.transactions.map<BitcoinTransactionInBlock>((tx, txIndex) => ({
       tx,
       blockHeight: block.height,
@@ -210,6 +213,7 @@ export class InMemoryGnsIndexer {
     this.currentHeight = block.height;
     this.currentBlockHash = block.hash;
     this.processedBlocks += 1;
+    this.reconcileExperimentalAuctionOwnedNames(block.height);
     this.pushRecentCheckpoint();
   }
 
@@ -256,13 +260,8 @@ export class InMemoryGnsIndexer {
   public listExperimentalAuctions(): SerializedExperimentalReservedAuctionState[] {
     const currentBlockHeight = this.currentHeight ?? (this.launchHeight - 1);
 
-    return deriveExperimentalReservedAuctionStates({
-      policy: this.experimentalReservedAuctionPolicy,
-      currentBlockHeight,
-      catalog: this.experimentalReservedAuctionCatalog,
-      bidObservations: this.listAppliedAuctionBidObservations(),
-      spentOutpoints: [...this.spentOutpoints.values()]
-    }).map((state) => serializeExperimentalReservedAuctionState(state));
+    return this.deriveExperimentalAuctionStatesAtHeight(currentBlockHeight)
+      .map((state) => serializeExperimentalReservedAuctionState(state));
   }
 
   public getExperimentalAuction(auctionId: string): SerializedExperimentalReservedAuctionState | null {
@@ -310,6 +309,19 @@ export class InMemoryGnsIndexer {
         }
 
         if (transaction.invalidatedNames.includes(normalizedName)) {
+          return true;
+        }
+
+        if (
+          record?.acquisitionKind === "auction"
+          && record.acquisitionAuctionLotCommitment
+          && transaction.events.some(
+            (event) =>
+              event.typeName === "AUCTION_BID"
+              && "auctionLotCommitment" in event.payload
+              && event.payload.auctionLotCommitment === record.acquisitionAuctionLotCommitment
+          )
+        ) {
           return true;
         }
 
@@ -441,6 +453,7 @@ export class InMemoryGnsIndexer {
 
     if (snapshot.currentHeight !== null) {
       refreshDerivedState(this.state, snapshot.currentHeight);
+      this.reconcileExperimentalAuctionOwnedNames(snapshot.currentHeight);
     }
   }
 
@@ -569,6 +582,7 @@ export class InMemoryGnsIndexer {
             vout: event.vout,
             bondVout: event.payload.bondVout,
             bidderCommitment: event.payload.bidderCommitment,
+            ownerPubkey: event.payload.ownerPubkey,
             bidAmountSats: BigInt(event.payload.bidAmountSats),
             reservedLockBlocks: event.payload.reservedLockBlocks,
             auctionLotCommitment: event.payload.auctionLotCommitment,
@@ -599,6 +613,79 @@ export class InMemoryGnsIndexer {
 
         return left.txid.localeCompare(right.txid);
       });
+  }
+
+  private deriveExperimentalAuctionStatesAtHeight(currentBlockHeight: number) {
+    return deriveExperimentalReservedAuctionStates({
+      policy: this.experimentalReservedAuctionPolicy,
+      currentBlockHeight,
+      catalog: this.experimentalReservedAuctionCatalog,
+      bidObservations: this.listAppliedAuctionBidObservations(),
+      spentOutpoints: [...this.spentOutpoints.values()]
+    });
+  }
+
+  private reconcileExperimentalAuctionOwnedNames(currentBlockHeight: number): void {
+    for (const auctionState of this.deriveExperimentalAuctionStatesAtHeight(currentBlockHeight)) {
+      if (
+        auctionState.phase !== "settled"
+        || auctionState.winnerBidTxid === null
+        || auctionState.winnerOwnerPubkey === null
+        || auctionState.winnerBidderCommitment === null
+        || auctionState.winnerBondVout === null
+        || auctionState.settlementHeight === null
+        || auctionState.winnerBondReleaseBlock === null
+        || auctionState.currentHighestBidSats === null
+      ) {
+        continue;
+      }
+
+      if (this.state.names.has(auctionState.normalizedName)) {
+        continue;
+      }
+
+      const winningOutcome = [...auctionState.visibleBidOutcomes]
+        .reverse()
+        .find(
+          (outcome) =>
+            outcome.status === "accepted"
+            && outcome.txid === auctionState.winnerBidTxid
+            && outcome.bondVout === auctionState.winnerBondVout
+        );
+
+      if (!winningOutcome) {
+        continue;
+      }
+
+      this.state.names.set(auctionState.normalizedName, {
+        name: auctionState.normalizedName,
+        status: getClaimedNameStatus({
+          isRevealConfirmed: true,
+          currentHeight: currentBlockHeight,
+          maturityHeight: auctionState.winnerBondReleaseBlock,
+          continuityIntact: true
+        }),
+        acquisitionKind: "auction",
+        acquisitionAuctionId: auctionState.auctionId,
+        acquisitionAuctionLotCommitment: auctionState.auctionLotCommitment,
+        acquisitionAuctionBidTxid: auctionState.winnerBidTxid,
+        acquisitionAuctionBidderCommitment: auctionState.winnerBidderCommitment,
+        acquisitionBondReleaseHeight: auctionState.winnerBondReleaseBlock,
+        currentOwnerPubkey: auctionState.winnerOwnerPubkey,
+        claimCommitTxid: auctionState.winnerBidTxid,
+        claimRevealTxid: auctionState.winnerBidTxid,
+        claimHeight: auctionState.settlementHeight,
+        maturityHeight: auctionState.winnerBondReleaseBlock,
+        requiredBondSats: auctionState.currentHighestBidSats,
+        currentBondTxid: auctionState.winnerBidTxid,
+        currentBondVout: auctionState.winnerBondVout,
+        currentBondValueSats: auctionState.currentHighestBidSats,
+        lastStateTxid: auctionState.winnerBidTxid,
+        lastStateHeight: auctionState.settlementHeight,
+        winningCommitBlockHeight: winningOutcome.blockHeight,
+        winningCommitTxIndex: winningOutcome.txIndex
+      });
+    }
   }
 }
 

@@ -202,6 +202,8 @@ The reserved lane should currently be understood as:
 - allocated by auction rather than ordinary commit / reveal
 - lock duration fixed by protocol or reserved class
 - bids compete on BTC amount only
+- the winning bid carries the eventual owner key, so a separate settlement-only
+  ownership transaction is not required in the current experimental model
 
 ## Reserved List Scope
 
