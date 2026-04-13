@@ -974,7 +974,7 @@ async function expectMissingNameFeedback(name) {
 }
 
 async function runAuctionLifecycleScenario() {
-  logStep("Auction flow: settlement, soft close, and bond release");
+  logStep("Auction flow: settlement, value publishing, mature transfer, and bond release");
 
   const alphaBidder = await createLiveAccount("auction-alpha");
   const betaBidder = await createLiveAccount("auction-beta");
@@ -1068,6 +1068,35 @@ async function runAuctionLifecycleScenario() {
   assertEqual(String(settledNameRecord.acquisitionKind ?? ""), "auction", "auction acquisition kind");
   assertEqual(settledNameRecord.currentBondTxid, softCloseBid.bidTxid, "auction winner bond txid");
   assertEqual(settledNameRecord.currentBondVout, softCloseBid.bondVout, "auction winner bond vout");
+  await cliJson([
+    "sign-value-record",
+    "--name",
+    settledState.normalizedName,
+    "--owner-private-key-hex",
+    betaBidder.ownerPrivateKeyHex,
+    "--sequence",
+    "1",
+    "--value-type",
+    String(VALUE_TYPE_HTTPS),
+    "--payload-utf8",
+    `https://example.com/auction/${settledState.normalizedName}/winner`,
+    "--write",
+    join(suiteState.artifactDir, "auction-winner-value.json")
+  ]);
+  const winnerValuePublish = await cliJson([
+    "publish-value-record",
+    join(suiteState.artifactDir, "auction-winner-value.json"),
+    "--resolver-url",
+    resolverUrl()
+  ]);
+  assertEqual(winnerValuePublish.ok, true, "auction winner value publish result");
+  const winnerValueRecord = await cliJson([
+    "get-value",
+    settledState.normalizedName,
+    "--resolver-url",
+    resolverUrl()
+  ]);
+  assertEqual(winnerValueRecord.sequence, 1, "auction winner value sequence");
 
   const losingSpendTxid = await spendAuctionBondWithRpc({
     bidTxid: openingBid.bidTxid,
@@ -1101,6 +1130,60 @@ async function runAuctionLifecycleScenario() {
     REGTEST_AUCTION_ID,
     (auction) => getAuctionOutcome(auction, softCloseBid.bidTxid).bondStatus === "winner_releasable"
   );
+  const releasableWinnerNameRecord = await waitForName(settledState.normalizedName, 120_000);
+  assertEqual(releasableWinnerNameRecord.status, "mature", "auction-owned name reaches maturity");
+  const auctionTransferRecipient = await createLiveAccount("auction-transfer-recipient");
+  const auctionWinnerSellerInput = await fundAddress(betaBidder.fundingAddress, 20_000n);
+  const auctionTransferBuyerInput = await fundAddress(auctionTransferRecipient.fundingAddress, 20_000n);
+  const matureAuctionTransfer = await cliJson([
+    "submit-sale-transfer",
+    "--prev-state-txid",
+    releasableWinnerNameRecord.lastStateTxid,
+    "--new-owner-pubkey",
+    auctionTransferRecipient.ownerPubkey,
+    "--owner-private-key-hex",
+    betaBidder.ownerPrivateKeyHex,
+    "--seller-input",
+    formatDescriptor(auctionWinnerSellerInput),
+    "--buyer-input",
+    formatDescriptor(auctionTransferBuyerInput),
+    "--seller-payment-sats",
+    "1000",
+    "--seller-payment-address",
+    betaBidder.fundingAddress,
+    "--fee-sats",
+    TRANSFER_FEE_SATS.toString(),
+    "--wif",
+    betaBidder.fundingWif,
+    "--wif",
+    auctionTransferRecipient.fundingWif,
+    "--seller-change-address",
+    betaBidder.fundingAddress,
+    "--buyer-change-address",
+    auctionTransferRecipient.fundingAddress,
+    "--network",
+    "regtest",
+    "--expected-chain",
+    "regtest",
+    "--out-dir",
+    join(suiteState.artifactDir, "auction-mature-transfer")
+  ]);
+
+  await mineBlocks(1, "confirm-auction-mature-transfer");
+  await waitForResolverHeight(await rpcCall("getblockcount"));
+
+  const transferredAuctionNameRecord = await waitForName(settledState.normalizedName, 120_000);
+  assertEqual(transferredAuctionNameRecord.status, "mature", "auction mature transfer preserves maturity");
+  assertEqual(
+    transferredAuctionNameRecord.currentOwnerPubkey,
+    auctionTransferRecipient.ownerPubkey,
+    "auction mature transfer owner"
+  );
+  assertEqual(
+    transferredAuctionNameRecord.lastStateTxid,
+    matureAuctionTransfer.transferTxid,
+    "auction mature transfer last state txid"
+  );
   const winningSpendTxid = await spendAuctionBondWithRpc({
     bidTxid: softCloseBid.bidTxid,
     bidBondVout: softCloseBid.bondVout,
@@ -1119,12 +1202,57 @@ async function runAuctionLifecycleScenario() {
   );
   const finalWinningOutcome = getAuctionOutcome(finalAuctionState, softCloseBid.bidTxid);
   assertEqual(finalWinningOutcome.bondSpentTxid, winningSpendTxid, "winner bond spend txid");
+  const finalTransferredAuctionNameRecord = await waitForName(settledState.normalizedName, 120_000);
+  assertEqual(
+    finalTransferredAuctionNameRecord.currentOwnerPubkey,
+    auctionTransferRecipient.ownerPubkey,
+    "auction transfer owner persists after winner bond release spend"
+  );
+  assertEqual(
+    finalTransferredAuctionNameRecord.lastStateTxid,
+    matureAuctionTransfer.transferTxid,
+    "auction transfer last state persists after winner bond release spend"
+  );
+  await cliJson([
+    "sign-value-record",
+    "--name",
+    settledState.normalizedName,
+    "--owner-private-key-hex",
+    auctionTransferRecipient.ownerPrivateKeyHex,
+    "--sequence",
+    "2",
+    "--value-type",
+    String(VALUE_TYPE_HTTPS),
+    "--payload-utf8",
+    `https://example.com/auction/${settledState.normalizedName}/recipient`,
+    "--write",
+    join(suiteState.artifactDir, "auction-transfer-recipient-value.json")
+  ]);
+  const transferredValuePublish = await cliJson([
+    "publish-value-record",
+    join(suiteState.artifactDir, "auction-transfer-recipient-value.json"),
+    "--resolver-url",
+    resolverUrl()
+  ]);
+  assertEqual(transferredValuePublish.ok, true, "auction transfer recipient value publish result");
+  const transferredValueRecord = await cliJson([
+    "get-value",
+    settledState.normalizedName,
+    "--resolver-url",
+    resolverUrl()
+  ]);
+  assertEqual(transferredValueRecord.sequence, 2, "auction transfer recipient value sequence");
 
   return {
+    name: settledState.normalizedName,
     openingBidTxid: openingBid.bidTxid,
     openingSpendTxid: losingSpendTxid,
     softCloseBidTxid: softCloseBid.bidTxid,
+    transferTxid: matureAuctionTransfer.transferTxid,
     winnerSpendTxid: winningSpendTxid,
+    winnerValueSequence: winnerValueRecord.sequence,
+    transferredValueSequence: transferredValueRecord.sequence,
+    transferredOwnerPubkey: auctionTransferRecipient.ownerPubkey,
     finalPhase: finalAuctionState.phase,
     finalWinnerBondStatus: finalWinningOutcome.bondStatus,
     finalWinnerBondSpendStatus: finalWinningOutcome.bondSpendStatus,

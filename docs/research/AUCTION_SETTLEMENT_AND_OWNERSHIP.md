@@ -81,6 +81,22 @@ opening bid:
 So settlement materialization only happens for lots with an actual settled
 winning bid.
 
+## Current Validation
+
+This experimental settlement path is now validated beyond the moment of
+settlement itself.
+
+In the controlled-chain regtest suite, we now prove that:
+
+- a settled winning bid materializes into a live owned name
+- the winning owner can publish a value record after settlement
+- once the reserved lock expires, that auction-owned name can move through a
+  mature transfer
+- the new owner can then publish the next value record sequence successfully
+
+That gives us a stronger claim than "the winner appears in a feed." The
+auction-owned name is now exercised through later registry lifecycle steps too.
+
 ## What This Does Not Solve Yet
 
 This experimental model still leaves open:

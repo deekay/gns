@@ -226,6 +226,9 @@ What it covers today:
   - soft-close extension under the stronger late increment rule
   - settlement into winner / loser bond states
   - winner materialization into a live owned name record
+  - winner-owned value publication after settlement
+  - mature post-release transfer from an auction-owned name
+  - new-owner value publication after that transfer
   - loser bond release and allowed post-settlement spend
   - winner lock until release height and allowed post-release spend
 - successful claim commit/reveal flow
