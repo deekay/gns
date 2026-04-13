@@ -131,11 +131,10 @@ reveal case:
 
 ### Live-chain note
 
-The shared public signet smoke flow still exists, but it is now a legacy/manual
-single-name path. It should not be confused with the current batching
-validation story.
+The live hosted batching proof now runs on **private signet**, not shared
+public signet.
 
-We now also have a **private signet batch smoke** flow that exercises:
+The private signet batch smoke flow exercises:
 
 - one batch anchor
 - two later reveals

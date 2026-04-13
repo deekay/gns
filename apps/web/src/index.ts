@@ -48,11 +48,7 @@ const resolverUrl =
 const basePath = normalizeBasePath(process.env.GNS_WEB_BASE_PATH ?? "");
 const networkLabel =
   normalizeOptionalText(process.env.GNS_WEB_NETWORK_LABEL)
-  ?? "Public Signet";
-const showLiveSmoke = parseBoolean(
-  process.env.GNS_WEB_SHOW_LIVE_SMOKE,
-  false
-);
+  ?? "Private Signet Demo";
 const showPrivateBatchSmoke = parseBoolean(
   process.env.GNS_WEB_SHOW_PRIVATE_BATCH_SMOKE,
   networkLabel.toLowerCase().includes("private signet")
@@ -110,9 +106,6 @@ const faviconDataUrl =
       .replace(/\s+/g, " ")
       .trim()
   );
-const liveSmokeStatusPath =
-  normalizeOptionalText(process.env.GNS_WEB_LIVE_SMOKE_STATUS_PATH) ??
-  fileURLToPath(new URL("../../../.data/live-smoke-summary.json", import.meta.url));
 const privateBatchSmokeStatusPath =
   normalizeOptionalText(process.env.GNS_WEB_PRIVATE_BATCH_SMOKE_STATUS_PATH) ??
   fileURLToPath(new URL("../../../.data/private-signet-demo/batch-smoke-summary.json", import.meta.url));
@@ -446,7 +439,7 @@ const server = createServer(async (request, response) => {
       renderPageHtml({
         basePath,
         faviconDataUrl,
-        includeLiveSmoke: showLiveSmoke,
+        includeLiveSmoke: false,
         includePrivateBatchSmoke: showPrivateBatchSmoke,
         includePrivateAuctionSmoke: showPrivateAuctionSmoke,
         networkLabel,
@@ -506,7 +499,6 @@ const server = createServer(async (request, response) => {
       resolverUrl,
       basePath,
       networkLabel,
-      showLiveSmoke,
       showPrivateBatchSmoke,
       showPrivateAuctionSmoke,
       showAuctionLab: true,
@@ -523,10 +515,6 @@ const server = createServer(async (request, response) => {
 
   if (pathname === "/api/health") {
     return proxyJson(response, `${resolverUrl}/health`);
-  }
-
-  if (pathname === "/api/live-smoke-status") {
-    return writeJson(response, 200, await readLiveSmokeStatus());
   }
 
   if (pathname === "/api/private-batch-smoke-status") {
@@ -647,7 +635,7 @@ const server = createServer(async (request, response) => {
   return writeJson(response, 404, {
     error: "not_found",
     message:
-      "Supported paths: /, /explore, /auctions, /claim, /values, /transfer, /setup, /explainer, /api/config, /api/health, /api/names, /api/pending-commits, /api/activity, /api/tx/{txid}, /api/dev-owner-key, /api/private-signet-fund, /api/claim-draft/{name}, /api/claim-plan/{name}, /api/name/{name}, /api/name/{name}/activity, /api/name/{name}/value, /api/live-smoke-status, /api/private-batch-smoke-status, /api/auctions"
+      "Supported paths: /, /explore, /auctions, /claim, /values, /transfer, /setup, /explainer, /api/config, /api/health, /api/names, /api/pending-commits, /api/activity, /api/tx/{txid}, /api/dev-owner-key, /api/private-signet-fund, /api/claim-draft/{name}, /api/claim-plan/{name}, /api/name/{name}, /api/name/{name}/activity, /api/name/{name}/value, /api/private-batch-smoke-status, /api/auctions"
       + ", /api/private-auction-smoke-status, /api/experimental-auctions, /api/auction-bid-package, /api/experimental-auction-bid-package, /api/private-signet-claim-psbts, /api/values, /claim/offline, /claim/offline/download"
   });
 });
@@ -723,28 +711,6 @@ async function proxyJson(
       error: "resolver_unavailable",
       message: error instanceof Error ? error.message : "Resolver request failed"
     });
-  }
-}
-
-async function readLiveSmokeStatus(): Promise<unknown> {
-  try {
-    return JSON.parse(await readFile(liveSmokeStatusPath, "utf8"));
-  } catch (error) {
-    if (
-      error instanceof Error &&
-      "code" in error &&
-      (error as NodeJS.ErrnoException).code === "ENOENT"
-    ) {
-      return {
-        status: "unavailable",
-        message: "No legacy public signet smoke summary has been published yet."
-      };
-    }
-
-    return {
-      status: "error",
-      message: error instanceof Error ? error.message : "Unable to read legacy public signet smoke summary."
-    };
   }
 }
 

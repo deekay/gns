@@ -1917,12 +1917,6 @@ button:disabled {
   gap: 12px;
 }
 
-.live-smoke-status {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
 .message {
   margin-top: 8px;
   padding: 12px 14px;

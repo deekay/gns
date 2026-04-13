@@ -248,46 +248,6 @@ Important note:
 - the suite uses explicit test-only maturity overrides so the mature-sale case finishes in minutes instead of requiring a full `52,000`-block wait
 - production behavior is unchanged unless `GNS_TEST_OVERRIDE_*` env vars are set
 
-## Legacy Public Signet Smoke Flow
-
-If you intentionally want to exercise the older shared public signet smoke
-runner, use:
-
-```bash
-npm run test:legacy-public-signet-smoke
-```
-
-What it does:
-
-- opens SSH tunnels to the VPS-backed signet RPC and resolver
-- reuses a stable owner account from `./.data/live-account-2.json`
-- checks whether that address has enough signet for the `50,000` sat bond plus fees
-- publishes the latest smoke summary to the VPS at `/var/lib/gns/live-smoke-summary.json` so the public app can show current readiness
-- currently exercises the **single-name** live signet claim flow, not the newer ordinary-lane batched claim path
-- if funded:
-  - prepares a fresh available name
-  - submits the live signet claim
-  - waits for reveal broadcast
-  - waits for the public app to show the claimed name
-  - publishes a value record
-  - attempts a gift transfer if enough fee liquidity remains
-- if not funded:
-  - writes a summary explaining the funding shortfall
-
-Artifacts:
-
-- summary: `./.data/live-smoke-summary.json`
-- live claim package: `./.data/live-smoke-claim.json`
-
-Important note:
-
-- this is **not** the primary live validation path anymore
-- our active hosted live demos now run on the private signet stack we control
-- this script does **not** bypass faucet anti-bot protection
-- if the owner address is unfunded, the script will stop at `awaiting_funds` and leave everything ready for the moment a real signet UTXO arrives
-- the public app can surface the latest published status at [https://globalnamesystem.org/api/live-smoke-status](https://globalnamesystem.org/api/live-smoke-status) once the VPS web service is deployed with `GNS_WEB_LIVE_SMOKE_STATUS_PATH=/var/lib/gns/live-smoke-summary.json`
-- if we want live signet evidence for batched ordinary claims, that still needs a separate batch-oriented smoke script and summary path
-
 ## Private Signet On The Existing VPS
 
 Because public faucet funding is unreliable, the active hosted demo and live
@@ -1152,57 +1112,23 @@ Current prototype behavior on reorg:
 
 It does **not** yet do selective rollback.
 
-## Public Signet Without Credentials
+## Public Signet Status
 
-If you only want to validate the live remote read path, you do not need a password or your own node.
+We no longer treat shared public signet as a normal demo or validation lane.
 
-This prototype now supports a public Esplora-backed signet source. The endpoint used during development is:
+The active environments are:
 
-- [mempool.space signet API](https://mempool.space/signet/api)
+- `regtest` for exhaustive controlled-chain tests
+- `private signet` for hosted live demos and live-chain smoke flows
 
-Example:
+That change is deliberate:
 
-```bash
-export GNS_ESPLORA_BASE_URL="https://mempool.space/signet/api"
-export GNS_EXPECT_CHAIN="signet"
-TIP=$(curl -sS https://mempool.space/signet/api/blocks/tip/height)
-export GNS_LAUNCH_HEIGHT="$TIP"
-export GNS_RPC_END_HEIGHT="$TIP"
-```
+- public faucet funding is unreliable
+- the older public signet smoke path only exercised a narrower single-name flow
+- keeping it around as a first-class path made the repo and website harder to understand
 
-One-shot indexer check:
-
-```bash
-npm run dev:indexer
-```
-
-Expected important fields:
-
-- `"source":"esplora"`
-- `"syncMode":"esplora-oneshot"`
-- `"descriptor":"https://mempool.space/signet/api"`
-
-Resolver check:
-
-```bash
-GNS_RESOLVER_PORT=8790 npm run dev:resolver
-```
-
-In another terminal:
-
-```bash
-curl -s http://127.0.0.1:8790/health
-```
-
-Expected important fields:
-
-- `"source":"esplora"`
-- `"syncMode":"esplora-polling"` or `"esplora-oneshot"`
-- `"descriptor":"https://mempool.space/signet/api"`
-
-Current prototype status:
-
-- resolver/indexer live reads are validated against the public signet Esplora source
+If we ever want to revive shared public signet later, we can reintroduce it on
+purpose. For now, treat the public-signet tooling as retired.
 - CLI transport commands also accept `--base-url <esplora-url>` now
 - a funded end-to-end claim/reveal/transfer flow has still not been exercised live against the public backend
 

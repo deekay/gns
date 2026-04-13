@@ -41,7 +41,6 @@ The wallet is responsible for:
 The authoritative state is the Bitcoin-compatible chain the resolver is indexing:
 
 - private signet for the hosted demo and current live proofs
-- public signet only as an optional legacy/manual smoke path
 - regtest for exhaustive automated tests
 
 ## Main Components
@@ -209,15 +208,6 @@ Best for:
 - guided demos
 - Sparrow testing
 - realistic but controlled lifecycle walkthroughs
-
-### Public signet
-
-Best for:
-
-- shared-network smoke checks
-- testing assumptions against a public environment
-
-It is intentionally not the primary exhaustive test path because faucets and public infrastructure are unreliable.
 
 ## Product Flows
 

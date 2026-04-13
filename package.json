@@ -33,8 +33,6 @@
     "selfhost:indexer": "docker compose run --rm indexer",
     "selfhost:reset": "docker compose down -v",
     "selfhost:up": "docker compose up --build",
-    "test:legacy-public-signet-smoke": "node ./scripts/live-signet-smoke.mjs",
-    "test:signet-smoke": "npm run test:legacy-public-signet-smoke",
     "test:private-signet-batch-smoke": "node ./scripts/private-signet-batch-smoke.mjs",
     "test:private-signet-auction-smoke": "node ./scripts/private-signet-auction-smoke.mjs",
     "test:private-signet-claim-smoke": "node ./scripts/private-signet-claim-smoke.mjs",

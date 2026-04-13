@@ -20,7 +20,6 @@ const state = {
   claimDraft: null,
   claimPsbtBundle: null,
   transferDraft: null,
-  liveSmokeStatus: null,
   privateBatchSmokeStatus: null,
   privateAuctionSmokeStatus: null,
   auctionLab: null,
@@ -95,8 +94,6 @@ const elements = {
   networkChain: document.getElementById("networkChain"),
   networkResolver: document.getElementById("networkResolver"),
   chainSummary: document.getElementById("chainSummary"),
-  liveSmokeMeta: document.getElementById("liveSmokeMeta"),
-  liveSmokeResult: document.getElementById("liveSmokeResult"),
   privateBatchSmokeMeta: document.getElementById("privateBatchSmokeMeta"),
   privateBatchSmokeResult: document.getElementById("privateBatchSmokeResult"),
   privateAuctionSmokeMeta: document.getElementById("privateAuctionSmokeMeta"),
@@ -441,9 +438,6 @@ async function bootstrap() {
       isAuctionsPage() ? fetchJson(getAuctionLabApiPath()).catch(() => null) : Promise.resolve(null),
       isAuctionsPage() ? fetchJson(withBasePath("/api/experimental-auctions")).catch(() => null) : Promise.resolve(null)
     ]);
-    const liveSmokeStatus = config.showLiveSmoke
-      ? await fetchJson(withBasePath("/api/live-smoke-status")).catch(() => null)
-      : null;
     const privateBatchSmokeStatus = config.showPrivateBatchSmoke
       ? await fetchJson(withBasePath("/api/private-batch-smoke-status")).catch(() => null)
       : null;
@@ -456,14 +450,12 @@ async function bootstrap() {
     state.names = Array.isArray(namesPayload.names) ? namesPayload.names : [];
     state.activity = Array.isArray(activityPayload.activity) ? activityPayload.activity : [];
     state.pendingCommits = Array.isArray(pendingPayload.pendingCommits) ? pendingPayload.pendingCommits : [];
-    state.liveSmokeStatus = liveSmokeStatus;
     state.privateBatchSmokeStatus = privateBatchSmokeStatus;
     state.privateAuctionSmokeStatus = privateAuctionSmokeStatus;
     state.auctionLab = auctionLabPayload;
     state.experimentalAuctions = experimentalAuctionsPayload;
 
     renderHealth();
-    renderLiveSmokeStatus();
     renderPrivateBatchSmokeStatus();
     renderPrivateAuctionSmokeStatus();
     renderAuctionLab();
@@ -1762,73 +1754,6 @@ function activityStatusPill(record) {
   }
 
   return "available";
-}
-
-function renderLiveSmokeStatus() {
-  if (!elements.liveSmokeResult) {
-    return;
-  }
-
-  const liveSmoke = state.liveSmokeStatus;
-  if (!liveSmoke) {
-    elements.liveSmokeResult.classList.add("empty");
-    elements.liveSmokeResult.textContent = "No legacy public signet smoke status is available yet.";
-    setText(elements.liveSmokeMeta, "Waiting for the first published legacy public signet smoke summary.");
-    return;
-  }
-
-  const status = String(liveSmoke.status ?? "unknown");
-  const ownerAvailableSats = liveSmoke.ownerAvailableSats ?? null;
-  const minClaimFundingSats = liveSmoke.minClaimFundingSats ?? null;
-  const fundingProgress =
-    ownerAvailableSats === null || minClaimFundingSats === null
-      ? "Funding progress unavailable"
-      : formatSats(ownerAvailableSats) + " / " + formatSats(minClaimFundingSats);
-
-  setText(
-    elements.liveSmokeMeta,
-    [
-      "Status: " + formatLiveSmokeStatus(status),
-      liveSmoke.startedAt ? "Updated " + new Date(liveSmoke.startedAt).toLocaleString() : null,
-      ownerAvailableSats === null || minClaimFundingSats === null ? null : fundingProgress
-    ]
-      .filter(Boolean)
-      .join(" · ")
-  );
-
-  elements.liveSmokeResult.classList.remove("empty");
-  elements.liveSmokeResult.innerHTML = \`
-    <div class="result-title">
-      <h3>\${escapeHtml(liveSmoke.name ?? "Legacy public signet smoke run")}</h3>
-      <span class="status-pill \${escapeHtml(mapLiveSmokeStatusPill(status))}">\${escapeHtml(formatLiveSmokeStatus(status))}</span>
-    </div>
-    <div class="result-grid">
-      <div class="result-item">
-        <label>Message</label>
-        <p class="field-value">\${escapeHtml(liveSmoke.message ?? "No message")}</p>
-      </div>
-      <div class="result-item">
-        <label>Funding Progress</label>
-        <p class="field-value">\${escapeHtml(fundingProgress)}</p>
-      </div>
-      <div class="result-item">
-        <label>Owner Funding Address</label>
-        \${liveSmoke.ownerFundingAddress ? renderCopyableCode(liveSmoke.ownerFundingAddress) : '<p class="field-value">Not published</p>'}
-      </div>
-      <div class="result-item">
-        <label>Recipient Funding Address</label>
-        \${liveSmoke.recipientFundingAddress ? renderCopyableCode(liveSmoke.recipientFundingAddress) : '<p class="field-value">Not published</p>'}
-      </div>
-      <div class="result-item">
-        <label>Minimum Claim Funding</label>
-        <p class="field-value">\${escapeHtml(minClaimFundingSats === null ? "Unknown" : formatSats(minClaimFundingSats))}</p>
-      </div>
-      <div class="result-item">
-        <label>Public API</label>
-        <p class="field-value">\${escapeHtml(liveSmoke.publicApiBase ?? "Unavailable")}</p>
-      </div>
-    </div>
-  \`;
 }
 
 function renderSearchRecord(record, valueRecord) {

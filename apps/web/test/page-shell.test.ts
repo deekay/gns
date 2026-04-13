@@ -5,7 +5,7 @@ import { renderPageHtml } from "../src/page-shell";
 const baseOptions = {
   basePath: "",
   faviconDataUrl: "data:image/svg+xml;base64,AA==",
-  includeLiveSmoke: true,
+  includeLiveSmoke: false,
   includePrivateBatchSmoke: true,
   includePrivateAuctionSmoke: true,
   networkLabel: "private signet",
@@ -38,15 +38,15 @@ describe("renderPageHtml", () => {
     expect(html).toContain("transferdemo");
   });
 
-  it("treats the public signet smoke panel as a legacy optional path", () => {
+  it("keeps explore focused on the current private-signet demo surfaces", () => {
     const html = renderPageHtml({
       ...baseOptions,
       pageKind: "explore"
     });
 
-    expect(html).toContain("Legacy Public Signet Smoke");
-    expect(html).toContain("older shared public signet smoke runner");
-    expect(html).toContain("hosted private signet stack is the active live path today");
+    expect(html).not.toContain("Legacy Public Signet Smoke");
+    expect(html).toContain("Private Signet Batch Smoke");
+    expect(html).toContain("privateBatchSmokeResult");
   });
 
   it("surfaces the private signet batch smoke panel when enabled", () => {

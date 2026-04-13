@@ -211,11 +211,10 @@ reveals after they land on chain.
 
 ### Live-chain note
 
-The shared public signet smoke path still exists, but it is now best treated as
-legacy/manual tooling. It still only exercises a single-name live claim flow,
-and faucet funding makes it unreliable as an active validation lane.
+We now treat **private signet** as the live-chain environment that matters for
+hosted demos and smoke validation.
 
-We now also have a dedicated **private signet batch smoke** path that runs:
+The active live-chain batching path runs:
 
 - one ordinary batch anchor
 - two later batch reveals
