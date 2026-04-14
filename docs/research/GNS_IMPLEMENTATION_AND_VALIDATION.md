@@ -11,6 +11,8 @@ packet for onboarding and review.
 Related notes:
 
 - [GNS_FROM_ZERO.md](/Users/davidking/dev/gns/docs/core/GNS_FROM_ZERO.md)
+- [BITCOIN_EXPERT_REVIEW_PACKET.md](/Users/davidking/dev/gns/docs/research/BITCOIN_EXPERT_REVIEW_PACKET.md)
+- [BITCOIN_REVIEW_CLOSURE_MATRIX.md](/Users/davidking/dev/gns/docs/research/BITCOIN_REVIEW_CLOSURE_MATRIX.md)
 - [TESTING.md](/Users/davidking/dev/gns/docs/core/TESTING.md)
 - [MERKLE_BATCHING_STATUS.md](/Users/davidking/dev/gns/docs/research/MERKLE_BATCHING_STATUS.md)
 - [AUCTION_SETTLEMENT_AND_OWNERSHIP.md](/Users/davidking/dev/gns/docs/research/AUCTION_SETTLEMENT_AND_OWNERSHIP.md)
@@ -26,6 +28,10 @@ The shortest honest summary is:
 - the two-lane launch design is a strong direction, but not the fully
   implemented launch mechanism yet
 - Taproot annex work is credible research, not the production path
+
+For external technically sophisticated review, the best current front door is:
+
+- [BITCOIN_EXPERT_REVIEW_PACKET.md](/Users/davidking/dev/gns/docs/research/BITCOIN_EXPERT_REVIEW_PACKET.md)
 
 ## Status Table
 

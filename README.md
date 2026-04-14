@@ -21,11 +21,13 @@ Human-facing amounts in GNS use integer bitcoin notation alongside the conventio
 
 If you want the shortest honest project orientation before touching the product surface, start with:
 
-1. [docs/core/GNS_FROM_ZERO.md](./docs/core/GNS_FROM_ZERO.md)
-2. [docs/research/GNS_IMPLEMENTATION_AND_VALIDATION.md](./docs/research/GNS_IMPLEMENTATION_AND_VALIDATION.md)
-3. [docs/research/MERKLE_BATCHING_STATUS.md](./docs/research/MERKLE_BATCHING_STATUS.md)
-4. [docs/research/LAUNCH_SPEC_V0.md](./docs/research/LAUNCH_SPEC_V0.md)
-5. [docs/core/TESTING.md](./docs/core/TESTING.md)
+1. [docs/research/BITCOIN_EXPERT_REVIEW_PACKET.md](./docs/research/BITCOIN_EXPERT_REVIEW_PACKET.md)
+2. [docs/core/GNS_FROM_ZERO.md](./docs/core/GNS_FROM_ZERO.md)
+3. [docs/research/GNS_IMPLEMENTATION_AND_VALIDATION.md](./docs/research/GNS_IMPLEMENTATION_AND_VALIDATION.md)
+4. [docs/research/MERKLE_BATCHING_STATUS.md](./docs/research/MERKLE_BATCHING_STATUS.md)
+5. [docs/research/LAUNCH_SPEC_V0.md](./docs/research/LAUNCH_SPEC_V0.md)
+6. [docs/research/BITCOIN_REVIEW_CLOSURE_MATRIX.md](./docs/research/BITCOIN_REVIEW_CLOSURE_MATRIX.md)
+7. [docs/core/TESTING.md](./docs/core/TESTING.md)
 
 If you want the fastest first walkthrough, use the hosted private demo:
 

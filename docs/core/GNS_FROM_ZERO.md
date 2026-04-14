@@ -5,6 +5,11 @@ the shortest honest orientation before reading deeper design or protocol notes.
 
 It is not a specification. It is a framing and status document.
 
+Related notes:
+
+- [BITCOIN_EXPERT_REVIEW_PACKET.md](/Users/davidking/dev/gns/docs/research/BITCOIN_EXPERT_REVIEW_PACKET.md)
+- [BITCOIN_REVIEW_CLOSURE_MATRIX.md](/Users/davidking/dev/gns/docs/research/BITCOIN_REVIEW_CLOSURE_MATRIX.md)
+
 ## The Short Version
 
 Global Name System (GNS) is an attempt to give Bitcoin a human-readable naming
@@ -222,11 +227,11 @@ So the right current message is:
 If someone wants to learn the project in a reasonable order, this is the best
 sequence right now:
 
-1. [GNS_EXPLAINER.md](/Users/davidking/dev/gns/docs/research/GNS_EXPLAINER.md)
-2. [GNS_ONE_PAGER.md](/Users/davidking/dev/gns/docs/core/GNS_ONE_PAGER.md)
-3. [GNS_IMPLEMENTATION_AND_VALIDATION.md](/Users/davidking/dev/gns/docs/research/GNS_IMPLEMENTATION_AND_VALIDATION.md)
-4. [TESTING.md](/Users/davidking/dev/gns/docs/core/TESTING.md)
-5. [MERKLE_BATCHING_STATUS.md](/Users/davidking/dev/gns/docs/research/MERKLE_BATCHING_STATUS.md)
+1. [BITCOIN_EXPERT_REVIEW_PACKET.md](/Users/davidking/dev/gns/docs/research/BITCOIN_EXPERT_REVIEW_PACKET.md)
+2. [GNS_IMPLEMENTATION_AND_VALIDATION.md](/Users/davidking/dev/gns/docs/research/GNS_IMPLEMENTATION_AND_VALIDATION.md)
+3. [MERKLE_BATCHING_STATUS.md](/Users/davidking/dev/gns/docs/research/MERKLE_BATCHING_STATUS.md)
+4. [LAUNCH_SPEC_V0.md](/Users/davidking/dev/gns/docs/research/LAUNCH_SPEC_V0.md)
+5. [BITCOIN_REVIEW_CLOSURE_MATRIX.md](/Users/davidking/dev/gns/docs/research/BITCOIN_REVIEW_CLOSURE_MATRIX.md)
 
 After that, deeper protocol appendices like Merkle reveal carriers and annex
 research will make much more sense.
