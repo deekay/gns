@@ -14,6 +14,7 @@ Related notes:
 - [BITCOIN_EXPERT_REVIEW_PACKET.md](/Users/davidking/dev/gns/docs/research/BITCOIN_EXPERT_REVIEW_PACKET.md)
 - [BITCOIN_REVIEW_CLOSURE_MATRIX.md](/Users/davidking/dev/gns/docs/research/BITCOIN_REVIEW_CLOSURE_MATRIX.md)
 - [TESTING.md](/Users/davidking/dev/gns/docs/core/TESTING.md)
+- [AUCTION_TESTING_AND_LIVE_SURFACES.md](/Users/davidking/dev/gns/docs/research/AUCTION_TESTING_AND_LIVE_SURFACES.md)
 - [MERKLE_BATCHING_STATUS.md](/Users/davidking/dev/gns/docs/research/MERKLE_BATCHING_STATUS.md)
 - [AUCTION_SETTLEMENT_AND_OWNERSHIP.md](/Users/davidking/dev/gns/docs/research/AUCTION_SETTLEMENT_AND_OWNERSHIP.md)
 

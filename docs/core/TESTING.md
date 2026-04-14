@@ -144,6 +144,11 @@ This checks:
 The current reserved-auction work is implemented as an experimental simulator
 and website lab, not an on-chain market yet.
 
+For the clearest distinction between fixture-backed visible states, controlled
+chain coverage, and live private-signet observations, see:
+
+- [AUCTION_TESTING_AND_LIVE_SURFACES.md](/Users/davidking/dev/gns/docs/research/AUCTION_TESTING_AND_LIVE_SURFACES.md)
+
 You can inspect it in the local app at:
 
 - `http://127.0.0.1:3000/auctions`
