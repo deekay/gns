@@ -1,0 +1,11 @@
+{
+  "title": "Private phase lot · pending unlock",
+  "description": "Dedicated private signet lot kept unbidded and still before unlock so the live experimental feed can show a real pending_unlock state.",
+  "currentBlockHeight": 181,
+  "scenario": {
+    "name": "phasepending",
+    "reservedClassId": "public_identity",
+    "unlockBlock": 186,
+    "bidAttempts": []
+  }
+}

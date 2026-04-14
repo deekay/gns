@@ -144,24 +144,27 @@ That means the set of visible phases depends on:
 - current dedicated smoke lots
 - whether a lot has already been used, settled, or released
 
-At the time of this audit, the private live feed includes:
+The private feed is now maintained in two ways:
 
-- real `settled`
-- real `released_to_ordinary_lane`
-- real `pending_unlock`
+- the private auction smoke leaves behind real `settled` and
+  `released_to_ordinary_lane` outcomes
+- a dedicated private phase-gallery refresh script parks real lots in
+  `pending_unlock`, `awaiting_opening_bid`, `live_bidding`, and `soft_close`
 
-It does **not** simultaneously show live examples of:
+That means the private live feed can now show all major phases at once, but it
+is still worth being honest about how that happens:
 
-- `awaiting_opening_bid`
-- `live_bidding`
-- `soft_close`
-
-even though those phases are covered elsewhere in tests and fixtures.
+- it is a real chain-derived feed
+- some states are maintained by dedicated parked lots rather than arising
+  spontaneously from one smoke run
+- those parked lots drift over time as the private chain keeps advancing, so
+  they need periodic refresh
 
 So the right statement is:
 
-> the private live feed proves real auction behavior, but it is not currently a
-> simultaneous gallery of every phase.
+> the private live feed now shows all major auction phases with real
+> chain-derived lots, but part of that presentation depends on periodically
+> refreshing dedicated parked phase lots.
 
 ## What The Private Auction Smoke Summary Adds
 
@@ -183,26 +186,26 @@ It gives a real observed end-to-end lifecycle record with:
 - post-transfer value record
 - no-bid release-valve rejection
 
-So while the chain-derived feed does not always hold every phase open at once,
-the smoke summary still proves the key live transitions.
+So even if the parked lots drift and need refreshing, the smoke summary still
+proves the key live transitions.
 
 ## The Honest Public Claim
 
 The clearest accurate wording today is:
 
 > GNS reserved auctions are tested across simulator, package, regtest, and
-> hosted private-signet smoke layers. The public auction lab shows all major
-> phases through curated fixture cases, while the private signet live feed and
-> smoke summary prove real observed auction behavior on the hosted demo chain.
+> hosted private-signet layers. The public auction lab shows all major phases
+> through curated fixture cases, while the private signet live feed and smoke
+> summary show real chain-derived examples across the same major phases on the
+> hosted demo chain.
 
 ## Remaining Gap
 
-If we want the private live feed itself to act as a simultaneous phase gallery,
-we would need additional operational work, for example:
+This is no longer a pure gap, but it is still an operational maintenance item.
+Keeping the private live feed phase-complete requires:
 
-- dedicated long-lived lots parked in awaiting-opening-bid
-- dedicated long-lived lots parked in live-bidding or soft-close
-- a repeatable reseed cadence that restores those states after smoke runs
+- dedicated parked lots
+- the refresh script `npm run test:private-signet-auction-phase-gallery`
+- or a full canonical private-signet reseed
 
-That is not a protocol blocker, but it is a real presentation gap if we want
-the live chain-derived feed alone to demonstrate every phase.
+That is not a protocol blocker, but it remains a presentation/ops concern.

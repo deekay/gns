@@ -54,22 +54,26 @@ export GNS_PRIVATE_SIGNET_SSH_KEY="${SSH_KEY_PATH:-}"
 cd "$ROOT_DIR"
 
 echo
-echo "[1/3] Reset private signet chain and demo state"
+echo "[1/5] Reset private signet chain and demo state"
 bash ./scripts/reset-private-signet-demo.sh "$REMOTE" "${SSH_KEY_PATH:-}"
 
 echo
-echo "[2/3] Seed canonical single-claim/value/transfer examples"
+echo "[2/5] Seed canonical single-claim/value/transfer examples"
 node ./scripts/private-signet-reseed-demo.mjs
 
 echo
-echo "[3/4] Seed canonical batched claim proof"
+echo "[3/5] Seed canonical batched claim proof"
 GNS_PRIVATE_SIGNET_BATCH_SMOKE_ALPHA_NAME="$ALPHA_NAME" \
 GNS_PRIVATE_SIGNET_BATCH_SMOKE_BETA_NAME="$BETA_NAME" \
 node ./scripts/private-signet-batch-smoke.mjs
 
 echo
-echo "[4/4] Seed canonical auction smoke lot"
+echo "[4/5] Seed canonical auction smoke lot"
 node ./scripts/private-signet-auction-smoke.mjs
+
+echo
+echo "[5/5] Park dedicated live auction phase examples"
+node ./scripts/private-signet-auction-phase-gallery.mjs
 
 echo
 echo "Canonical private signet reseed complete."
@@ -80,3 +84,4 @@ echo "  transferdemo"
 echo "  ${ALPHA_NAME}"
 echo "  ${BETA_NAME}"
 echo "  private auction smoke lots (see /auctions)"
+echo "  dedicated phase lots: phasepending, phaseawaiting, phaselive, phasesoftclose"

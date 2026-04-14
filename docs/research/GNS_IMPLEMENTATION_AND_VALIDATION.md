@@ -140,6 +140,10 @@ Today the repo has:
   `AUCTION_BID` activity for dedicated private smoke lots, including a live
   no-bid release-valve check plus a late-bid rejection after release, and
   publishes a summary the website can surface directly
+- a dedicated private signet auction phase-gallery refresh script that parks
+  real private-chain lots in `pending_unlock`, `awaiting_opening_bid`,
+  `live_bidding`, and `soft_close` so the hosted experimental auction feed is
+  easier to review without relying only on curated public fixtures
 
 This is still explicitly an experimental layer rather than the launch protocol,
 but it is now implemented enough to inspect and test end to end.

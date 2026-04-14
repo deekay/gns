@@ -340,6 +340,7 @@ For faster, focused checks, use:
 
 ```bash
 npm run test:private-signet-auction-smoke
+npm run test:private-signet-auction-phase-gallery
 npm run test:private-signet-batch-smoke
 npm run test:private-signet-claim-smoke
 npm run test:private-signet-transfer-smoke
@@ -356,6 +357,11 @@ Those focused smokes cover:
   prebuilt late bid so the feed can reject it as `released_to_ordinary_lane`;
   it also checks that a settled winner resolves as a real owned name with the
   expected owner key and winning bond anchor
+- `auction-phase-gallery`: refreshes dedicated private-signet lots so the live
+  `/gns-private/api/experimental-auctions` feed can simultaneously show real
+  `pending_unlock`, `awaiting_opening_bid`, `live_bidding`, and `soft_close`
+  phases alongside the smoke-driven `settled` and
+  `released_to_ordinary_lane` examples
 - `batch-smoke`: one private-signet batch anchor, two later reveals, and a later gift transfer on one of the batch-claimed names
 - `claim-smoke`: one name through commit, reveal, and claimed state
 - `transfer-smoke`: gift transfer and immature buyer-funded sale transfer
@@ -382,6 +388,23 @@ shorter hosted-demo overrides than the default research policy:
 
 That keeps the private auction smoke practical while preserving the same
 auction-state machinery.
+
+The canonical reseed now also parks dedicated private phase lots:
+
+- `phasepending`
+- `phaseawaiting`
+- `phaselive`
+- `phasesoftclose`
+
+Those are real private-chain auction lots, not fixture-only website cards. The
+parking script is:
+
+```bash
+npm run test:private-signet-auction-phase-gallery
+```
+
+and the canonical reseed runs it automatically after the auction smoke so the
+private live feed stays review-friendly.
 
 If the private web service is configured with
 `GNS_WEB_PRIVATE_BATCH_SMOKE_STATUS_PATH=/var/lib/gns/private-batch-smoke-summary.json`,

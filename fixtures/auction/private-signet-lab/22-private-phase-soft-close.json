@@ -1,0 +1,11 @@
+{
+  "title": "Private phase lot · soft close",
+  "description": "Dedicated private signet lot intended to hold an older accepted bid so the live experimental feed can show a real soft_close state.",
+  "currentBlockHeight": 176,
+  "scenario": {
+    "name": "phasesoftclose",
+    "reservedClassId": "public_identity",
+    "unlockBlock": 170,
+    "bidAttempts": []
+  }
+}

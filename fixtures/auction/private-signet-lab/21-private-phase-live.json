@@ -1,0 +1,11 @@
+{
+  "title": "Private phase lot · live bidding",
+  "description": "Dedicated private signet lot intended to hold a single recent accepted bid so the live experimental feed can show a real live_bidding state.",
+  "currentBlockHeight": 176,
+  "scenario": {
+    "name": "phaselive",
+    "reservedClassId": "public_identity",
+    "unlockBlock": 174,
+    "bidAttempts": []
+  }
+}
