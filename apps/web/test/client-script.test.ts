@@ -53,7 +53,14 @@ describe("renderClientScript", () => {
     expect(script).toContain("Late Bid Txid");
     expect(script).toContain("Late Bid Outcome");
     expect(script).toContain("Winner handoff");
+    expect(script).toContain("Workflow proved");
+    expect(script).toContain("Winner value sequence");
+    expect(script).toContain("Winner bond release spend");
+    expect(script).toContain("Post-release transfer Txid");
+    expect(script).toContain("Transferred owner");
+    expect(script).toContain("Transferred value sequence");
     expect(script).toContain("Open settled name");
+    expect(script).toContain("renderPrivateAuctionWorkflowSummary");
     expect(script).toContain("renderPrivateAuctionWinnerHandoffCopy");
     expect(script).toContain("Open private auction lab");
     expect(script).toContain("getPrivateDemoBasePath");

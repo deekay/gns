@@ -159,6 +159,9 @@ SERVICE
     upsert_env /etc/gns/gns-private.env GNS_EXPERIMENTAL_AUCTION_BASE_WINDOW_BLOCKS 8
     upsert_env /etc/gns/gns-private.env GNS_EXPERIMENTAL_AUCTION_SOFT_CLOSE_EXTENSION_BLOCKS 4
     upsert_env /etc/gns/gns-private.env GNS_EXPERIMENTAL_AUCTION_NO_BID_RELEASE_BLOCKS 16
+    upsert_env /etc/gns/gns-private.env GNS_EXPERIMENTAL_AUCTION_TOP_COLLISION_LOCK_BLOCKS 24
+    upsert_env /etc/gns/gns-private.env GNS_EXPERIMENTAL_AUCTION_MAJOR_EXISTING_NAME_LOCK_BLOCKS 12
+    upsert_env /etc/gns/gns-private.env GNS_EXPERIMENTAL_AUCTION_PUBLIC_IDENTITY_LOCK_BLOCKS 8
     upsert_env /etc/gns/gns-private.env GNS_WEB_PRIVATE_SIGNET_ELECTRUM_ENDPOINT "${PUBLIC_HOST}:${ELECTRUM_PORT}:t"
     upsert_env /etc/gns/gns-private.env GNS_WEB_PRIVATE_BATCH_SMOKE_STATUS_PATH /var/lib/gns/private-batch-smoke-summary.json
     upsert_env /etc/gns/gns-private.env GNS_WEB_PRIVATE_AUCTION_SMOKE_STATUS_PATH /var/lib/gns/private-auction-smoke-summary.json

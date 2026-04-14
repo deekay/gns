@@ -5557,6 +5557,23 @@ function renderPrivateAuctionSmokeStatus() {
     releaseCheck?.finalState && typeof releaseCheck.finalState === "object"
       ? releaseCheck.finalState
       : {};
+  const winnerValueSequence =
+    auctionSmoke.winnerValue?.currentValue && typeof auctionSmoke.winnerValue.currentValue === "object"
+      ? auctionSmoke.winnerValue.currentValue.sequence
+      : null;
+  const transferredValueSequence =
+    auctionSmoke.transferredValue?.currentValue && typeof auctionSmoke.transferredValue.currentValue === "object"
+      ? auctionSmoke.transferredValue.currentValue.sequence
+      : null;
+  const transferTxid =
+    auctionSmoke.transfer && typeof auctionSmoke.transfer === "object"
+      ? auctionSmoke.transfer.transferTxid
+      : null;
+  const transferredOwnerPubkey =
+    auctionSmoke.transfer?.record?.currentOwnerPubkey
+    ?? auctionSmoke.highlight?.transferredOwnerPubkey
+    ?? null;
+  const winnerBondSpentTxid = auctionSmoke.highlight?.winnerBondSpentTxid ?? null;
   const actionLinks = [
     finalState.phase === "settled" && typeof finalState.normalizedName === "string" && finalState.normalizedName.trim().length > 0
       ? '<a class="action-link" href="' + escapeHtml(buildNameDetailPath(finalState.normalizedName, privateDemoBasePath)) + '">Open settled name</a>'
@@ -5621,6 +5638,10 @@ function renderPrivateAuctionSmokeStatus() {
     '    <p class="field-value">' + escapeHtml(renderPrivateAuctionWinnerHandoffCopy(finalState)) + '</p>',
     "  </div>",
     '  <div class="result-item">',
+    "    <label>Workflow proved</label>",
+    '    <p class="field-value">' + escapeHtml(renderPrivateAuctionWorkflowSummary(auctionSmoke)) + '</p>',
+    "  </div>",
+    '  <div class="result-item">',
     "    <label>Highest / next bid</label>",
     '    <p class="field-value">' + escapeHtml(highestBidText) + " / " + escapeHtml(nextBidText) + '</p>',
     "  </div>",
@@ -5647,6 +5668,26 @@ function renderPrivateAuctionSmokeStatus() {
     '  <div class="result-item">',
     "    <label>Beta bond status</label>",
     '    <p class="field-value">' + escapeHtml(formatAuctionBondStatus(auctionSmoke.highlight?.betaBondStatus ?? null)) + '</p>',
+    "  </div>",
+    '  <div class="result-item">',
+    "    <label>Winner value sequence</label>",
+    '    <p class="field-value">' + escapeHtml(winnerValueSequence === null ? "Not published" : String(winnerValueSequence)) + '</p>',
+    "  </div>",
+    '  <div class="result-item">',
+    "    <label>Winner bond release spend</label>",
+    winnerBondSpentTxid ? renderCopyableCode(winnerBondSpentTxid) : '<p class="field-value">Not published</p>',
+    "  </div>",
+    '  <div class="result-item">',
+    "    <label>Post-release transfer Txid</label>",
+    transferTxid ? renderCopyableCode(transferTxid) : '<p class="field-value">Not published</p>',
+    "  </div>",
+    '  <div class="result-item">',
+    "    <label>Transferred owner</label>",
+    transferredOwnerPubkey ? renderCopyableCode(transferredOwnerPubkey) : '<p class="field-value">Not published</p>',
+    "  </div>",
+    '  <div class="result-item">',
+    "    <label>Transferred value sequence</label>",
+    '    <p class="field-value">' + escapeHtml(transferredValueSequence === null ? "Not published" : String(transferredValueSequence)) + '</p>',
     "  </div>",
     '  <div class="result-item">',
     "    <label>Release Lot</label>",
@@ -5688,6 +5729,22 @@ function renderPrivateAuctionWinnerHandoffCopy(finalState) {
   return blocksUntilRelease > 0
     ? "The lot has settled into a live name record, but the post-auction lock remains active for about " + String(blocksUntilRelease) + " more blocks."
     : "The lot has settled into a live name record and the post-auction lock has cleared.";
+}
+
+function renderPrivateAuctionWorkflowSummary(auctionSmoke) {
+  const winnerSequence = auctionSmoke?.winnerValue?.currentValue?.sequence;
+  const transferredSequence = auctionSmoke?.transferredValue?.currentValue?.sequence;
+  const transferTxid = auctionSmoke?.transfer?.transferTxid;
+
+  if (winnerSequence === 1 && transferredSequence === 2 && typeof transferTxid === "string" && transferTxid.length > 0) {
+    return "Bidding, settlement, winner value publication, post-release transfer, and recipient value publication all succeeded.";
+  }
+
+  if (winnerSequence === 1) {
+    return "Bidding, settlement, and winner value publication succeeded; the later mature transfer path is not published in this summary.";
+  }
+
+  return "This summary is still focused on bid acceptance and settlement signals.";
 }
   `;
 }

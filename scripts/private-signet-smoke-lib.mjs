@@ -537,6 +537,75 @@ export async function immatureSaleTransferName({
   };
 }
 
+export async function matureSaleTransferName({
+  nameRecord,
+  sellerAccount,
+  buyerAccount,
+  rpcPassword,
+  outDir,
+  salePriceSats = 1_000n,
+  sellerFundingSats = 20_000n,
+  buyerFundingSats = 20_000n
+}) {
+  await mkdir(outDir, { recursive: true });
+  const sellerFunding = await fundAddress(
+    sellerAccount.fundingAddress,
+    sellerFundingSats
+  );
+  const buyerFunding = await fundAddress(
+    buyerAccount.fundingAddress,
+    buyerFundingSats
+  );
+
+  const transferResult = await cliJson([
+    "submit-sale-transfer",
+    "--prev-state-txid",
+    nameRecord.lastStateTxid,
+    "--new-owner-pubkey",
+    buyerAccount.ownerPubkey,
+    "--owner-private-key-hex",
+    sellerAccount.ownerPrivateKeyHex,
+    "--seller-input",
+    formatDescriptor(sellerFunding),
+    "--buyer-input",
+    formatDescriptor(buyerFunding),
+    "--seller-payment-sats",
+    salePriceSats.toString(),
+    "--seller-payment-address",
+    sellerAccount.fundingAddress,
+    "--fee-sats",
+    TRANSFER_FEE_SATS.toString(),
+    "--wif",
+    sellerAccount.fundingWif,
+    "--wif",
+    buyerAccount.fundingWif,
+    "--seller-change-address",
+    sellerAccount.fundingAddress,
+    "--buyer-change-address",
+    buyerAccount.fundingAddress,
+    "--network",
+    "signet",
+    "--expected-chain",
+    "signet",
+    "--rpc-url",
+    localRpcUrl(),
+    "--rpc-username",
+    RPC_USERNAME,
+    "--rpc-password",
+    rpcPassword,
+    "--out-dir",
+    outDir
+  ]);
+
+  await mineBlocks(1);
+  await waitForResolverHeight(await getBlockCount());
+
+  return {
+    transferResult,
+    record: await cliJson(["get-name", nameRecord.name, "--resolver-url", resolverUrl()])
+  };
+}
+
 export async function ensureAccount(path) {
   try {
     return JSON.parse(await readFile(path, "utf8"));

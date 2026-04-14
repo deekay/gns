@@ -12,7 +12,9 @@ import {
   fundAddress,
   getBlockCount,
   localRpcUrl,
+  matureSaleTransferName,
   mineBlocks,
+  postValueRecord,
   publishScenarioSummary,
   resolverUrl,
   rpcCall,
@@ -50,6 +52,7 @@ async function main() {
   await withPrivateSignetSession(async ({
     owner,
     recipient,
+    pendingOwner,
     rpcPassword,
     resolverUrl: privateResolverUrl,
     rpcUrl
@@ -124,13 +127,15 @@ async function main() {
       await mineBlocks(1);
       await waitForResolverHeight(afterSpendBlock + 1);
 
-      const finalState = await fetchExperimentalAuctionById(targetAuction.auctionId);
-      if (!finalState) {
+      const postEarlySpendState = await fetchExperimentalAuctionById(targetAuction.auctionId);
+      if (!postEarlySpendState) {
         throw new Error(`missing final state for ${targetAuction.auctionId}`);
       }
 
-      const alphaOutcome = finalState.visibleBidOutcomes.find((outcome) => outcome.txid === alphaBid.bidTxid) ?? null;
-      const betaOutcome = finalState.visibleBidOutcomes.find((outcome) => outcome.txid === betaBid.bidTxid) ?? null;
+      const alphaOutcome =
+        postEarlySpendState.visibleBidOutcomes.find((outcome) => outcome.txid === alphaBid.bidTxid) ?? null;
+      const betaOutcome =
+        postEarlySpendState.visibleBidOutcomes.find((outcome) => outcome.txid === betaBid.bidTxid) ?? null;
 
       if (!alphaOutcome || alphaOutcome.bondSpendStatus !== "spent_before_allowed_release") {
         throw new Error(`expected ${targetAuction.auctionId} to flag the first bid bond as spent_before_allowed_release`);
@@ -140,7 +145,7 @@ async function main() {
         throw new Error(`expected ${targetAuction.auctionId} to keep the higher bid accepted`);
       }
 
-      const settledState = await ensureAuctionSettled(finalState);
+      const settledState = await ensureAuctionSettled(postEarlySpendState);
       const settledNameRecord = await fetchNameRecordByName(targetAuction.normalizedName);
       if (!settledNameRecord) {
         throw new Error(`expected ${targetAuction.normalizedName} to materialize as a live name after auction settlement`);
@@ -156,6 +161,128 @@ async function main() {
 
       if (settledNameRecord.currentBondTxid !== betaBid.bidTxid) {
         throw new Error(`expected ${targetAuction.normalizedName} to anchor its live bond to the winning bid`);
+      }
+
+      logStep(targetAuction.auctionId, "publishing a value record from the settled winning owner");
+      const winnerValueRecord = await cliJson([
+        "sign-value-record",
+        "--name",
+        targetAuction.normalizedName,
+        "--owner-private-key-hex",
+        recipient.ownerPrivateKeyHex,
+        "--sequence",
+        "1",
+        "--value-type",
+        "2",
+        "--payload-utf8",
+        `https://example.com/private-auction/${targetAuction.normalizedName}/winner`,
+        "--write",
+        join(outDir, "winner-value-record.json")
+      ]);
+      const winnerValuePublish = await postValueRecord(winnerValueRecord);
+      if (winnerValuePublish.status !== 201 || winnerValuePublish.payload?.ok !== true) {
+        throw new Error(`expected ${targetAuction.normalizedName} winner value publish to succeed`);
+      }
+
+      const currentWinnerValue = await cliJson([
+        "get-value",
+        targetAuction.normalizedName,
+        "--resolver-url",
+        resolverUrl()
+      ]);
+      if (currentWinnerValue.sequence !== 1) {
+        throw new Error(`expected ${targetAuction.normalizedName} winner value record to publish at sequence 1`);
+      }
+
+      const winnerReleaseBlocks = Math.max(
+        0,
+        Number(settledState.winnerBondReleaseBlock ?? 0) - Number(settledState.currentBlockHeight ?? 0)
+      );
+      if (winnerReleaseBlocks > 0) {
+        logStep(
+          targetAuction.auctionId,
+          `mining ${winnerReleaseBlocks} block${winnerReleaseBlocks === 1 ? "" : "s"} until the winner bond lock clears`
+        );
+        const currentHeight = await getBlockCount();
+        await mineBlocks(winnerReleaseBlocks);
+        await waitForResolverHeight(currentHeight + winnerReleaseBlocks);
+      }
+
+      const releasableState = await fetchExperimentalAuctionById(targetAuction.auctionId);
+      if (!releasableState || releasableState.phase !== "settled") {
+        throw new Error(`expected ${targetAuction.auctionId} to remain settled at winner release height`);
+      }
+
+      const releasableNameRecord = await fetchNameRecordByName(targetAuction.normalizedName);
+      if (!releasableNameRecord || releasableNameRecord.status !== "mature") {
+        throw new Error(`expected ${targetAuction.normalizedName} to become mature after the winner bond lock cleared`);
+      }
+
+      logStep(targetAuction.auctionId, "transferring the auction-owned name after release");
+      const matureTransfer = await matureSaleTransferName({
+        nameRecord: releasableNameRecord,
+        sellerAccount: recipient,
+        buyerAccount: pendingOwner,
+        rpcPassword,
+        outDir: join(outDir, "winner-mature-transfer")
+      });
+
+      if (matureTransfer.record.currentOwnerPubkey !== pendingOwner.ownerPubkey) {
+        throw new Error(`expected ${targetAuction.normalizedName} to transfer to the pending owner after maturity`);
+      }
+
+      logStep(targetAuction.auctionId, "publishing a value record from the post-transfer owner");
+      const transferredValueRecord = await cliJson([
+        "sign-value-record",
+        "--name",
+        targetAuction.normalizedName,
+        "--owner-private-key-hex",
+        pendingOwner.ownerPrivateKeyHex,
+        "--sequence",
+        "2",
+        "--value-type",
+        "2",
+        "--payload-utf8",
+        `https://example.com/private-auction/${targetAuction.normalizedName}/recipient`,
+        "--write",
+        join(outDir, "transferred-value-record.json")
+      ]);
+      const transferredValuePublish = await postValueRecord(transferredValueRecord);
+      if (transferredValuePublish.status !== 201 || transferredValuePublish.payload?.ok !== true) {
+        throw new Error(`expected ${targetAuction.normalizedName} post-transfer value publish to succeed`);
+      }
+
+      const currentTransferredValue = await cliJson([
+        "get-value",
+        targetAuction.normalizedName,
+        "--resolver-url",
+        resolverUrl()
+      ]);
+      if (currentTransferredValue.sequence !== 2) {
+        throw new Error(`expected ${targetAuction.normalizedName} post-transfer value record to publish at sequence 2`);
+      }
+
+      logStep(targetAuction.auctionId, "spending the winning bond after allowed release");
+      const winnerSpendTxid = await spendBidBondWithRpc({
+        bidTxid: betaBid.bidTxid,
+        bidBondVout: betaBid.bondVout,
+        bidBondValueSats: BigInt(betaBid.bidAmountSats),
+        destinationAddress: recipient.fundingAddress,
+        signingWif: recipient.fundingWif
+      });
+
+      const afterWinnerSpendBlock = await getBlockCount();
+      await mineBlocks(1);
+      await waitForResolverHeight(afterWinnerSpendBlock + 1);
+
+      const finalState = await fetchExperimentalAuctionById(targetAuction.auctionId);
+      if (!finalState) {
+        throw new Error(`missing final state for ${targetAuction.auctionId}`);
+      }
+
+      const finalTransferredRecord = await fetchNameRecordByName(targetAuction.normalizedName);
+      if (!finalTransferredRecord || finalTransferredRecord.currentOwnerPubkey !== pendingOwner.ownerPubkey) {
+        throw new Error(`expected ${targetAuction.normalizedName} to remain owned by the post-transfer recipient after winning bond release`);
       }
 
       const releaseTargetBefore = await ensureAuctionReadyForRelease(
@@ -207,7 +334,7 @@ async function main() {
 
       summary.status = "complete";
       summary.message =
-        "Private signet experimental auction smoke succeeded with live bidding, early losing-bond enforcement, and no-bid release-valve rejection.";
+        "Private signet experimental auction smoke succeeded with live bidding, settlement, winner value publication, post-release transfer, and no-bid release-valve rejection.";
       summary.completedAt = new Date().toISOString();
       summary.resolverUrl = privateResolverUrl;
       summary.rpcUrl = rpcUrl;
@@ -224,12 +351,26 @@ async function main() {
       summary.finalState = finalState;
       summary.settledState = settledState;
       summary.settledNameRecord = settledNameRecord;
+      summary.winnerValue = {
+        publish: winnerValuePublish,
+        currentValue: currentWinnerValue
+      };
+      summary.transfer = {
+        transferTxid: matureTransfer.transferResult.transferTxid,
+        record: matureTransfer.record
+      };
+      summary.transferredValue = {
+        publish: transferredValuePublish,
+        currentValue: currentTransferredValue
+      };
       summary.highlight = {
         alphaBondSpendStatus: alphaOutcome.bondSpendStatus,
         alphaBondSpentTxid: alphaOutcome.bondSpentTxid,
         betaBondStatus: betaOutcome.bondStatus,
         betaBondSpendStatus: betaOutcome.bondSpendStatus,
-        settledOwnerPubkey: settledNameRecord.currentOwnerPubkey
+        winnerBondSpentTxid: winnerSpendTxid,
+        settledOwnerPubkey: settledNameRecord.currentOwnerPubkey,
+        transferredOwnerPubkey: finalTransferredRecord.currentOwnerPubkey
       };
       summary.releaseCheck = {
         auctionId: releaseTargetBefore.auctionId,
@@ -302,7 +443,7 @@ function selectAvailableBiddingSmokeAuction(auctions) {
 
   if (!candidate) {
     throw new Error(
-      "no empty private auction smoke lot is available; reset or reseed private signet to free one of the dedicated smoke lots"
+      "no empty private auction smoke lot is available; rerun the canonical private signet reseed to free dedicated smoke lots"
     );
   }
 
@@ -331,7 +472,7 @@ function selectReleaseSmokeAuction(auctions) {
   });
 
   if (!candidate) {
-    throw new Error("no dedicated private release smoke lot is available");
+    throw new Error("no dedicated private release smoke lot is available; rerun the canonical private signet reseed");
   }
 
   return candidate;
