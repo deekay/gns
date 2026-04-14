@@ -15,11 +15,16 @@ This is not a full specification. It is a review packet.
 
 Related notes:
 
+- [BITCOIN_EXPERT_ONE_PAGER.md](/Users/davidking/dev/gns/docs/research/BITCOIN_EXPERT_ONE_PAGER.md)
+- [BITCOIN_PROTOCOL_REVIEW_QUESTIONS.md](/Users/davidking/dev/gns/docs/research/BITCOIN_PROTOCOL_REVIEW_QUESTIONS.md)
+- [BITCOIN_REVIEW_PREP.md](/Users/davidking/dev/gns/docs/research/BITCOIN_REVIEW_PREP.md)
 - [GNS_FROM_ZERO.md](/Users/davidking/dev/gns/docs/core/GNS_FROM_ZERO.md)
 - [GNS_IMPLEMENTATION_AND_VALIDATION.md](/Users/davidking/dev/gns/docs/research/GNS_IMPLEMENTATION_AND_VALIDATION.md)
 - [MERKLE_BATCHING_STATUS.md](/Users/davidking/dev/gns/docs/research/MERKLE_BATCHING_STATUS.md)
 - [LAUNCH_SPEC_V0.md](/Users/davidking/dev/gns/docs/research/LAUNCH_SPEC_V0.md)
 - [RESERVED_LIST_GENERATION_METHOD.md](/Users/davidking/dev/gns/docs/research/RESERVED_LIST_GENERATION_METHOD.md)
+- [RESERVED_LIST_SCALE_AND_AUCTION_DYNAMICS.md](/Users/davidking/dev/gns/docs/research/RESERVED_LIST_SCALE_AND_AUCTION_DYNAMICS.md)
+- [AUCTION_PLACEHOLDERS_AND_MECHANISM_CHOICES.md](/Users/davidking/dev/gns/docs/research/AUCTION_PLACEHOLDERS_AND_MECHANISM_CHOICES.md)
 - [BITCOIN_REVIEW_CLOSURE_MATRIX.md](/Users/davidking/dev/gns/docs/research/BITCOIN_REVIEW_CLOSURE_MATRIX.md)
 
 ## 1. What GNS Is

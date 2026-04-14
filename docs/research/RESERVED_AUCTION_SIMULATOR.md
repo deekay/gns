@@ -19,6 +19,8 @@ Related notes:
 - [RESERVED_CLASS_OPTIONS.md](./RESERVED_CLASS_OPTIONS.md)
 - [RESERVED_NAME_AUCTION_LANE.md](./RESERVED_NAME_AUCTION_LANE.md)
 - [AUCTION_IMPLEMENTATION_GAP_LIST.md](./AUCTION_IMPLEMENTATION_GAP_LIST.md)
+- [RESERVED_LIST_SCALE_AND_AUCTION_DYNAMICS.md](./RESERVED_LIST_SCALE_AND_AUCTION_DYNAMICS.md)
+- [AUCTION_PLACEHOLDERS_AND_MECHANISM_CHOICES.md](./AUCTION_PLACEHOLDERS_AND_MECHANISM_CHOICES.md)
 
 ## What It Covers
 
@@ -252,3 +254,8 @@ correct.
 
 It is whether the simulator is good enough to help us decide what the right
 numbers and class shapes should be.
+
+For a short synthesis of what the current scenarios suggest about thin early
+participation and price discovery, see:
+
+- [RESERVED_LIST_SCALE_AND_AUCTION_DYNAMICS.md](/Users/davidking/dev/gns/docs/research/RESERVED_LIST_SCALE_AND_AUCTION_DYNAMICS.md)

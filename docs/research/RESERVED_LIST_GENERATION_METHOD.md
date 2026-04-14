@@ -14,6 +14,7 @@ Related notes:
 - [SALIENCE_OVERLAY_RATIONALE.md](/Users/davidking/dev/gns/docs/research/SALIENCE_OVERLAY_RATIONALE.md)
 - [SALIENCE_SOURCE_REGISTRY.md](/Users/davidking/dev/gns/docs/research/SALIENCE_SOURCE_REGISTRY.md)
 - [RESERVED_CLASS_OPTIONS.md](/Users/davidking/dev/gns/docs/research/RESERVED_CLASS_OPTIONS.md)
+- [RESERVED_LIST_SCALE_AND_AUCTION_DYNAMICS.md](/Users/davidking/dev/gns/docs/research/RESERVED_LIST_SCALE_AND_AUCTION_DYNAMICS.md)
 
 ## 1. The Goal
 
@@ -181,6 +182,19 @@ The current recommendation remains:
 - broad reserved list
 - `3` coarse reserved classes
 - market discovery for the exact winning BTC amount inside those classes
+
+## 8a. Rough Scale Expectation
+
+For current review and communication purposes, the rough order-of-magnitude
+expectation is:
+
+- not a few hundred
+- not millions
+- probably **tens of thousands to low hundreds of thousands**
+
+The current best working range is discussed in:
+
+- [RESERVED_LIST_SCALE_AND_AUCTION_DYNAMICS.md](/Users/davidking/dev/gns/docs/research/RESERVED_LIST_SCALE_AND_AUCTION_DYNAMICS.md)
 
 ## 9. What Should Be Frozen Before Launch
 
