@@ -2,7 +2,7 @@
 
 Global Name System is a human-readable naming layer anchored to Bitcoin.
 
-The best front door is narrower than “DNS replacement.” GNS is easiest to understand as **payments first, counterparties second, broader publishing and service uses later**: a way to say who gets paid, which merchant you trust, or which Bitcoin-native counterparty or service you mean without depending on a registrar, a platform handle, or a rented suffix.
+The best front door is narrower than “DNS replacement.” GNS is easiest to understand as **payments first, counterparties second, broader publishing and service uses later**: a way to say who gets paid, which merchant you trust, or which counterparty or service you mean without depending on a registrar, a platform handle, or a rented suffix.
 
 The hosted website is mainly a tool surface:
 
@@ -49,7 +49,7 @@ One important testing/status distinction:
 
 - the hosted private demo is a **private signet** walkthrough and the active live environment we maintain
 - explicit ordinary-lane Merkle batching is implemented and validated in fixture mode, controlled-chain regtest, and the hosted **private signet** batch smoke flow
-- the old shared **public signet smoke** runner still exists as optional legacy tooling, but it is not part of the main demo or validation packet because faucet funding is unreliable
+- the old shared **public signet** path has been retired from the active demo and validation story because faucet funding never became reliable
 
 ## Quick Map
 
@@ -159,8 +159,9 @@ Use the auction page to inspect both:
   including stale-bid rejection, same-bidder replacement, and derived
   bond spend / release summaries
 - plus the hosted private signet auction-smoke summary showing a real opening
-  bid, higher bid, and intentionally early losing-bond spend on a dedicated
-  smoke lot
+  bid, higher bid, settlement into a live owned name, winner value publishing,
+  post-release transfer, and an intentionally early losing-bond spend on a
+  dedicated smoke lot
 
 ## What GNS Is
 
@@ -196,9 +197,9 @@ So the right framing is not just “better DNS.” It is closer to a sovereign n
 
 The clearest current wording is:
 
-> use a human-readable name to say who gets paid or which Bitcoin-native counterparty or service you trust.
+> use a human-readable name to say who gets paid or which counterparty or service you trust.
 
-Adjacent work is worth keeping in mind here too. Systems like Pubky / PKARR (which the old Slashtags project now points to) explore self-sovereign routing around public keys and signed DHT records while intentionally avoiding a scarce global human-readable namespace. GNS is trying to solve a different layer: Bitcoin-anchored ownership of shared human-readable names for Bitcoin payments first, then broader counterparties and services after that. For a short internal comparison note, see [docs/research/GNS_VS_PUBKY_PKARR.md](./docs/research/GNS_VS_PUBKY_PKARR.md).
+Adjacent work is worth keeping in mind here too. Systems like Pubky / PKARR (which the old Slashtags project now points to) explore self-sovereign routing around public keys and signed DHT records while intentionally avoiding a scarce global human-readable namespace. GNS is trying to solve a different layer: Bitcoin-anchored ownership of shared human-readable names for payments first, then broader counterparties and services after that. For a short internal comparison note, see [docs/research/GNS_VS_PUBKY_PKARR.md](./docs/research/GNS_VS_PUBKY_PKARR.md).
 
 ## How Ownership Works
 

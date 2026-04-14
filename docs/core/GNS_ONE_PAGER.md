@@ -161,7 +161,7 @@ GNS should not be introduced as "better DNS" or as a generic key/value layer for
 The first claim is narrower and more believable:
 
 - pay the right person
-- use the right Bitcoin-native service
+- use the right service
 - express that choice in words you control instead of raw addresses, DNS aliases, or platform handles
 
 From that wedge, GNS can grow into a broader sovereign naming layer for the resources humans and software actually want to access:
@@ -175,6 +175,8 @@ As we hand more decision-making to language models, human-readable names become 
 
 The system is designed so that the ownership record is public, auditable, and difficult to revoke or forge, while the mutable destination layer stays lightweight and easy to update.
 
+Adjacent systems are useful to keep in mind here too. Pubky / PKARR, which the older Slashtags effort now points toward, takes a different approach: public keys are the durable identity layer, and the base system intentionally avoids trying to allocate a scarce global human-readable namespace. GNS is trying to solve that extra layer for the Bitcoin ecosystem by adding Bitcoin-anchored ownership for shared human-readable names. See [../research/GNS_VS_PUBKY_PKARR.md](../research/GNS_VS_PUBKY_PKARR.md) for a short comparison note.
+
 ## Current Status
 
 GNS is an active prototype, not a mainnet-ready production system.
@@ -182,6 +184,8 @@ GNS is an active prototype, not a mainnet-ready production system.
 Today:
 
 - hosted private demo claim flow: working
+- hosted private demo batch-claim smoke: working
+- hosted private demo experimental auction smoke: working
 - browser value publishing: working
 - self-hosted website + resolver stack: working
 - transfers: prototype

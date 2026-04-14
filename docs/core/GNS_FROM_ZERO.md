@@ -60,8 +60,8 @@ Today, a name can conceptually point to things like:
 
 But the current story should start with:
 
-> use a human-readable name to say who gets paid or which Bitcoin-native
-> counterparty or service you trust.
+> use a human-readable name to say who gets paid or which counterparty or
+> service you trust.
 
 ## Why Bonds Instead Of Fees
 
@@ -69,6 +69,12 @@ GNS uses a **bonded-capital** model rather than annual rent.
 
 The claimant locks bitcoin they still own instead of paying protocol rent to a
 registrar, treasury, or operator.
+
+That still creates a real cost. Capital has time value and opportunity cost:
+bitcoin locked in a bond cannot be sold, lent, invested, or used elsewhere
+during settlement. The important difference is that this cost does not have to
+be paid away to a third party. It comes from giving up liquidity and optionality
+for a period of time, not from sending protocol rent to a gatekeeper.
 
 That does not mean claims are free:
 
@@ -136,6 +142,7 @@ What is real today:
 - transfer prototype
 - off-chain signed value-record flow
 - explicit Merkle batching for ordinary claims
+- private-signet live demo paths for batched ordinary claims and experimental auction lifecycle smoke
 
 What is still design or research:
 

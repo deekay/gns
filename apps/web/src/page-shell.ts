@@ -237,7 +237,7 @@ function renderHeroSection(
       <p class="eyebrow"><a class="eyebrow-link" href="${withBasePath("/", configuredBasePath)}">Global Name System</a> · ${escapeHtml(configuredNetworkLabel)}</p>
       <h1>Human-Readable Names For Bitcoin Counterparties</h1>
       <p class="lede">
-        Global Name System is best understood today as a payment-first naming layer: a way to say who gets paid, which merchant you trust, or which Bitcoin-native counterparty or service you mean before software acts.
+        Global Name System is best understood today as a payment-first naming layer: a way to say who gets paid, which merchant you trust, or which counterparty or service you mean before software acts.
       </p>
     </div>
     <aside class="hero-card hero-home-card">
@@ -649,8 +649,8 @@ function renderHomeStatusSection(): string {
         <h3>Still Prototype</h3>
         <ul class="guide-list">
           <li>Transfers still lean on CLI and signer flow.</li>
-          <li>The active hosted live-chain proof paths today are private signet, not shared public signet.</li>
-          <li>A legacy public-signet smoke runner still exists, but it is usually unfunded and is no longer presented as the default validation path.</li>
+          <li>The active hosted live-chain proof paths today are private signet and regtest, not shared public signet.</li>
+          <li>The old shared public-signet path has been retired from the active demo and validation story.</li>
           <li>Resolver availability is only partly decentralized in v1.</li>
           <li>Mainnet-ready usage is not the current claim.</li>
         </ul>
@@ -671,7 +671,7 @@ function renderWhyGnsSection(configuredBasePath: string): string {
   return `<section id="why-gns" class="panel panel-guide">
     ${renderPanelHead(
       "What A GNS Name Is",
-      "A payment-first human-readable name for Bitcoin counterparties, with room to grow into broader service and publishing uses later.",
+      "A payment-first human-readable name for payments and counterparties, anchored to Bitcoin, with room to grow into broader service and publishing uses later.",
       `<p>The project is easier to understand if we start with payments and counterparties instead of leading with a generic DNS-replacement claim.</p>
       <ul>
         <li><strong>Bonded:</strong> you lock bond capital instead of paying rent.</li>
@@ -682,7 +682,7 @@ function renderWhyGnsSection(configuredBasePath: string): string {
     <div class="guide-grid">
       <article class="guide-card">
         <h3>Start With The Payment Problem</h3>
-        <p>A GNS name is best understood first as a human-readable way to say who gets paid, which merchant you trust, or which Bitcoin-native counterparty or service you mean before software acts.</p>
+        <p>A GNS name is best understood first as a human-readable way to say who gets paid, which merchant you trust, or which counterparty or service you mean before software acts.</p>
       </article>
       <article class="guide-card">
         <h3>Ownership And Values Are Separate</h3>
@@ -976,8 +976,9 @@ function renderPrivateAuctionSmokeSection(collapsible = false): string {
       `<p>This is the current live-chain proof for the experimental reserved-auction slice.</p>
       <ul>
         <li>It starts with an empty dedicated smoke lot from the private auction catalog.</li>
-        <li>It submits an opening bid, then a higher bid, then spends the losing bond early to prove the chain-derived feed flags that violation.</li>
-        <li>The resulting website feed shows accepted bid history, current leader, next minimum, and the early-spend bond status.</li>
+        <li>It submits an opening bid, then a higher bid, settles the lot into a live owned name, publishes a winner value record, and later transfers that name after the winner lock clears.</li>
+        <li>It still spends the losing bond early to prove the chain-derived feed flags that violation, and it separately proves the no-bid release valve on a dedicated release lot.</li>
+        <li>The resulting website feed shows accepted bid history, settlement state, post-settlement handoff, and bond spend / release consequences.</li>
       </ul>`
     )}
     ${body}
@@ -988,7 +989,7 @@ function renderPrivateAuctionSmokeSection(collapsible = false): string {
     <summary class="panel-summary">
       <div class="panel-summary-copy">
         <h2>Private Signet Auction Smoke</h2>
-        <p>Latest status from the hosted private signet experimental auction flow: one opening bid, one higher bid, and one early losing-bond spend.</p>
+        <p>Latest status from the hosted private signet experimental auction flow: bidding, settlement, winner handoff, post-release transfer, and release-valve checks.</p>
       </div>
       <span class="summary-chip">Open auction smoke</span>
     </summary>
