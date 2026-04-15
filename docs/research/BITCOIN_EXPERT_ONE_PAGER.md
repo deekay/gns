@@ -13,18 +13,17 @@ Related notes:
 
 ## What GNS Is For
 
-GNS is a Bitcoin-anchored human-readable naming system.
+GNS is a Bitcoin-anchored payment-handle system.
 
 The narrowest and most useful framing is:
 
-> use a human-readable name to say who gets paid or which counterparty or
-> service you trust.
+> use a human-readable name to say who gets paid.
 
 This is why the project should be read as:
 
-- payments first
-- counterparties and services second
-- broader key/value publishing later
+- payment handles first
+- owner-signed payment records second
+- broader key/value publishing later if useful clients support it
 
 ## Core Design
 
@@ -109,6 +108,12 @@ Implemented and validated today:
 - experimental reserved-auction stack with real bid transactions, chain-derived
   state, winner materialization into owned names, regtest coverage, and hosted
   private-signet proof paths
+
+Value records are now signed, sequence-numbered, and predecessor-linked. The
+current prototype uses a Keybase-style predecessor hash chain scoped to the
+current ownership interval, so resolvers can prove that an owner changed a
+value from `foo` to `bar` in order without putting routine value updates on
+Bitcoin.
 
 The current live demo environments are:
 

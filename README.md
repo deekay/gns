@@ -1,8 +1,8 @@
 # Global Name System (GNS)
 
-Global Name System is a human-readable naming layer anchored to Bitcoin.
+Global Name System is a payment-handle system anchored to Bitcoin.
 
-The best front door is narrower than “DNS replacement.” GNS is easiest to understand as **payments first, counterparties second, broader publishing and service uses later**: a way to say who gets paid, which merchant you trust, or which counterparty or service you mean without depending on a registrar, a platform handle, or a rented suffix.
+A GNS name is a human-readable handle you can actually own. Its first job is simple: let a wallet or client resolve who should get paid before money moves. The owner can update signed off-chain value records, so the same name can later carry other destinations if clients and applications decide to support them.
 
 The hosted website is mainly a tool surface:
 
@@ -167,25 +167,20 @@ Use the auction page to inspect both:
 
 ## What GNS Is
 
-GNS names are first-class strings like `satoshi`, not hierarchical domains like `satoshi.com`.
+GNS names are first-class strings like `satoshi`.
 
 Ownership is derived from Bitcoin transactions. Mutable value records stay off-chain and are signed by the current owner key. That means GNS uses Bitcoin as a notary for ownership and state transitions, not as a general-purpose database.
 
-The result is a naming layer that can point to:
+The result is a payment handle that can point to:
 
 - payment endpoints
-- identities and profiles
-- APIs and services
-- software or agent endpoints
-- whatever other owner-signed resources the ecosystem chooses to support
+- additional owner-signed key/value records if clients support them later
 
 ## Why It Exists
 
-Most names on the internet are controlled by someone other than the person using them.
+Payment handles are useful because people do not think in raw addresses.
 
-- social handles can be suspended or reassigned by platforms
-- DNS domains depend on registries, registrars, DNS hosts, CDNs, billing, and account security
-- human-readable payment or identity aliases usually inherit one of those stacks underneath
+Today, readable payment handles usually depend on a service, account, domain, or operator that sits between the payer and the recipient. That can be a good transitional convenience, but it means the handle's availability and correctness inherit someone else's infrastructure and policies.
 
 GNS is trying to offer a different model:
 
@@ -195,13 +190,11 @@ GNS is trying to offer a different model:
 - no protocol operator selling the namespace
 - publicly verifiable ownership history
 
-So the right framing is not just “better DNS.” It is closer to a sovereign naming layer for the internet resources humans want to access and remember.
-
 The clearest current wording is:
 
-> use a human-readable name to say who gets paid or which counterparty or service you trust.
+> a payment handle you can actually own.
 
-Adjacent work is worth keeping in mind here too. Systems like Pubky / PKARR (which the old Slashtags project now points to) explore self-sovereign routing around public keys and signed DHT records while intentionally avoiding a scarce global human-readable namespace. GNS is trying to solve a different layer: Bitcoin-anchored ownership of shared human-readable names for payments first, then broader counterparties and services after that. For a short internal comparison note, see [docs/research/GNS_VS_PUBKY_PKARR.md](./docs/research/GNS_VS_PUBKY_PKARR.md).
+Adjacent work is worth keeping in mind here too. Systems like Pubky / PKARR (which the old Slashtags project now points to) explore self-sovereign routing around public keys and signed DHT records while intentionally avoiding a scarce global human-readable namespace. GNS is trying to solve a different layer: Bitcoin-anchored ownership of shared human-readable payment handles, with broader owner-signed records possible later. For a short internal comparison note, see [docs/research/GNS_VS_PUBKY_PKARR.md](./docs/research/GNS_VS_PUBKY_PKARR.md).
 
 ## How Ownership Works
 

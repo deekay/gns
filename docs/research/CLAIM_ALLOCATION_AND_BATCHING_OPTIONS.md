@@ -117,7 +117,7 @@ Still the cleanest default from a protocol-simplicity standpoint, but now under 
 
 - it changes the feel of the system dramatically
 - expressing interest in a name publicly invites competition
-- any interesting name can be griefed or bid up by a richer counterparty
+- any interesting name can be griefed or bid up by a richer bidder
 - users lose the clean "I saw it and grabbed it" experience
 - chain activity can spike badly during contested periods
 

@@ -9,7 +9,7 @@ Status note:
 This one-pager still captures the core model, but some older launch details below
 should not be treated as the settled launch spec.
 
-Global Name System (GNS) is a human-readable naming system anchored to Bitcoin. A GNS name is a flat string like `satoshi`, not a hierarchical domain like `satoshi.com`. The front-door use case is simple: help humans say who they mean before money moves, without depending on a registrar, a platform handle, or a rented suffix.
+Global Name System (GNS) is a payment-handle system anchored to Bitcoin. A GNS name is a flat string like `satoshi` that the owner can control directly. The first use case is simple: help humans say who should get paid before money moves, without copying raw addresses or depending on a gatekeeper-controlled alias.
 
 ## What The System Does
 
@@ -23,10 +23,7 @@ That means Bitcoin is used as a notary for ownership and state transitions, not 
 A name can point to:
 
 - payment destinations
-- APIs and services
-- a profile or identity record
-- agent endpoints
-- broader ordered key/value pairs later if the ecosystem decides to support them
+- broader ordered key/value pairs later if clients and applications decide to support them
 
 ## Core Design
 
@@ -156,26 +153,19 @@ That creates a decentralized path forward that is stronger than a generic off-ch
 
 ## The Vision For GNS
 
-GNS should not be introduced as "better DNS" or as a generic key/value layer for everything on day one.
-
-The first claim is narrower and more believable:
+The first claim is narrow and useful:
 
 - pay the right person
-- use the right service
-- express that choice in words you control instead of raw addresses, DNS aliases, or platform handles
+- express that choice in words you control instead of raw addresses
+- let clients verify the current owner-signed payment record before sending
 
-From that wedge, GNS can grow into a broader sovereign naming layer for the resources humans and software actually want to access:
+From that payment-handle base, GNS can grow into a broader owner-signed record layer if useful clients emerge. The key/value model allows additional records without putting routine updates on Bitcoin or changing the ownership model.
 
-- payment endpoints
-- services
-- identities
-- software agents
-
-As we hand more decision-making to language models, human-readable names become more important, not less. Software can interpret intent flexibly, but the final payment, API call, or identity lookup should not rest on a probabilistic guess about which account, service, or counterparty is the right one. GNS is designed to make names human-readable while keeping ownership cryptographically grounded, so both people and software acting on their behalf can resolve them with much higher confidence.
+As we hand more decision-making to software, human-readable names become more important, not less. Software can interpret intent flexibly, but the final payment target should not rest on a probabilistic guess about which account is the right one. GNS is designed to make payment handles human-readable while keeping ownership cryptographically grounded, so both people and software acting on their behalf can resolve them with much higher confidence.
 
 The system is designed so that the ownership record is public, auditable, and difficult to revoke or forge, while the mutable destination layer stays lightweight and easy to update.
 
-Adjacent systems are useful to keep in mind here too. Pubky / PKARR, which the older Slashtags effort now points toward, takes a different approach: public keys are the durable identity layer, and the base system intentionally avoids trying to allocate a scarce global human-readable namespace. GNS is trying to solve that extra layer for the Bitcoin ecosystem by adding Bitcoin-anchored ownership for shared human-readable names. See [../research/GNS_VS_PUBKY_PKARR.md](../research/GNS_VS_PUBKY_PKARR.md) for a short comparison note.
+Adjacent systems are useful to keep in mind here too. Pubky / PKARR, which the older Slashtags effort now points toward, takes a different approach: public keys are the durable identity layer, and the base system intentionally avoids trying to allocate a scarce global human-readable namespace. GNS is trying to solve that extra layer for the Bitcoin ecosystem by adding Bitcoin-anchored ownership for shared human-readable payment handles. See [../research/GNS_VS_PUBKY_PKARR.md](../research/GNS_VS_PUBKY_PKARR.md) for a short comparison note.
 
 ## Current Status
 

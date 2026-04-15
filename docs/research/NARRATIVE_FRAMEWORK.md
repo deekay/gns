@@ -6,106 +6,93 @@ It is not a protocol specification and it is not a launch announcement. The goal
 
 ## Working Thesis
 
-GNS is a censorship-resistant human-readable naming layer for Bitcoin payments first, and Bitcoin counterparties more broadly over time.
+GNS is a Bitcoin-anchored payment-handle system: a way to own the readable name people and wallets use before money moves.
 
-The front-door use case is simple:
+The first use case is simple:
 
 - who do I mean before money moves?
-- how do I say that in words instead of raw addresses, opaque accounts, or third-party handles?
-- how does my software verify that I meant the same person or business I think I meant?
+- how do I say that in words instead of raw addresses or opaque accounts?
+- how does my software verify the current owner-signed payment record?
 
-Machines can use keys, hashes, and opaque identifiers without much trouble. Humans cannot. GNS exists to make those instructions legible and cryptographically grounded without depending on DNS, a registrar, or a platform account.
+Machines can use keys, hashes, and opaque identifiers without much trouble. Humans cannot. GNS exists to make payment instructions legible and cryptographically grounded.
 
-The broader ambition can stay open-ended, but it should not be the first thing the story asks people to believe. The near-term claim can stay much narrower:
+The broader ambition can stay open-ended, but it should not be the first thing the story asks people to believe. The near-term claim can stay narrow:
 
 - who should get paid?
 - who do I mean?
-- which counterparty do I trust?
-- which Bitcoin-native service should my software use after that?
+- did the signed payment record change?
 
 The short version is:
 
 - Bitcoin gave us sovereign money.
-- GNS explores sovereign naming for Bitcoin payments first, with room to grow into broader counterparty and service naming later.
+- GNS explores sovereign payment handles on a Bitcoin-anchored base, with room for broader owner-signed records later.
 
 ## The Problem To Paint
 
-The strongest near-term problem is not "how do we replace DNS?" It is much closer to:
+The strongest near-term problem is simple:
 
-- Bitcoin addresses are not a human interface
-- DNS and platform handles are readable, but they depend on third parties
-- people need a better way to specify who they mean before money moves or a service is used
+- Bitcoin addresses are not a human interface.
+- Payment handles are useful because people need words before money moves.
+- Most readable handles rely on a service, account, domain, or operator.
 
 That is already enough to justify a system like GNS inside the Bitcoin ecosystem.
 
 This makes the project easier to believe:
 
-- Bitcoin has room for new naming and coordination layers
-- human-readable payment and service selection is already a real need
+- Bitcoin has room for human-readable payment handles
+- human-readable payment selection is already a real need
 - censorship resistance and third-party independence are already legible values in this ecosystem
 
 The broader future can remain visible in the background:
 
 - software will act more often on behalf of humans
-- humans will still need to choose counterparties and approve risk
+- humans will still need to approve recipients and payment risk
 - names will matter more as the action surface gets delegated
 
 But that future should feel like expansion and option value, not a prerequisite for the first story to work.
 
 ## Core Claim
 
-GNS should be framed first as a system for choosing who gets paid in Bitcoin and, secondarily, which Bitcoin-native counterparty or service to trust.
+GNS should be framed first as a payment handle the owner actually controls.
 
-That umbrella is broad enough to include:
+That is broad enough to include:
 
 - payment destinations
-- Bitcoin-native services
-- identity
-- richer delegation later
+- owner-signed records
+- richer key/value data later
 
-But it is more ambitious than any one of those alone.
+But the first useful story should not require people to care about every possible record type.
 
 The most important sentence may be:
 
-> GNS gives humans a way to tell software who they mean.
+> GNS gives humans a way to tell software who gets paid.
 
-That is stronger than:
+That can later expand into a broader "who do I mean?" layer, but the payment-handle story should carry the first explanation.
 
-- decentralized handles
-- a DNS replacement
-- a human-readable payment alias alone
+## First Use Case And Long Arc
 
-Those may be examples or partial stepping stones, but they are not the full thesis.
+The first use case should be narrower than the full design space.
 
-## Front Door And Long Arc
-
-The front door should be narrower than the full design space.
-
-The best initial framing is something like:
-
-- censorship-resistant human-readable naming for Bitcoin payments and counterparties
-
-That lets the story start from something already believable:
+The best initial framing is:
 
 - pay the right person
 - check that a payment target is still the one you expect
-- use the right Bitcoin-native service after that
-- reduce dependence on DNS-era naming and platform handles
+- say it in words you control
 
 The long arc can remain much broader because the protocol already allows richer name/value uses. Over time, if better clients and supporting infrastructure emerge, the same naming layer could support:
 
-- broader service selection
-- stronger delegation policies
-- richer identity and profile records
+- additional payment rails
+- richer wallet and merchant records
+- stronger client-side warnings when records change
 - more agent-mediated software flows
 
 The key is not to demand belief in that larger future before the Bitcoin-native wedge has had a chance to prove itself.
 
-## Probabilistic Models, Deterministic Counterparties
+## Probabilistic Models, Deterministic Payment Targets
 
 Large language models increase the amount of interpretation in the interface.
 
-This is useful as a second-order framing, but it probably should not be the main front-door story.
+This is useful as a second-order framing, but it probably should not be the first thing people have to understand.
 
 That is useful for understanding what a human wants. It is much less acceptable when the same uncertainty leaks into who gets trusted, called, or paid.
 
@@ -121,7 +108,7 @@ Or more concretely:
 
 This keeps the division of labor clear.
 
-The model can remain probabilistic about understanding intent. GNS helps make execution more constrained at the counterparty layer, so a human can say, in effect:
+The model can remain probabilistic about understanding intent. GNS helps make execution more constrained at the payment-target layer, so a human can say, in effect:
 
 > If you are going to serve me, here is how to do it according to the names and preferences I actually use.
 
@@ -141,33 +128,31 @@ The story should begin where the need is already easy to see:
 
 - choosing who to pay
 - verifying that a payment target has not silently changed
-- choosing which Bitcoin-native service to trust after that
-- reducing dependence on DNS and platform-controlled naming
 
-That is a much easier first ask than "replace web navigation" or "invent a new browser."
+That is a much easier first ask than a broad naming or navigation story.
 
-### 3. Counterparty trust, not just discoverability
+### 3. Payment confidence, not just discoverability
 
 The problem is not only finding a destination.
 
 The deeper problem is knowing that the destination is the one you meant. A name should help a human say:
 
-- use `river` for buys
-- use `lightspark` for this service
 - pay `david` back for dinner
-- only buy from services on my allowlist
-- only call the support endpoint attached to the name I trust
+- pay `river` only if the signed record is unchanged
+- warn me when a payment target is new
+- require extra approval above a threshold
 
 The point is not just resolution. It is authoritative resolution.
 
-### 4. Human-readable authority, not only human-readable payments
+### 4. Key/value records after the payment handle lands
 
-A payment alias is a good proof point because the cost of misdirection is obvious. But payment is still a special case of a broader problem:
+A payment handle is the first proof point because the cost of misdirection is obvious.
 
-- a human needs to specify the intended counterparty
-- software needs to verify the mapping before acting
+The protocol can support broader owner-signed key/value records, but those should appear as a natural extension:
 
-So the larger claim is not "easier addresses." It is "human-readable authority."
+- a human uses a stable name
+- the owner signs the current records
+- clients decide which record types they understand
 
 ## Flagship Scene
 
@@ -175,7 +160,7 @@ The strongest flagship scene is probably not two agents talking to each other.
 
 It is a human setting instructions for software:
 
-1. A person tells their client: pay `david`, use `river` for recurring buys, and only interact with payment or service names I have approved above a threshold.
+1. A person tells their client: pay `david`, use `river` for recurring buys, and warn me when a signed payment target changes.
 2. The client resolves those names, verifies the owner-signed records and policy constraints, and shows the human what it is about to do in terms the human can understand.
 3. The software handles the underlying protocols, keys, capabilities, and payment rails.
 
@@ -274,55 +259,53 @@ So the two-lane launch says:
 
 This is not a retreat from fairness. It is a better market-based account of fairness.
 
-## Relationship To DNS-Based Human Bitcoin Addressing
+## Relationship To Human Bitcoin Addressing
 
-This should have a respectful but clearer place in the story.
+This should get a respectful but small place in the story.
 
 The main points are:
 
-- human-readable payment aliases solve a real human problem
-- DNS-based approaches can be part of a transitional landscape
+- human-readable payment handles solve a real human problem
+- existing approaches can be part of a transitional landscape
 - GNS is aimed at the same human need, but with a more sovereign foundation
-- over time GNS can also extend beyond payment naming into broader human-readable authority
+- over time GNS can also extend beyond payment records through app-defined key/value records
 
-That keeps the tone friendly, acknowledges useful adjacent work, and makes the architectural distinction legible without turning the narrative into an attack.
+That keeps the tone friendly and acknowledges useful adjacent work without turning the narrative into an attack.
 
 ## Suggested Messaging Lines
 
 These are working lines, not final copy.
 
 - Machines can use keys. Humans need names.
-- GNS is how humans tell software who they mean.
+- GNS is how humans tell software who gets paid.
 - GNS starts by helping Bitcoin users pay the right person in words they control.
-- Pay the right person. Then use the right service. Say it in words you control.
+- Pay the right person. Say it in words you control.
 - Let models infer your intent. Do not let them guess who you mean.
 - LLMs widen the interpretation surface. GNS narrows the action surface.
-- Probabilistic understanding, more deterministic counterparties.
-- Bitcoin removed banks from money. GNS explores more sovereign naming around Bitcoin payments first, and Bitcoin services after that.
-- In an automated internet, the critical interface is trustworthy naming.
+- Probabilistic understanding, more deterministic payment targets.
+- Bitcoin removed banks from money. GNS explores more sovereign payment handles anchored to Bitcoin.
+- In an automated internet, the critical interface is trustworthy payment intent.
 - A name is the shortest safe instruction a human can give a machine.
-- The goal is not just human-readable payments. It is human-readable authority.
+- A payment handle you can actually own.
 
 ## Narrative Hazards To Avoid
 
-- Leading with "better DNS" makes the ambition feel smaller than it is.
-- Leading with "DNS replacement" asks people to believe too much too early.
-- Leading with identity alone makes GNS sound like a handle system.
+- Leading with a broad naming ambition asks people to believe too much too early.
+- Leading with identity alone makes GNS sound like a generic handle system.
 - Leading with anti-censorship alone can sound generic and underspecified.
 - Leading with generic key/value publishing can make the protocol feel abstract before the payment problem lands.
 - Leading with premium-name monetization can make the project feel extractive before the fairness argument lands.
-- Leading with a speculative new browser can make the core use case sound less believable.
 - Over-describing a sci-fi future can make the thesis feel less credible instead of more credible.
-- Narrowing too far into "just a payment alias" can hide the protocol's upside.
+- Treating key/value extensibility as the first explanation can distract from the payment-handle use case.
 
 ## A Good Narrative Shape
 
 One simple structure for a public-facing essay or presentation:
 
 1. Bitcoin users need a better human interface for choosing who gets paid.
-2. Raw addresses, DNS aliases, and platform handles each leave something important on the table.
-3. GNS explores a censorship-resistant naming layer for Bitcoin payments first, then counterparties and services more broadly.
-4. The same design can grow into broader human-readable authority over time.
+2. Raw addresses and service-controlled aliases each leave something important on the table.
+3. GNS explores Bitcoin-anchored ownership for payment handles.
+4. The same key/value design can grow into broader owner-signed records over time.
 5. Ordinary names can stay simple; salient names need more legitimate market structure.
 
 ## Open Questions
@@ -330,6 +313,6 @@ One simple structure for a public-facing essay or presentation:
 These questions should keep guiding the storytelling work:
 
 - How explicitly should the public story talk about censorship resistance versus convenience?
-- Which payment-first scene makes the thesis click fastest: paying a person, paying a merchant, or approving a recovery/support flow?
-- What minimum data should a name resolve to in the front-door story: payment target, endpoint, owner authority, or a bundle?
-- How soon should the broader browser or agent story appear after the first Bitcoin-native framing lands?
+- Which payment-handle scene makes the thesis click fastest: paying a person, paying a merchant, or approving a recovery/support flow?
+- What minimum data should a name resolve to in the first payment-handle story: payment target, owner authority, or a bundle?
+- How soon should broader key/value examples appear after the payment-handle framing lands?

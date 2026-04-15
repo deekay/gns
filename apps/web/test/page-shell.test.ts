@@ -15,14 +15,14 @@ const baseOptions = {
 } as const;
 
 describe("renderPageHtml", () => {
-  it("surfaces the payment-first framing and current docs on the home page", () => {
+  it("surfaces the payment-handle framing and current docs on the home page", () => {
     const html = renderPageHtml({
       ...baseOptions,
       pageKind: "home"
     });
 
-    expect(html).toContain("Human-Readable Names For Bitcoin Counterparties");
-    expect(html).toContain("payment-first naming layer");
+    expect(html).toContain("Human-Readable Names You Can Actually Own");
+    expect(html).toContain("payment handle you control");
     expect(html).toContain("Open offline architect");
     expect(html).toContain("Open auction lab");
     expect(html).toContain("GNS_FROM_ZERO.md");

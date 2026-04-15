@@ -9,17 +9,17 @@ Status note:
 This explainer still describes the core model accurately, but the launch-allocation
 story has evolved since some of the older “no special cases at launch” wording.
 
-## The Problem With Names Today
+## The Problem With Payment Handles Today
 
 Bitcoin addresses are not a human interface.
 
-If you want to pay the right person, approve the right merchant, or tell software which counterparty you mean, raw addresses and opaque account strings are a poor final interface.
+If you want to pay the right person or merchant, raw addresses and opaque account strings are a poor final interface. A good payment handle should let a wallet answer a simple question before money moves:
 
-Readable names exist, but they usually depend on somebody else. Your domain renews through a registrar that can suspend it. Your social handle lives on a platform that can deactivate it. Your email address belongs to a provider that can close your account.
+> who gets paid?
 
-This is not a minor inconvenience. It means the human-readable layer around identity, coordination, and payment details sits on infrastructure someone else controls. At any point, for any reason, it can be taken from you.
+Readable payment handles exist, but they usually depend on a service, account, domain, or operator between the payer and the recipient. That can be useful, especially during transition, but it also means availability and correctness inherit someone else's infrastructure and policies.
 
-GNS is a different approach. A name like `satoshi` is not a subscription. It is something you own outright, in the same way you own a private key: no company can revoke it, no platform can suspend it, no registrar can let it lapse. The record of ownership is public, permanent, and verifiable by anyone without asking anyone's permission.
+GNS is a different approach. A name like `satoshi` is not a subscription. It is something you own outright, in the same way you own a private key. The record of ownership is public, permanent, and verifiable by anyone without asking anyone's permission.
 
 Human-facing amounts in GNS use integer bitcoin notation alongside the conventional BTC equivalent. Example: `₿50,000 (0.0005 BTC)`.
 
@@ -46,22 +46,20 @@ GNS claims still pay normal Bitcoin transaction fees. The point is not that nami
 
 ## What GNS Names Are For
 
-A GNS name is best understood first as a human-readable way to say who gets paid or which Bitcoin-native counterparty you trust.
+A GNS name is best understood first as a human-readable payment handle.
 
-That front door is intentionally narrower than the full design space. The first question GNS is trying to solve is:
+The first question GNS is trying to solve is:
 
 - who do I mean before money moves?
 
-From there, the same structure can support other resources too. That includes:
+From there, the same structure can support other records too:
 
 - **Payment endpoints** — a Lightning address, an on-chain address, a payment URI
-- **Services** — an HTTPS endpoint, an API, an application
-- **Identity** — a public key, a profile, a verifiable credential
-- **Anything you choose later** — the protocol is deliberately open-ended, but broad key/value publishing should be treated as expansion, not as the first thing new readers have to believe
+- **Anything clients support later** — the protocol uses owner-signed key/value records, but broad publishing should be treated as expansion, not as the first thing new readers have to believe
 
 The name is the stable layer. What it points to can change. The ownership cannot be taken from you.
 
-This matters increasingly as software acts on behalf of people. When an agent routes a payment, authenticates a counterparty, or resolves an address without a human in the loop, the cost of a spoofed or silenced record is much higher than when a person is visually verifying the result. GNS names carry cryptographic ownership guarantees at the protocol level — not because a company promises to honor them, but because the record of ownership is anchored to an immutable public ledger that no single party controls.
+This matters increasingly as software acts on behalf of people. When software routes a payment or resolves an address without a human inspecting every character, the final payment target should not rest on a probabilistic guess or an unverifiable alias. GNS names carry cryptographic ownership guarantees at the protocol level — not because a company promises to honor them, but because the record of ownership is anchored to an immutable public ledger that no single party controls.
 
 ---
 
@@ -119,15 +117,14 @@ public rules and public on-chain outcomes rather than private approvals.
 
 ---
 
-## Comparison to Alternatives
+## Comparison to Rented Handles
 
-| Feature | GNS | ENS (Ethereum) | DNS |
-| :--- | :--- | :--- | :--- |
-| **Cost model** | Bonded capital (you keep it) | Annual rent to DAO | Annual rent to registrar |
-| **Ownership** | Sovereign | Tenant | Tenant |
-| **Revocability** | Cannot be revoked | DAO governance risk | Registrar / legal risk |
-| **Forgery resistance** | Cryptographic | Cryptographic | Weak (hijacking, spoofing) |
-| **Value storage** | Off-chain, owner-signed | On-chain | On DNS servers |
+| Feature | GNS | Typical service-controlled handle |
+| :--- | :--- | :--- |
+| **Cost model** | Bonded capital the claimant still owns | Fees, rent, or account dependence |
+| **Control** | Current owner key signs updates | Provider account or operator controls availability |
+| **Revocability** | No protocol operator can revoke ownership | Provider policy or infrastructure can remove access |
+| **Value storage** | Off-chain, owner-signed | Provider-hosted records |
 
 ---
 
@@ -154,7 +151,7 @@ The resolver layer is designed to be decentralized and self-sustaining:
 3. **Completeness scoring** lets clients deprioritize low-quality resolvers using only locally verifiable data.
 4. **On-chain resolver announcements** let any resolver make itself permanently discoverable to anyone syncing from the launch height.
 
-For value records, owners retain full control: a name owner can self-host their signed record and register a fetch hint with resolvers. If a resolver disappears, the record survives at the owner's endpoint. Multiple resolvers can replicate records, and clients take the highest valid sequence number from whichever they reach.
+For value records, owners retain full control: a name owner can self-host their signed record and register a fetch hint with resolvers. If a resolver disappears, the record survives at the owner's endpoint. Multiple resolvers can replicate records. The current prototype uses owner-signed sequence numbers plus predecessor hashes, scoped to the current ownership interval, so clients can compare verified value-history heads rather than trusting a resolver's latest-value summary.
 
 No single operator needs to be trusted. A hosted resolver at launch is a convenience, not a requirement.
 

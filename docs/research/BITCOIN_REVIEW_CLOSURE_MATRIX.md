@@ -16,6 +16,7 @@ Related notes:
 - [BITCOIN_EXPERT_REVIEW_PACKET.md](/Users/davidking/dev/gns/docs/research/BITCOIN_EXPERT_REVIEW_PACKET.md)
 - [LAUNCH_SPEC_V0.md](/Users/davidking/dev/gns/docs/research/LAUNCH_SPEC_V0.md)
 - [GNS_IMPLEMENTATION_AND_VALIDATION.md](/Users/davidking/dev/gns/docs/research/GNS_IMPLEMENTATION_AND_VALIDATION.md)
+- [VALUE_RECORD_HISTORY_AND_KEYBASE_NOTES.md](/Users/davidking/dev/gns/docs/research/VALUE_RECORD_HISTORY_AND_KEYBASE_NOTES.md)
 
 Status labels:
 
@@ -28,7 +29,7 @@ Status labels:
 
 | Topic | Current recommendation | Status | Should Bitcoin experts review this now? | Next action |
 | --- | --- | --- | --- | --- |
-| Core framing | Payments first, counterparties and services second, broader key/value uses later | closed for this review rev | yes, as context | keep front-door docs aligned |
+| Core framing | Payment handles first, owner-signed payment records second, broader key/value uses later | closed for this review rev | yes, as context | keep intro docs aligned |
 | Public vs private signet | Private signet is the live demo path; public signet is retired | closed for this review rev | no, only mention for clarity | keep docs and site consistent |
 | Ordinary claim architecture | Keep commit / reveal for ordinary names | closed for this review rev | yes | keep as baseline in review packet |
 | Ordinary-lane batching | Explicit Merkle batching is the current mainline path | closed for this review rev | yes | present implemented + validated path clearly |
@@ -47,6 +48,8 @@ Status labels:
 | Reserved list generation methodology | Use a source-registry plus inclusion-path method with selected and near-miss outputs | provisional but shareable | not the best use of Bitcoin-wizard time | keep [RESERVED_LIST_GENERATION_METHOD.md](/Users/davidking/dev/gns/docs/research/RESERVED_LIST_GENERATION_METHOD.md) aligned with the data build notes |
 | Auction implementation status | Present as experimental but real: simulator + bid artifacts + chain-derived state + private-signet smoke | closed for this review rev | yes | keep status language honest |
 | Merkle implementation status | Present as implemented and strongly validated | closed for this review rev | yes | keep validation evidence centralized |
+| Value-record history | Use Keybase-style signed predecessor chains scoped to ownership intervals | closed for this review rev | maybe, as a systems question rather than a Bitcoin-native blocker | keep implementation and website history view exercised |
+| Resolver transparency roots | Defer until value chains and multi-resolver publish/read are clearer | defer from this review round | maybe only if reviewers raise anti-rollback / forked-view concerns | keep routine value updates off Bitcoin by default |
 | Website / tooling story | Website is good enough for inspection and demo; not yet a full end-user bidder flow | closed for this review rev | no, only as context | keep expectations explicit |
 
 ## What Should Be Closed Before A Broader Technical Outreach
@@ -58,6 +61,8 @@ The highest-value tightening work before a broader round is:
 2. one canonical review packet rather than many parallel entry points
 3. one tighter explanation of which questions are Bitcoin-native versus launch
    governance questions
+4. one hosted-demo refresh so value-record history is visible against current
+   private-signet names
 
 Those are not giant protocol blockers, but they reduce confusion.
 
@@ -65,7 +70,7 @@ Those are not giant protocol blockers, but they reduce confusion.
 
 These items are already in a reviewable state:
 
-- payment-first framing
+- payment-handle framing
 - ordinary claim flow
 - explicit Merkle batching baseline
 - annex as research rather than mainline
@@ -83,6 +88,8 @@ The best first-round ask to technically sophisticated Bitcoin reviewers is:
 3. Are the auction transaction and settlement shapes coherent?
 4. Are there obvious Bitcoin-native concerns we are missing around policy,
    relay, footprint, or state-machine complexity?
+5. If they care about resolver trust, does the value-record history direction
+   look sufficient before we consider heavier transparency machinery?
 
 That is a much better first ask than trying to get them to decide every launch
 policy and governance question immediately.

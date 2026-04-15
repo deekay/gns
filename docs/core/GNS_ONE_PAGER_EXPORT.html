@@ -212,7 +212,7 @@
       <section class="sheet">
         <p class="eyebrow">Global Name System</p>
         <h1>GNS One-Pager</h1>
-        <p class="lead">GNS is a human-readable naming system anchored to Bitcoin. It gives people, projects, agents, payment flows, and services a name they control directly, without depending on a registrar, a platform handle, or a rented suffix.</p>
+        <p class="lead">GNS is a payment-handle system anchored to Bitcoin. It gives people and wallets a readable name they can resolve before money moves, with ownership controlled directly by Bitcoin-anchored records.</p>
 
         <div class="sheet-grid sheet-grid-first">
           <div class="column">
@@ -223,7 +223,7 @@
                 <li><strong>ownership</strong>, which is recorded on-chain</li>
                 <li><strong>what the name points to</strong>, which is signed off-chain by the current owner</li>
               </ul>
-              <p>Bitcoin is used as a notary for ownership and state transitions, not as a general-purpose data store. A name can point to identities, payment destinations, APIs, services, agent endpoints, and other ordered key/value pairs.</p>
+              <p>Bitcoin is used as a notary for ownership and state transitions, not as a general-purpose data store. A name can point to payment destinations first, then broader ordered key/value records later if clients support them.</p>
             </section>
 
             <section class="section">
@@ -336,14 +336,14 @@
           <div class="column">
             <section class="section tight">
               <h2>The Vision For GNS</h2>
-              <p>GNS is not just “better DNS.” It is a sovereign naming layer for the internet resources humans and software actually want to access:</p>
+              <p>The first useful claim is narrow:</p>
               <ul class="compact-list">
-                <li>identities</li>
-                <li>payment endpoints</li>
-                <li>services</li>
-                <li>software agents</li>
+                <li>pay the right person</li>
+                <li>express that choice in words instead of raw addresses</li>
+                <li>let clients verify the current owner-signed payment record before sending</li>
               </ul>
-              <p>As we hand more decision-making to language models, human-readable names become more important, not less. Software can interpret intent flexibly, but the final payment, API call, or identity lookup should not rest on a probabilistic guess about which account, service, or counterparty is the right one. GNS is designed to make names human-readable while keeping ownership cryptographically grounded, so both people and software acting on their behalf can resolve them with much higher confidence.</p>
+              <p>From that payment-handle base, GNS can grow into a broader owner-signed record layer if useful clients emerge. The key/value model allows additional records without putting routine updates on Bitcoin or changing the ownership model.</p>
+              <p>As we hand more decision-making to software, human-readable names become more important, not less. Software can interpret intent flexibly, but the final payment target should not rest on a probabilistic guess about which account is the right one. GNS is designed to make payment handles human-readable while keeping ownership cryptographically grounded.</p>
               <p>The system is designed so that the ownership record is public, auditable, and difficult to revoke or forge, while the mutable destination layer stays lightweight and easy to update.</p>
             </section>
 

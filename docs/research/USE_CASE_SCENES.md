@@ -13,7 +13,7 @@ Each scene is trying to answer the same question:
 The scenes are ordered from easiest to explain to most ambitious:
 
 1. pay the right person
-2. use the right service
+2. pay the right merchant or rail
 3. delegate safely to software
 
 The recommendation is to treat them as a ladder, not as competing stories. The first public-facing story should start with payment unless there is a strong reason not to.
@@ -28,7 +28,7 @@ A human tells their wallet or client:
 
 The client resolves `david`, shows the current signed payment destination, confirms whether the target changed since the last payment, and asks for approval before sending.
 
-The human is not comparing raw addresses. The client is not guessing a counterparty from context. The name is the trusted bridge.
+The human is not comparing raw addresses. The client is not guessing a recipient from context. The name is the trusted bridge.
 
 ### Why it works
 
@@ -44,11 +44,11 @@ It also gives a good answer to "why not just let the model handle it?" A model c
 
 - turning a human-readable name into an authoritative payment instruction
 - giving the client something verifiable to resolve before it acts
-- letting the user pin, review, and approve counterparties in familiar words
+- letting the user pin, review, and approve recipients in familiar words
 
 ### What not to imply
 
-- this should not be framed as only a payment alias system
+- this should be framed as a payment handle first, while leaving room for broader records later
 - this should not be framed as a direct attack on adjacent human-readable payment efforts
 - this is the first proof point, not the full destination
 
@@ -56,46 +56,46 @@ It also gives a good answer to "why not just let the model handle it?" A model c
 
 This is the best on-ramp because it is concrete and high-stakes. It earns the right to tell the bigger story later.
 
-## Scene 2: Use The Right Service
+## Scene 2: Pay The Right Merchant Or Rail
 
 ### The scene
 
 A human tells their client:
 
-> Book me a refundable Delta flight under my budget.
+> Pay River for this recurring buy.
 
-The client knows it is allowed to browse certain travel names, compare offers, and ask for approval before buying. It resolves `delta` as the official service the human means, checks the current signed records, and shows the human which merchant and payment target it is about to use.
+The client resolves `river`, checks the current signed records, notices whether the target changed since last time, and shows the human which merchant and payment rail it is about to use.
 
-The human is not choosing between raw URLs, hidden affiliate paths, spoofed apps, or substituted endpoints. The human is choosing the service they mean in words they can understand.
+The human is not choosing between raw addresses, substituted invoices, or rail-specific account strings. The human is choosing the payment relationship they mean in words they can understand.
 
 ### Why it works
 
-This is the natural second step after the payment story lands.
+This is the natural second step after the person-to-person payment story lands.
 
 It naturally includes:
 
 - merchant trust
-- service discovery
+- multi-rail payment records
 - payment approval
-- endpoint verification
+- target-change warnings
 
-It is also a better long-term frame than identity alone. A handle or profile is static. A trusted service relationship is active and much closer to where software will actually make decisions on a human's behalf. But it is still easier to believe after Scene 1 has already established why names matter around money.
+It is also a better long-term frame than identity alone. A handle or profile is static. A trusted payment relationship is active and much closer to where software will actually make decisions on a human's behalf. But it is still easier to believe after Scene 1 has already established why names matter around money.
 
 ### What GNS is doing here
 
-- binding a service name to owner-controlled, signed instructions
-- giving the client a way to verify official endpoints before it acts
-- making room for warnings like "this service record changed" or "this payment target is new"
+- binding a merchant name to owner-controlled, signed payment instructions
+- giving the client a way to choose among supported rails
+- making room for warnings like "this payment target changed" or "this rail is new"
 
 ### What not to imply
 
 - do not pretend GNS alone solves all merchant reputation or fraud problems
-- do not imply the whole web will immediately replatform onto GNS-native clients
-- do not overstate the exact future browser shape
+- do not imply every payment rail will support GNS immediately
+- do not overstate what clients can verify without extra context
 
 ### Why it matters strategically
 
-If Scene 1 proves the need for trustworthy names around money, Scene 2 shows the larger surface area: humans need trustworthy names for choosing which service to trust.
+If Scene 1 proves the need for trustworthy names around money, Scene 2 shows the larger payment surface: humans need trustworthy names across merchants, repeated payments, and multiple rails.
 
 This is probably the best second story, not the first one.
 
@@ -115,7 +115,7 @@ Later, the human gives a broad instruction:
 
 > Handle my travel for this conference.
 
-The model interprets the goal. The client still has to resolve names, obey policy, verify counterparties, and present the human with a legible summary before acting.
+The model interprets the goal. The client still has to resolve names, obey policy, verify recipients or merchants, and present the human with a legible summary before acting.
 
 ### Why it works
 
@@ -129,7 +129,7 @@ This is where the phrase "LLMs widen the interpretation surface; GNS narrows the
 
 - turning some words in a user's instructions into trusted constraints
 - separating "understand what I want" from "decide who I mean"
-- helping the client enforce preferences at the counterparty layer
+- helping the client enforce preferences at the payment-target layer
 
 ### What not to imply
 
@@ -148,7 +148,7 @@ It is also the place where the "human-readable authority" framing becomes cleare
 If these scenes are used in a presentation, homepage, or explainer, the recommended order is:
 
 1. start with Scene 1 because it is instantly legible and high-stakes
-2. expand into Scene 2 because it generalizes the trust problem after the payment wedge is established
+2. expand into Scene 2 because it generalizes the payment-handle problem after the first wedge is established
 3. end on Scene 3 because it shows why the problem grows as software becomes more capable
 
 That progression moves from concrete pain to broader system relevance.
@@ -157,10 +157,10 @@ That progression moves from concrete pain to broader system relevance.
 
 These scenes imply certain client behaviors that may deserve stronger emphasis in demos and docs:
 
-- clear counterparty previews before payment or action
+- clear recipient previews before payment or action
 - warnings when a resolved target changed since the user's last interaction
 - pinned or allowlisted names
-- approval thresholds tied to named counterparties
+- approval thresholds tied to named recipients
 - explicit display of what record was resolved and why the client considers it authoritative
 
 These are not all protocol features. Some are product and client behaviors. But they make the narrative more believable because they show how GNS would actually help a human stay in control.

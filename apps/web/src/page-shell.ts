@@ -61,7 +61,7 @@ export function renderPageHtml(options: PageShellOptions): string {
           : `${PRODUCT_NAME} Explorer`;
   const description =
     pageKind === "home"
-      ? "Search a name, understand the payment-first model, and choose whether to explore, claim, or review the current Global Name System prototype."
+      ? "Search a payment handle, inspect ownership, and choose whether to explore, claim, or review the current Global Name System prototype."
       : pageKind === "claim"
       ? "Prepare a Global Name System claim package, then finish the commit and reveal flow in Sparrow or another external signer."
       : pageKind === "auctions"
@@ -129,15 +129,14 @@ export function renderPageHtml(options: PageShellOptions): string {
 }
 
 function renderHeroSection(
-  configuredBasePath: string,
+  _configuredBasePath: string,
   configuredNetworkLabel: string,
   pageKind: PageKind
 ): string {
   if (pageKind === "claim") {
     return `<header class="hero hero-single hero-page">
       <div class="hero-copy">
-        <p class="eyebrow"><a class="eyebrow-link" href="${withBasePath("/", configuredBasePath)}">Global Name System</a> · ${escapeHtml(configuredNetworkLabel)}</p>
-        <h1>Prepare A Global Name System Claim</h1>
+        <h1>Prepare A Claim</h1>
         <p class="lede">
           Claim details, backups, and signer files.
         </p>
@@ -151,8 +150,7 @@ function renderHeroSection(
   if (pageKind === "transfer") {
     return `<header class="hero hero-single hero-page">
       <div class="hero-copy">
-        <p class="eyebrow"><a class="eyebrow-link" href="${withBasePath("/", configuredBasePath)}">Global Name System</a> · ${escapeHtml(configuredNetworkLabel)}</p>
-        <h1>Prepare A Global Name System Transfer</h1>
+        <h1>Prepare A Transfer</h1>
         <p class="lede">
           Move owner authority to a new pubkey, then finish the handoff in your signer and CLI flow.
         </p>
@@ -166,7 +164,6 @@ function renderHeroSection(
   if (pageKind === "values") {
     return `<header class="hero hero-single hero-page">
       <div class="hero-copy">
-        <p class="eyebrow"><a class="eyebrow-link" href="${withBasePath("/", configuredBasePath)}">Global Name System</a> · ${escapeHtml(configuredNetworkLabel)}</p>
         <h1>Publish An Off-Chain Value</h1>
         <p class="lede">
           Load the current name state, sign a value record locally in the browser, then publish only the signed record.
@@ -181,7 +178,6 @@ function renderHeroSection(
   if (pageKind === "explainer") {
     return `<header class="hero hero-single hero-page">
       <div class="hero-copy">
-        <p class="eyebrow"><a class="eyebrow-link" href="${withBasePath("/", configuredBasePath)}">Global Name System</a> · ${escapeHtml(configuredNetworkLabel)}</p>
         <h1>Quick Overview</h1>
         <p class="lede">
           What GNS is and how to use the hosted tools. Full project documentation lives in the repo.
@@ -193,7 +189,6 @@ function renderHeroSection(
   if (pageKind === "setup") {
     return `<header class="hero hero-single hero-page">
       <div class="hero-copy">
-        <p class="eyebrow"><a class="eyebrow-link" href="${withBasePath("/", configuredBasePath)}">Global Name System</a> · ${escapeHtml(configuredNetworkLabel)}</p>
         <h1>Set Up Your Wallet</h1>
         <p class="lede">
           Sparrow, the hosted demo wallet endpoint, demo coins, and automatic confirmations for the private signet flow.
@@ -205,7 +200,6 @@ function renderHeroSection(
   if (pageKind === "explore") {
     return `<header class="hero hero-single hero-page">
       <div class="hero-copy">
-        <p class="eyebrow"><a class="eyebrow-link" href="${withBasePath("/", configuredBasePath)}">Global Name System</a> · ${escapeHtml(configuredNetworkLabel)}</p>
         <h1>Explore The Live Registry</h1>
         <p class="lede">
           Recent names, current activity, and the tracked registry.
@@ -220,7 +214,6 @@ function renderHeroSection(
   if (pageKind === "auctions") {
     return `<header class="hero hero-single hero-page">
       <div class="hero-copy">
-        <p class="eyebrow"><a class="eyebrow-link" href="${withBasePath("/", configuredBasePath)}">Global Name System</a> · ${escapeHtml(configuredNetworkLabel)}</p>
         <h1>Experimental Reserved Auction Lab</h1>
         <p class="lede">
           Pending unlock, opening-floor pressure, no-bid release to the ordinary lane, live bidding, soft close, and settled winner states rendered from the current reserved-auction simulator.
@@ -233,31 +226,28 @@ function renderHeroSection(
   }
 
   return `<header class="hero hero-home">
-    <div class="hero-copy">
-      <p class="eyebrow"><a class="eyebrow-link" href="${withBasePath("/", configuredBasePath)}">Global Name System</a> · ${escapeHtml(configuredNetworkLabel)}</p>
-      <h1>Human-Readable Names For Bitcoin Counterparties</h1>
-      <p class="lede">
-        Global Name System is best understood today as a payment-first naming layer: a way to say who gets paid, which merchant you trust, or which counterparty or service you mean before software acts.
-      </p>
+    <div class="hero-copy hero-home-banner">
+      <h1>Human-Readable Names You Can Actually Own</h1>
     </div>
-    <aside class="hero-card hero-home-card">
-      <p class="hero-card-label">Current wedge</p>
-      <div class="hero-action-list">
-        <article class="hero-action-item">
-          <strong>Payments First</strong>
-          <p>Start with who gets paid and how that target resolves.</p>
-        </article>
-        <article class="hero-action-item">
-          <strong>Counterparties</strong>
-          <p>Then expand into merchants, operators, and service endpoints you trust.</p>
-        </article>
-        <article class="hero-action-item">
-          <strong>Broader Uses Later</strong>
-          <p>Profiles, navigation, and richer key/value publishing can come after the basic trust wedge is clear.</p>
-        </article>
-      </div>
-      <p class="hero-card-meta">Bonded bitcoin, not rented namespace.</p>
-    </aside>
+    <div class="hero-home-grid">
+      <article class="hero-copy hero-home-intro">
+        <div class="hero-home-intro-copy">
+          <p class="hero-card-label">What that means</p>
+          <p class="lede">
+            Use a readable name as a payment handle you control, so people and wallets can resolve who gets paid before money moves.
+          </p>
+          <p class="hero-home-subcopy">
+            Ownership is public and auditable. The current owner signs the payment record, and the same key/value model can carry other destinations later.
+          </p>
+        </div>
+        <div class="hero-home-proof-row" aria-label="Name ownership summary">
+          <span>Payment handle</span>
+          <span>Public ownership</span>
+          <span>Owner-signed values</span>
+          <span>Bonded, not rented</span>
+        </div>
+      </article>
+    </div>
   </header>`;
 }
 
@@ -671,8 +661,8 @@ function renderWhyGnsSection(configuredBasePath: string): string {
   return `<section id="why-gns" class="panel panel-guide">
     ${renderPanelHead(
       "What A GNS Name Is",
-      "A payment-first human-readable name for payments and counterparties, anchored to Bitcoin, with room to grow into broader service and publishing uses later.",
-      `<p>The project is easier to understand if we start with payments and counterparties instead of leading with a generic DNS-replacement claim.</p>
+      "A payment handle you can actually own, anchored to Bitcoin, with owner-signed records for what the name resolves to.",
+      `<p>A GNS name is claimed on-chain, then the owner signs off-chain records such as payment targets. Other key/value uses can grow later as clients decide to support them.</p>
       <ul>
         <li><strong>Bonded:</strong> you lock bond capital instead of paying rent.</li>
         <li><strong>No suffix:</strong> names are first-class strings.</li>
@@ -681,16 +671,16 @@ function renderWhyGnsSection(configuredBasePath: string): string {
     )}
     <div class="guide-grid">
       <article class="guide-card">
-        <h3>Start With The Payment Problem</h3>
-        <p>A GNS name is best understood first as a human-readable way to say who gets paid, which merchant you trust, or which counterparty or service you mean before software acts.</p>
+        <h3>Payment Handle First</h3>
+        <p>A GNS name is best understood first as a human-readable payment handle: a way to say who should get paid without copying a raw address.</p>
       </article>
       <article class="guide-card">
         <h3>Ownership And Values Are Separate</h3>
-        <p><strong>Bonded, not rented or sold.</strong> Bitcoin transactions establish ownership. The current owner then signs the mutable off-chain value record that says what the name points to.</p>
+        <p><strong>Bonded, not rented or sold.</strong> Bitcoin transactions establish ownership. The current owner then signs the mutable off-chain value record that says where payments should resolve.</p>
       </article>
       <article class="guide-card">
-        <h3>Broader Uses Can Come Later</h3>
-        <p>A GNS name can later point to profiles, payment endpoints, APIs, services, and agent endpoints. The stable human-readable string comes first; richer key/value publishing is the expansion path, not the onboarding requirement.</p>
+        <h3>Key/Value Uses Can Grow</h3>
+        <p>The value record is intentionally app-defined. Payments are the first useful handle story; additional client-supported records can come later without changing the ownership model.</p>
       </article>
     </div>
     <div class="hero-cta-row section-cta-row">
@@ -747,7 +737,7 @@ function renderSearchSection(): string {
   return `<section id="lookup" class="panel panel-search panel-home">
     ${renderPanelHead(
       "Check A Name",
-      "See the current state and the next move."
+      "Resolve a name, inspect ownership, or see whether it is available to claim."
     )}
     <form id="searchForm" class="search-form">
       <label class="field-label" for="nameInput">Name</label>
@@ -1409,7 +1399,7 @@ function renderValuesToolSection(): string {
             <span class="claim-step-badge">Step 1</span>
             <div class="wizard-step-copy">
               <h3>Load The Current Name State</h3>
-              <p>Start with the claimed name you control. The site will pull the current owner and latest published value so the next sequence is clear.</p>
+              <p>Start with the claimed name you control. The site will pull the current owner, ownership interval, latest value, and predecessor hash so the next signed update is clear.</p>
             </div>
           </div>
           <span id="valueStepInspectState" class="summary-chip wizard-step-state">Start here</span>
@@ -1472,7 +1462,7 @@ function renderValuesToolSection(): string {
               </label>
               <label class="draft-field">
                 <span class="field-label">Sequence</span>
-                <input id="valueSequenceInput" name="valueSequence" type="number" min="0" step="1" value="0" />
+                <input id="valueSequenceInput" name="valueSequence" type="number" min="1" step="1" value="1" />
                 <span id="valueSequenceHint" class="field-hint">Load the current name first to confirm the next sequence.</span>
               </label>
               <label class="draft-field">

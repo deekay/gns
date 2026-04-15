@@ -13,30 +13,26 @@ Related notes:
 
 ## The Short Version
 
-Global Name System (GNS) is an attempt to give Bitcoin a human-readable naming
-layer.
+Global Name System (GNS) is an attempt to give Bitcoin human-readable payment
+handles people can actually own.
 
-The front-door problem is simple:
+The first user problem is simple:
 
 - who do I mean before money moves?
-- how do I say that in words instead of a long address or a platform handle?
-- how can software verify that I meant the same person, business, or service I
-  think I meant?
+- how do I say that in words instead of a long address?
+- how can software verify that the handle still resolves to the payment record
+  signed by the current owner?
 
-The project is best framed today as **payments first, counterparties and
-services second, broader key/value uses later**.
+The project is best framed today as **payment handles first, broader
+owner-signed key/value records later**.
 
 ## What GNS Is Trying To Solve
 
-Bitcoin addresses are not a human interface.
+Bitcoin addresses are not a human interface. People want readable payment
+handles, but readable handles usually depend on a service, account, domain, or
+operator between the payer and the recipient.
 
-Readable names exist today, but they usually depend on somebody else:
-
-- DNS depends on registrars and registries
-- social handles depend on platforms
-- email-style aliases depend on service providers
-
-That means the human-readable layer around payment and trust is usually rented,
+That means the human-readable layer around payment is usually rented,
 revocable, or platform-controlled.
 
 GNS explores a different approach:
@@ -57,17 +53,14 @@ GNS separates two things:
 That means Bitcoin is used as a notary for the namespace, not as a database for
 every routine update.
 
-Today, a name can conceptually point to things like:
+Today, a name can conceptually point to:
 
 - payment destinations
-- services and endpoints
-- identity or profile records
-- broader ordered key/value data later
+- broader ordered key/value data later, if clients support it
 
 But the current story should start with:
 
-> use a human-readable name to say who gets paid or which counterparty or
-> service you trust.
+> use a human-readable payment handle to say who gets paid.
 
 ## Why Bonds Instead Of Fees
 
@@ -241,15 +234,10 @@ research will make much more sense.
 
 ## The Right Takeaway
 
-The project should not be read as:
-
-- "a DNS replacement already fully specified"
-- or "a finished mainnet launch design"
-
-It is better understood as:
+The project is best understood as:
 
 - a serious Bitcoin-native naming project
-- with a payment-first and counterparty-first wedge
+- with a payment-handle first use case
 - a real working prototype already on disk
 - an increasingly coherent two-lane launch design
 - and a deliberate effort to be thoughtful about blockspace, validation, and

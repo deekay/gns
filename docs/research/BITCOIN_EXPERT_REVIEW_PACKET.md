@@ -1,6 +1,6 @@
 # Bitcoin Expert Review Packet
 
-This note is the intended front door for technically sophisticated Bitcoin
+This note is the intended entry point for technically sophisticated Bitcoin
 reviewers who do not already know GNS well.
 
 The goal is not to make them reconstruct the project from scattered design
@@ -25,28 +25,22 @@ Related notes:
 - [RESERVED_LIST_GENERATION_METHOD.md](/Users/davidking/dev/gns/docs/research/RESERVED_LIST_GENERATION_METHOD.md)
 - [RESERVED_LIST_SCALE_AND_AUCTION_DYNAMICS.md](/Users/davidking/dev/gns/docs/research/RESERVED_LIST_SCALE_AND_AUCTION_DYNAMICS.md)
 - [AUCTION_PLACEHOLDERS_AND_MECHANISM_CHOICES.md](/Users/davidking/dev/gns/docs/research/AUCTION_PLACEHOLDERS_AND_MECHANISM_CHOICES.md)
+- [VALUE_RECORD_HISTORY_AND_KEYBASE_NOTES.md](/Users/davidking/dev/gns/docs/research/VALUE_RECORD_HISTORY_AND_KEYBASE_NOTES.md)
 - [BITCOIN_REVIEW_CLOSURE_MATRIX.md](/Users/davidking/dev/gns/docs/research/BITCOIN_REVIEW_CLOSURE_MATRIX.md)
 
 ## 1. What GNS Is
 
-GNS is a Bitcoin-anchored human-readable naming system.
+GNS is a Bitcoin-anchored payment-handle system.
 
 The narrowest useful framing is:
 
-> use a human-readable name to say who gets paid or which counterparty or
-> service you trust.
-
-That framing matters. GNS should not be introduced first as:
-
-- a generic DNS replacement
-- a generic key/value layer
-- or a social-handle land grab
+> use a human-readable name to say who gets paid.
 
 The project is best understood as:
 
-- payments first
-- counterparties and services second
-- broader key/value publishing later
+- payment handles first
+- owner-signed payment records second
+- broader key/value publishing later if useful clients support it
 
 ## 2. Core System Shape
 
@@ -247,6 +241,17 @@ The best questions for this round are:
 - are we making the right tradeoff between easy-to-audit explicit data and
   tighter on-chain footprint?
 
+### D. Resolver and value-record history
+
+- is the implemented Keybase-style value-record chain the right baseline for
+  mutable off-chain values?
+- should resolver transparency roots or append receipts be part of the first
+  serious resolver profile, or deferred until after multi-resolver publish/read
+  exists?
+- would Bitcoin-anchored resolver transparency roots ever be worth the
+  recurring blockspace cost, or should GNS avoid that path unless a concrete
+  threat model demands it?
+
 ## 8. What We Are Not Primarily Asking Them To Decide
 
 These are important, but they are not the highest-value first ask for Bitcoin
@@ -266,7 +271,7 @@ These are the current house recommendations for the next review revision.
 
 ### Keep
 
-- payment-first framing
+- payment-handle framing
 - two-lane lead architecture
 - ordinary-lane commit / reveal
 - explicit ordinary-lane Merkle batching
@@ -318,13 +323,14 @@ Optional deeper appendices after that:
 - [MERKLE_BATCHING_PROTOCOL_REVIEW_MEMO.md](/Users/davidking/dev/gns/docs/research/MERKLE_BATCHING_PROTOCOL_REVIEW_MEMO.md)
 - [MERKLE_BATCHING_REVEAL_CARRIER_OPTIONS.md](/Users/davidking/dev/gns/docs/research/MERKLE_BATCHING_REVEAL_CARRIER_OPTIONS.md)
 - [AUCTION_SETTLEMENT_AND_OWNERSHIP.md](/Users/davidking/dev/gns/docs/research/AUCTION_SETTLEMENT_AND_OWNERSHIP.md)
+- [VALUE_RECORD_HISTORY_AND_KEYBASE_NOTES.md](/Users/davidking/dev/gns/docs/research/VALUE_RECORD_HISTORY_AND_KEYBASE_NOTES.md)
 
 ## 12. Short Current Bottom Line
 
 If we want one honest paragraph for technically serious reviewers, it is this:
 
-> GNS is a Bitcoin-anchored human-readable naming system aimed first at
-> payments and counterparties. The ordinary claim path is real, explicit
+> GNS is a Bitcoin-anchored payment-handle system aimed first at
+> human-readable payment resolution. The ordinary claim path is real, explicit
 > ordinary-lane Merkle batching is implemented and strongly validated, and the
 > reserved-auction slice is now implemented enough to inspect as a real system
 > rather than only a design sketch. The remaining review questions are mostly
