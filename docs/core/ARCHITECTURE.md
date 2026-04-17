@@ -1,6 +1,6 @@
 # Architecture
 
-This document describes the current shape of the Global Name System prototype as it exists in this repository.
+This document describes the current shape of the Open Name Tags prototype as it exists in this repository.
 
 ## Mental Model
 
@@ -86,6 +86,17 @@ That means v1 is **not** centralized for ownership, but it is still somewhat cen
 
 This is an intentional v1 boundary, not the intended end state.
 
+There is also a history boundary in the current prototype:
+
+- current value records are signed, sequence-numbered, and predecessor-linked
+- the resolver stores value history by current ownership interval
+- each record points to the previous value-record hash, or `null` for the first
+  record in that ownership interval
+- timestamps are signed metadata, not the canonical ordering rule
+
+That lets a resolver show not only "the current value is `bar`," but also
+"this owner-signed chain changed from `foo` to `bar` in this order."
+
 ### Why this is acceptable for v1
 
 - the signed value record is portable
@@ -95,14 +106,22 @@ This is an intentional v1 boundary, not the intended end state.
 
 ### Planned future direction
 
-The most likely next decentralization step is **client-side multi-resolver publish**, not resolver-to-resolver gossip as the first move.
+The first decentralization step now has an initial prototype:
+**client-side multi-resolver publish/read in the CLI**, plus
+**website-side fanout/compare against a configured resolver allowlist**.
+Resolver-to-resolver gossip is still not the first move.
 
-That would mean:
+Today that means:
 
 - the user signs one value record locally
-- the client publishes the same signed record to multiple resolvers
-- each resolver verifies ownership and sequence independently
-- clients can read from one resolver or several preferred resolvers
+- the CLI can publish the same signed record to multiple resolvers
+- the CLI can compare current value history visibility across multiple resolvers
+- the website can do the same only when the deployment explicitly configures a
+  resolver allowlist
+- each resolver still verifies ownership, ownership interval, predecessor hash, and
+  sequence independently
+- the hosted website still defaults to one resolver unless that allowlist is
+  configured
 
 This keeps the security boundary clean:
 

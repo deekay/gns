@@ -162,7 +162,7 @@ stays consistent." The fields are actually strong enough to verify.
 
 ## What This Tells Us About The Future CLI Shape
 
-If GNS ever takes the annex path seriously, the CLI probably should not pretend
+If ONT ever takes the annex path seriously, the CLI probably should not pretend
 it is a normal PSBT-only command family.
 
 A more honest future shape would be something like:
@@ -209,7 +209,7 @@ The important follow-up result is that the experimental CLI now supports a
 bridge from:
 
 ```text
-real GNS batch claim package -> annex envelope -> signed annex tx -> verifier
+real ONT batch claim package -> annex envelope -> signed annex tx -> verifier
 ```
 
 So the annex experiment is no longer limited to synthetic names and mock proof

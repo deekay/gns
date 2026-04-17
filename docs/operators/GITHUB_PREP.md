@@ -4,7 +4,7 @@ This repository is close to publishable, but a few decisions are still worth mak
 
 ## Ready Now
 
-- product naming is standardized around `Global Name System` / `GNS`
+- product naming is standardized around `Open Name Tags` / `ONT`
 - top-level docs now explain architecture, contribution flow, testing, and Sparrow setup
 - local scripts can be run directly with full paths
 - the private signet Sparrow setup is documented and automated

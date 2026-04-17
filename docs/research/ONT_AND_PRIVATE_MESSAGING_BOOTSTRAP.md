@@ -1,15 +1,15 @@
-# GNS and Private Messaging Bootstrap
+# ONT and Private Messaging Bootstrap
 
-This note explores a messaging use case for GNS that should remain secondary to
+This note explores a messaging use case for ONT that should remain secondary to
 the payment-handle story.
 
 The central question is not:
 
-- should GNS become a messenger?
+- should ONT become a messenger?
 
 It is:
 
-- can GNS help people know who they are messaging, discover current contact
+- can ONT help people know who they are messaging, discover current contact
   endpoints, and preserve identity continuity across messaging tools?
 
 ## Why This Matters
@@ -30,11 +30,11 @@ That creates a tension:
 - humans want stable names
 - private systems often avoid public discoverability
 
-GNS may be useful at that boundary if it is treated carefully.
+ONT may be useful at that boundary if it is treated carefully.
 
-## The Useful Role For GNS
+## The Useful Role For ONT
 
-GNS looks most useful here as:
+ONT looks most useful here as:
 
 - a human-readable contact bootstrap layer
 - a continuity layer for contact identity
@@ -55,9 +55,9 @@ In that model, the user says something like:
 And the client learns the current trusted messaging endpoints from the
 owner-signed record.
 
-## What GNS Should Not Try To Be Here
+## What ONT Should Not Try To Be Here
 
-GNS should not be framed as:
+ONT should not be framed as:
 
 - the private transport layer
 - the thing that makes messaging confidential
@@ -92,7 +92,7 @@ So the right model is probably:
 
 ## White Noise / Marmot As A Concrete Example
 
-White Noise is an interesting example of the kind of system GNS could pair with.
+White Noise is an interesting example of the kind of system ONT could pair with.
 
 As of April 12, 2026, [White Noise](https://www.whitenoise.chat/) describes
 itself as a secure and private messenger that is "identity-free," with no phone
@@ -104,10 +104,10 @@ separate MLS signing keys. See [White Noise](https://www.whitenoise.chat/) and
 That suggests a clean pairing:
 
 - White Noise / Marmot handles encrypted transport and messaging mechanics
-- GNS could optionally handle human-readable contact bootstrap and identity
+- ONT could optionally handle human-readable contact bootstrap and identity
   continuity
 
-For example, a GNS name could point to:
+For example, an ONT name could point to:
 
 - a stable Nostr pubkey
 - preferred relay hints
@@ -129,12 +129,12 @@ As:
 
 The division of labor should stay simple:
 
-- GNS: who you mean
+- ONT: who you mean
 - messenger: how you talk safely
 
 That is the most honest framing.
 
-GNS helps with:
+ONT helps with:
 
 - human-readable contact discovery
 - continuity across key rotation or app migration
@@ -173,9 +173,9 @@ So the likely story order is:
 2. service selection second
 3. optional public contact bootstrap for messaging as an adjacent use case
 
-## What Might Live In GNS vs Above It
+## What Might Live In ONT vs Above It
 
-Things that plausibly belong in GNS or owner-signed public records:
+Things that plausibly belong in ONT or owner-signed public records:
 
 - public messaging protocol hints
 - public identity keys
@@ -183,7 +183,7 @@ Things that plausibly belong in GNS or owner-signed public records:
 - key-rotation continuity signals
 - public contact metadata
 
-Things that likely belong above GNS:
+Things that likely belong above ONT:
 
 - message history
 - private contact graph
@@ -197,7 +197,7 @@ Things that likely belong above GNS:
 
 If this direction is mentioned publicly, it should be phrased as:
 
-- GNS can provide a user-owned human-readable contact layer for messaging apps,
+- ONT can provide a user-owned human-readable contact layer for messaging apps,
   while the private transport happens somewhere else.
 
 That keeps the claim useful and believable.
@@ -208,7 +208,7 @@ If this is explored later, a few guardrails seem important:
 
 - keep it optional, not mandatory
 - do not imply a public name is suitable for every threat model
-- keep GNS separate from the messaging transport layer
-- make room for multiple messaging protocols rather than coupling GNS to one
+- keep ONT separate from the messaging transport layer
+- make room for multiple messaging protocols rather than coupling ONT to one
   app
 - preserve the payment-handle narrative as the main entry point

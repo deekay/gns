@@ -5,7 +5,7 @@ import { computeCommitHash } from "./events.js";
 import { normalizeName } from "./names.js";
 import { encodeCommitPayload, encodeRevealPayload } from "./wire.js";
 
-export const CLAIM_PACKAGE_FORMAT = "gns-claim-package";
+export const CLAIM_PACKAGE_FORMAT = "ont-claim-package";
 export const CLAIM_PACKAGE_VERSION = 1;
 
 export interface ClaimPackage {

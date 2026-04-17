@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import * as secp256k1 from "tiny-secp256k1";
 
 import { assertHexBytes, assertHexString, bytesToHex, hexToBytes } from "./bytes.js";
-import { GnsEventType } from "./constants.js";
+import { OntEventType } from "./constants.js";
 import { normalizeName } from "./names.js";
 
 export interface CommitEventPayload {
@@ -304,7 +304,7 @@ export function computeTransferAuthorizationHash(input: TransferAuthorizationFie
 }
 
 export function getEventTypeName(
-  type: GnsEventType
+  type: OntEventType
 ):
   | "COMMIT"
   | "REVEAL"
@@ -314,19 +314,19 @@ export function getEventTypeName(
   | "REVEAL_PROOF_CHUNK"
   | "AUCTION_BID" {
   switch (type) {
-    case GnsEventType.Commit:
+    case OntEventType.Commit:
       return "COMMIT";
-    case GnsEventType.Reveal:
+    case OntEventType.Reveal:
       return "REVEAL";
-    case GnsEventType.Transfer:
+    case OntEventType.Transfer:
       return "TRANSFER";
-    case GnsEventType.BatchAnchor:
+    case OntEventType.BatchAnchor:
       return "BATCH_ANCHOR";
-    case GnsEventType.BatchReveal:
+    case OntEventType.BatchReveal:
       return "BATCH_REVEAL";
-    case GnsEventType.RevealProofChunk:
+    case OntEventType.RevealProofChunk:
       return "REVEAL_PROOF_CHUNK";
-    case GnsEventType.AuctionBid:
+    case OntEventType.AuctionBid:
       return "AUCTION_BID";
   }
 }

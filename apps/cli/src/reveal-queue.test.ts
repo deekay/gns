@@ -4,7 +4,7 @@ import { join } from "node:path";
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { createBitcoinRpcConfig } from "@gns/bitcoin";
+import { createBitcoinRpcConfig } from "@ont/bitcoin";
 
 import {
   createRevealQueueItem,
@@ -19,7 +19,7 @@ describe("reveal queue", () => {
   let sandboxDir: string;
 
   beforeEach(async () => {
-    sandboxDir = await mkdtemp(join(tmpdir(), "gns-reveal-queue-"));
+    sandboxDir = await mkdtemp(join(tmpdir(), "ont-reveal-queue-"));
   });
 
   afterEach(async () => {
@@ -34,7 +34,7 @@ describe("reveal queue", () => {
       expectedChain: "signet",
       commitTxid: "aa".repeat(32),
       signedRevealArtifacts: {
-        kind: "gns-signed-reveal-artifacts",
+        kind: "ont-signed-reveal-artifacts",
         network: "signet",
         signedTransactionHex: "deadbeef",
         signedTransactionId: "bb".repeat(32),
@@ -61,7 +61,7 @@ describe("reveal queue", () => {
               bestblockhash: "hash100"
             },
             error: null,
-            id: "gns"
+            id: "ont"
           }),
           { status: 200, headers: { "content-type": "application/json" } }
         );
@@ -77,7 +77,7 @@ describe("reveal queue", () => {
               in_active_chain: true
             },
             error: null,
-            id: "gns"
+            id: "ont"
           }),
           { status: 200, headers: { "content-type": "application/json" } }
         );
@@ -88,7 +88,7 @@ describe("reveal queue", () => {
           JSON.stringify({
             result: "bb".repeat(32),
             error: null,
-            id: "gns"
+            id: "ont"
           }),
           { status: 200, headers: { "content-type": "application/json" } }
         );
@@ -121,7 +121,7 @@ describe("reveal queue", () => {
       expectedChain: "regtest",
       commitTxid: "11".repeat(32),
       signedRevealArtifacts: {
-        kind: "gns-signed-batch-reveal-artifacts",
+        kind: "ont-signed-batch-reveal-artifacts",
         network: "regtest",
         signedTransactionHex: "cafebabe",
         signedTransactionId: "22".repeat(32),

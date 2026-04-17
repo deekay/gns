@@ -1,4 +1,4 @@
-import { getBondSats, getMaturityBlocks, getMaturityHeight, normalizeName } from "@gns/protocol";
+import { getBondSats, getMaturityBlocks, getMaturityHeight, normalizeName } from "@ont/protocol";
 
 export type NameStatus = "unclaimed" | "pending" | "immature" | "mature" | "invalid";
 export type ClaimedNameStatus = Exclude<NameStatus, "unclaimed">;

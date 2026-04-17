@@ -258,7 +258,7 @@ export async function ensureDatabaseSchema(config: DatabaseConfig): Promise<void
 
     await client.query(`create schema if not exists ${schema}`);
     await client.query(`
-      create table if not exists ${schema}.gns_documents (
+      create table if not exists ${schema}.ont_documents (
         kind text not null,
         document_key text not null,
         payload jsonb not null,
@@ -282,7 +282,7 @@ export async function loadDatabaseDocument(
   try {
     const schema = quoteIdentifier(config.schema);
     const result = await client.query<{ payload: unknown }>(
-      `select payload from ${schema}.gns_documents where kind = $1 and document_key = $2 limit 1`,
+      `select payload from ${schema}.ont_documents where kind = $1 and document_key = $2 limit 1`,
       [kind, validatedKey]
     );
 
@@ -305,7 +305,7 @@ export async function saveDatabaseDocument(
     const schema = quoteIdentifier(config.schema);
     await client.query(
       `
-        insert into ${schema}.gns_documents (kind, document_key, payload)
+        insert into ${schema}.ont_documents (kind, document_key, payload)
         values ($1, $2, $3::jsonb)
         on conflict (kind, document_key)
         do update set payload = excluded.payload, updated_at = now()

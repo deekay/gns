@@ -6,7 +6,7 @@ APP_ROOT=/app
 SERVICE="${1:-web}"
 
 fetch_launch_height_from_rpc() {
-  node --input-type=module - "$GNS_BITCOIN_RPC_URL" "${GNS_BITCOIN_RPC_USERNAME:-}" "${GNS_BITCOIN_RPC_PASSWORD:-}" <<'NODE'
+  node --input-type=module - "$ONT_BITCOIN_RPC_URL" "${ONT_BITCOIN_RPC_USERNAME:-}" "${ONT_BITCOIN_RPC_PASSWORD:-}" <<'NODE'
 const [url, username, password] = process.argv.slice(2);
 
 const headers = { "content-type": "application/json" };
@@ -19,7 +19,7 @@ const response = await fetch(url, {
   headers,
   body: JSON.stringify({
     jsonrpc: "1.0",
-    id: "gns-container",
+    id: "ont-container",
     method: "getblockcount",
     params: []
   })
@@ -39,7 +39,7 @@ NODE
 }
 
 fetch_launch_height_from_esplora() {
-  node --input-type=module - "$GNS_ESPLORA_BASE_URL" <<'NODE'
+  node --input-type=module - "$ONT_ESPLORA_BASE_URL" <<'NODE'
 const [baseUrl] = process.argv.slice(2);
 const response = await fetch(`${baseUrl.replace(/\/$/, "")}/blocks/tip/height`);
 if (!response.ok) {
@@ -52,47 +52,47 @@ NODE
 
 ensure_launch_height() {
   local snapshot_path="$1"
-  local source_mode="${GNS_SOURCE_MODE:-fixture}"
+  local source_mode="${ONT_SOURCE_MODE:-fixture}"
 
   mkdir -p "$(dirname "$snapshot_path")"
 
-  if [[ -n "${GNS_LAUNCH_HEIGHT:-}" || -f "$snapshot_path" || "$source_mode" == "fixture" ]]; then
+  if [[ -n "${ONT_LAUNCH_HEIGHT:-}" || -f "$snapshot_path" || "$source_mode" == "fixture" ]]; then
     return
   fi
 
   if [[ "$source_mode" == "rpc" ]]; then
-    if [[ -z "${GNS_BITCOIN_RPC_URL:-}" ]]; then
-      echo "GNS_BITCOIN_RPC_URL is required when GNS_SOURCE_MODE=rpc and GNS_LAUNCH_HEIGHT is unset." >&2
+    if [[ -z "${ONT_BITCOIN_RPC_URL:-}" ]]; then
+      echo "ONT_BITCOIN_RPC_URL is required when ONT_SOURCE_MODE=rpc and ONT_LAUNCH_HEIGHT is unset." >&2
       exit 1
     fi
-    export GNS_LAUNCH_HEIGHT
-    GNS_LAUNCH_HEIGHT="$(fetch_launch_height_from_rpc)"
-    echo "Resolved GNS_LAUNCH_HEIGHT=${GNS_LAUNCH_HEIGHT} from Bitcoin RPC."
+    export ONT_LAUNCH_HEIGHT
+    ONT_LAUNCH_HEIGHT="$(fetch_launch_height_from_rpc)"
+    echo "Resolved ONT_LAUNCH_HEIGHT=${ONT_LAUNCH_HEIGHT} from Bitcoin RPC."
     return
   fi
 
   if [[ "$source_mode" == "esplora" ]]; then
-    if [[ -z "${GNS_ESPLORA_BASE_URL:-}" ]]; then
-      echo "GNS_ESPLORA_BASE_URL is required when GNS_SOURCE_MODE=esplora and GNS_LAUNCH_HEIGHT is unset." >&2
+    if [[ -z "${ONT_ESPLORA_BASE_URL:-}" ]]; then
+      echo "ONT_ESPLORA_BASE_URL is required when ONT_SOURCE_MODE=esplora and ONT_LAUNCH_HEIGHT is unset." >&2
       exit 1
     fi
-    export GNS_LAUNCH_HEIGHT
-    GNS_LAUNCH_HEIGHT="$(fetch_launch_height_from_esplora)"
-    echo "Resolved GNS_LAUNCH_HEIGHT=${GNS_LAUNCH_HEIGHT} from Esplora."
+    export ONT_LAUNCH_HEIGHT
+    ONT_LAUNCH_HEIGHT="$(fetch_launch_height_from_esplora)"
+    echo "Resolved ONT_LAUNCH_HEIGHT=${ONT_LAUNCH_HEIGHT} from Esplora."
     return
   fi
 }
 
 case "$SERVICE" in
   resolver)
-    ensure_launch_height "${GNS_SNAPSHOT_PATH:-${APP_ROOT}/.data/resolver-snapshot.json}"
+    ensure_launch_height "${ONT_SNAPSHOT_PATH:-${APP_ROOT}/.data/resolver-snapshot.json}"
     exec node "${APP_ROOT}/apps/resolver/dist/apps/resolver/src/index.js"
     ;;
   web)
     exec node "${APP_ROOT}/apps/web/dist/apps/web/src/index.js"
     ;;
   indexer)
-    ensure_launch_height "${GNS_SNAPSHOT_PATH:-${APP_ROOT}/.data/indexer-snapshot.json}"
+    ensure_launch_height "${ONT_SNAPSHOT_PATH:-${APP_ROOT}/.data/indexer-snapshot.json}"
     exec node "${APP_ROOT}/apps/indexer/dist/apps/indexer/src/index.js"
     ;;
   bash|sh)

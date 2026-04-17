@@ -1,6 +1,6 @@
 # Hosted Demo Script
 
-Use this when you want to show GNS quickly to someone new without sending them through the whole repository first.
+Use this when you want to show ONT quickly to someone new without sending them through the whole repository first.
 
 ## Goal
 
@@ -23,12 +23,12 @@ This is the right script for:
 
 Send exactly these two links first:
 
-- [https://globalnamesystem.org/setup](https://globalnamesystem.org/setup)
-- [https://globalnamesystem.org/claim](https://globalnamesystem.org/claim)
+- [https://opennametags.org/setup](https://opennametags.org/setup)
+- [https://opennametags.org/claim](https://opennametags.org/claim)
 
 If you want one sentence of framing, use:
 
-> GNS lets you claim a human-readable name, then point it at ordered key/value pairs you control.
+> ONT lets you claim a human-readable name, then point it at ordered key/value pairs you control.
 
 ## What They Need
 
@@ -43,7 +43,7 @@ For the hosted demo, the supported wallet path is Sparrow in `signet` mode using
 
 ### 1. Connect Sparrow
 
-Open [setup](https://globalnamesystem.org/setup).
+Open [setup](https://opennametags.org/setup).
 
 In Sparrow:
 
@@ -60,7 +60,7 @@ Success looks like:
 
 ### 2. Claim A Name
 
-Open [claim](https://globalnamesystem.org/claim).
+Open [claim](https://opennametags.org/claim).
 
 Use:
 
@@ -76,12 +76,12 @@ Then:
 
 Success looks like:
 
-- the name appears in [explore](https://globalnamesystem.org/explore)
+- the name appears in [explore](https://opennametags.org/explore)
 - or the detail page resolves at `/names/<your-name>`
 
 ### 3. Publish A Value Bundle
 
-Open [values](https://globalnamesystem.org/values?name=valuedemo) or replace the name with the one just claimed.
+Open [values](https://opennametags.org/values?name=valuedemo) or replace the name with the one just claimed.
 
 Load the claimed name, then publish a few key/value pairs such as:
 
@@ -99,9 +99,9 @@ Success looks like:
 
 If they want to inspect the product before claiming, point them at:
 
-- [claimdemo](https://globalnamesystem.org/names/claimdemo): claimed name with no value yet
-- [valuedemo](https://globalnamesystem.org/names/valuedemo): claimed name with repeatable key/value pairs
-- [transferdemo](https://globalnamesystem.org/names/transferdemo): transferred name with new-owner authority
+- [claimdemo](https://opennametags.org/names/claimdemo): claimed name with no value yet
+- [valuedemo](https://opennametags.org/names/valuedemo): claimed name with repeatable key/value pairs
+- [transferdemo](https://opennametags.org/names/transferdemo): transferred name with new-owner authority
 
 ## What To Say If They Ask “What Works Today?”
 

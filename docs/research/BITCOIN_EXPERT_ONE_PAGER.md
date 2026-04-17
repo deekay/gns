@@ -1,19 +1,19 @@
-# GNS Bitcoin Expert One-Pager
+# ONT Bitcoin Expert One-Pager
 
-This is the shortest review-oriented summary of GNS we should be comfortable
+This is the shortest review-oriented summary of ONT we should be comfortable
 sharing with technically sophisticated Bitcoin reviewers.
 
 Related notes:
 
 - [BITCOIN_EXPERT_REVIEW_PACKET.md](/Users/davidking/dev/gns/docs/research/BITCOIN_EXPERT_REVIEW_PACKET.md)
 - [BITCOIN_PROTOCOL_REVIEW_QUESTIONS.md](/Users/davidking/dev/gns/docs/research/BITCOIN_PROTOCOL_REVIEW_QUESTIONS.md)
-- [GNS_IMPLEMENTATION_AND_VALIDATION.md](/Users/davidking/dev/gns/docs/research/GNS_IMPLEMENTATION_AND_VALIDATION.md)
+- [ONT_IMPLEMENTATION_AND_VALIDATION.md](/Users/davidking/dev/gns/docs/research/ONT_IMPLEMENTATION_AND_VALIDATION.md)
 - [RESERVED_LIST_SCALE_AND_AUCTION_DYNAMICS.md](/Users/davidking/dev/gns/docs/research/RESERVED_LIST_SCALE_AND_AUCTION_DYNAMICS.md)
 - [AUCTION_PLACEHOLDERS_AND_MECHANISM_CHOICES.md](/Users/davidking/dev/gns/docs/research/AUCTION_PLACEHOLDERS_AND_MECHANISM_CHOICES.md)
 
-## What GNS Is For
+## What ONT Is For
 
-GNS is a Bitcoin-anchored payment-handle system.
+ONT is a Bitcoin-anchored payment-handle system.
 
 The narrowest and most useful framing is:
 
@@ -27,7 +27,7 @@ This is why the project should be read as:
 
 ## Core Design
 
-GNS separates:
+ONT separates:
 
 - on-chain ownership
 - off-chain mutable value records

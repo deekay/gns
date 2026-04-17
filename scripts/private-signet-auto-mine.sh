@@ -2,14 +2,14 @@
 
 set -euo pipefail
 
-CONF_PATH="${GNS_PRIVATE_SIGNET_CONF:-/etc/bitcoin-private-signet.conf}"
-DATA_DIR="${GNS_PRIVATE_SIGNET_DATADIR:-/var/lib/bitcoind-private-signet}"
-BITCOIN_CLI="${GNS_PRIVATE_SIGNET_BITCOIN_CLI:-/usr/local/bin/bitcoin-cli}"
-MINE_COMMAND="${GNS_PRIVATE_SIGNET_MINE_COMMAND:-/usr/local/bin/gns-private-signet-mine}"
-INTERVAL_SECONDS="${GNS_PRIVATE_SIGNET_AUTO_MINE_INTERVAL_SECONDS:-30}"
+CONF_PATH="${ONT_PRIVATE_SIGNET_CONF:-/etc/bitcoin-private-signet.conf}"
+DATA_DIR="${ONT_PRIVATE_SIGNET_DATADIR:-/var/lib/bitcoind-private-signet}"
+BITCOIN_CLI="${ONT_PRIVATE_SIGNET_BITCOIN_CLI:-/usr/local/bin/bitcoin-cli}"
+MINE_COMMAND="${ONT_PRIVATE_SIGNET_MINE_COMMAND:-/usr/local/bin/ont-private-signet-mine}"
+INTERVAL_SECONDS="${ONT_PRIVATE_SIGNET_AUTO_MINE_INTERVAL_SECONDS:-30}"
 
 if ! [[ "$INTERVAL_SECONDS" =~ ^[0-9]+$ ]] || [[ "$INTERVAL_SECONDS" -lt 1 ]]; then
-  echo "GNS_PRIVATE_SIGNET_AUTO_MINE_INTERVAL_SECONDS must be a positive integer." >&2
+  echo "ONT_PRIVATE_SIGNET_AUTO_MINE_INTERVAL_SECONDS must be a positive integer." >&2
   exit 1
 fi
 

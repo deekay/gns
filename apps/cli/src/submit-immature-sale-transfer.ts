@@ -1,19 +1,19 @@
 import { mkdir } from "node:fs/promises";
 import { join, resolve } from "node:path";
 
-import type { BitcoinEsploraConfig, BitcoinRpcConfig } from "@gns/bitcoin";
+import type { BitcoinEsploraConfig, BitcoinRpcConfig } from "@ont/bitcoin";
 
 import {
   buildImmatureSaleTransferArtifacts,
   maybeWriteJsonFile,
   type FundingInputDescriptor,
-  type GnsCliNetwork
+  type OntCliNetwork
 } from "./builder.js";
 import { broadcastSignedArtifacts, type RpcConnectionOptions } from "./rpc-actions.js";
 import { signArtifacts } from "./signer.js";
 
 export interface SubmitImmatureSaleTransferResult {
-  readonly kind: "gns-submit-immature-sale-transfer-result";
+  readonly kind: "ont-submit-immature-sale-transfer-result";
   readonly mode: "immature-sale";
   readonly expectedChain: RpcConnectionOptions["expectedChain"];
   readonly transferTxid: string;
@@ -36,7 +36,7 @@ export async function submitImmatureSaleTransfer(options: {
   readonly salePriceSats: bigint;
   readonly sellerPayoutAddress: string;
   readonly feeSats: bigint;
-  readonly network: GnsCliNetwork;
+  readonly network: OntCliNetwork;
   readonly expectedChain: RpcConnectionOptions["expectedChain"];
   readonly rpc: BitcoinRpcConfig | undefined;
   readonly esplora: BitcoinEsploraConfig | undefined;
@@ -94,7 +94,7 @@ export async function submitImmatureSaleTransfer(options: {
   }
 
   return {
-    kind: "gns-submit-immature-sale-transfer-result",
+    kind: "ont-submit-immature-sale-transfer-result",
     mode: "immature-sale",
     expectedChain: options.expectedChain,
     transferTxid: signedTransferArtifacts.signedTransactionId,

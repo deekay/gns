@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   computeAuctionBidStateCommitment,
   computeAuctionBidderCommitment
-} from "@gns/protocol";
+} from "@ont/protocol";
 
 import { createDefaultReservedAuctionPolicy } from "./auction-policy.js";
 import {

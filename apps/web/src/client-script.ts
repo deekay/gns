@@ -1,4 +1,4 @@
-import { PRODUCT_NAME, PROTOCOL_NAME, REVEAL_WINDOW_BLOCKS, TRANSFER_PACKAGE_FORMAT, TRANSFER_PACKAGE_VERSION } from "@gns/protocol";
+import { PRODUCT_NAME, PROTOCOL_NAME, REVEAL_WINDOW_BLOCKS, TRANSFER_PACKAGE_FORMAT, TRANSFER_PACKAGE_VERSION } from "@ont/protocol";
 
 export function renderClientScript(configuredBasePath: string): string {
   return `
@@ -7,8 +7,8 @@ const PROTOCOL_ID = ${JSON.stringify(PROTOCOL_NAME)};
 const PRODUCT_LABEL = ${JSON.stringify(PRODUCT_NAME)};
 const TRANSFER_PACKAGE_FORMAT = ${JSON.stringify(TRANSFER_PACKAGE_FORMAT)};
 const TRANSFER_PACKAGE_VERSION = ${JSON.stringify(TRANSFER_PACKAGE_VERSION)};
-const CLAIM_PROGRESS_STORAGE_KEY = "gns.claim-progress.v1";
-const TRANSFER_PROGRESS_STORAGE_KEY = "gns.transfer-progress.v1";
+const CLAIM_PROGRESS_STORAGE_KEY = "ont.claim-progress.v1";
+const TRANSFER_PROGRESS_STORAGE_KEY = "ont.transfer-progress.v1";
 const state = {
   config: null,
   health: null,
@@ -688,7 +688,7 @@ async function bootstrap() {
 
     downloadJsonFile(
       withClaimDraftLocalData(state.claimDraft),
-      "gns-claim-" +
+      "ont-claim-" +
         state.claimDraft.name +
         (state.claimDraft.commitTxid ? "-reveal-ready" : "-commit-ready") +
         ".json"
@@ -703,7 +703,7 @@ async function bootstrap() {
 
     downloadTextFile(
       buildClaimEssentialsText(state.claimDraft),
-      "gns-claim-" + state.claimDraft.name + "-signer-notes.txt"
+      "ont-claim-" + state.claimDraft.name + "-signer-notes.txt"
     );
   });
 
@@ -811,7 +811,7 @@ async function bootstrap() {
 
     downloadBase64BinaryFile(
       state.claimPsbtBundle.commitArtifacts.psbtBase64,
-      "gns-commit-" + state.claimPsbtBundle.revealReadyClaimPackage.name + "-sparrow.psbt"
+      "ont-commit-" + state.claimPsbtBundle.revealReadyClaimPackage.name + "-sparrow.psbt"
     );
   });
 
@@ -823,7 +823,7 @@ async function bootstrap() {
 
     downloadBase64BinaryFile(
       state.claimPsbtBundle.revealArtifacts.psbtBase64,
-      "gns-reveal-" + state.claimPsbtBundle.revealReadyClaimPackage.name + "-sparrow.psbt"
+      "ont-reveal-" + state.claimPsbtBundle.revealReadyClaimPackage.name + "-sparrow.psbt"
     );
   });
 
@@ -835,7 +835,7 @@ async function bootstrap() {
 
     downloadJsonFile(
       withClaimPackageLocalData(state.claimPsbtBundle.revealReadyClaimPackage),
-      "gns-claim-" + state.claimPsbtBundle.revealReadyClaimPackage.name + "-reveal-ready.json"
+      "ont-claim-" + state.claimPsbtBundle.revealReadyClaimPackage.name + "-reveal-ready.json"
     );
   });
 
@@ -895,7 +895,7 @@ async function bootstrap() {
 
     downloadTextFile(
       buildTransferEssentialsText(state.transferDraft),
-      "gns-transfer-" + state.transferDraft.name + "-signer-notes.txt"
+      "ont-transfer-" + state.transferDraft.name + "-signer-notes.txt"
     );
   });
 
@@ -911,7 +911,7 @@ async function bootstrap() {
     }
 
     const transferPackage = buildTransferPackage(state.transferDraft);
-    downloadJsonFile(transferPackage, "gns-transfer-" + state.transferDraft.name + "-package.json");
+    downloadJsonFile(transferPackage, "ont-transfer-" + state.transferDraft.name + "-package.json");
   });
 
   document.addEventListener("click", async (event) => {
@@ -968,7 +968,7 @@ async function bootstrap() {
 
       downloadTextFile(
         buildDemoOwnerKeyText(state.claimDraft),
-        "gns-" + state.claimDraft.name + "-demo-owner-key.txt"
+        "ont-" + state.claimDraft.name + "-demo-owner-key.txt"
       );
       return;
     }
@@ -983,7 +983,7 @@ async function bootstrap() {
       const nameHint = elements.claimNameInput?.value?.trim() || null;
       downloadTextFile(
         buildGeneratedOwnerKeyText(state.generatedOwnerKey, nameHint),
-        "gns-" + (nameHint || "demo-name") + "-demo-owner-key.txt"
+        "ont-" + (nameHint || "demo-name") + "-demo-owner-key.txt"
       );
       return;
     }
@@ -997,7 +997,7 @@ async function bootstrap() {
 
       downloadJsonFile(
         withClaimPackageLocalData(state.claimPsbtBundle.revealReadyClaimPackage),
-        "gns-claim-" + state.claimPsbtBundle.revealReadyClaimPackage.name + "-reveal-ready.json"
+        "ont-claim-" + state.claimPsbtBundle.revealReadyClaimPackage.name + "-reveal-ready.json"
       );
       return;
     }
@@ -1069,7 +1069,7 @@ async function bootstrap() {
         if (action === "download") {
           downloadJsonFile(
             pkg,
-            "gns-auction-" + String(pkg.auctionId ?? id) + "-" + String(pkg.bidderId ?? bidderId) + "-bid-package.json"
+            "ont-auction-" + String(pkg.auctionId ?? id) + "-" + String(pkg.bidderId ?? bidderId) + "-bid-package.json"
           );
         }
       } catch (error) {
@@ -1308,7 +1308,7 @@ function renderActivity() {
   renderActivityFilters();
 
   if (state.activity.length === 0) {
-    setText(elements.activityState, "No recent Global Name System activity is visible from the resolver yet.");
+    setText(elements.activityState, "No recent Open Name Tags activity is visible from the resolver yet.");
     if (highlightsContainer) {
       highlightsContainer.innerHTML = "";
     }
@@ -1636,7 +1636,7 @@ function summarizeActivityCopy(record) {
     return "This transaction affected " + names.join(", ") + ".";
   }
 
-  return "This transaction contains parsed Global Name System activity.";
+  return "This transaction contains parsed Open Name Tags activity.";
 }
 
 function summarizeActivityNames(record) {
@@ -2037,7 +2037,7 @@ function renderBootError(error) {
   setText(elements.pendingState, "Pending commit data could not be loaded.");
   setText(elements.activityState, "Recent activity could not be loaded.");
   setText(elements.namesState, "Resolver data could not be loaded.");
-  renderSearchMessage("Resolver data is unavailable right now.");
+  hideSearchResult();
 }
 
 async function fetchJson(path) {
@@ -3172,15 +3172,21 @@ function detailValueCopy(valueRecord) {
   return (
     "Signed off-chain by the current owner. Latest sequence " +
     String(valueRecord.sequence) +
-    " exported " +
-    new Date(valueRecord.exportedAt).toLocaleDateString()
+    " issued " +
+    new Date(valueRecord.issuedAt).toLocaleDateString()
   );
 }
 
 function renderOffChainDataSection(valueRecord) {
   const typeValue = valueRecord ? formatValueType(valueRecord.valueType, valueRecord.payloadHex) : "Not published";
   const sequenceValue = valueRecord ? String(valueRecord.sequence) : "None yet";
-  const publishedValue = valueRecord ? new Date(valueRecord.exportedAt).toLocaleString() : "Not published";
+  const publishedValue = valueRecord ? new Date(valueRecord.issuedAt).toLocaleString() : "Not published";
+  const recordHashValue = valueRecord?.recordHash ? truncateMiddle(valueRecord.recordHash, 12, 10) : "None yet";
+  const predecessorValue = valueRecord?.previousRecordHash
+    ? truncateMiddle(valueRecord.previousRecordHash, 12, 10)
+    : valueRecord
+      ? "None (first in ownership interval)"
+      : "None yet";
   const bundle = valueRecord && Number(valueRecord.valueType) === 255
     ? decodeProfileBundlePayloadHex(valueRecord.payloadHex)
     : null;
@@ -3199,7 +3205,9 @@ function renderOffChainDataSection(valueRecord) {
     '<div class="result-item"><label>Current Resolution</label>' + renderValueRecordPreview(valueRecord) + "</div>" +
     '<div class="result-item"><label>Record Type</label><p class="field-value">' + escapeHtml(typeValue) + "</p></div>" +
     '<div class="result-item"><label>Sequence</label><p class="field-value">' + escapeHtml(sequenceValue) + "</p></div>" +
-    '<div class="result-item"><label>Last Published</label><p class="field-value">' + escapeHtml(publishedValue) + "</p></div>" +
+    '<div class="result-item"><label>Issued At</label><p class="field-value">' + escapeHtml(publishedValue) + "</p></div>" +
+    '<div class="result-item"><label>Record Hash</label><p class="field-value">' + escapeHtml(recordHashValue) + "</p></div>" +
+    '<div class="result-item"><label>Previous Record</label><p class="field-value">' + escapeHtml(predecessorValue) + "</p></div>" +
     (destinationCountValue === null
       ? ""
       : '<div class="result-item"><label>Destinations</label><p class="field-value">' + escapeHtml(destinationCountValue) + "</p></div>") +
@@ -3321,7 +3329,7 @@ function buildTimelineItems(record, valueRecord, activity, currentHeight) {
         " · type 0x" +
         Number(valueRecord.valueType).toString(16).padStart(2, "0") +
         " · " +
-        new Date(valueRecord.exportedAt).toLocaleString()
+        new Date(valueRecord.issuedAt).toLocaleString()
     });
   }
 
@@ -3787,7 +3795,7 @@ function renderWalletOutput(output) {
 function buildClaimEssentialsText(draft) {
   const generatedOwnerKey = getGeneratedOwnerKeyForDraft(draft);
   const lines = [
-    "Global Name System claim essentials",
+    "Open Name Tags claim essentials",
     "====================",
     "",
     "Name: " + String(draft.name),
@@ -3849,7 +3857,7 @@ function buildDemoOwnerKeyText(draft) {
 
 function buildGeneratedOwnerKeyText(generatedOwnerKey, nameHint) {
   return [
-    "Global Name System demo owner key",
+    "Open Name Tags demo owner key",
     "===================",
     "",
     "Name: " + String(nameHint ?? "unassigned"),
@@ -4292,7 +4300,7 @@ function buildTransferEssentialsText(draft) {
   }
 
   const lines = [
-    "Global Name System transfer essentials",
+    "Open Name Tags transfer essentials",
     "=======================",
     "",
     "Name: " + String(draft.name),
@@ -4443,7 +4451,7 @@ function renderTxProvenance(tx) {
 
 function renderTxEventList(events) {
   if (!Array.isArray(events) || events.length === 0) {
-    return '<p class="tx-panel-note">No Global Name System events were parsed from this transaction.</p>';
+    return '<p class="tx-panel-note">No Open Name Tags events were parsed from this transaction.</p>';
   }
 
   return (
@@ -4668,7 +4676,7 @@ function decodeProfileBundlePayloadHex(payloadHex) {
       return null;
     }
 
-    if (payload.kind !== "gns-key-value-bundle") {
+    if (payload.kind !== "ont-key-value-bundle") {
       return null;
     }
 
@@ -5736,7 +5744,7 @@ function renderPrivateAuctionWorkflowSummary(auctionSmoke) {
   const transferredSequence = auctionSmoke?.transferredValue?.currentValue?.sequence;
   const transferTxid = auctionSmoke?.transfer?.transferTxid;
 
-  if (winnerSequence === 1 && transferredSequence === 2 && typeof transferTxid === "string" && transferTxid.length > 0) {
+  if (winnerSequence === 1 && transferredSequence === 1 && typeof transferTxid === "string" && transferTxid.length > 0) {
     return "Bidding, settlement, winner value publication, post-release transfer, and recipient value publication all succeeded.";
   }
 

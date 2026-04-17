@@ -21,7 +21,7 @@ async function main() {
     const name = createScenarioName("pval");
     logStep(name, "claiming name");
     const summary = {
-      kind: "gns-private-signet-value-handoff-smoke-summary",
+      kind: "ont-private-signet-value-handoff-smoke-summary",
       startedAt: new Date().toISOString(),
       name,
       steps: []
@@ -52,6 +52,8 @@ async function main() {
       name,
       "--owner-private-key-hex",
       owner.ownerPrivateKeyHex,
+      "--resolver-url",
+      resolverUrl,
       "--sequence",
       "1",
       "--value-type",
@@ -87,8 +89,10 @@ async function main() {
       name,
       "--owner-private-key-hex",
       recipient.ownerPrivateKeyHex,
+      "--resolver-url",
+      resolverUrl,
       "--sequence",
-      "0",
+      "1",
       "--value-type",
       "2",
       "--payload-utf8",

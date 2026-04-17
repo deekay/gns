@@ -9,8 +9,8 @@ import {
   buildBatchRevealArtifacts,
   buildCommitArtifacts,
   buildRevealArtifacts
-} from "@gns/architect";
-import { createClaimPackage } from "@gns/protocol";
+} from "@ont/architect";
+import { createClaimPackage } from "@ont/protocol";
 
 initEccLib(tinysecp);
 
@@ -29,7 +29,7 @@ const BATCH_SIZES = [2, 4, 8, 16, 32, 64];
 const HYBRID_HEADER_EXTRA_PAYLOAD_BYTES = 33;
 
 // Hybrid annex assumptions:
-// - annex payload includes the required 0x50 prefix plus one GNS proof-format byte
+// - annex payload includes the required 0x50 prefix plus one ONT proof-format byte
 // - the explicit header commits to annex_sha256 and annex_bytes_length
 const ANNEX_NON_PROOF_BYTES = 2;
 
@@ -82,7 +82,7 @@ for (const row of rows) {
 
 console.log("");
 console.log("JSON:");
-console.log(JSON.stringify({ kind: "gns-annex-hybrid-weight-model", rows }, null, 2));
+console.log(JSON.stringify({ kind: "ont-annex-hybrid-weight-model", rows }, null, 2));
 
 function measureBatchSize(batchSize) {
   const claimPackages = Array.from({ length: batchSize }, (_, index) => createBenchmarkClaimPackage(index));
@@ -168,15 +168,15 @@ function measureBatchSize(batchSize) {
   }
 
   const proofOutputBytes = sampleBatchRevealArtifacts.outputs
-    .filter((output) => output.role === "gns_reveal_proof_chunk")
+    .filter((output) => output.role === "ont_reveal_proof_chunk")
     .reduce((sum, output) => sum + outputSizeBytes(output.scriptHex.length / 2), 0);
 
   const currentHeaderOutput = sampleBatchRevealArtifacts.outputs.find(
-    (output) => output.role === "gns_batch_reveal"
+    (output) => output.role === "ont_batch_reveal"
   );
 
   if (!currentHeaderOutput) {
-    throw new Error("missing gns_batch_reveal output");
+    throw new Error("missing ont_batch_reveal output");
   }
 
   const currentHeaderOutputBytes = outputSizeBytes(currentHeaderOutput.scriptHex.length / 2);

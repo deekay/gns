@@ -1,6 +1,6 @@
-# GNS Future Explorations
+# ONT Future Explorations
 
-This document captures speculative technical directions and brainstorming for the GNS protocol. These are **not** part of the current implementation plan or the v1 protocol freeze. They are preserved here for research and potential inclusion in future protocol versions.
+This document captures speculative technical directions and brainstorming for the ONT protocol. These are **not** part of the current implementation plan or the v1 protocol freeze. They are preserved here for research and potential inclusion in future protocol versions.
 
 ## 1. Zero-Knowledge (ZK) Enhancements
 
@@ -16,18 +16,18 @@ This document captures speculative technical directions and brainstorming for th
 - **The Solution:** Use a **Deterministic Occupancy Signal** (e.g., a Sparse Merkle Tree where the leaf position is `hash(name)`). This proves a "slot" is taken without revealing the name, though common names can still be brute-forced.
 
 ### Succinct State Proofs
-- **The Idea:** Represent the GNS registry as a Merkle Tree and provide a ZK-SNARK of the state transition.
+- **The Idea:** Represent the ONT registry as a Merkle Tree and provide a ZK-SNARK of the state transition.
 - **Benefit:** Allows mobile/light clients to verify the entire 10-million-name registry with a few hundred bytes of data.
 
 ## 2. "Scriptless" Protocol Design (Minimizing Bloat)
 
 ### Taproot Tweaking
 - **The Idea:** Hide the `COMMIT` hash by tweaking the Owner Public Key ($P' = P + hash(name)G$).
-- **Benefit:** **Zero bytes** of extra data on-chain. GNS transactions look identical to standard Bitcoin spends.
+- **Benefit:** **Zero bytes** of extra data on-chain. ONT transactions look identical to standard Bitcoin spends.
 
 ### Inference-Based Transfers
 - **The Idea:** Instead of an `OP_RETURN` transfer event, the indexer monitors the movement of "Known Bond UTXOs."
-- **Benefit:** Transfers become "silent" to anyone not running a GNS indexer.
+- **Benefit:** Transfers become "silent" to anyone not running an ONT indexer.
 
 ### Signature-Based Reveals
 - **The Idea:** Encode the reveal name into the Schnorr Signature nonce or signature itself.
@@ -53,7 +53,7 @@ These are ideas for addressing that without introducing a central registry or a 
 
 ### DNS Seeds + Hardcoded Defaults (Bitcoin-Style Bootstrap)
 
-- **The Idea:** Ship the client with a small set of hardcoded resolver endpoints and 2-3 DNS seed domains (e.g., `seed.gns.example`) that return lists of known resolver IPs. Anyone can operate a seed domain.
+- **The Idea:** Ship the client with a small set of hardcoded resolver endpoints and 2-3 DNS seed domains (e.g., `seed.ont.example`) that return lists of known resolver IPs. Anyone can operate a seed domain.
 - **Benefit:** Mirrors exactly how Bitcoin nodes discover peers at startup. Simple, works on day one, requires no new protocol machinery.
 - **Note:** The hardcoded seeds are a starting point for discovery, not a trust anchor. They get a client onto the network; completeness scoring (below) handles trust from there.
 
@@ -79,8 +79,12 @@ These are ideas for addressing that without introducing a central registry or a 
 Off-chain value records have an additional DA challenge: unlike ownership state, they are mutable and not derivable from chain. A few approaches worth considering:
 
 - **Owner self-hosts, resolver caches:** The owner publishes their signed value record at a URL they control and registers a "fetch hint" with the resolver. The resolver caches for performance, but the canonical copy stays under owner control. If a resolver disappears, the record survives at the owner's URL.
-- **Multi-resolver replication:** Since value records are small and Schnorr-signed, any resolver can store and serve them for any name. Clients query multiple resolvers and take the highest valid sequence number. Completeness scoring extends naturally to value record coverage.
-- **Nostr as optional value record transport:** Value records are already Schnorr-signed. A Nostr event kind for GNS records is a natural fit — Nostr relays are designed for signed mutable data. This keeps Nostr optional (not required for ownership verification) while giving owners a decentralized publication layer they don't have to self-host. Consistent with Decision #2 as long as Nostr is never required.
+- **History-aware value chains:** Value records now use a per-name append-only chain with a signed predecessor hash, scoped to the current ownership interval. This is the Keybase-sigchain lesson that most directly applies to ONT.
+- **Multi-resolver replication:** Since value records are small and Schnorr-signed, any resolver can store and serve them for any name. Clients query multiple resolvers and compare the latest valid chain head. Completeness scoring extends naturally to value record coverage.
+- **Resolver transparency roots:** A future resolver can periodically sign a Merkle root over accepted value-record heads and append receipts. This helps clients detect rollback, withholding, or forked resolver views without putting every mutable value update on Bitcoin.
+- **Nostr as optional value record transport:** Value records are already Schnorr-signed. A Nostr event kind for ONT records is a natural fit — Nostr relays are designed for signed mutable data. This keeps Nostr optional (not required for ownership verification) while giving owners a decentralized publication layer they don't have to self-host. Consistent with Decision #2 as long as Nostr is never required.
+
+See [VALUE_RECORD_HISTORY_AND_KEYBASE_NOTES.md](/Users/davidking/dev/gns/docs/research/VALUE_RECORD_HISTORY_AND_KEYBASE_NOTES.md) for the current implementation notes and remaining transparency questions.
 
 ## 6. First-Class Identity (No Suffixes)
 

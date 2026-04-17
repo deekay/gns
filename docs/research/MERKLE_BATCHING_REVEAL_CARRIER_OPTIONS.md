@@ -149,7 +149,7 @@ This is the strongest candidate if we want a serious next-step research lane
 without fully redesigning the protocol around script trees. It is much deeper
 than v0 explicit packing, but much more targeted than a full tapscript redesign.
 
-For a more concrete GNS-specific flow sketch, see
+For a more concrete ONT-specific flow sketch, see
 [MERKLE_BATCHING_TAPROOT_ANNEX_SKETCH.md](./MERKLE_BATCHING_TAPROOT_ANNEX_SKETCH.md).
 
 For a more concrete unsigned/signed artifact model, see
@@ -218,7 +218,7 @@ already exists.
 
 ## Option 5: Off-Chain Proof Artifact With Minimal On-Chain Reference
 
-This is the smallest on-chain path, but it is the weakest fit for GNS.
+This is the smallest on-chain path, but it is the weakest fit for ONT.
 
 ### Why It Looks Tempting
 

@@ -1,4 +1,4 @@
-import { normalizeName } from "@gns/protocol";
+import { normalizeName } from "@ont/protocol";
 
 import {
   calculateReservedAuctionMinimumIncrementBidSats,

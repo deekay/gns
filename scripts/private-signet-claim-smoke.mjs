@@ -18,7 +18,7 @@ async function main() {
     const name = createScenarioName("pclm");
     logStep(name, "claiming name");
     const summary = {
-      kind: "gns-private-signet-claim-smoke-summary",
+      kind: "ont-private-signet-claim-smoke-summary",
       startedAt: new Date().toISOString(),
       name,
       steps: []

@@ -4,37 +4,40 @@ import * as secp256k1 from "tiny-secp256k1";
 import { assertHexBytes, bytesToHex, hexToBytes } from "./bytes.js";
 import { normalizeName } from "./names.js";
 
-export const VALUE_RECORD_FORMAT = "gns-value-record";
-export const VALUE_RECORD_VERSION = 1;
+export const VALUE_RECORD_FORMAT = "ont-value-record";
+export const VALUE_RECORD_VERSION = 2;
 
 export interface ValueRecordFields {
   readonly name: string;
   readonly ownerPubkey: string;
+  readonly ownershipRef: string;
   readonly sequence: number;
+  readonly previousRecordHash: string | null;
   readonly valueType: number;
   readonly payloadHex: string;
+  readonly issuedAt: string;
 }
 
 export interface SignedValueRecord extends ValueRecordFields {
   readonly format: typeof VALUE_RECORD_FORMAT;
   readonly recordVersion: typeof VALUE_RECORD_VERSION;
-  readonly exportedAt: string;
   readonly signature: string;
 }
 
 export function createValueRecord(input: ValueRecordFields & {
-  readonly exportedAt?: string;
   readonly signature: string;
 }): SignedValueRecord {
   return {
     format: VALUE_RECORD_FORMAT,
     recordVersion: VALUE_RECORD_VERSION,
-    exportedAt: input.exportedAt ?? new Date().toISOString(),
     name: normalizeName(input.name),
     ownerPubkey: assertHexBytes(input.ownerPubkey, 32, "ownerPubkey"),
+    ownershipRef: assertHexBytes(input.ownershipRef, 32, "ownershipRef"),
     sequence: assertSequence(input.sequence),
+    previousRecordHash: normalizePreviousRecordHash(input.previousRecordHash),
     valueType: assertByte(input.valueType, "valueType"),
     payloadHex: normalizePayloadHex(input.payloadHex),
+    issuedAt: assertIsoTimestamp(input.issuedAt, "issuedAt"),
     signature: assertHexBytes(input.signature, 64, "signature")
   };
 }
@@ -42,10 +45,12 @@ export function createValueRecord(input: ValueRecordFields & {
 export function signValueRecord(input: {
   readonly name: string;
   readonly ownerPrivateKeyHex: string;
+  readonly ownershipRef: string;
   readonly sequence: number;
+  readonly previousRecordHash: string | null;
   readonly valueType: number;
   readonly payloadHex: string;
-  readonly exportedAt?: string;
+  readonly issuedAt?: string;
 }): SignedValueRecord {
   const ownerPrivateKeyHex = assertHexBytes(input.ownerPrivateKeyHex, 32, "ownerPrivateKeyHex");
   const ownerPrivateKey = hexToBytes(ownerPrivateKeyHex);
@@ -58,14 +63,16 @@ export function signValueRecord(input: {
   const fields: ValueRecordFields = {
     name: normalizeName(input.name),
     ownerPubkey,
+    ownershipRef: assertHexBytes(input.ownershipRef, 32, "ownershipRef"),
     sequence: assertSequence(input.sequence),
+    previousRecordHash: normalizePreviousRecordHash(input.previousRecordHash),
     valueType: assertByte(input.valueType, "valueType"),
-    payloadHex: normalizePayloadHex(input.payloadHex)
+    payloadHex: normalizePayloadHex(input.payloadHex),
+    issuedAt: assertIsoTimestamp(input.issuedAt ?? new Date().toISOString(), "issuedAt")
   };
 
   return createValueRecord({
     ...fields,
-    ...(input.exportedAt === undefined ? {} : { exportedAt: input.exportedAt }),
     signature: bytesToHex(secp256k1.signSchnorr(computeValueRecordDigest(fields), ownerPrivateKey))
   });
 }
@@ -82,9 +89,12 @@ export function verifyValueRecord(input: SignedValueRecord): boolean {
     computeValueRecordDigest({
       name: input.name,
       ownerPubkey: input.ownerPubkey,
+      ownershipRef: input.ownershipRef,
       sequence: input.sequence,
+      previousRecordHash: input.previousRecordHash,
       valueType: input.valueType,
-      payloadHex: input.payloadHex
+      payloadHex: input.payloadHex,
+      issuedAt: input.issuedAt
     }),
     ownerPubkey,
     signature
@@ -106,17 +116,15 @@ export function parseSignedValueRecord(input: unknown): SignedValueRecord {
     throw new Error(`value record version must be ${VALUE_RECORD_VERSION}`);
   }
 
-  if (typeof record.exportedAt !== "string") {
-    throw new Error("value record exportedAt must be a string");
-  }
-
   return createValueRecord({
-    exportedAt: record.exportedAt,
     name: assertString(record.name, "name"),
     ownerPubkey: assertString(record.ownerPubkey, "ownerPubkey"),
+    ownershipRef: assertString(record.ownershipRef, "ownershipRef"),
     sequence: assertInteger(record.sequence, "sequence"),
+    previousRecordHash: assertNullableString(record.previousRecordHash, "previousRecordHash"),
     valueType: assertInteger(record.valueType, "valueType"),
     payloadHex: assertString(record.payloadHex, "payloadHex"),
+    issuedAt: assertString(record.issuedAt, "issuedAt"),
     signature: assertString(record.signature, "signature")
   });
 }
@@ -124,21 +132,39 @@ export function parseSignedValueRecord(input: unknown): SignedValueRecord {
 function computeValueRecordDigest(input: ValueRecordFields): Uint8Array {
   const name = normalizeName(input.name);
   const ownerPubkey = assertHexBytes(input.ownerPubkey, 32, "ownerPubkey");
+  const ownershipRef = assertHexBytes(input.ownershipRef, 32, "ownershipRef");
   const sequence = assertSequence(input.sequence);
+  const previousRecordHash = normalizePreviousRecordHash(input.previousRecordHash);
   const valueType = assertByte(input.valueType, "valueType");
   const payloadHex = normalizePayloadHex(input.payloadHex);
   const payloadBytes = hexToBytes(payloadHex);
+  const issuedAt = assertIsoTimestamp(input.issuedAt, "issuedAt");
   const hasher = createHash("sha256");
 
-  hasher.update(Uint8Array.of(Buffer.byteLength(name, "utf8")));
-  hasher.update(Buffer.from(name, "utf8"));
+  updateUtf8(hasher, VALUE_RECORD_FORMAT);
+  hasher.update(Uint8Array.of(VALUE_RECORD_VERSION));
+  updateUtf8(hasher, name);
   hasher.update(hexToBytes(ownerPubkey));
+  hasher.update(hexToBytes(ownershipRef));
   hasher.update(bigIntToUint64Bytes(BigInt(sequence)));
+  if (previousRecordHash === null) {
+    hasher.update(Uint8Array.of(0));
+  } else {
+    hasher.update(Uint8Array.of(1));
+    hasher.update(hexToBytes(previousRecordHash));
+  }
   hasher.update(Uint8Array.of(valueType));
   hasher.update(uint16ToBytes(payloadBytes.length));
   hasher.update(payloadBytes);
+  updateUtf8(hasher, issuedAt);
 
   return hasher.digest();
+}
+
+function updateUtf8(hasher: ReturnType<typeof createHash>, value: string): void {
+  const bytes = Buffer.from(value, "utf8");
+  hasher.update(uint16ToBytes(bytes.length));
+  hasher.update(bytes);
 }
 
 function normalizePayloadHex(payloadHex: string): string {
@@ -181,8 +207,8 @@ function uint16ToBytes(value: number): Uint8Array {
 }
 
 function assertSequence(value: number): number {
-  if (!Number.isSafeInteger(value) || value < 0) {
-    throw new Error("sequence must be a non-negative safe integer");
+  if (!Number.isSafeInteger(value) || value < 1) {
+    throw new Error("sequence must be a positive safe integer");
   }
 
   return value;
@@ -212,10 +238,34 @@ function assertString(value: unknown, label: string): string {
   return value;
 }
 
+function assertNullableString(value: unknown, label: string): string | null {
+  if (value === null) {
+    return null;
+  }
+
+  if (typeof value !== "string") {
+    throw new Error(`${label} must be a string or null`);
+  }
+
+  return value;
+}
+
 function assertInteger(value: unknown, label: string): number {
   if (!Number.isInteger(value)) {
     throw new Error(`${label} must be an integer`);
   }
 
   return value as number;
+}
+
+function normalizePreviousRecordHash(value: string | null): string | null {
+  return value === null ? null : assertHexBytes(value, 32, "previousRecordHash");
+}
+
+function assertIsoTimestamp(value: string, label: string): string {
+  if (typeof value !== "string" || Number.isNaN(Date.parse(value))) {
+    throw new Error(`${label} must be a valid ISO timestamp`);
+  }
+
+  return value;
 }

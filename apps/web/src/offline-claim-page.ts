@@ -1,9 +1,9 @@
-import { PRODUCT_NAME, PROTOCOL_NAME } from "@gns/protocol";
+import { PRODUCT_NAME, PROTOCOL_NAME } from "@ont/protocol";
 
-const HOSTED_SITE_URL = "https://globalnamesystem.org";
-const GITHUB_REPO_URL = "https://github.com/deekay/gns";
+const HOSTED_SITE_URL = "https://opennametags.org";
+const GITHUB_REPO_URL = "https://github.com/deekay/ont";
 const GITHUB_BLOB_BASE_URL = `${GITHUB_REPO_URL}/blob/main`;
-const FROM_ZERO_URL = `${GITHUB_BLOB_BASE_URL}/docs/core/GNS_FROM_ZERO.md`;
+const FROM_ZERO_URL = `${GITHUB_BLOB_BASE_URL}/docs/core/ONT_FROM_ZERO.md`;
 const MERKLE_STATUS_URL = `${GITHUB_BLOB_BASE_URL}/docs/research/MERKLE_BATCHING_STATUS.md`;
 const TESTING_DOC_URL = `${GITHUB_BLOB_BASE_URL}/docs/core/TESTING.md`;
 
@@ -18,7 +18,7 @@ export function renderOfflineClaimPageHtml(scriptBody: string): string {
     <title>${escapeHtml(PRODUCT_NAME)} Offline Claim Architect</title>
     <meta
       name="description"
-      content="Offline claim architect for Global Name System. Paste wallet metadata and UTXOs, then generate claim PSBTs locally."
+      content="Offline claim architect for Open Name Tags. Paste wallet metadata and UTXOs, then generate claim PSBTs locally."
     />
     <style>
       :root {
@@ -311,7 +311,7 @@ export function renderOfflineClaimPageHtml(scriptBody: string): string {
         <p class="eyebrow"><a href="${HOSTED_SITE_URL}" target="_blank" rel="noreferrer noopener">${escapeHtml(PROTOCOL_NAME)}</a> · Offline Architect</p>
         <h1>Build Claim PSBTs Offline</h1>
         <p class="lede">
-          This single-file tool prepares Global Name System claim artifacts entirely in your browser. Paste the wallet metadata and UTXOs you already trust, then carry the resulting PSBTs into Sparrow for signing.
+          This single-file tool prepares Open Name Tags claim artifacts entirely in your browser. Paste the wallet metadata and UTXOs you already trust, then carry the resulting PSBTs into Sparrow for signing.
         </p>
         <div class="hero-links">
           <a class="text-link" href="${HOSTED_SITE_URL}" target="_blank" rel="noreferrer noopener">Return to main site</a>

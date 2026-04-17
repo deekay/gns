@@ -24,7 +24,7 @@ void main().catch((error) => {
 async function main() {
   await withPrivateSignetSession(async ({ owner, recipient, rpcPassword, resolverUrl }) => {
     const summary = {
-      kind: "gns-private-signet-reseed-summary",
+      kind: "ont-private-signet-reseed-summary",
       startedAt: new Date().toISOString(),
       names: DEMO_NAMES,
       steps: []
@@ -55,16 +55,19 @@ async function main() {
       DEMO_NAMES.bundle,
       "--owner-private-key-hex",
       owner.ownerPrivateKeyHex,
+      "--resolver-url",
+      resolverUrl,
       "--sequence",
-      "0",
+      "1",
       "--value-type",
       "255",
       "--payload-hex",
       encodeBundlePayloadHex([
+        { key: "cashapp", value: "$valuedemo" },
         { key: "site", value: "https://example.com/valuedemo" },
         { key: "profile", value: "https://example.com/profiles/valuedemo" },
         { key: "profile", value: "https://example.net/valuedemo" },
-        { key: "notes", value: "Example repeatable key/value pairs on the GNS demo network." }
+        { key: "notes", value: "Example repeatable key/value pairs on the ONT demo network." }
       ]),
       "--write",
       `${scenarioArtifactsDir(DEMO_NAMES.bundle)}/${DEMO_NAMES.bundle}-bundle-value.json`
@@ -73,12 +76,40 @@ async function main() {
     if (bundlePublish.status !== 201 || bundlePublish.payload?.ok !== true) {
       throw new Error(`expected bundle value publish for ${DEMO_NAMES.bundle} to succeed`);
     }
+    const updatedBundleValueRecord = await cliJson([
+      "sign-value-record",
+      "--name",
+      DEMO_NAMES.bundle,
+      "--owner-private-key-hex",
+      owner.ownerPrivateKeyHex,
+      "--resolver-url",
+      resolverUrl,
+      "--value-type",
+      "255",
+      "--payload-hex",
+      encodeBundlePayloadHex([
+        { key: "cashapp", value: "$valuedemo" },
+        { key: "site", value: "https://example.com/valuedemo-updated" },
+        { key: "profile", value: "https://example.com/profiles/valuedemo" },
+        { key: "profile", value: "https://example.net/valuedemo" },
+        { key: "notes", value: "Second owner-signed update in the same ownership interval." }
+      ]),
+      "--write",
+      `${scenarioArtifactsDir(DEMO_NAMES.bundle)}/${DEMO_NAMES.bundle}-bundle-value-updated.json`
+    ]);
+    const updatedBundlePublish = await postValueRecord(updatedBundleValueRecord);
+    if (updatedBundlePublish.status !== 201 || updatedBundlePublish.payload?.ok !== true) {
+      throw new Error(`expected updated bundle value publish for ${DEMO_NAMES.bundle} to succeed`);
+    }
     const bundleCurrentValue = await cliJson(["get-value", DEMO_NAMES.bundle, "--resolver-url", resolverUrl]);
+    const bundleValueHistory = await cliJson(["get-value-history", DEMO_NAMES.bundle, "--resolver-url", resolverUrl]);
     summary.steps.push({
       step: "publish_bundle_value",
       result: {
         publish: bundlePublish,
-        currentValue: bundleCurrentValue
+        updatedPublish: updatedBundlePublish,
+        currentValue: bundleCurrentValue,
+        history: bundleValueHistory
       }
     });
 
@@ -108,8 +139,10 @@ async function main() {
       DEMO_NAMES.transfer,
       "--owner-private-key-hex",
       owner.ownerPrivateKeyHex,
+      "--resolver-url",
+      resolverUrl,
       "--sequence",
-      "0",
+      "1",
       "--value-type",
       "255",
       "--payload-hex",
@@ -132,8 +165,10 @@ async function main() {
       DEMO_NAMES.transfer,
       "--owner-private-key-hex",
       recipient.ownerPrivateKeyHex,
+      "--resolver-url",
+      resolverUrl,
       "--sequence",
-      "0",
+      "1",
       "--value-type",
       "255",
       "--payload-hex",
@@ -174,7 +209,7 @@ async function main() {
 
 function encodeBundlePayloadHex(entries) {
   const payload = {
-    kind: "gns-key-value-bundle",
+    kind: "ont-key-value-bundle",
     version: 1,
     entries
   };

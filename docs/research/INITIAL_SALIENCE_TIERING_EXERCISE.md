@@ -49,7 +49,7 @@ For a companion slice focused on newer breakout names that the original seed und
 
 ## V1 Script Boundary
 
-This exercise is intentionally scoped to the names GNS v1 can actually represent.
+This exercise is intentionally scoped to the names ONT v1 can actually represent.
 
 That means:
 
@@ -65,7 +65,7 @@ It is trying to rank:
 
 This matters for interpretation:
 
-- a brand primarily expressed in Chinese characters should not be treated as "missing from the list" if GNS v1 cannot represent that name directly
+- a brand primarily expressed in Chinese characters should not be treated as "missing from the list" if ONT v1 cannot represent that name directly
 - if such a brand already has an official and genuinely coordinated Latin-script identity, that Latin identity can still be considered
 - otherwise it should be tracked as future namespace work, not shoehorned into the v1 overlay
 

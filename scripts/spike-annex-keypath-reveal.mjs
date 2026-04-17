@@ -19,7 +19,7 @@ initEccLib(tinysecp);
 
 const ECPair = ECPairFactory(tinysecp);
 const NETWORK = networks.regtest;
-const PROTOCOL_MAGIC = Buffer.from("gns", "utf8");
+const PROTOCOL_MAGIC = Buffer.from("ont", "utf8");
 const EXPERIMENTAL_ANNEX_TYPE = 0xf0;
 
 const internalKeyPair = ECPair.fromPrivateKey(Buffer.alloc(32, 61), {
@@ -119,7 +119,7 @@ const decodedPaymentA = payments.p2tr({
 });
 
 const report = {
-  kind: "gns-annex-keypath-reveal-spike",
+  kind: "ont-annex-keypath-reveal-spike",
   network: "regtest",
   summary: {
     signedTxid: signedTransactionA.getId(),

@@ -475,7 +475,7 @@ describe("BitcoinRpcBlockPoller", () => {
         JSON.stringify({
           result,
           error: null,
-          id: "gns"
+          id: "ont"
         }),
         {
           status: 200,
@@ -524,7 +524,7 @@ describe("isBitcoinRpcHeadCurrent", () => {
           JSON.stringify({
             result: "hash101",
             error: null,
-            id: "gns"
+            id: "ont"
           }),
           {
             status: 200,
@@ -621,7 +621,7 @@ describe("getBitcoinRpcBlockchainInfo", () => {
               initialblockdownload: false
             },
             error: null,
-            id: "gns"
+            id: "ont"
           }),
           {
             status: 200,
@@ -679,7 +679,7 @@ describe("raw transaction rpc helpers", () => {
               in_active_chain: true
             },
             error: null,
-            id: "gns"
+            id: "ont"
           }),
           {
             status: 200,
@@ -695,7 +695,7 @@ describe("raw transaction rpc helpers", () => {
           JSON.stringify({
             result: "broadcast-txid",
             error: null,
-            id: "gns"
+            id: "ont"
           }),
           {
             status: 200,
@@ -757,7 +757,7 @@ function jsonRpcResponse(result: unknown): Response {
     JSON.stringify({
       result,
       error: null,
-      id: "gns"
+      id: "ont"
     }),
     {
       status: 200,

@@ -1,19 +1,19 @@
-# GNS One-Pager
+# ONT One-Pager
 
 Status note:
 
-- for the current framing, start with [GNS_FROM_ZERO.md](./GNS_FROM_ZERO.md)
-- for the current implementation status, use [GNS_IMPLEMENTATION_AND_VALIDATION.md](../research/GNS_IMPLEMENTATION_AND_VALIDATION.md)
+- for the current framing, start with [ONT_FROM_ZERO.md](./ONT_FROM_ZERO.md)
+- for the current implementation status, use [ONT_IMPLEMENTATION_AND_VALIDATION.md](../research/ONT_IMPLEMENTATION_AND_VALIDATION.md)
 - for the current launch direction, use [LAUNCH_SPEC_V0.md](../research/LAUNCH_SPEC_V0.md)
 
 This one-pager still captures the core model, but some older launch details below
 should not be treated as the settled launch spec.
 
-Global Name System (GNS) is a payment-handle system anchored to Bitcoin. A GNS name is a flat string like `satoshi` that the owner can control directly. The first use case is simple: help humans say who should get paid before money moves, without copying raw addresses or depending on a gatekeeper-controlled alias.
+Open Name Tags (ONT) is a payment-handle system anchored to Bitcoin. An ONT name is a flat string like `satoshi` that the owner can control directly. The first use case is simple: help humans say who should get paid before money moves, without copying raw addresses or depending on a gatekeeper-controlled alias.
 
 ## What The System Does
 
-GNS separates two things:
+ONT separates two things:
 
 - **ownership**, which is recorded on-chain
 - **what the name points to**, which is signed off-chain by the current owner
@@ -27,7 +27,7 @@ A name can point to:
 
 ## Core Design
 
-GNS claims use a **commit / reveal** flow plus a **bitcoin bond**.
+ONT claims use a **commit / reveal** flow plus a **bitcoin bond**.
 
 1. `COMMIT` hides the intended name while establishing the claim attempt.
 2. `REVEAL` publishes the plaintext name and must confirm within **24 blocks** after the commit confirms.
@@ -45,11 +45,11 @@ In v1, losing the owner key means losing update and transfer authority for that 
 
 ## Economic Model
 
-GNS tries to allocate names through **bonded capital**, not through rent, private allocation, or protocol sales.
+ONT tries to allocate names through **bonded capital**, not through rent, private allocation, or protocol sales.
 
 The bond is:
 
-- **not** a payment to GNS
+- **not** a payment to ONT
 - **not** burned
 - **not** annual rent
 
@@ -99,7 +99,7 @@ A mainnet launch should only happen once the signet and private-demo paths are w
 
 ## Blockspace Footprint
 
-GNS keeps its pure naming payload relatively small, but it still consumes real Bitcoin blockspace because each successful claim is a pair of ordinary Bitcoin transactions.
+ONT keeps its pure naming payload relatively small, but it still consumes real Bitcoin blockspace because each successful claim is a pair of ordinary Bitcoin transactions.
 
 Current implementation summary:
 
@@ -107,7 +107,7 @@ Current implementation summary:
 - observed full claim footprint: about `404 vbytes`
 - observed full serialized footprint: about `566 raw bytes`
 
-So GNS is compact as protocol data, but it still competes in the normal fee market like any other transaction.
+So ONT is compact as protocol data, but it still competes in the normal fee market like any other transaction.
 
 At the current transaction shape:
 
@@ -125,7 +125,7 @@ So the main economic brakes are not protocol throttles; they are normal Bitcoin 
 
 ## Trust Model
 
-GNS has two different trust and availability stories.
+ONT has two different trust and availability stories.
 
 ### Ownership
 
@@ -143,7 +143,7 @@ What a name points to is intentionally off-chain.
 - authenticity is cryptographic
 - availability depends on one or more resolvers retaining a copy
 
-That means GNS is decentralized for ownership, but only partly decentralized for value availability in v1. The intended direction is stronger distribution and better resolver availability, not moving normal value updates on-chain.
+That means ONT is decentralized for ownership, but only partly decentralized for value availability in v1. The intended direction is stronger distribution and better resolver availability, not moving normal value updates on-chain.
 
 ### Why Resolver Decentralization Is Still Strong
 
@@ -151,7 +151,7 @@ Resolvers do not get to invent ownership, and they cannot fake completeness agai
 
 That creates a decentralized path forward that is stronger than a generic off-chain directory. Resolver quality is auditable. Multi-resolver publish and multi-resolver read can improve availability over time, while the chain remains the authority for which names exist and who owns them.
 
-## The Vision For GNS
+## The Vision For ONT
 
 The first claim is narrow and useful:
 
@@ -159,17 +159,17 @@ The first claim is narrow and useful:
 - express that choice in words you control instead of raw addresses
 - let clients verify the current owner-signed payment record before sending
 
-From that payment-handle base, GNS can grow into a broader owner-signed record layer if useful clients emerge. The key/value model allows additional records without putting routine updates on Bitcoin or changing the ownership model.
+From that payment-handle base, ONT can grow into a broader owner-signed record layer if useful clients emerge. The key/value model allows additional records without putting routine updates on Bitcoin or changing the ownership model.
 
-As we hand more decision-making to software, human-readable names become more important, not less. Software can interpret intent flexibly, but the final payment target should not rest on a probabilistic guess about which account is the right one. GNS is designed to make payment handles human-readable while keeping ownership cryptographically grounded, so both people and software acting on their behalf can resolve them with much higher confidence.
+As we hand more decision-making to software, human-readable names become more important, not less. Software can interpret intent flexibly, but the final payment target should not rest on a probabilistic guess about which account is the right one. ONT is designed to make payment handles human-readable while keeping ownership cryptographically grounded, so both people and software acting on their behalf can resolve them with much higher confidence.
 
 The system is designed so that the ownership record is public, auditable, and difficult to revoke or forge, while the mutable destination layer stays lightweight and easy to update.
 
-Adjacent systems are useful to keep in mind here too. Pubky / PKARR, which the older Slashtags effort now points toward, takes a different approach: public keys are the durable identity layer, and the base system intentionally avoids trying to allocate a scarce global human-readable namespace. GNS is trying to solve that extra layer for the Bitcoin ecosystem by adding Bitcoin-anchored ownership for shared human-readable payment handles. See [../research/GNS_VS_PUBKY_PKARR.md](../research/GNS_VS_PUBKY_PKARR.md) for a short comparison note.
+Adjacent systems are useful to keep in mind here too. Pubky / PKARR, which the older Slashtags effort now points toward, takes a different approach: public keys are the durable identity layer, and the base system intentionally avoids trying to allocate a scarce global human-readable namespace. ONT is trying to solve that extra layer for the Bitcoin ecosystem by adding Bitcoin-anchored ownership for shared human-readable payment handles. See [../research/ONT_VS_PUBKY_PKARR.md](../research/ONT_VS_PUBKY_PKARR.md) for a short comparison note.
 
 ## Current Status
 
-GNS is an active prototype, not a mainnet-ready production system.
+ONT is an active prototype, not a mainnet-ready production system.
 
 Today:
 
@@ -181,4 +181,4 @@ Today:
 - transfers: prototype
 - mainnet readiness: not yet
 
-The current product surface is available at [https://globalnamesystem.org](https://globalnamesystem.org), and the public repository is at [https://github.com/deekay/gns](https://github.com/deekay/gns).
+The current product surface is available at [https://opennametags.org](https://opennametags.org), and the public repository is at [https://github.com/deekay/ont](https://github.com/deekay/ont).

@@ -118,7 +118,7 @@ static void *grind_worker(void *raw) {
 
 int main(int argc, char **argv) {
   if (argc != 2) {
-    fprintf(stderr, "usage: gns-grind-header-fast <80-byte-header-hex>\n");
+    fprintf(stderr, "usage: ont-grind-header-fast <80-byte-header-hex>\n");
     return 1;
   }
 

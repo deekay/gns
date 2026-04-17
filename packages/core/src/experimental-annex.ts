@@ -8,11 +8,11 @@ import {
   computeBatchCommitLeafHash,
   computeCommitHash,
   decodeBatchRevealPayload,
-  decodeGnsPayload,
+  decodeOntPayload,
   decodeMerkleProof,
-  GnsEventType,
+  OntEventType,
   verifyMerkleProof
-} from "@gns/protocol";
+} from "@ont/protocol";
 
 const EXPERIMENTAL_ANNEX_PREFIX_HEX = "5000";
 const EXPERIMENTAL_BATCH_REVEAL_EXTENSION_TYPE = 0xf0;
@@ -175,7 +175,7 @@ function findExperimentalBatchRevealHeader(transaction: Transaction): {
     throw new Error("experimental annex batch reveal header is too short");
   }
 
-  if (header[4] !== GnsEventType.BatchReveal) {
+  if (header[4] !== OntEventType.BatchReveal) {
     throw new Error("experimental annex header does not begin with a batch reveal payload");
   }
 
@@ -207,8 +207,8 @@ function findExperimentalBatchRevealHeader(transaction: Transaction): {
 function countExplicitProofChunkOutputs(transaction: Transaction): number {
   let count = 0;
   for (const output of transaction.outs) {
-    const event = decodeGnsPayloadFromOutput(output.script);
-    if (event?.type === GnsEventType.RevealProofChunk) {
+    const event = decodeOntPayloadFromOutput(output.script);
+    if (event?.type === OntEventType.RevealProofChunk) {
       count += 1;
     }
   }
@@ -220,8 +220,8 @@ function collectExplicitProofChunkHex(transaction: Transaction): string {
   const chunks: Array<{ chunkIndex: number; proofBytesHex: string }> = [];
 
   for (const output of transaction.outs) {
-    const event = decodeGnsPayloadFromOutput(output.script);
-    if (event?.type !== GnsEventType.RevealProofChunk) {
+    const event = decodeOntPayloadFromOutput(output.script);
+    if (event?.type !== OntEventType.RevealProofChunk) {
       continue;
     }
 
@@ -234,7 +234,7 @@ function collectExplicitProofChunkHex(transaction: Transaction): string {
     .join("");
 }
 
-function decodeGnsPayloadFromOutput(script: Uint8Array) {
+function decodeOntPayloadFromOutput(script: Uint8Array) {
   const decompiled = btcScript.decompile(script);
   if (!decompiled || decompiled[0] !== btcScript.OPS.OP_RETURN) {
     return null;
@@ -246,7 +246,7 @@ function decodeGnsPayloadFromOutput(script: Uint8Array) {
   }
 
   try {
-    return decodeGnsPayload(Buffer.from(payload));
+    return decodeOntPayload(Buffer.from(payload));
   } catch {
     return null;
   }

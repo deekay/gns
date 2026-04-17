@@ -14,6 +14,7 @@ Related notes:
 - [BITCOIN_REVIEW_CLOSURE_MATRIX.md](/Users/davidking/dev/gns/docs/research/BITCOIN_REVIEW_CLOSURE_MATRIX.md)
 - [MERKLE_BATCHING_STATUS.md](/Users/davidking/dev/gns/docs/research/MERKLE_BATCHING_STATUS.md)
 - [AUCTION_SETTLEMENT_AND_OWNERSHIP.md](/Users/davidking/dev/gns/docs/research/AUCTION_SETTLEMENT_AND_OWNERSHIP.md)
+- [VALUE_RECORD_HISTORY_AND_KEYBASE_NOTES.md](/Users/davidking/dev/gns/docs/research/VALUE_RECORD_HISTORY_AND_KEYBASE_NOTES.md)
 
 ## Best Use Of Bitcoin-Expert Attention
 
@@ -109,9 +110,16 @@ expert time:
 - exact class floors and lock durations
 - exact reserved-name inclusion choices
 - whether one-lane universal auction should replace two-lane entirely
+- whether the implemented Keybase-style predecessor chain is enough for the
+  first serious resolver profile, or whether resolver transparency roots and
+  receipts should come sooner
+- whether low-frequency resolver transparency roots should ever be anchored to
+  Bitcoin, or whether that would add recurring non-ownership blockspace usage
+  that ONT should avoid
 
 Those are real questions, but they lean more toward launch-policy and
-governance judgment than Bitcoin-native protocol review.
+governance, resolver, and system-design judgment than Bitcoin-native protocol
+review.
 
 ## Current Stance We Should Present Clearly
 

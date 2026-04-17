@@ -18,16 +18,17 @@ import {
   isBitcoinEsploraHeadCurrent,
   isBitcoinRpcHeadCurrent,
   loadBitcoinBlocksFromSource
-} from "@gns/bitcoin";
+} from "@ont/bitcoin";
 import {
   createDefaultReservedAuctionPolicy,
   createExperimentalReservedAuctionCatalogEntry,
-  InMemoryGnsIndexer,
+  InMemoryOntIndexer,
   parseReservedAuctionScenario,
   serializeReservedAuctionPolicy,
   type ExperimentalReservedAuctionCatalogEntry,
+  type NameRecord,
   type ReservedAuctionPolicy
-} from "@gns/core";
+} from "@ont/core";
 import {
   createDatabaseConfig,
   ensureDatabaseSchema,
@@ -36,8 +37,9 @@ import {
   saveIndexerSnapshotDatabase,
   saveIndexerSnapshotFile,
   type DatabaseConfig
-} from "@gns/db";
+} from "@ont/db";
 import {
+  computeValueRecordHash,
   getBondSats,
   getEpochIndex,
   getMaturityBlocks,
@@ -49,63 +51,68 @@ import {
   REVEAL_WINDOW_BLOCKS,
   type SignedValueRecord,
   verifyValueRecord
-} from "@gns/protocol";
+} from "@ont/protocol";
 import {
+  appendValueRecord,
+  countValueRecords,
+  getValueRecordChain,
   loadValueRecordStoreDatabase,
   loadValueRecordStoreFile,
   saveValueRecordStoreDatabase,
-  saveValueRecordStoreFile
+  saveValueRecordStoreFile,
+  type ValueRecordChain,
+  type ValueRecordStore
 } from "./value-store.js";
 
 const port = parsePort(
-  process.env.GNS_RESOLVER_PORT ?? "8787",
-  "GNS_RESOLVER_PORT"
+  process.env.ONT_RESOLVER_PORT ?? "8787",
+  "ONT_RESOLVER_PORT"
 );
 const defaultPollIntervalMs = Number.parseInt(
-  process.env.GNS_RPC_POLL_INTERVAL_MS ?? "10000",
+  process.env.ONT_RPC_POLL_INTERVAL_MS ?? "10000",
   10
 );
 const currentDir = dirname(fileURLToPath(import.meta.url));
 const auctionFixtureDir =
-  normalizeOptionalText(process.env.GNS_EXPERIMENTAL_AUCTION_FIXTURE_DIR)
+  normalizeOptionalText(process.env.ONT_EXPERIMENTAL_AUCTION_FIXTURE_DIR)
   ?? resolve(currentDir, "../../../fixtures/auction/lab");
 void main();
 
 async function main(): Promise<void> {
-  const sourceMode = parseSourceMode(process.env.GNS_SOURCE_MODE);
+  const sourceMode = parseSourceMode(process.env.ONT_SOURCE_MODE);
   const fixturePath =
-    (process.env.GNS_FIXTURE_PATH) === undefined
+    (process.env.ONT_FIXTURE_PATH) === undefined
       ? resolve(currentDir, "../../../fixtures/demo-chain.json")
-      : resolve(process.cwd(), process.env.GNS_FIXTURE_PATH ?? "");
-  const launchHeight = parseOptionalInteger(process.env.GNS_LAUNCH_HEIGHT);
-  const endHeight = parseOptionalInteger(process.env.GNS_RPC_END_HEIGHT);
-  const expectedChain = parseExpectedChain(process.env.GNS_EXPECT_CHAIN ?? "signet");
+      : resolve(process.cwd(), process.env.ONT_FIXTURE_PATH ?? "");
+  const launchHeight = parseOptionalInteger(process.env.ONT_LAUNCH_HEIGHT);
+  const endHeight = parseOptionalInteger(process.env.ONT_RPC_END_HEIGHT);
+  const expectedChain = parseExpectedChain(process.env.ONT_EXPECT_CHAIN ?? "signet");
   const snapshotPath =
-    (process.env.GNS_SNAPSHOT_PATH) === undefined
+    (process.env.ONT_SNAPSHOT_PATH) === undefined
       ? resolve(process.cwd(), ".data/resolver-snapshot.json")
-      : resolve(process.cwd(), process.env.GNS_SNAPSHOT_PATH ?? "");
+      : resolve(process.cwd(), process.env.ONT_SNAPSHOT_PATH ?? "");
   const valueStorePath =
-    (process.env.GNS_VALUE_STORE_PATH) === undefined
+    (process.env.ONT_VALUE_STORE_PATH) === undefined
       ? resolve(process.cwd(), ".data/value-records.json")
-      : resolve(process.cwd(), process.env.GNS_VALUE_STORE_PATH ?? "");
+      : resolve(process.cwd(), process.env.ONT_VALUE_STORE_PATH ?? "");
   const database = resolveDatabaseConfig();
-  const snapshotDocumentKey = process.env.GNS_SNAPSHOT_KEY?.trim() || "resolver";
-  const valueStoreDocumentKey = process.env.GNS_VALUE_STORE_KEY?.trim() || "resolver";
+  const snapshotDocumentKey = process.env.ONT_SNAPSHOT_KEY?.trim() || "resolver";
+  const valueStoreDocumentKey = process.env.ONT_VALUE_STORE_KEY?.trim() || "resolver";
   const configuredRpcUrl = resolveConfiguredEndpoint(
-    process.env.GNS_BITCOIN_RPC_URL,
-    "GNS_BITCOIN_RPC_URL"
+    process.env.ONT_BITCOIN_RPC_URL,
+    "ONT_BITCOIN_RPC_URL"
   );
   const configuredEsploraBaseUrl = resolveConfiguredEndpoint(
-    process.env.GNS_ESPLORA_BASE_URL,
-    "GNS_ESPLORA_BASE_URL"
+    process.env.ONT_ESPLORA_BASE_URL,
+    "ONT_ESPLORA_BASE_URL"
   );
   const rpc =
     sourceMode === "fixture" || sourceMode === "esplora" || configuredRpcUrl === undefined
       ? undefined
       : createBitcoinRpcConfig(
         configuredRpcUrl,
-          process.env.GNS_BITCOIN_RPC_USERNAME,
-          process.env.GNS_BITCOIN_RPC_PASSWORD
+          process.env.ONT_BITCOIN_RPC_USERNAME,
+          process.env.ONT_BITCOIN_RPC_PASSWORD
         );
   const esplora =
     sourceMode === "fixture" || sourceMode === "rpc" || configuredEsploraBaseUrl === undefined
@@ -114,13 +121,13 @@ async function main(): Promise<void> {
 
   if (sourceMode === "rpc" && rpc === undefined) {
     throw new Error(
-      "GNS_SOURCE_MODE=rpc requires a real GNS_BITCOIN_RPC_URL"
+      "ONT_SOURCE_MODE=rpc requires a real ONT_BITCOIN_RPC_URL"
     );
   }
 
   if (sourceMode === "esplora" && esplora === undefined) {
     throw new Error(
-      "GNS_SOURCE_MODE=esplora requires a real GNS_ESPLORA_BASE_URL"
+      "ONT_SOURCE_MODE=esplora requires a real ONT_ESPLORA_BASE_URL"
     );
   }
 
@@ -134,7 +141,7 @@ async function main(): Promise<void> {
     auctionFixtureDir,
     experimentalReservedAuctionPolicy
   );
-  let indexer: InMemoryGnsIndexer;
+  let indexer: InMemoryOntIndexer;
   const valueRecords =
     database === null
       ? await loadValueRecordStoreFile(valueStorePath)
@@ -151,7 +158,7 @@ async function main(): Promise<void> {
     rpcChainInfo = await assertBitcoinRpcChain(rpc, expectedChain);
 
     try {
-      indexer = InMemoryGnsIndexer.fromSnapshot(
+      indexer = InMemoryOntIndexer.fromSnapshot(
         await loadSnapshot(database, snapshotPath, snapshotDocumentKey),
         {
           experimentalReservedAuctionPolicy,
@@ -162,11 +169,11 @@ async function main(): Promise<void> {
     } catch {
       if (launchHeight === undefined) {
         throw new Error(
-          "GNS_LAUNCH_HEIGHT is required for rpc mode when no snapshot is available"
+          "ONT_LAUNCH_HEIGHT is required for rpc mode when no snapshot is available"
         );
       }
 
-      indexer = new InMemoryGnsIndexer({
+      indexer = new InMemoryOntIndexer({
         launchHeight,
         experimentalReservedAuctionPolicy,
         experimentalReservedAuctionCatalog
@@ -189,12 +196,12 @@ async function main(): Promise<void> {
       } else {
         if (launchHeight === undefined) {
           throw new Error(
-            "GNS_LAUNCH_HEIGHT is required to rebuild after a reorg mismatch"
+            "ONT_LAUNCH_HEIGHT is required to rebuild after a reorg mismatch"
           );
         }
 
         restoredFromSnapshot = false;
-        indexer = new InMemoryGnsIndexer({
+        indexer = new InMemoryOntIndexer({
           launchHeight,
           experimentalReservedAuctionPolicy,
           experimentalReservedAuctionCatalog
@@ -248,7 +255,7 @@ async function main(): Promise<void> {
               return;
             }
 
-            indexer = new InMemoryGnsIndexer({
+            indexer = new InMemoryOntIndexer({
               launchHeight: indexer.getLaunchHeight(),
               experimentalReservedAuctionPolicy,
               experimentalReservedAuctionCatalog
@@ -286,7 +293,7 @@ async function main(): Promise<void> {
     descriptor = esplora.baseUrl;
 
     try {
-      indexer = InMemoryGnsIndexer.fromSnapshot(
+      indexer = InMemoryOntIndexer.fromSnapshot(
         await loadSnapshot(database, snapshotPath, snapshotDocumentKey),
         {
           experimentalReservedAuctionPolicy,
@@ -297,11 +304,11 @@ async function main(): Promise<void> {
     } catch {
       if (launchHeight === undefined) {
         throw new Error(
-          "GNS_LAUNCH_HEIGHT is required for esplora mode when no snapshot is available"
+          "ONT_LAUNCH_HEIGHT is required for esplora mode when no snapshot is available"
         );
       }
 
-      indexer = new InMemoryGnsIndexer({
+      indexer = new InMemoryOntIndexer({
         launchHeight,
         experimentalReservedAuctionPolicy,
         experimentalReservedAuctionCatalog
@@ -327,12 +334,12 @@ async function main(): Promise<void> {
       } else {
         if (launchHeight === undefined) {
           throw new Error(
-            "GNS_LAUNCH_HEIGHT is required to rebuild after an esplora reorg mismatch"
+            "ONT_LAUNCH_HEIGHT is required to rebuild after an esplora reorg mismatch"
           );
         }
 
         restoredFromSnapshot = false;
-        indexer = new InMemoryGnsIndexer({
+        indexer = new InMemoryOntIndexer({
           launchHeight,
           experimentalReservedAuctionPolicy,
           experimentalReservedAuctionCatalog
@@ -392,7 +399,7 @@ async function main(): Promise<void> {
               return;
             }
 
-            indexer = new InMemoryGnsIndexer({
+            indexer = new InMemoryOntIndexer({
               launchHeight: indexer.getLaunchHeight(),
               experimentalReservedAuctionPolicy,
               experimentalReservedAuctionCatalog
@@ -436,7 +443,7 @@ async function main(): Promise<void> {
     source = loaded.source;
     descriptor = loaded.descriptor;
     syncMode = "fixture";
-    indexer = new InMemoryGnsIndexer({
+    indexer = new InMemoryOntIndexer({
       launchHeight: loaded.launchHeight,
       experimentalReservedAuctionPolicy,
       experimentalReservedAuctionCatalog
@@ -485,17 +492,53 @@ async function main(): Promise<void> {
           });
         }
 
-        const existingRecord = getCurrentValueRecord(valueRecords, indexer, parsedRecord.name);
-        if (existingRecord !== null && parsedRecord.sequence <= existingRecord.sequence) {
+        const currentOwnershipRef = getOwnershipRef(currentNameRecord);
+
+        if (parsedRecord.ownershipRef !== currentOwnershipRef) {
           return writeJson(response, 409, {
-            error: "stale_sequence",
-            message: "Value record sequence must increase relative to the current owner-visible record.",
+            error: "ownership_ref_mismatch",
+            message: "Value record ownershipRef must match the resolver's current ownership interval.",
             name: parsedRecord.name,
-            currentSequence: existingRecord.sequence
+            currentOwnershipRef
           });
         }
 
-        valueRecords.set(parsedRecord.name, parsedRecord);
+        const existingChain = getValueRecordChain(valueRecords, parsedRecord.name, parsedRecord.ownershipRef);
+        const existingRecord = getChainHead(existingChain);
+        const expectedSequence = existingRecord === null ? 1 : existingRecord.sequence + 1;
+        const expectedPreviousRecordHash =
+          existingRecord === null ? null : computeValueRecordHash(existingRecord);
+
+        if (parsedRecord.sequence < expectedSequence) {
+          return writeJson(response, 409, {
+            error: "stale_sequence",
+            message: "Value record sequence must be the exact next sequence for the current ownership interval.",
+            name: parsedRecord.name,
+            currentSequence: existingRecord?.sequence ?? 0,
+            expectedSequence
+          });
+        }
+
+        if (parsedRecord.sequence > expectedSequence) {
+          return writeJson(response, 409, {
+            error: "sequence_gap",
+            message: "Value record sequence cannot skip over missing predecessors.",
+            name: parsedRecord.name,
+            currentSequence: existingRecord?.sequence ?? 0,
+            expectedSequence
+          });
+        }
+
+        if (parsedRecord.previousRecordHash !== expectedPreviousRecordHash) {
+          return writeJson(response, 409, {
+            error: "predecessor_mismatch",
+            message: "Value record previousRecordHash must point to the current chain head.",
+            name: parsedRecord.name,
+            expectedPreviousRecordHash
+          });
+        }
+
+        appendValueRecord(valueRecords, parsedRecord);
         if (database === null) {
           await saveValueRecordStoreFile(valueStorePath, valueRecords);
         } else {
@@ -505,7 +548,10 @@ async function main(): Promise<void> {
         return writeJson(response, 201, {
           ok: true,
           name: parsedRecord.name,
+          ownershipRef: parsedRecord.ownershipRef,
           sequence: parsedRecord.sequence,
+          previousRecordHash: parsedRecord.previousRecordHash,
+          recordHash: computeValueRecordHash(parsedRecord),
           valueType: parsedRecord.valueType,
           valueStorePath
         });
@@ -542,7 +588,8 @@ async function main(): Promise<void> {
         expectedChain: rpc === undefined && esplora === undefined ? null : expectedChain,
         rpcChainInfo,
         rpcStatus,
-        valueRecordsTracked: valueRecords.size,
+        valueChainsTracked: valueRecords.size,
+        valueRecordsTracked: countValueRecords(valueRecords),
         valueStorePath:
           database === null ? valueStorePath : `${database.schema}:value_record_store/${valueStoreDocumentKey}`,
         stats: indexer.getStats()
@@ -658,6 +705,39 @@ async function main(): Promise<void> {
         }
       }
 
+      const valueHistoryPathMatch = url.pathname.match(/^\/name\/(.+)\/value\/history$/);
+
+      if (valueHistoryPathMatch) {
+        const requested = decodeURIComponent(valueHistoryPathMatch[1] ?? "");
+
+        try {
+          const normalized = normalizeName(requested);
+          const currentNameRecord = indexer.getName(normalized);
+
+          if (currentNameRecord === null) {
+            return writeJson(response, 404, {
+              error: "name_not_found",
+              name: normalized
+            });
+          }
+
+          const history = getCurrentValueRecordHistory(valueRecords, indexer, normalized);
+          if (history === null) {
+            return writeJson(response, 404, {
+              error: "value_not_found",
+              name: normalized
+            });
+          }
+
+          return writeJson(response, 200, history);
+        } catch (error) {
+          return writeJson(response, 400, {
+            error: "invalid_name",
+            message: error instanceof Error ? error.message : "Invalid name"
+          });
+        }
+      }
+
       const valuePathMatch = url.pathname.match(/^\/name\/(.+)\/value$/);
 
       if (valuePathMatch) {
@@ -682,7 +762,7 @@ async function main(): Promise<void> {
             });
           }
 
-          return writeJson(response, 200, valueRecord);
+          return writeJson(response, 200, serializeValueRecord(valueRecord));
         } catch (error) {
           return writeJson(response, 400, {
             error: "invalid_name",
@@ -716,7 +796,7 @@ async function main(): Promise<void> {
     return writeJson(response, 404, {
       error: "not_found",
       message:
-        "Supported prototype endpoints: /health, /stats, /names, /pending-commits, /experimental-auctions, /activity, /tx/{txid}, /claim-plan/{normalized_name}, /name/{normalized_name}, /name/{normalized_name}/activity, /name/{normalized_name}/value, POST /values"
+        "Supported prototype endpoints: /health, /stats, /names, /pending-commits, /experimental-auctions, /activity, /tx/{txid}, /claim-plan/{normalized_name}, /name/{normalized_name}, /name/{normalized_name}/activity, /name/{normalized_name}/value, /name/{normalized_name}/value/history, POST /values"
     });
   }
 
@@ -725,8 +805,8 @@ async function main(): Promise<void> {
       console.error(
         [
           `${PRODUCT_NAME} resolver could not start because port ${port} is already in use.`,
-          "Try: GNS_RESOLVER_PORT=8788 npm run dev:resolver",
-          "Or run both together with: GNS_RESOLVER_PORT=8788 GNS_WEB_PORT=3001 npm run dev:all"
+          "Try: ONT_RESOLVER_PORT=8788 npm run dev:resolver",
+          "Or run both together with: ONT_RESOLVER_PORT=8788 ONT_WEB_PORT=3001 npm run dev:all"
         ].join("\n")
       );
       process.exit(1);
@@ -841,33 +921,33 @@ function parseNonNegativeInteger(value: string, label: string): number {
 
 function resolveExperimentalReservedAuctionPolicy(): ReservedAuctionPolicy {
   const basePolicy = createDefaultReservedAuctionPolicy();
-  const baseWindowBlocks = readOptionalExperimentalAuctionInteger("GNS_EXPERIMENTAL_AUCTION_BASE_WINDOW_BLOCKS");
+  const baseWindowBlocks = readOptionalExperimentalAuctionInteger("ONT_EXPERIMENTAL_AUCTION_BASE_WINDOW_BLOCKS");
   const softCloseExtensionBlocks = readOptionalExperimentalAuctionInteger(
-    "GNS_EXPERIMENTAL_AUCTION_SOFT_CLOSE_EXTENSION_BLOCKS"
+    "ONT_EXPERIMENTAL_AUCTION_SOFT_CLOSE_EXTENSION_BLOCKS"
   );
   const noBidReleaseBlocks = readOptionalExperimentalAuctionInteger(
-    "GNS_EXPERIMENTAL_AUCTION_NO_BID_RELEASE_BLOCKS"
+    "ONT_EXPERIMENTAL_AUCTION_NO_BID_RELEASE_BLOCKS"
   );
   const minimumIncrementAbsoluteSats = readOptionalExperimentalAuctionBigInt(
-    "GNS_EXPERIMENTAL_AUCTION_MINIMUM_INCREMENT_ABSOLUTE_SATS"
+    "ONT_EXPERIMENTAL_AUCTION_MINIMUM_INCREMENT_ABSOLUTE_SATS"
   );
   const minimumIncrementBasisPoints = readOptionalExperimentalAuctionInteger(
-    "GNS_EXPERIMENTAL_AUCTION_MINIMUM_INCREMENT_BASIS_POINTS"
+    "ONT_EXPERIMENTAL_AUCTION_MINIMUM_INCREMENT_BASIS_POINTS"
   );
   const softCloseMinimumIncrementAbsoluteSats = readOptionalExperimentalAuctionBigInt(
-    "GNS_EXPERIMENTAL_AUCTION_SOFT_CLOSE_MINIMUM_INCREMENT_ABSOLUTE_SATS"
+    "ONT_EXPERIMENTAL_AUCTION_SOFT_CLOSE_MINIMUM_INCREMENT_ABSOLUTE_SATS"
   );
   const softCloseMinimumIncrementBasisPoints = readOptionalExperimentalAuctionInteger(
-    "GNS_EXPERIMENTAL_AUCTION_SOFT_CLOSE_MINIMUM_INCREMENT_BASIS_POINTS"
+    "ONT_EXPERIMENTAL_AUCTION_SOFT_CLOSE_MINIMUM_INCREMENT_BASIS_POINTS"
   );
   const topCollisionLockBlocks = readOptionalExperimentalAuctionInteger(
-    "GNS_EXPERIMENTAL_AUCTION_TOP_COLLISION_LOCK_BLOCKS"
+    "ONT_EXPERIMENTAL_AUCTION_TOP_COLLISION_LOCK_BLOCKS"
   );
   const majorExistingNameLockBlocks = readOptionalExperimentalAuctionInteger(
-    "GNS_EXPERIMENTAL_AUCTION_MAJOR_EXISTING_NAME_LOCK_BLOCKS"
+    "ONT_EXPERIMENTAL_AUCTION_MAJOR_EXISTING_NAME_LOCK_BLOCKS"
   );
   const publicIdentityLockBlocks = readOptionalExperimentalAuctionInteger(
-    "GNS_EXPERIMENTAL_AUCTION_PUBLIC_IDENTITY_LOCK_BLOCKS"
+    "ONT_EXPERIMENTAL_AUCTION_PUBLIC_IDENTITY_LOCK_BLOCKS"
   );
 
   return {
@@ -936,7 +1016,7 @@ function parseNonNegativeBigInt(value: string, label: string): bigint {
 
 function parseExpectedChain(value: string): BitcoinRpcChain {
   if (value !== "main" && value !== "test" && value !== "signet" && value !== "regtest") {
-    throw new Error(`invalid GNS_EXPECT_CHAIN value: ${value}`);
+    throw new Error(`invalid ONT_EXPECT_CHAIN value: ${value}`);
   }
 
   return value;
@@ -951,7 +1031,7 @@ function parseSourceMode(value: string | undefined): "auto" | "fixture" | "rpc" 
     return value;
   }
 
-  throw new Error("GNS_SOURCE_MODE must be one of auto, fixture, rpc, esplora");
+  throw new Error("ONT_SOURCE_MODE must be one of auto, fixture, rpc, esplora");
 }
 
 function resolveConfiguredEndpoint(value: string | undefined, envName: string): string | undefined {
@@ -986,14 +1066,14 @@ function looksLikePlaceholderEndpoint(value: string): boolean {
 }
 
 function resolveDatabaseConfig(): DatabaseConfig | null {
-  const connectionString = process.env.GNS_DATABASE_URL?.trim() ?? "";
+  const connectionString = process.env.ONT_DATABASE_URL?.trim() ?? "";
   if (connectionString === "") {
     return null;
   }
 
   return createDatabaseConfig(connectionString, {
     schema:
-      process.env.GNS_DATABASE_SCHEMA?.trim()
+      process.env.ONT_DATABASE_SCHEMA?.trim()
       || "public"
   });
 }
@@ -1019,7 +1099,7 @@ async function saveSnapshot(
   database: DatabaseConfig | null,
   snapshotPath: string,
   documentKey: string,
-  indexer: InMemoryGnsIndexer
+  indexer: InMemoryOntIndexer
 ): Promise<void> {
   const snapshot = indexer.exportSnapshot();
 
@@ -1050,26 +1130,96 @@ async function readJsonBody(
 }
 
 function getCurrentValueRecord(
-  valueRecords: ReadonlyMap<string, SignedValueRecord>,
-  indexer: InMemoryGnsIndexer,
+  valueRecords: ValueRecordStore,
+  indexer: InMemoryOntIndexer,
   name: string
 ): SignedValueRecord | null {
   const normalized = normalizeName(name);
   const currentNameRecord = indexer.getName(normalized);
-  const valueRecord = valueRecords.get(normalized) ?? null;
 
-  if (currentNameRecord === null || valueRecord === null) {
+  if (currentNameRecord === null || currentNameRecord.status === "invalid") {
     return null;
   }
 
-  if (currentNameRecord.currentOwnerPubkey !== valueRecord.ownerPubkey) {
+  const chain = getValueRecordChain(valueRecords, normalized, getOwnershipRef(currentNameRecord));
+  const valueRecord = getChainHead(chain);
+
+  if (valueRecord === null || currentNameRecord.currentOwnerPubkey !== valueRecord.ownerPubkey) {
     return null;
   }
 
   return valueRecord;
 }
 
-function buildClaimPlan(indexer: InMemoryGnsIndexer, normalizedName: string) {
+function getCurrentValueRecordHistory(
+  valueRecords: ValueRecordStore,
+  indexer: InMemoryOntIndexer,
+  name: string
+): {
+  readonly name: string;
+  readonly ownershipRef: string;
+  readonly currentRecordHash: string;
+  readonly completeFromSequence: number;
+  readonly completeToSequence: number;
+  readonly hasGaps: boolean;
+  readonly hasForks: boolean;
+  readonly records: readonly ReturnType<typeof serializeValueRecord>[];
+} | null {
+  const normalized = normalizeName(name);
+  const currentNameRecord = indexer.getName(normalized);
+
+  if (currentNameRecord === null || currentNameRecord.status === "invalid") {
+    return null;
+  }
+
+  const ownershipRef = getOwnershipRef(currentNameRecord);
+  const chain = getValueRecordChain(valueRecords, normalized, ownershipRef);
+  const head = getChainHead(chain);
+
+  if (chain === null || head === null || head.ownerPubkey !== currentNameRecord.currentOwnerPubkey) {
+    return null;
+  }
+
+  const records = chain.records.map(serializeValueRecord);
+
+  return {
+    name: normalized,
+    ownershipRef,
+    currentRecordHash: computeValueRecordHash(head),
+    completeFromSequence: records[0]?.sequence ?? 0,
+    completeToSequence: records.at(-1)?.sequence ?? 0,
+    hasGaps: hasSequenceGaps(chain),
+    hasForks: false,
+    records
+  };
+}
+
+function getChainHead(chain: ValueRecordChain | null): SignedValueRecord | null {
+  if (chain === null || chain.records.length === 0) {
+    return null;
+  }
+
+  return [...chain.records].sort((left, right) => left.sequence - right.sequence).at(-1) ?? null;
+}
+
+function serializeValueRecord(record: SignedValueRecord): SignedValueRecord & {
+  readonly recordHash: string;
+} {
+  return {
+    ...record,
+    recordHash: computeValueRecordHash(record)
+  };
+}
+
+function getOwnershipRef(record: NameRecord): string {
+  return record.lastStateTxid;
+}
+
+function hasSequenceGaps(chain: ValueRecordChain): boolean {
+  return chain.records.some((record, index) => record.sequence !== index + 1);
+}
+
+function buildClaimPlan(indexer: InMemoryOntIndexer, normalizedName: string) {
   const existingRecord = indexer.getName(normalizedName);
   const stats = indexer.getStats();
   const currentHeight = stats.currentHeight ?? indexer.getLaunchHeight() - 1;

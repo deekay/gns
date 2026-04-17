@@ -7,7 +7,7 @@ import ECPairFactory from "ecpair";
 import { initEccLib, networks, payments, Transaction } from "bitcoinjs-lib";
 import * as tinysecp from "tiny-secp256k1";
 
-import { createBitcoinRpcConfig } from "@gns/bitcoin";
+import { createBitcoinRpcConfig } from "@ont/bitcoin";
 
 import { submitTransfer } from "./submit-transfer.js";
 
@@ -51,7 +51,7 @@ describe("submitTransfer", () => {
   let sandboxDir: string;
 
   beforeEach(async () => {
-    sandboxDir = await mkdtemp(join(tmpdir(), "gns-submit-transfer-"));
+    sandboxDir = await mkdtemp(join(tmpdir(), "ont-submit-transfer-"));
   });
 
   afterEach(async () => {
@@ -82,7 +82,7 @@ describe("submitTransfer", () => {
               bestblockhash: "hash100"
             },
             error: null,
-            id: "gns"
+            id: "ont"
           }),
           { status: 200, headers: { "content-type": "application/json" } }
         );
@@ -98,7 +98,7 @@ describe("submitTransfer", () => {
               maxdatacarriersize: 100000
             },
             error: null,
-            id: "gns"
+            id: "ont"
           }),
           { status: 200, headers: { "content-type": "application/json" } }
         );
@@ -118,7 +118,7 @@ describe("submitTransfer", () => {
               }
             ],
             error: null,
-            id: "gns"
+            id: "ont"
           }),
           { status: 200, headers: { "content-type": "application/json" } }
         );
@@ -132,7 +132,7 @@ describe("submitTransfer", () => {
           JSON.stringify({
             result: txid,
             error: null,
-            id: "gns"
+            id: "ont"
           }),
           { status: 200, headers: { "content-type": "application/json" } }
         );
@@ -173,7 +173,7 @@ describe("submitTransfer", () => {
       outDir
     });
 
-    expect(result.kind).toBe("gns-submit-transfer-result");
+    expect(result.kind).toBe("ont-submit-transfer-result");
     expect(result.mode).toBe("gift");
     expect(result.outDir).toBe(outDir);
     expect(result.transferTxid).toHaveLength(64);

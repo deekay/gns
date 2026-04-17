@@ -18,7 +18,7 @@ import {
   encodeBatchRevealPayload,
   encodeMerkleProof,
   computeMerkleRoot
-} from "@gns/protocol";
+} from "@ont/protocol";
 
 import {
   extractExperimentalAnnexBatchRevealRecord,

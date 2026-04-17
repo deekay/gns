@@ -1,12 +1,12 @@
-# GNS Narrative Framework
+# ONT Narrative Framework
 
-This note is a working draft for how to talk about GNS.
+This note is a working draft for how to talk about ONT.
 
 It is not a protocol specification and it is not a launch announcement. The goal is to sharpen the story, the flagship scenes, and the moral intuition behind the system.
 
 ## Working Thesis
 
-GNS is a Bitcoin-anchored payment-handle system: a way to own the readable name people and wallets use before money moves.
+ONT is a Bitcoin-anchored payment-handle system: a way to own the readable name people and wallets use before money moves.
 
 The first use case is simple:
 
@@ -14,7 +14,7 @@ The first use case is simple:
 - how do I say that in words instead of raw addresses or opaque accounts?
 - how does my software verify the current owner-signed payment record?
 
-Machines can use keys, hashes, and opaque identifiers without much trouble. Humans cannot. GNS exists to make payment instructions legible and cryptographically grounded.
+Machines can use keys, hashes, and opaque identifiers without much trouble. Humans cannot. ONT exists to make payment instructions legible and cryptographically grounded.
 
 The broader ambition can stay open-ended, but it should not be the first thing the story asks people to believe. The near-term claim can stay narrow:
 
@@ -25,7 +25,7 @@ The broader ambition can stay open-ended, but it should not be the first thing t
 The short version is:
 
 - Bitcoin gave us sovereign money.
-- GNS explores sovereign payment handles on a Bitcoin-anchored base, with room for broader owner-signed records later.
+- ONT explores sovereign payment handles on a Bitcoin-anchored base, with room for broader owner-signed records later.
 
 ## The Problem To Paint
 
@@ -35,7 +35,7 @@ The strongest near-term problem is simple:
 - Payment handles are useful because people need words before money moves.
 - Most readable handles rely on a service, account, domain, or operator.
 
-That is already enough to justify a system like GNS inside the Bitcoin ecosystem.
+That is already enough to justify a system like ONT inside the Bitcoin ecosystem.
 
 This makes the project easier to believe:
 
@@ -53,7 +53,7 @@ But that future should feel like expansion and option value, not a prerequisite 
 
 ## Core Claim
 
-GNS should be framed first as a payment handle the owner actually controls.
+ONT should be framed first as a payment handle the owner actually controls.
 
 That is broad enough to include:
 
@@ -65,7 +65,7 @@ But the first useful story should not require people to care about every possibl
 
 The most important sentence may be:
 
-> GNS gives humans a way to tell software who gets paid.
+> ONT gives humans a way to tell software who gets paid.
 
 That can later expand into a broader "who do I mean?" layer, but the payment-handle story should carry the first explanation.
 
@@ -96,10 +96,10 @@ This is useful as a second-order framing, but it probably should not be the firs
 
 That is useful for understanding what a human wants. It is much less acceptable when the same uncertainty leaks into who gets trusted, called, or paid.
 
-So one important way to frame GNS is:
+So one important way to frame ONT is:
 
 - LLMs widen the interpretation surface
-- GNS narrows the action surface
+- ONT narrows the action surface
 
 Or more concretely:
 
@@ -108,7 +108,7 @@ Or more concretely:
 
 This keeps the division of labor clear.
 
-The model can remain probabilistic about understanding intent. GNS helps make execution more constrained at the payment-target layer, so a human can say, in effect:
+The model can remain probabilistic about understanding intent. ONT helps make execution more constrained at the payment-target layer, so a human can say, in effect:
 
 > If you are going to serve me, here is how to do it according to the names and preferences I actually use.
 
@@ -118,9 +118,9 @@ That means some words in a prompt stop being soft hints and start becoming trust
 
 ### 1. Human legibility at the trust boundary
 
-GNS matters where a person chooses, approves, delegates, audits, or revokes.
+ONT matters where a person chooses, approves, delegates, audits, or revokes.
 
-Human-readable names are not primarily for agent-to-agent coordination. Agents can use long keys and machine-native identifiers directly. The value of GNS is at the human boundary, where intent has to be expressed in terms a person can understand.
+Human-readable names are not primarily for agent-to-agent coordination. Agents can use long keys and machine-native identifiers directly. The value of ONT is at the human boundary, where intent has to be expressed in terms a person can understand.
 
 ### 2. A believable Bitcoin-native wedge
 
@@ -166,7 +166,7 @@ It is a human setting instructions for software:
 
 The human does not need to inspect raw identifiers. The machine still can.
 
-That is the bridge GNS is trying to provide.
+That is the bridge ONT is trying to provide.
 
 ## Use-Case Ladder
 
@@ -206,7 +206,7 @@ A person will increasingly want to set standing instructions such as:
 - only use endpoints signed by the current owner key
 - warn me when the resolved target changes
 
-At that point GNS starts to look like a trust layer for delegation rather than a lookup convenience.
+At that point ONT starts to look like a trust layer for delegation rather than a lookup convenience.
 
 ## Near-Term Sci-Fi, Not Far-Term Fantasy
 
@@ -267,8 +267,8 @@ The main points are:
 
 - human-readable payment handles solve a real human problem
 - existing approaches can be part of a transitional landscape
-- GNS is aimed at the same human need, but with a more sovereign foundation
-- over time GNS can also extend beyond payment records through app-defined key/value records
+- ONT is aimed at the same human need, but with a more sovereign foundation
+- over time ONT can also extend beyond payment records through app-defined key/value records
 
 That keeps the tone friendly and acknowledges useful adjacent work without turning the narrative into an attack.
 
@@ -277,13 +277,13 @@ That keeps the tone friendly and acknowledges useful adjacent work without turni
 These are working lines, not final copy.
 
 - Machines can use keys. Humans need names.
-- GNS is how humans tell software who gets paid.
-- GNS starts by helping Bitcoin users pay the right person in words they control.
+- ONT is how humans tell software who gets paid.
+- ONT starts by helping Bitcoin users pay the right person in words they control.
 - Pay the right person. Say it in words you control.
 - Let models infer your intent. Do not let them guess who you mean.
-- LLMs widen the interpretation surface. GNS narrows the action surface.
+- LLMs widen the interpretation surface. ONT narrows the action surface.
 - Probabilistic understanding, more deterministic payment targets.
-- Bitcoin removed banks from money. GNS explores more sovereign payment handles anchored to Bitcoin.
+- Bitcoin removed banks from money. ONT explores more sovereign payment handles anchored to Bitcoin.
 - In an automated internet, the critical interface is trustworthy payment intent.
 - A name is the shortest safe instruction a human can give a machine.
 - A payment handle you can actually own.
@@ -291,7 +291,7 @@ These are working lines, not final copy.
 ## Narrative Hazards To Avoid
 
 - Leading with a broad naming ambition asks people to believe too much too early.
-- Leading with identity alone makes GNS sound like a generic handle system.
+- Leading with identity alone makes ONT sound like a generic handle system.
 - Leading with anti-censorship alone can sound generic and underspecified.
 - Leading with generic key/value publishing can make the protocol feel abstract before the payment problem lands.
 - Leading with premium-name monetization can make the project feel extractive before the fairness argument lands.
@@ -304,7 +304,7 @@ One simple structure for a public-facing essay or presentation:
 
 1. Bitcoin users need a better human interface for choosing who gets paid.
 2. Raw addresses and service-controlled aliases each leave something important on the table.
-3. GNS explores Bitcoin-anchored ownership for payment handles.
+3. ONT explores Bitcoin-anchored ownership for payment handles.
 4. The same key/value design can grow into broader owner-signed records over time.
 5. Ordinary names can stay simple; salient names need more legitimate market structure.
 

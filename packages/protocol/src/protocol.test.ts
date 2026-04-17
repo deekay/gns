@@ -27,7 +27,7 @@ import {
   decodeMerkleProof,
   computeCommitHash,
   decodeCommitPayload,
-  decodeGnsPayload,
+  decodeOntPayload,
   decodeRevealPayload,
   decodeRevealProofChunkPayload,
   decodeTransferBody,
@@ -41,7 +41,7 @@ import {
   encodeRevealPayload,
   encodeRevealProofChunkPayload,
   encodeTransferBody,
-  GnsEventType,
+  OntEventType,
   getBondSats,
   getEpochIndex,
   getMaturityBlocks,
@@ -71,7 +71,7 @@ describe("normalizeName", () => {
   });
 
   it("rejects characters outside the v1 alphabet", () => {
-    expect(() => normalizeName("alice-123")).toThrow(/invalid GNS name/);
+    expect(() => normalizeName("alice-123")).toThrow(/invalid ONT name/);
   });
 });
 
@@ -190,8 +190,8 @@ describe("wire payloads", () => {
       signature: "66".repeat(64)
     });
 
-    expect(decodeGnsPayload(encoded)).toEqual({
-      type: GnsEventType.Transfer,
+    expect(decodeOntPayload(encoded)).toEqual({
+      type: OntEventType.Transfer,
       payload: {
         prevStateTxid: "44".repeat(32),
         newOwnerPubkey: "55".repeat(32),
@@ -261,8 +261,8 @@ describe("wire payloads", () => {
       }),
       bidderCommitment: computeAuctionBidderCommitment("operator_alpha")
     });
-    expect(decodeGnsPayload(encoded)).toEqual({
-      type: GnsEventType.AuctionBid,
+    expect(decodeOntPayload(encoded)).toEqual({
+      type: OntEventType.AuctionBid,
       payload: {
         flags: 0,
         bondVout: 0,
@@ -307,8 +307,8 @@ describe("wire payloads", () => {
       leafCount: 3,
       merkleRoot: "77".repeat(32)
     });
-    expect(decodeGnsPayload(encoded)).toEqual({
-      type: GnsEventType.BatchAnchor,
+    expect(decodeOntPayload(encoded)).toEqual({
+      type: OntEventType.BatchAnchor,
       payload: {
         flags: 0x00,
         leafCount: 3,
@@ -338,8 +338,8 @@ describe("wire payloads", () => {
       proofChunkCount: 2,
       name: "alice123"
     });
-    expect(decodeGnsPayload(encoded)).toEqual({
-      type: GnsEventType.BatchReveal,
+    expect(decodeOntPayload(encoded)).toEqual({
+      type: OntEventType.BatchReveal,
       payload: {
         anchorTxid: "88".repeat(32),
         ownerPubkey: "99".repeat(32),
@@ -363,8 +363,8 @@ describe("wire payloads", () => {
       chunkIndex: 1,
       proofBytesHex: "aa".repeat(12)
     });
-    expect(decodeGnsPayload(encoded)).toEqual({
-      type: GnsEventType.RevealProofChunk,
+    expect(decodeOntPayload(encoded)).toEqual({
+      type: OntEventType.RevealProofChunk,
       payload: {
         chunkIndex: 1,
         proofBytesHex: "aa".repeat(12)
@@ -769,14 +769,19 @@ describe("value records", () => {
     const record = signValueRecord({
       name: "Alice",
       ownerPrivateKeyHex,
+      ownershipRef: "aa".repeat(32),
       sequence: 1,
+      previousRecordHash: null,
       valueType: 0x02,
-      payloadHex: Buffer.from("https://example.com/alice", "utf8").toString("hex")
+      payloadHex: Buffer.from("https://example.com/alice", "utf8").toString("hex"),
+      issuedAt: "2026-04-15T12:00:00.000Z"
     });
 
     expect(record.format).toBe(VALUE_RECORD_FORMAT);
     expect(record.recordVersion).toBe(VALUE_RECORD_VERSION);
     expect(record.name).toBe("alice");
+    expect(record.ownershipRef).toBe("aa".repeat(32));
+    expect(record.previousRecordHash).toBeNull();
     expect(record.signature).toHaveLength(128);
     expect(record.ownerPubkey).toHaveLength(64);
     expect(verifyValueRecord(record)).toBe(true);
@@ -786,9 +791,12 @@ describe("value records", () => {
     const record = signValueRecord({
       name: "bob",
       ownerPrivateKeyHex: "0d".repeat(32),
+      ownershipRef: "bb".repeat(32),
       sequence: 3,
+      previousRecordHash: "cc".repeat(32),
       valueType: 0x01,
-      payloadHex: "001122"
+      payloadHex: "001122",
+      issuedAt: "2026-04-15T12:01:00.000Z"
     });
 
     const parsed = parseSignedValueRecord(record);

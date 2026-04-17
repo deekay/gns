@@ -1,6 +1,6 @@
 <svg width="512" height="512" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
   <!--
-    GNS icon — name record mark
+    ONT icon — name record mark
     Two stacked records: circle (the name/node) + horizontal bar (the value it points to).
     Top record is longer than bottom, suggesting distinct entries in a registry.
     Reads as a list of names at any size.

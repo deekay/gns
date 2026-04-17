@@ -1,7 +1,7 @@
 import { readdir, readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 
-import { createAuctionBidPackage, type AuctionBidPackage } from "@gns/protocol";
+import { createAuctionBidPackage, type AuctionBidPackage } from "@ont/protocol";
 import {
   createDefaultReservedAuctionPolicy,
   parseReservedAuctionScenario,
@@ -10,7 +10,7 @@ import {
   simulateReservedAuctionStateAtBlock,
   type ReservedAuctionPolicy,
   type SerializedReservedAuctionPolicy
-} from "@gns/core";
+} from "@ont/core";
 
 interface AuctionLabFixtureFile {
   readonly title: string;
@@ -57,7 +57,7 @@ interface WebsiteAuctionBidPackageStateInput {
 }
 
 const AUCTION_LAB_FIXTURE_DIR =
-  process.env.GNS_EXPERIMENTAL_AUCTION_FIXTURE_DIR?.trim()
+  process.env.ONT_EXPERIMENTAL_AUCTION_FIXTURE_DIR?.trim()
   || fileURLToPath(new URL("../../../fixtures/auction/lab", import.meta.url));
 
 export async function loadReservedAuctionLab(input?: {

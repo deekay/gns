@@ -1,7 +1,7 @@
 import {
   computeAuctionBidStateCommitment,
   computeAuctionLotCommitment
-} from "@gns/protocol";
+} from "@ont/protocol";
 
 import {
   calculateReservedAuctionMinimumIncrementBidSats,

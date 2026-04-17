@@ -8,7 +8,7 @@ The goal was narrow:
 > annex bytes, sign it correctly, recover the annex afterward, and learn where
 > the tooling starts to get awkward?
 
-This is not a GNS integration. It is a feasibility probe.
+This is not an ONT integration. It is a feasibility probe.
 
 Artifacts:
 
@@ -112,7 +112,7 @@ That matches the earlier envelope note.
 `bitcoinjs-lib`'s `p2tr` payment parser understands the key-spend signature, but
 it does not surface annex as a first-class semantic field.
 
-That is reasonable for Bitcoin validation, but it matters for GNS:
+That is reasonable for Bitcoin validation, but it matters for ONT:
 
 - the protocol cannot rely on a high-level Taproot payment abstraction alone to
   recover the proof bytes

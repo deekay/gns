@@ -77,10 +77,10 @@ path is real and validated.
 
 We have passing tests across:
 
-- `@gns/protocol`
-- `@gns/core`
-- `@gns/cli`
-- `@gns/web`
+- `@ont/protocol`
+- `@ont/core`
+- `@ont/cli`
+- `@ont/web`
 
 The Merkle-specific confidence points now include:
 
@@ -91,7 +91,7 @@ The Merkle-specific confidence points now include:
 - names claimed through batched anchors still transfer correctly under the
   normal immature transfer rules
 - a bad batched reveal can still confirm as a Bitcoin transaction and is then
-  ignored by the GNS state machine with `batch_reveal_invalid_merkle_proof`
+  ignored by the ONT state machine with `batch_reveal_invalid_merkle_proof`
 
 ### Fixture-backed smoke validation
 
@@ -124,7 +124,7 @@ reveal case:
 - a later reveal transaction is deliberately tampered so the Merkle proof no
   longer matches the anchored root
 - the reveal still confirms as a valid Bitcoin transaction
-- the resolver keeps the name unavailable because the GNS state machine ignores
+- the resolver keeps the name unavailable because the ONT state machine ignores
   the reveal
 - transaction provenance records the reason as
   `batch_reveal_invalid_merkle_proof`
@@ -219,7 +219,7 @@ That is a workflow limitation, not a protocol correctness problem.
 
 If we want a careful but confident summary, the wording I would use is:
 
-> GNS now has a working explicit Merkle batching path for ordinary claims. We
+> ONT now has a working explicit Merkle batching path for ordinary claims. We
 > can batch the commit anchor, later reveal names individually against the
 > anchored Merkle root, inspect the full provenance in the website, and carry
 > those names through the normal immature transfer rules afterward. The next

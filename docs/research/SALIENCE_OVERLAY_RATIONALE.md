@@ -26,7 +26,7 @@ The current direction is:
 - determine that overlay from public evidence of salience and coordination importance
 - allow a second path for names where cheap capture would create an overly easy resale trade to one obvious, well-capitalized natural buyer or one dominant real-world referent
 
-This is not a claim that GNS can neutrally price every important word on earth.
+This is not a claim that ONT can neutrally price every important word on earth.
 
 It is a narrower claim:
 
@@ -87,7 +87,7 @@ The overlay path exists partly because it may preserve more of the simplicity an
 
 The special problem is bootstrapping, not steady-state governance.
 
-Existing famous names already carry off-chain value before GNS exists. Future names do not have that same starting condition.
+Existing famous names already carry off-chain value before ONT exists. Future names do not have that same starting condition.
 
 So the cleanest version of the idea is:
 
@@ -141,7 +141,7 @@ That is part of the fairness story.
 
 ### 6. Stay Honest About V1 Scope
 
-The current work is only about names GNS v1 can actually represent:
+The current work is only about names ONT v1 can actually represent:
 
 - lowercase Latin letters
 - digits
@@ -217,7 +217,7 @@ for `10+` years.
 
 A speculator usually is not.
 
-That asymmetry is one of the main non-legal tools GNS has for pushing existing brands toward their real operators over time.
+That asymmetry is one of the main non-legal tools ONT has for pushing existing brands toward their real operators over time.
 
 The token itself still has to be reasonably clear and defensible.
 

@@ -17,19 +17,19 @@ import {
   BATCH_REVEAL_MIN_PAYLOAD_LENGTH,
   decodeBatchRevealPayload,
   encodeBatchRevealPayload,
-  GnsEventType,
+  OntEventType,
   type BatchClaimPackage
-} from "@gns/protocol";
+} from "@ont/protocol";
 
-import type { GnsCliNetwork } from "./builder.js";
+import type { OntCliNetwork } from "./builder.js";
 
 initEccLib(tinysecp);
 
 const ECPair = ECPairFactory(tinysecp);
 
-const PROTOCOL_MAGIC = Buffer.from("gns", "utf8");
+const PROTOCOL_MAGIC = Buffer.from("ont", "utf8");
 const EXPERIMENTAL_ANNEX_TYPE = 0xf0;
-const EXPERIMENTAL_ANNEX_FORMAT = "gns-batch-proof-v0";
+const EXPERIMENTAL_ANNEX_FORMAT = "ont-batch-proof-v0";
 const DEFAULT_EXPERIMENTAL_FEE_SATS = 500n;
 const DEFAULT_EXPERIMENTAL_PROOF_BYTES = 99;
 const DEFAULT_EXPERIMENTAL_PROOF_FILL_BYTE = 0x41;
@@ -43,9 +43,9 @@ export interface ExperimentalAnnexCarrierPrevout {
 }
 
 export interface ExperimentalAnnexUnsignedEnvelope {
-  readonly kind: "gns-batch-reveal-annex-artifacts";
+  readonly kind: "ont-batch-reveal-annex-artifacts";
   readonly semanticMode: "illustrative" | "batch_claim_package";
-  readonly network: GnsCliNetwork;
+  readonly network: OntCliNetwork;
   readonly psbtBase64: string;
   readonly unsignedBaseTransactionHex: string;
   readonly unsignedBaseTransactionId: string;
@@ -63,13 +63,13 @@ export interface ExperimentalAnnexUnsignedEnvelope {
   readonly name: string;
   readonly bondVout: number;
   readonly feeSats: string;
-  readonly gnsBatchRevealPayloadHex?: string;
-  readonly gnsBatchRevealPayloadBytes?: number;
+  readonly ontBatchRevealPayloadHex?: string;
+  readonly ontBatchRevealPayloadBytes?: number;
 }
 
 export interface ExperimentalAnnexSignedEnvelope {
-  readonly kind: "gns-signed-batch-reveal-annex-artifacts";
-  readonly network: GnsCliNetwork;
+  readonly kind: "ont-signed-batch-reveal-annex-artifacts";
+  readonly network: OntCliNetwork;
   readonly signedTransactionHex: string;
   readonly signedTransactionId: string;
   readonly signedTransactionWitnessId: string;
@@ -86,8 +86,8 @@ export interface ExperimentalAnnexSignedEnvelope {
 }
 
 export interface ExperimentalAnnexVerificationReport {
-  readonly kind: "gns-batch-reveal-annex-verification";
-  readonly network: GnsCliNetwork;
+  readonly kind: "ont-batch-reveal-annex-verification";
+  readonly network: OntCliNetwork;
   readonly signedTransactionId: string;
   readonly signedTransactionWitnessId: string;
   readonly verification: {
@@ -105,7 +105,7 @@ export interface ExperimentalAnnexVerificationReport {
 }
 
 export interface BuildExperimentalAnnexRevealEnvelopeOptions {
-  readonly network: GnsCliNetwork;
+  readonly network: OntCliNetwork;
   readonly name: string;
   readonly anchorTxid: string;
   readonly bondVout: number;
@@ -124,7 +124,7 @@ export interface BuildExperimentalAnnexRevealEnvelopeOptions {
 }
 
 export interface BuildExperimentalAnnexRevealEnvelopeFromBatchClaimPackageOptions {
-  readonly network: GnsCliNetwork;
+  readonly network: OntCliNetwork;
   readonly claimPackage: BatchClaimPackage;
   readonly carrierPrevout: {
     readonly txid: string;
@@ -217,8 +217,8 @@ export function buildExperimentalAnnexRevealEnvelopeFromBatchClaimPackage(
     name: options.claimPackage.name,
     bondVout: options.claimPackage.bondVout,
     semanticMode: "batch_claim_package",
-    gnsBatchRevealPayloadHex: derivedBatchRevealPayloadHex,
-    gnsBatchRevealPayloadBytes: derivedBatchRevealPayloadHex.length / 2,
+    ontBatchRevealPayloadHex: derivedBatchRevealPayloadHex,
+    ontBatchRevealPayloadBytes: derivedBatchRevealPayloadHex.length / 2,
     ...(options.feeSats !== undefined ? { feeSats: options.feeSats } : {}),
     ...(options.changeAddress !== undefined ? { changeAddress: options.changeAddress } : {})
   });
@@ -276,15 +276,15 @@ export function signExperimentalAnnexRevealEnvelope(
   }
 
   if (
-    options.unsignedEnvelope.gnsBatchRevealPayloadHex &&
+    options.unsignedEnvelope.ontBatchRevealPayloadHex &&
     parsedHeader.mode !== "batch_claim_package"
   ) {
     throw new Error("experimental annex envelope expected a batch-claim-package header");
   }
 
   if (
-    options.unsignedEnvelope.gnsBatchRevealPayloadHex &&
-    parsedHeader.gnsBatchRevealPayloadHex !== options.unsignedEnvelope.gnsBatchRevealPayloadHex
+    options.unsignedEnvelope.ontBatchRevealPayloadHex &&
+    parsedHeader.ontBatchRevealPayloadHex !== options.unsignedEnvelope.ontBatchRevealPayloadHex
   ) {
     throw new Error("explicit header batch reveal payload does not match the envelope");
   }
@@ -315,7 +315,7 @@ export function signExperimentalAnnexRevealEnvelope(
   tx.setWitness(options.unsignedEnvelope.carrierInputIndex, [signature, annex]);
 
   return {
-    kind: "gns-signed-batch-reveal-annex-artifacts",
+    kind: "ont-signed-batch-reveal-annex-artifacts",
     network: options.unsignedEnvelope.network,
     signedTransactionHex: tx.toHex(),
     signedTransactionId: tx.getId(),
@@ -335,7 +335,7 @@ export function signExperimentalAnnexRevealEnvelope(
 }
 
 function buildExperimentalAnnexRevealEnvelopeFromComponents(options: {
-  readonly network: GnsCliNetwork;
+  readonly network: OntCliNetwork;
   readonly carrierPrevout: {
     readonly txid: string;
     readonly vout: number;
@@ -351,8 +351,8 @@ function buildExperimentalAnnexRevealEnvelopeFromComponents(options: {
   readonly name: string;
   readonly bondVout: number;
   readonly semanticMode: "illustrative" | "batch_claim_package";
-  readonly gnsBatchRevealPayloadHex?: string;
-  readonly gnsBatchRevealPayloadBytes?: number;
+  readonly ontBatchRevealPayloadHex?: string;
+  readonly ontBatchRevealPayloadBytes?: number;
 }): ExperimentalAnnexUnsignedEnvelope {
   const network = resolveNetwork(options.network);
   const keyPair = ECPair.fromWIF(options.wif, [network]);
@@ -405,7 +405,7 @@ function buildExperimentalAnnexRevealEnvelopeFromComponents(options: {
   });
 
   return {
-    kind: "gns-batch-reveal-annex-artifacts",
+    kind: "ont-batch-reveal-annex-artifacts",
     semanticMode: options.semanticMode,
     network: options.network,
     psbtBase64: psbt.toBase64(),
@@ -429,11 +429,11 @@ function buildExperimentalAnnexRevealEnvelopeFromComponents(options: {
     name: options.name,
     bondVout: options.bondVout,
     feeSats: feeSats.toString(),
-    ...(options.gnsBatchRevealPayloadHex
-      ? { gnsBatchRevealPayloadHex: options.gnsBatchRevealPayloadHex }
+    ...(options.ontBatchRevealPayloadHex
+      ? { ontBatchRevealPayloadHex: options.ontBatchRevealPayloadHex }
       : {}),
-    ...(options.gnsBatchRevealPayloadBytes !== undefined
-      ? { gnsBatchRevealPayloadBytes: options.gnsBatchRevealPayloadBytes }
+    ...(options.ontBatchRevealPayloadBytes !== undefined
+      ? { ontBatchRevealPayloadBytes: options.ontBatchRevealPayloadBytes }
       : {})
   };
 }
@@ -477,7 +477,7 @@ export function verifyExperimentalAnnexRevealEnvelope(
   );
 
   return {
-    kind: "gns-batch-reveal-annex-verification",
+    kind: "ont-batch-reveal-annex-verification",
     network: options.unsignedEnvelope.network,
     signedTransactionId: tx.getId(),
     signedTransactionWitnessId: displayHash(tx.getHash(true)),
@@ -507,8 +507,8 @@ export function parseExperimentalAnnexRevealEnvelope(
   const record = assertRecord(input, "experimental annex envelope");
   const kind = assertString(record.kind, "kind");
 
-  if (kind !== "gns-batch-reveal-annex-artifacts") {
-    throw new Error("experimental annex envelope kind must be gns-batch-reveal-annex-artifacts");
+  if (kind !== "ont-batch-reveal-annex-artifacts") {
+    throw new Error("experimental annex envelope kind must be ont-batch-reveal-annex-artifacts");
   }
 
   const carrierPrevout = assertRecord(record.carrierPrevout, "carrierPrevout");
@@ -547,11 +547,11 @@ export function parseExperimentalAnnexRevealEnvelope(
     name: assertString(record.name, "name"),
     bondVout: assertInteger(record.bondVout, "bondVout"),
     feeSats: assertString(record.feeSats, "feeSats"),
-    ...(typeof record.gnsBatchRevealPayloadHex === "string"
-      ? { gnsBatchRevealPayloadHex: assertString(record.gnsBatchRevealPayloadHex, "gnsBatchRevealPayloadHex") }
+    ...(typeof record.ontBatchRevealPayloadHex === "string"
+      ? { ontBatchRevealPayloadHex: assertString(record.ontBatchRevealPayloadHex, "ontBatchRevealPayloadHex") }
       : {}),
-    ...(record.gnsBatchRevealPayloadBytes !== undefined
-      ? { gnsBatchRevealPayloadBytes: assertInteger(record.gnsBatchRevealPayloadBytes, "gnsBatchRevealPayloadBytes") }
+    ...(record.ontBatchRevealPayloadBytes !== undefined
+      ? { ontBatchRevealPayloadBytes: assertInteger(record.ontBatchRevealPayloadBytes, "ontBatchRevealPayloadBytes") }
       : {})
   };
 }
@@ -562,9 +562,9 @@ export function parseSignedExperimentalAnnexRevealEnvelope(
   const record = assertRecord(input, "signed experimental annex envelope");
   const kind = assertString(record.kind, "kind");
 
-  if (kind !== "gns-signed-batch-reveal-annex-artifacts") {
+  if (kind !== "ont-signed-batch-reveal-annex-artifacts") {
     throw new Error(
-      "signed experimental annex envelope kind must be gns-signed-batch-reveal-annex-artifacts"
+      "signed experimental annex envelope kind must be ont-signed-batch-reveal-annex-artifacts"
     );
   }
 
@@ -677,11 +677,11 @@ function parseExperimentalExplicitHeader(headerBytes: Uint8Array): {
   readonly annexSha256: string;
   readonly annexBytesLength: number;
   readonly name: string;
-  readonly gnsBatchRevealPayloadHex?: string;
+  readonly ontBatchRevealPayloadHex?: string;
 } {
   const header = Buffer.from(headerBytes);
 
-  if (header[4] === GnsEventType.BatchReveal) {
+  if (header[4] === OntEventType.BatchReveal) {
     return parseBatchRevealHybridHeader(header);
   }
 
@@ -740,7 +740,7 @@ function parseBatchRevealHybridHeader(header: Buffer): {
   readonly annexSha256: string;
   readonly annexBytesLength: number;
   readonly name: string;
-  readonly gnsBatchRevealPayloadHex: string;
+  readonly ontBatchRevealPayloadHex: string;
 } {
   if (header.length < BATCH_REVEAL_MIN_PAYLOAD_LENGTH + 36) {
     throw new Error("experimental annex batch reveal header is too short");
@@ -774,7 +774,7 @@ function parseBatchRevealHybridHeader(header: Buffer): {
     annexSha256: header.subarray(batchRevealPayloadLength + 2, batchRevealPayloadLength + 34).toString("hex"),
     annexBytesLength: header.readUInt16BE(batchRevealPayloadLength + 34),
     name: decodedPayload.name,
-    gnsBatchRevealPayloadHex: batchRevealPayload.toString("hex")
+    ontBatchRevealPayloadHex: batchRevealPayload.toString("hex")
   };
 }
 
@@ -922,7 +922,7 @@ function assertInteger(value: unknown, label: string): number {
   return value as number;
 }
 
-function parseNetwork(value: string): GnsCliNetwork {
+function parseNetwork(value: string): OntCliNetwork {
   if (value === "main" || value === "signet" || value === "testnet" || value === "regtest") {
     return value;
   }
@@ -930,7 +930,7 @@ function parseNetwork(value: string): GnsCliNetwork {
   throw new Error("experimental annex network must be one of main, signet, testnet, regtest");
 }
 
-function resolveNetwork(name: GnsCliNetwork) {
+function resolveNetwork(name: OntCliNetwork) {
   switch (name) {
     case "main":
       return networks.bitcoin;

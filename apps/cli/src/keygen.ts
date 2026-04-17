@@ -4,7 +4,7 @@ import { payments, networks, initEccLib } from "bitcoinjs-lib";
 import ECPairFactory from "ecpair";
 import * as tinysecp from "tiny-secp256k1";
 
-import type { GnsCliNetwork } from "./builder.js";
+import type { OntCliNetwork } from "./builder.js";
 
 initEccLib(tinysecp);
 
@@ -22,8 +22,8 @@ export interface GeneratedFundingKey {
 }
 
 export interface GeneratedLiveAccount {
-  readonly kind: "gns-generated-live-account";
-  readonly network: GnsCliNetwork;
+  readonly kind: "ont-generated-live-account";
+  readonly network: OntCliNetwork;
   readonly ownerPrivateKeyHex: string;
   readonly ownerPubkey: string;
   readonly fundingWif: string;
@@ -56,7 +56,7 @@ export function generateOwnerKey(): GeneratedOwnerKey {
   }
 }
 
-export function generateFundingKey(network: GnsCliNetwork): GeneratedFundingKey {
+export function generateFundingKey(network: OntCliNetwork): GeneratedFundingKey {
   const keyPair = ECPair.makeRandom({
     network: resolveNetwork(network),
     rng: (size: number) => randomBytes(size)
@@ -77,12 +77,12 @@ export function generateFundingKey(network: GnsCliNetwork): GeneratedFundingKey 
   };
 }
 
-export function generateLiveAccount(network: GnsCliNetwork): GeneratedLiveAccount {
+export function generateLiveAccount(network: OntCliNetwork): GeneratedLiveAccount {
   const owner = generateOwnerKey();
   const funding = generateFundingKey(network);
 
   return {
-    kind: "gns-generated-live-account",
+    kind: "ont-generated-live-account",
     network,
     ownerPrivateKeyHex: owner.ownerPrivateKeyHex,
     ownerPubkey: owner.ownerPubkey,
@@ -92,7 +92,7 @@ export function generateLiveAccount(network: GnsCliNetwork): GeneratedLiveAccoun
   };
 }
 
-function resolveNetwork(name: GnsCliNetwork) {
+function resolveNetwork(name: OntCliNetwork) {
   switch (name) {
     case "main":
       return networks.bitcoin;

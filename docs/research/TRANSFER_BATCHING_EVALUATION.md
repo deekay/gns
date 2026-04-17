@@ -2,7 +2,7 @@
 
 This note answers a narrower question than the Merkle batching work:
 
-> should GNS turn its attention toward batching transfers, and if so, what
+> should ONT turn its attention toward batching transfers, and if so, what
 > would that actually mean?
 
 The short answer is:
@@ -16,11 +16,11 @@ Related notes:
 
 - [TRANSFER_RELAY_OPTIONS.md](./TRANSFER_RELAY_OPTIONS.md)
 - [MERKLE_BATCHING_STATUS.md](./MERKLE_BATCHING_STATUS.md)
-- [GNS_IMPLEMENTATION_AND_VALIDATION.md](./GNS_IMPLEMENTATION_AND_VALIDATION.md)
+- [ONT_IMPLEMENTATION_AND_VALIDATION.md](./ONT_IMPLEMENTATION_AND_VALIDATION.md)
 
 ## Current State
 
-Today, GNS has:
+Today, ONT has:
 
 - working transfer prototypes
 - valid immature transfer handling with bond continuity
@@ -29,7 +29,7 @@ Today, GNS has:
 - proof that names originally claimed through batch anchors still transfer
   correctly later
 
-What GNS does **not** have today:
+What ONT does **not** have today:
 
 - transfers that are themselves Merkle-batched
 - multi-name transfer packaging as a production flow

@@ -1,23 +1,25 @@
 import { schnorr, secp256k1 } from "@noble/curves/secp256k1.js";
 import { sha256 } from "@noble/hashes/sha2.js";
 
-export const VALUE_RECORD_FORMAT = "gns-value-record";
-export const VALUE_RECORD_VERSION = 1;
+export const VALUE_RECORD_FORMAT = "ont-value-record";
+export const VALUE_RECORD_VERSION = 2;
 const NAME_PATTERN = /^[a-z0-9]{1,32}$/;
 const HEX_PATTERN = /^[0-9a-f]+$/i;
 
 export interface BrowserValueRecordFields {
   readonly name: string;
   readonly ownerPubkey: string;
+  readonly ownershipRef: string;
   readonly sequence: number;
+  readonly previousRecordHash: string | null;
   readonly valueType: number;
   readonly payloadHex: string;
+  readonly issuedAt: string;
 }
 
 export interface BrowserSignedValueRecord extends BrowserValueRecordFields {
   readonly format: typeof VALUE_RECORD_FORMAT;
   readonly recordVersion: typeof VALUE_RECORD_VERSION;
-  readonly exportedAt: string;
   readonly signature: string;
 }
 
@@ -34,10 +36,12 @@ export function deriveOwnerPubkey(ownerPrivateKeyHex: string): string {
 export function signBrowserValueRecord(input: {
   readonly name: string;
   readonly ownerPrivateKeyHex: string;
+  readonly ownershipRef: string;
   readonly sequence: number;
+  readonly previousRecordHash: string | null;
   readonly valueType: number;
   readonly payloadHex: string;
-  readonly exportedAt?: string;
+  readonly issuedAt?: string;
 }): BrowserSignedValueRecord {
   const ownerPrivateKeyHex = assertHexBytes(input.ownerPrivateKeyHex, 32, "ownerPrivateKeyHex");
   const ownerPrivateKey = hexToBytes(ownerPrivateKeyHex);
@@ -49,15 +53,17 @@ export function signBrowserValueRecord(input: {
   const fields: BrowserValueRecordFields = {
     name: normalizeName(input.name),
     ownerPubkey: bytesToHex(schnorr.getPublicKey(ownerPrivateKey)),
+    ownershipRef: assertHexBytes(input.ownershipRef, 32, "ownershipRef"),
     sequence: assertSequence(input.sequence),
+    previousRecordHash: normalizePreviousRecordHash(input.previousRecordHash),
     valueType: assertByte(input.valueType, "valueType"),
-    payloadHex: normalizePayloadHex(input.payloadHex)
+    payloadHex: normalizePayloadHex(input.payloadHex),
+    issuedAt: assertIsoTimestamp(input.issuedAt ?? new Date().toISOString(), "issuedAt")
   };
 
   return {
     format: VALUE_RECORD_FORMAT,
     recordVersion: VALUE_RECORD_VERSION,
-    exportedAt: input.exportedAt ?? new Date().toISOString(),
     ...fields,
     signature: bytesToHex(schnorr.sign(computeValueRecordDigest(fields), ownerPrivateKey))
   };
@@ -73,9 +79,12 @@ export function verifyBrowserValueRecord(input: BrowserSignedValueRecord): boole
       computeValueRecordDigest({
         name: input.name,
         ownerPubkey: input.ownerPubkey,
+        ownershipRef: input.ownershipRef,
         sequence: input.sequence,
+        previousRecordHash: input.previousRecordHash,
         valueType: input.valueType,
-        payloadHex: input.payloadHex
+        payloadHex: input.payloadHex,
+        issuedAt: input.issuedAt
       }),
       pubkey
     );
@@ -92,32 +101,76 @@ export function normalizeRawPayloadHex(value: string): string {
   return normalizePayloadHex(value.trim().replace(/\s+/g, ""));
 }
 
+export function computeBrowserValueRecordHash(input: BrowserValueRecordFields): string {
+  return bytesToHex(computeValueRecordDigest(input));
+}
+
 function computeValueRecordDigest(input: BrowserValueRecordFields): Uint8Array {
   const name = normalizeName(input.name);
   const ownerPubkey = hexToBytes(assertHexBytes(input.ownerPubkey, 32, "ownerPubkey"));
+  const ownershipRef = hexToBytes(assertHexBytes(input.ownershipRef, 32, "ownershipRef"));
   const sequence = assertSequence(input.sequence);
+  const previousRecordHash = normalizePreviousRecordHash(input.previousRecordHash);
   const valueType = assertByte(input.valueType, "valueType");
   const payloadBytes = hexToBytes(normalizePayloadHex(input.payloadHex));
+  const issuedAt = assertIsoTimestamp(input.issuedAt, "issuedAt");
+  const formatBytes = new TextEncoder().encode(VALUE_RECORD_FORMAT);
   const nameBytes = new TextEncoder().encode(name);
+  const issuedAtBytes = new TextEncoder().encode(issuedAt);
 
   const message = new Uint8Array(
-    1 + nameBytes.length + ownerPubkey.length + 8 + 1 + 2 + payloadBytes.length
+    2
+    + formatBytes.length
+    + 1
+    + 2
+    + nameBytes.length
+    + ownerPubkey.length
+    + ownershipRef.length
+    + 8
+    + 1
+    + (previousRecordHash === null ? 0 : 32)
+    + 1
+    + 2
+    + payloadBytes.length
+    + 2
+    + issuedAtBytes.length
   );
 
   let offset = 0;
-  message[offset] = nameBytes.length;
+  message.set(uint16ToBytes(formatBytes.length), offset);
+  offset += 2;
+  message.set(formatBytes, offset);
+  offset += formatBytes.length;
+  message[offset] = VALUE_RECORD_VERSION;
   offset += 1;
+  message.set(uint16ToBytes(nameBytes.length), offset);
+  offset += 2;
   message.set(nameBytes, offset);
   offset += nameBytes.length;
   message.set(ownerPubkey, offset);
   offset += ownerPubkey.length;
+  message.set(ownershipRef, offset);
+  offset += ownershipRef.length;
   message.set(bigIntToUint64Bytes(BigInt(sequence)), offset);
   offset += 8;
+  if (previousRecordHash === null) {
+    message[offset] = 0;
+    offset += 1;
+  } else {
+    message[offset] = 1;
+    offset += 1;
+    message.set(hexToBytes(previousRecordHash), offset);
+    offset += 32;
+  }
   message[offset] = valueType;
   offset += 1;
   message.set(uint16ToBytes(payloadBytes.length), offset);
   offset += 2;
   message.set(payloadBytes, offset);
+  offset += payloadBytes.length;
+  message.set(uint16ToBytes(issuedAtBytes.length), offset);
+  offset += 2;
+  message.set(issuedAtBytes, offset);
 
   return Uint8Array.from(sha256(message));
 }
@@ -183,8 +236,8 @@ function bytesToHex(bytes: Uint8Array): string {
 }
 
 function assertSequence(value: number): number {
-  if (!Number.isSafeInteger(value) || value < 0) {
-    throw new Error("sequence must be a non-negative safe integer");
+  if (!Number.isSafeInteger(value) || value < 1) {
+    throw new Error("sequence must be a positive safe integer");
   }
 
   return value;
@@ -220,4 +273,16 @@ function uint16ToBytes(value: number): Uint8Array {
   }
 
   return Uint8Array.of((value >> 8) & 0xff, value & 0xff);
+}
+
+function normalizePreviousRecordHash(value: string | null): string | null {
+  return value === null ? null : assertHexBytes(value, 32, "previousRecordHash");
+}
+
+function assertIsoTimestamp(value: string, label: string): string {
+  if (typeof value !== "string" || Number.isNaN(Date.parse(value))) {
+    throw new Error(`${label} must be a valid ISO timestamp`);
+  }
+
+  return value;
 }

@@ -3,7 +3,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
-import { createAuctionBidPackage } from "@gns/protocol";
+import { createAuctionBidPackage } from "@ont/protocol";
 
 import {
   cliJson,
@@ -67,7 +67,7 @@ async function main() {
 
     const finalFeed = await fetchExperimentalAuctionFeed();
     const summary = {
-      kind: "gns-private-signet-auction-phase-gallery-summary",
+      kind: "ont-private-signet-auction-phase-gallery-summary",
       status: "complete",
       generatedAt: new Date().toISOString(),
       currentBlockHeight: finalFeed.currentBlockHeight,

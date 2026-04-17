@@ -9,33 +9,33 @@ const baseOptions = {
   includePrivateBatchSmoke: true,
   includePrivateAuctionSmoke: true,
   networkLabel: "private signet",
-  privateSignetElectrumEndpoint: "globalnamesystem.org:50001:t",
+  privateSignetElectrumEndpoint: "opennametags.org:50001:t",
   privateSignetFundingAmountSats: 50_000n,
   privateSignetFundingEnabled: true
 } as const;
 
 describe("renderPageHtml", () => {
-  it("surfaces the payment-handle framing and current docs on the home page", () => {
+  it("keeps the homepage focused on the core framing and next paths", () => {
     const html = renderPageHtml({
       ...baseOptions,
       pageKind: "home"
     });
 
     expect(html).toContain("Human-Readable Names You Can Actually Own");
-    expect(html).toContain("payment handle you control");
-    expect(html).toContain("Open offline architect");
-    expect(html).toContain("Open auction lab");
-    expect(html).toContain("GNS_FROM_ZERO.md");
-    expect(html).toContain("GNS_IMPLEMENTATION_AND_VALIDATION.md");
-    expect(html).toContain("MERKLE_BATCHING_STATUS.md");
-    expect(html).toContain("LAUNCH_SPEC_V0.md");
-    expect(html).toContain("Private Signet Batch Smoke");
-    expect(html).toContain("Private Signet Auction Smoke");
-    expect(html).toContain("best live-chain proof for the current ordinary-lane Merkle batching path");
-    expect(html).toContain("current live-chain proof for the experimental reserved-auction slice");
-    expect(html).toContain("claimdemo");
-    expect(html).toContain("valuedemo");
-    expect(html).toContain("transferdemo");
+    expect(html).toContain("human-readable name with verifiable ownership");
+    expect(html).toContain("Ownership is anchored to Bitcoin and publicly auditable.");
+    expect(html).toContain("It is bonded, not rented.");
+    expect(html).toContain("cashapp -&gt; $alice1234");
+    expect(html).toContain("website -&gt; https://alice.example");
+    expect(html).toContain("Choose A Path");
+    expect(html).toContain("Understand ONT");
+    expect(html).toContain("Try The Prototype");
+    expect(html).toContain("Explore The Registry");
+    expect(html).toContain("Offline architect");
+    expect(html).toContain("Auctions");
+    expect(html).not.toContain("Current Status");
+    expect(html).not.toContain("Private Signet Batch Smoke");
+    expect(html).not.toContain("claimdemo");
   });
 
   it("keeps explore focused on the current private-signet demo surfaces", () => {
@@ -60,7 +60,7 @@ describe("renderPageHtml", () => {
     expect(html).toContain("privateBatchSmokeResult");
   });
 
-  it("adds the overview nav entry", () => {
+  it("adds the overview nav entry and keeps overview as the main explanatory page", () => {
     const html = renderPageHtml({
       ...baseOptions,
       pageKind: "explainer"
@@ -68,31 +68,49 @@ describe("renderPageHtml", () => {
 
     expect(html).toContain(">Overview<");
     expect(html).toContain(">Auctions<");
+    expect(html).toContain("How It Works");
     expect(html).toContain("Use The Current Prototype");
-    expect(html).toContain("Implementation status");
+    expect(html).toContain("Current Status");
+    expect(html).toContain("Works Today");
+    expect(html).toContain("Launch Spec v0");
+    expect(html).not.toContain("What ONT Is");
   });
 
-  it("renders the auction lab page", () => {
+  it("renders the auctions page", () => {
     const html = renderPageHtml({
       ...baseOptions,
       pageKind: "auctions"
     });
 
-    expect(html).toContain("Experimental Reserved Auction Lab");
-    expect(html).toContain("Reserved Auction States");
+    expect(html).toContain("Auctions");
+    expect(html).toContain("Reserved Name Auction States");
     expect(html).toContain("auctionLabList");
     expect(html).toContain("auctionPolicyControls");
     expect(html).toContain("No-bid release blocks");
     expect(html).toContain("Apply simulator override");
-    expect(html).toContain("Chain-Derived Experimental Bids");
+    expect(html).toContain("Chain-Derived Bid Feed");
     expect(html).toContain("experimentalAuctionList");
     expect(html).toContain("privateAuctionSmokeResult");
-    expect(html).toContain("What This Covers");
-    expect(html).toContain("Experimental bid-package handoffs");
+    expect(html).toContain("Current Scope");
+    expect(html).toContain("Auction bid-package handoffs");
     expect(html).toContain("Same-bidder replacement");
     expect(html).toContain("no-bid release");
     expect(html).toContain("ordinary lane");
     expect(html).toContain("stronger soft-close increment rule");
     expect(html).toContain("bond spend/release summaries");
+  });
+
+  it("renders the values page fanout controls", () => {
+    const html = renderPageHtml({
+      ...baseOptions,
+      pageKind: "values"
+    });
+
+    expect(html).toContain("Publish An Off-Chain Value");
+    expect(html).toContain("valuePublishModeNote");
+    expect(html).toContain("publishValueFanoutButton");
+    expect(html).toContain("configured resolver set");
+    expect(html).toContain("cashapp -&gt; $alice1234");
+    expect(html).toContain("Keys are app-defined and repeatable.");
   });
 });

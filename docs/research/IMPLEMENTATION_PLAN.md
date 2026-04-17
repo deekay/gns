@@ -1,8 +1,8 @@
-# Global Name System Implementation Plan
+# Open Name Tags Implementation Plan
 
 ## Purpose
 
-This document turns the current Global Name System / GNS protocol direction into a concrete implementation plan for a public prototype on signet.
+This document turns the current Open Name Tags / ONT protocol direction into a concrete implementation plan for a public prototype on signet.
 
 The goal is not to freeze the final mainnet protocol immediately. The goal is to:
 - build a working reference implementation
@@ -15,7 +15,7 @@ This document describes the current explicit-event prototype baseline. If the pr
 ## Build Goal
 
 Ship a signet prototype with:
-- a long-running Global Name System / GNS indexer
+- a long-running Open Name Tags / ONT indexer
 - a read-only resolver API
 - a CLI or signer-capable client
 - a website for browsing, search, provenance, and transaction assembly
@@ -58,16 +58,16 @@ Responsibilities:
 - expose RPC and ZMQ or polling access
 - support transaction broadcast for prototype flows
 
-2. `gns-indexer`
+2. `ont-indexer`
 
 A long-running service that:
 - scans signet blocks
-- parses GNS events
+- parses ONT events
 - tracks claim state, ownership state, bond continuity, and maturity
 - stores normalized indexed state in a database
 - handles reorg rollback and replay
 
-3. `gns-resolver`
+3. `ont-resolver`
 
 A read-only API layered on indexed state.
 
@@ -76,16 +76,16 @@ Responsibilities:
 - return latest valid off-chain value record
 - return provenance for events and names
 
-4. `gns-cli`
+4. `ont-cli`
 
 A local signer-oriented tool that:
 - derives or imports owner keys
-- prepares and signs GNS transactions
+- prepares and signs ONT transactions
 - signs off-chain value records
 - validates bond continuity before signing
 - broadcasts transactions when configured to do so
 
-5. `gns-web`
+5. `ont-web`
 
 A website that:
 - queries the resolver
@@ -113,7 +113,7 @@ The website should not be the only execution path. Every meaningful action shoul
 ### Use A Separate Always-On Service For
 
 - Bitcoin Core signet node
-- GNS indexer
+- ONT indexer
 - PostgreSQL database
 - resolver backend
 
@@ -140,7 +140,7 @@ Suggested structure:
 ```text
 apps/
   web/          Next.js website
-  indexer/      long-running GNS indexer
+  indexer/      long-running ONT indexer
   resolver/     read-only HTTP API
   cli/          signer and transaction preparation tool
 
@@ -294,7 +294,7 @@ Returns:
 ### `GET /tx/{txid}`
 
 Returns:
-- parsed GNS event if present
+- parsed ONT event if present
 - raw decoded fields
 - validation status
 - links to related name state
@@ -333,7 +333,7 @@ The prototype website should support:
 - sign locally via CLI/wallet flow
 - submit to resolver-backed storage or publication layer
 
-### GNS Signet Faucet (UX Beta)
+### ONT Signet Faucet (UX Beta)
 
 - provide small amounts of sBTC (e.g., 10,000 - 50,000 sats) for testing
 - integrated into the claim planning flow for zero-friction onboarding
@@ -348,13 +348,13 @@ The prototype website should support:
 
 The CLI should support:
 
-- `gns name lookup <name>`
-- `gns claim prepare <name>`
-- `gns claim reveal <commit_txid> <name>`
-- `gns transfer prepare <name> <new_owner_pubkey>`
-- `gns value sign <name> ...`
-- `gns value publish ...`
-- `gns wallet scan`
+- `ont name lookup <name>`
+- `ont claim prepare <name>`
+- `ont claim reveal <commit_txid> <name>`
+- `ont transfer prepare <name> <new_owner_pubkey>`
+- `ont value sign <name> ...`
+- `ont value publish ...`
+- `ont wallet scan`
 
 Minimum capabilities:
 - derive/import owner key
@@ -384,7 +384,7 @@ Exit criteria:
 ### Phase 1: Local Protocol Engine
 
 Goal:
-- make GNS state transitions executable without any UI
+- make ONT state transitions executable without any UI
 
 Deliverables:
 - event parsers
@@ -420,7 +420,7 @@ Goal: Run an open prototype on Bitcoin Signet to gather technical feedback, iden
 **Focus Areas:**
 - **Protocol Hardening:** Encouraging technical reviewers to identify reorg handling issues, bond continuity exploits, or tie-breaking ambiguities.
 - **UX Refinement:** Testing the "Commit/Reveal" flow and resolution logic with early adopters.
-- **Ecosystem Tooling:** Launching the GNS Signet Faucet and reference resolution APIs to lower the barrier for developer participation.
+- **Ecosystem Tooling:** Launching the ONT Signet Faucet and reference resolution APIs to lower the barrier for developer participation.
 - **Alternative Approaches:** Remaining open to protocol adjustments based on community input before constants are frozen.
 
 ### Phase 4: Path to Mainnet (Stability-Driven)
@@ -436,7 +436,7 @@ Goal: A fair, neutral launch of the canonical namespace once the protocol is pro
 Goal: Scale the utility of the namespace through integration and tooling.
 
 - **Resolution Hosting:** Reference implementations for serving signed off-chain resolution records.
-- **Wallet Integrations:** Partnering with major Bitcoin wallets (Sparrow, Electrum, Alby) for native GNS resolution.
+- **Wallet Integrations:** Partnering with major Bitcoin wallets (Sparrow, Electrum, Alby) for native ONT resolution.
 
 ### Phase 6: Review Loop
 

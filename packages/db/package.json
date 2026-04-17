@@ -1,5 +1,5 @@
 {
-  "name": "@gns/db",
+  "name": "@ont/db",
   "version": "0.0.0",
   "private": true,
   "type": "module",

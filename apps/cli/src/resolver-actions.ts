@@ -1,4 +1,4 @@
-import { normalizeName } from "@gns/protocol";
+import { normalizeName } from "@ont/protocol";
 
 export interface ResolverClaimPlan {
   readonly name: string;
@@ -49,13 +49,54 @@ export interface ResolverNameRecord {
 export interface ResolverValueRecord {
   readonly format: string;
   readonly recordVersion: number;
-  readonly exportedAt: string;
   readonly name: string;
   readonly ownerPubkey: string;
+  readonly ownershipRef: string;
   readonly sequence: number;
+  readonly previousRecordHash: string | null;
   readonly valueType: number;
   readonly payloadHex: string;
+  readonly issuedAt: string;
   readonly signature: string;
+  readonly recordHash: string;
+}
+
+export interface ResolverValueHistory {
+  readonly name: string;
+  readonly ownershipRef: string;
+  readonly currentRecordHash: string;
+  readonly completeFromSequence: number;
+  readonly completeToSequence: number;
+  readonly hasGaps: boolean;
+  readonly hasForks: boolean;
+  readonly records: readonly ResolverValueRecord[];
+}
+
+export interface MultiResolverValueHistoryResult {
+  readonly resolverUrl: string;
+  readonly outcome: "ok" | "missing" | "error";
+  readonly history: ResolverValueHistory | null;
+  readonly status: number | null;
+  readonly code: string | null;
+  readonly message: string | null;
+}
+
+export interface MultiResolverValueHistorySummary {
+  readonly kind: "ont-multi-resolver-value-history";
+  readonly name: string;
+  readonly resolverCount: number;
+  readonly status: "all_missing" | "consistent" | "lagging" | "conflict";
+  readonly canonicalResolverUrl: string | null;
+  readonly canonicalHistory: ResolverValueHistory | null;
+  readonly canonicalValueRecord: ResolverValueRecord | null;
+  readonly ownershipRef: string | null;
+  readonly currentRecordHash: string | null;
+  readonly currentSequence: number | null;
+  readonly laggingResolverUrls: readonly string[];
+  readonly missingResolverUrls: readonly string[];
+  readonly conflictingResolverUrls: readonly string[];
+  readonly failedResolverUrls: readonly string[];
+  readonly resolverResults: readonly MultiResolverValueHistoryResult[];
 }
 
 export interface ResolverNameActivityResponse {
@@ -128,16 +169,28 @@ export class ResolverHttpError extends Error {
 }
 
 export function resolveResolverUrl(explicitResolverUrl: string | undefined): string {
-  if (explicitResolverUrl) {
-    return explicitResolverUrl;
+  return resolveResolverUrls(
+    explicitResolverUrl === undefined ? undefined : [explicitResolverUrl]
+  )[0] as string;
+}
+
+export function resolveResolverUrls(explicitResolverUrls?: readonly string[]): readonly string[] {
+  const fromExplicit = normalizeResolverUrls(explicitResolverUrls);
+  if (fromExplicit.length > 0) {
+    return fromExplicit;
   }
 
-  if (process.env.GNS_RESOLVER_URL) {
-    return process.env.GNS_RESOLVER_URL;
+  const fromEnvList = normalizeResolverUrls(parseResolverUrlList(process.env.ONT_RESOLVER_URLS));
+  if (fromEnvList.length > 0) {
+    return fromEnvList;
   }
 
-  const port = process.env.GNS_RESOLVER_PORT ?? "8787";
-  return `http://127.0.0.1:${port}`;
+  if (process.env.ONT_RESOLVER_URL) {
+    return [process.env.ONT_RESOLVER_URL];
+  }
+
+  const port = process.env.ONT_RESOLVER_PORT ?? "8787";
+  return [`http://127.0.0.1:${port}`];
 }
 
 export async function fetchClaimPlan(options: {
@@ -171,6 +224,145 @@ export async function fetchNameValueRecord(options: {
     ...(options.resolverUrl ? { resolverUrl: options.resolverUrl } : {}),
     path: `/name/${encodeURIComponent(normalized)}/value`
   });
+}
+
+export async function fetchNameValueHistory(options: {
+  readonly name: string;
+  readonly resolverUrl?: string;
+}): Promise<ResolverValueHistory> {
+  const normalized = normalizeName(options.name);
+  return fetchResolverJson<ResolverValueHistory>({
+    ...(options.resolverUrl ? { resolverUrl: options.resolverUrl } : {}),
+    path: `/name/${encodeURIComponent(normalized)}/value/history`
+  });
+}
+
+export async function fetchNameValueHistoryFromResolvers(options: {
+  readonly name: string;
+  readonly resolverUrls?: readonly string[];
+}): Promise<MultiResolverValueHistorySummary> {
+  const normalized = normalizeName(options.name);
+  const resolverUrls = resolveResolverUrls(options.resolverUrls);
+  const resolverResults = await Promise.all(
+    resolverUrls.map(async (resolverUrl): Promise<MultiResolverValueHistoryResult> => {
+      try {
+        return {
+          resolverUrl,
+          outcome: "ok",
+          history: await fetchNameValueHistory({
+            name: normalized,
+            resolverUrl
+          }),
+          status: 200,
+          code: null,
+          message: null
+        };
+      } catch (error) {
+        if (error instanceof ResolverHttpError && error.code === "value_not_found") {
+          return {
+            resolverUrl,
+            outcome: "missing",
+            history: null,
+            status: error.status,
+            code: error.code,
+            message: error.message
+          };
+        }
+
+        return {
+          resolverUrl,
+          outcome: "error",
+          history: null,
+          status: error instanceof ResolverHttpError ? error.status : null,
+          code: error instanceof ResolverHttpError ? error.code : "resolver_request_failed",
+          message: error instanceof Error ? error.message : "Unable to load value history."
+        };
+      }
+    })
+  );
+
+  const missingResolverUrls = resolverResults
+    .filter((result) => result.outcome === "missing")
+    .map((result) => result.resolverUrl);
+  const failedResolverUrls = resolverResults
+    .filter((result) => result.outcome === "error")
+    .map((result) => result.resolverUrl);
+  const okResults = resolverResults.filter(
+    (result): result is MultiResolverValueHistoryResult & { readonly outcome: "ok"; readonly history: ResolverValueHistory } =>
+      result.outcome === "ok" && result.history !== null
+  );
+
+  if (okResults.length === 0) {
+    return {
+      kind: "ont-multi-resolver-value-history",
+      name: normalized,
+      resolverCount: resolverUrls.length,
+      status: "all_missing",
+      canonicalResolverUrl: null,
+      canonicalHistory: null,
+      canonicalValueRecord: null,
+      ownershipRef: null,
+      currentRecordHash: null,
+      currentSequence: null,
+      laggingResolverUrls: [],
+      missingResolverUrls,
+      conflictingResolverUrls: [],
+      failedResolverUrls,
+      resolverResults
+    };
+  }
+
+  const canonicalResult = [...okResults].sort(compareValueHistoryResults)[0] as MultiResolverValueHistoryResult & {
+    readonly outcome: "ok";
+    readonly history: ResolverValueHistory;
+  };
+  const canonicalHistory = canonicalResult.history;
+  const canonicalValueRecord = getCurrentValueRecordFromHistory(canonicalHistory);
+  const laggingResolverUrls: string[] = [];
+  const conflictingResolverUrls: string[] = [];
+
+  if (canonicalHistory.hasGaps || canonicalHistory.hasForks) {
+    conflictingResolverUrls.push(canonicalResult.resolverUrl);
+  }
+
+  for (const result of okResults) {
+    if (result.resolverUrl === canonicalResult.resolverUrl) {
+      continue;
+    }
+
+    const compatibility = classifyValueHistoryCompatibility(result.history, canonicalHistory);
+    if (compatibility === "lagging") {
+      laggingResolverUrls.push(result.resolverUrl);
+      continue;
+    }
+
+    if (compatibility === "conflict") {
+      conflictingResolverUrls.push(result.resolverUrl);
+    }
+  }
+
+  return {
+    kind: "ont-multi-resolver-value-history",
+    name: normalized,
+    resolverCount: resolverUrls.length,
+    status:
+      conflictingResolverUrls.length > 0
+        ? "conflict"
+        : laggingResolverUrls.length > 0 || missingResolverUrls.length > 0
+          ? "lagging"
+          : "consistent",
+    canonicalResolverUrl: canonicalResult.resolverUrl,
+    canonicalHistory,
+    canonicalValueRecord,
+    ownershipRef: canonicalHistory.ownershipRef,
+    currentRecordHash: canonicalHistory.currentRecordHash,
+    currentSequence: canonicalValueRecord?.sequence ?? null,
+    laggingResolverUrls,
+    missingResolverUrls,
+    conflictingResolverUrls,
+    failedResolverUrls,
+    resolverResults
+  };
 }
 
 export async function fetchNameActivity(options: {
@@ -267,4 +459,73 @@ async function fetchResolverJson<T>(input: {
   }
 
   return parsed as T;
+}
+
+function parseResolverUrlList(raw: string | undefined): readonly string[] {
+  if (!raw) {
+    return [];
+  }
+
+  return raw
+    .split(/[\s,]+/u)
+    .map((entry) => entry.trim())
+    .filter((entry) => entry.length > 0);
+}
+
+function normalizeResolverUrls(input: readonly string[] | undefined): readonly string[] {
+  if (!input || input.length === 0) {
+    return [];
+  }
+
+  return [...new Set(input.map((entry) => entry.trim()).filter((entry) => entry.length > 0))];
+}
+
+function compareValueHistoryResults(
+  left: MultiResolverValueHistoryResult & { readonly outcome: "ok"; readonly history: ResolverValueHistory },
+  right: MultiResolverValueHistoryResult & { readonly outcome: "ok"; readonly history: ResolverValueHistory }
+): number {
+  if (left.history.completeToSequence !== right.history.completeToSequence) {
+    return right.history.completeToSequence - left.history.completeToSequence;
+  }
+
+  if (left.history.completeFromSequence !== right.history.completeFromSequence) {
+    return left.history.completeFromSequence - right.history.completeFromSequence;
+  }
+
+  return left.resolverUrl.localeCompare(right.resolverUrl);
+}
+
+function classifyValueHistoryCompatibility(
+  candidate: ResolverValueHistory,
+  canonical: ResolverValueHistory
+): "equal" | "lagging" | "conflict" {
+  if (candidate.hasGaps || candidate.hasForks || canonical.hasGaps || canonical.hasForks) {
+    return "conflict";
+  }
+
+  if (candidate.ownershipRef !== canonical.ownershipRef) {
+    return "conflict";
+  }
+
+  const canonicalRecordsBySequence = new Map(
+    canonical.records.map((record) => [record.sequence, record.recordHash])
+  );
+
+  for (const record of candidate.records) {
+    if (canonicalRecordsBySequence.get(record.sequence) !== record.recordHash) {
+      return "conflict";
+    }
+  }
+
+  const hasSameVisibleRange =
+    candidate.completeFromSequence === canonical.completeFromSequence
+    && candidate.completeToSequence === canonical.completeToSequence
+    && candidate.currentRecordHash === canonical.currentRecordHash
+    && candidate.records.length === canonical.records.length;
+
+  return hasSameVisibleRange ? "equal" : "lagging";
+}
+
+function getCurrentValueRecordFromHistory(history: ResolverValueHistory): ResolverValueRecord | null {
+  return history.records.at(-1) ?? null;
 }

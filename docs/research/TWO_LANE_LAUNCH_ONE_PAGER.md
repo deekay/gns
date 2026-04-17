@@ -1,6 +1,6 @@
 # Two-Lane Launch One-Pager
 
-This note summarizes a launch structure now under active exploration for GNS.
+This note summarizes a launch structure now under active exploration for ONT.
 
 It is **not** a final protocol decision. The point is to share the philosophy, the mechanism split, and the current calibration intuition in a compact form.
 

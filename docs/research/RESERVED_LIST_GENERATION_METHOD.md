@@ -2,7 +2,7 @@
 
 This note turns one persistent open question into a concrete working answer:
 
-> how should GNS generate the reserved list for the deferred auction lane
+> how should ONT generate the reserved list for the deferred auction lane
 > without pretending the list is arbitrary or purely vibe-based?
 
 This is not the final frozen launch list. It is the current recommended method
@@ -134,7 +134,7 @@ not:
 The working method should be:
 
 1. collect candidate names from the source registry
-2. normalize them into v1-legal GNS tokens
+2. normalize them into v1-legal ONT tokens
 3. tag each candidate with source category and inclusion path
 4. deduplicate and merge duplicate evidence
 5. classify each candidate as:

@@ -1,4 +1,4 @@
-# GNS Implementation And Validation
+# ONT Implementation And Validation
 
 This note is meant to answer a practical question:
 
@@ -10,9 +10,10 @@ packet for onboarding and review.
 
 Related notes:
 
-- [GNS_FROM_ZERO.md](/Users/davidking/dev/gns/docs/core/GNS_FROM_ZERO.md)
+- [ONT_FROM_ZERO.md](/Users/davidking/dev/gns/docs/core/ONT_FROM_ZERO.md)
 - [BITCOIN_EXPERT_REVIEW_PACKET.md](/Users/davidking/dev/gns/docs/research/BITCOIN_EXPERT_REVIEW_PACKET.md)
 - [BITCOIN_REVIEW_CLOSURE_MATRIX.md](/Users/davidking/dev/gns/docs/research/BITCOIN_REVIEW_CLOSURE_MATRIX.md)
+- [VALUE_RECORD_HISTORY_AND_KEYBASE_NOTES.md](/Users/davidking/dev/gns/docs/research/VALUE_RECORD_HISTORY_AND_KEYBASE_NOTES.md)
 - [TESTING.md](/Users/davidking/dev/gns/docs/core/TESTING.md)
 - [AUCTION_TESTING_AND_LIVE_SURFACES.md](/Users/davidking/dev/gns/docs/research/AUCTION_TESTING_AND_LIVE_SURFACES.md)
 - [MERKLE_BATCHING_STATUS.md](/Users/davidking/dev/gns/docs/research/MERKLE_BATCHING_STATUS.md)
@@ -25,12 +26,16 @@ The shortest honest summary is:
 - the ordinary claim flow is real
 - the resolver and website are real
 - transfer and value-record flows exist as prototypes
+- value-record history plus CLI multi-resolver publish/read are now real enough
+  to inspect
+- the website can also compare/fan out across a configured resolver set when a
+  deployment opts into that allowlist
 - explicit Merkle batching for ordinary claims is real and well-validated
 - the two-lane launch design is a strong direction, but not the fully
   implemented launch mechanism yet
 - Taproot annex work is credible research, not the production path
 
-For external technically sophisticated review, the best current front door is:
+For external technically sophisticated review, the best current entry point is:
 
 - [BITCOIN_EXPERT_REVIEW_PACKET.md](/Users/davidking/dev/gns/docs/research/BITCOIN_EXPERT_REVIEW_PACKET.md)
 
@@ -39,7 +44,7 @@ For external technically sophisticated review, the best current front door is:
 | Area | Status | Confidence | Notes |
 | --- | --- | --- | --- |
 | Ordinary claim commit/reveal | Implemented | High | Works across CLI, resolver, web, and controlled-chain tests |
-| Off-chain signed value records | Implemented prototype | Moderate | Works today, but broader resolver/network availability is still an ecosystem question |
+| Off-chain signed value records | Implemented history-aware prototype | Moderate to high | Current records prove owner authorization, exact sequence, predecessor linkage, ownership-interval binding, CLI multi-resolver publish/read comparison, website-side fanout/compare against a configured resolver set, and browser-level local proof of consistent-versus-lagging resolver views; resolver transparency remains future work |
 | Transfers | Implemented prototype | Moderate to high | Gift and cooperative sale flows exist; browser UX is not the full end-user story yet |
 | Ordinary-lane explicit Merkle batching | Implemented | High | Commit, reveal, negative-path rejection, and later transfer behavior are validated |
 | Reserved-lane auction flow | Experimental simulator + chain-derived bid prototype | Moderate | Configurable policy, CLI simulation, fixture coverage, website state rendering, bid packages, signable experimental bid artifacts, chain-derived `AUCTION_BID` state, and an experimental settled-winner-to-owned-name path now exist; this is still not the final reserved-auction protocol |
@@ -67,6 +72,21 @@ The repo also supports an off-chain value-record model:
 - values are signed by the current owner key
 - resolver can ingest and serve them
 - clients can verify authenticity without trusting the resolver
+- the CLI can now fan one signed record out to several resolvers and compare
+  value-history visibility across them
+- the website can surface that same pattern when the deployment configures an
+  explicit resolver allowlist
+
+Current limitation:
+
+- the resolver stores a value history chain for the current ownership interval
+- each signed payload includes `ownershipRef`, `sequence`,
+  `previousRecordHash`, `valueType`, `payloadHex`, and signed `issuedAt`
+- `issuedAt` is useful metadata, but canonical ordering comes from exact
+  sequence plus predecessor hash
+- the website still defaults to a single hosted resolver unless the deployment
+  opts into a configured resolver set
+- resolver transparency roots and append receipts are not implemented yet
 
 This is important because it shows the intended separation between:
 
@@ -80,7 +100,7 @@ There is a working transfer prototype, including:
 - immature gift transfers with bond continuity rules
 - mature cooperative sale-style transfers
 
-This matters because GNS is not just a claim toy anymore. The state machine has
+This matters because ONT is not just a claim toy anymore. The state machine has
 already been exercised through later lifecycle transitions.
 
 ### 4. Explicit Merkle batching for ordinary claims
@@ -154,10 +174,10 @@ but it is now implemented enough to inspect and test end to end.
 
 We have passing test coverage across:
 
-- `@gns/protocol`
-- `@gns/core`
-- `@gns/cli`
-- `@gns/web`
+- `@ont/protocol`
+- `@ont/core`
+- `@ont/cli`
+- `@ont/web`
 
 These cover both happy-path and important negative-path behaviors.
 
@@ -176,7 +196,7 @@ For reserved auctions specifically, this now includes:
 - same-bidder replacement derivation when the later bid spends the prior bid
   bond output
 - early-vs-allowed bond-spend derivation from observed outpoint spends,
-  including non-GNS spending transactions
+  including non-ONT spending transactions
 - settled-winner materialization into a real owned name record once the auction
   reaches settlement
 - website fixture loading and page rendering for the auction lab
@@ -218,8 +238,8 @@ It already covers:
 
 And now, importantly, it also covers:
 
-- a **Bitcoin-valid but GNS-invalid** batched reveal that confirms on-chain and
-  is ignored by the GNS state machine because the Merkle proof does not match
+- a **Bitcoin-valid but ONT-invalid** batched reveal that confirms on-chain and
+  is ignored by the ONT state machine because the Merkle proof does not match
   the anchored root
 - a controlled-chain experimental auction lifecycle where real `AUCTION_BID`
   transactions open an auction, extend soft close, settle into winner / loser
@@ -263,7 +283,7 @@ ownership materialization on the controlled private chain.
 
 The strongest implementation claims we can make today are:
 
-1. The ordinary GNS claim flow works.
+1. The ordinary ONT claim flow works.
 2. The resolver / website / CLI surfaces are coherent enough to review and demo
    the system end to end.
 3. Explicit ordinary-lane Merkle batching works through commit, reveal,
@@ -326,7 +346,7 @@ These are not done yet and should not be implied by the current docs:
 
 If we want a reviewer-friendly summary right now, the strongest version is:
 
-> GNS already has a real ordinary claim system with resolver and website
+> ONT already has a real ordinary claim system with resolver and website
 > surfaces, a working transfer prototype, and a well-validated explicit Merkle
 > batching path for ordinary claims. The next big questions are launch-market
 > design for reserved names and whether to keep the explicit reveal carrier as
@@ -337,8 +357,8 @@ If we want a reviewer-friendly summary right now, the strongest version is:
 
 For someone trying to evaluate the project without getting lost:
 
-1. [GNS_FROM_ZERO.md](/Users/davidking/dev/gns/docs/core/GNS_FROM_ZERO.md)
-2. [GNS_EXPLAINER.md](/Users/davidking/dev/gns/docs/research/GNS_EXPLAINER.md)
+1. [ONT_FROM_ZERO.md](/Users/davidking/dev/gns/docs/core/ONT_FROM_ZERO.md)
+2. [ONT_EXPLAINER.md](/Users/davidking/dev/gns/docs/research/ONT_EXPLAINER.md)
 3. [TESTING.md](/Users/davidking/dev/gns/docs/core/TESTING.md)
 4. [MERKLE_BATCHING_STATUS.md](/Users/davidking/dev/gns/docs/research/MERKLE_BATCHING_STATUS.md)
 

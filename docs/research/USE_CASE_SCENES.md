@@ -1,4 +1,4 @@
-# GNS Use-Case Scenes
+# ONT Use-Case Scenes
 
 This note turns the narrative framework into concrete scenes people can picture.
 
@@ -8,7 +8,7 @@ It is not a product roadmap and it is not a final marketing page. The goal is to
 
 Each scene is trying to answer the same question:
 
-> What does GNS let a human do that feels both new and obviously useful?
+> What does ONT let a human do that feels both new and obviously useful?
 
 The scenes are ordered from easiest to explain to most ambitious:
 
@@ -40,7 +40,7 @@ This is the cleanest proof point because the stakes are immediate.
 
 It also gives a good answer to "why not just let the model handle it?" A model can help interpret the request, but it should not be free to improvise who gets paid.
 
-### What GNS is doing here
+### What ONT is doing here
 
 - turning a human-readable name into an authoritative payment instruction
 - giving the client something verifiable to resolve before it acts
@@ -81,7 +81,7 @@ It naturally includes:
 
 It is also a better long-term frame than identity alone. A handle or profile is static. A trusted payment relationship is active and much closer to where software will actually make decisions on a human's behalf. But it is still easier to believe after Scene 1 has already established why names matter around money.
 
-### What GNS is doing here
+### What ONT is doing here
 
 - binding a merchant name to owner-controlled, signed payment instructions
 - giving the client a way to choose among supported rails
@@ -89,8 +89,8 @@ It is also a better long-term frame than identity alone. A handle or profile is 
 
 ### What not to imply
 
-- do not pretend GNS alone solves all merchant reputation or fraud problems
-- do not imply every payment rail will support GNS immediately
+- do not pretend ONT alone solves all merchant reputation or fraud problems
+- do not imply every payment rail will support ONT immediately
 - do not overstate what clients can verify without extra context
 
 ### Why it matters strategically
@@ -123,9 +123,9 @@ This scene captures the real long-term prize.
 
 The point is not just lookup. It is giving humans a way to constrain software in words that stay meaningful as more work gets delegated.
 
-This is where the phrase "LLMs widen the interpretation surface; GNS narrows the action surface" becomes most useful.
+This is where the phrase "LLMs widen the interpretation surface; ONT narrows the action surface" becomes most useful.
 
-### What GNS is doing here
+### What ONT is doing here
 
 - turning some words in a user's instructions into trusted constraints
 - separating "understand what I want" from "decide who I mean"
@@ -139,7 +139,7 @@ This is where the phrase "LLMs widen the interpretation surface; GNS narrows the
 
 ### Why it matters strategically
 
-This is the scene that makes GNS feel like future infrastructure rather than a niche naming tool.
+This is the scene that makes ONT feel like future infrastructure rather than a niche naming tool.
 
 It is also the place where the "human-readable authority" framing becomes clearest.
 
@@ -163,7 +163,7 @@ These scenes imply certain client behaviors that may deserve stronger emphasis i
 - approval thresholds tied to named recipients
 - explicit display of what record was resolved and why the client considers it authoritative
 
-These are not all protocol features. Some are product and client behaviors. But they make the narrative more believable because they show how GNS would actually help a human stay in control.
+These are not all protocol features. Some are product and client behaviors. But they make the narrative more believable because they show how ONT would actually help a human stay in control.
 
 ## Relationship To The Two-Lane Story
 

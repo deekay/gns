@@ -9,8 +9,8 @@ import {
   buildBatchRevealArtifacts,
   buildCommitArtifacts,
   buildRevealArtifacts
-} from "@gns/architect";
-import { createClaimPackage } from "@gns/protocol";
+} from "@ont/architect";
+import { createClaimPackage } from "@ont/protocol";
 
 initEccLib(tinysecp);
 
@@ -60,7 +60,7 @@ for (const row of rows) {
 
 console.log("");
 console.log("JSON:");
-console.log(JSON.stringify({ kind: "gns-batch-footprint-report", rows }, null, 2));
+console.log(JSON.stringify({ kind: "ont-batch-footprint-report", rows }, null, 2));
 
 function measureBatchSize(batchSize) {
   const claimPackages = Array.from({ length: batchSize }, (_, index) => createBenchmarkClaimPackage(index));

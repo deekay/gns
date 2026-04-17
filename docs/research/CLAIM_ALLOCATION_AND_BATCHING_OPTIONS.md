@@ -2,7 +2,7 @@
 
 This note explores the main design fork now under active pressure from review:
 
-- should GNS keep a fixed, objective bond curve as the primary allocation mechanism?
+- should ONT keep a fixed, objective bond curve as the primary allocation mechanism?
 - should it add or replace that with an auction mechanism?
 - and how should the protocol reduce chain footprint, especially if launch dynamics become more competitive?
 
@@ -225,7 +225,7 @@ This is close to the spirit of the current design, but it needs stronger justifi
 
 ### Current Assessment
 
-This appears to solve the criticism while actually introducing a much deeper governance problem. It is probably the least aligned with the current GNS philosophy.
+This appears to solve the criticism while actually introducing a much deeper governance problem. It is probably the least aligned with the current ONT philosophy.
 
 ### Narrower Variant Worth Exploring
 
@@ -409,7 +409,7 @@ Good operationally, but not a substitute for a protocol-level story.
 ### Strengths
 
 - strongest answer to visible protocol footprint criticism
-- can make GNS usage look more like ordinary Bitcoin activity
+- can make ONT usage look more like ordinary Bitcoin activity
 
 ### Trade-Offs
 

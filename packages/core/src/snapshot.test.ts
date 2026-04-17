@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { computeCommitHash, encodeCommitPayload, encodeRevealPayload } from "@gns/protocol";
+import { computeCommitHash, encodeCommitPayload, encodeRevealPayload } from "@ont/protocol";
 
-import { InMemoryGnsIndexer } from "./indexer.js";
+import { InMemoryOntIndexer } from "./indexer.js";
 
-describe("InMemoryGnsIndexer snapshotting", () => {
+describe("InMemoryOntIndexer snapshotting", () => {
   it("round-trips indexed state through a snapshot", () => {
     const ownerPubkey = "11".repeat(32);
-    const indexer = new InMemoryGnsIndexer({ launchHeight: 100 });
+    const indexer = new InMemoryOntIndexer({ launchHeight: 100 });
 
     indexer.ingestBlocks([
       {
@@ -67,7 +67,7 @@ describe("InMemoryGnsIndexer snapshotting", () => {
     ]);
 
     const snapshot = indexer.exportSnapshot();
-    const restored = InMemoryGnsIndexer.fromSnapshot(snapshot);
+    const restored = InMemoryOntIndexer.fromSnapshot(snapshot);
 
     expect(restored.getLaunchHeight()).toBe(100);
     expect(restored.getStats()).toEqual(indexer.getStats());

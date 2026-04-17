@@ -1,6 +1,6 @@
 # Launch Premium Overlay Pipeline
 
-This note explores a bounded version of semantic pricing for GNS:
+This note explores a bounded version of semantic pricing for ONT:
 
 For the higher-level rationale behind this direction, see:
 
@@ -12,7 +12,7 @@ For the higher-level rationale behind this direction, see:
 
 Instead, it asks a narrower question:
 
-> If GNS wants a one-time bootstrap mechanism for already-famous names, what would a practical, as-fair-as-possible pipeline look like?
+> If ONT wants a one-time bootstrap mechanism for already-famous names, what would a practical, as-fair-as-possible pipeline look like?
 
 ## Why This Exists
 
@@ -24,13 +24,13 @@ It is that someone may be able to lock up a relatively small but economically im
 - major internet services
 - culturally dominant entities
 
-Those names already have off-chain value before GNS exists. That makes launch different from the long-run steady state.
+Those names already have off-chain value before ONT exists. That makes launch different from the long-run steady state.
 
-The idea here is to address that one-time bootstrapping problem without turning GNS into an ongoing semantic governance system.
+The idea here is to address that one-time bootstrapping problem without turning ONT into an ongoing semantic governance system.
 
 ## Core Design Constraint
 
-If GNS explores this path, the cleanest version is:
+If ONT explores this path, the cleanest version is:
 
 - a **normal objective base curve** for every name
 - plus a **frozen launch-only premium overlay** for a bounded set of already-salient names
@@ -43,7 +43,7 @@ That keeps the ordinary protocol simple while acknowledging that a small set of 
 
 ## V1 Namespace Scope
 
-The launch premium overlay should be scoped to the namespace GNS v1 can actually express.
+The launch premium overlay should be scoped to the namespace ONT v1 can actually express.
 
 For the current v1 design, that means:
 
@@ -57,7 +57,7 @@ So the right claim is **not**:
 
 It is:
 
-> this table prices the most salient already-existing names that can be represented in the v1 GNS namespace
+> this table prices the most salient already-existing names that can be represented in the v1 ONT namespace
 
 That has an important consequence:
 
@@ -99,7 +99,7 @@ The most defensible version of this idea is:
 This suggests a pipeline like:
 
 1. collect public candidate datasets
-2. normalize them into GNS-legal names
+2. normalize them into ONT-legal names
 3. consolidate duplicates and aliases into entity groups
 4. assign rough salience scores from transparent inputs
 5. map scores into a few premium tiers
@@ -162,7 +162,7 @@ with fields like:
 
 ## Step 2: Name Normalization
 
-Every candidate needs to be normalized into the actual v1 GNS namespace:
+Every candidate needs to be normalized into the actual v1 ONT namespace:
 
 - lowercase
 - `[a-z0-9]{1,32}`

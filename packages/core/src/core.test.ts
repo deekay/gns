@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import * as secp256k1 from "tiny-secp256k1";
 
-import { type BitcoinTransactionInBlock } from "@gns/bitcoin";
+import { type BitcoinTransactionInBlock } from "@ont/bitcoin";
 import {
   computeBatchCommitLeafHash,
   computeCommitHash,
@@ -15,12 +15,12 @@ import {
   encodeTransferPayload,
   computeMerkleRoot,
   signTransferAuthorization
-} from "@gns/protocol";
+} from "@ont/protocol";
 
-import { applyBlockTransactions, createEmptyState, extractGnsEvents } from "./index.js";
+import { applyBlockTransactions, createEmptyState, extractOntEvents } from "./index.js";
 
-describe("extractGnsEvents", () => {
-  it("parses GNS commit and reveal payloads from OP_RETURN outputs", () => {
+describe("extractOntEvents", () => {
+  it("parses ONT commit and reveal payloads from OP_RETURN outputs", () => {
     const commit = makeTransaction({
       txid: "aa".repeat(32),
       blockHeight: 100,
@@ -47,8 +47,8 @@ describe("extractGnsEvents", () => {
       ]
     });
 
-    expect(extractGnsEvents(commit)).toHaveLength(1);
-    expect(extractGnsEvents(reveal)).toHaveLength(1);
+    expect(extractOntEvents(commit)).toHaveLength(1);
+    expect(extractOntEvents(reveal)).toHaveLength(1);
   });
 
   it("parses batch anchor, batch reveal, and proof chunk payloads from OP_RETURN outputs", () => {
@@ -110,8 +110,8 @@ describe("extractGnsEvents", () => {
       ]
     });
 
-    expect(extractGnsEvents(batch)).toHaveLength(1);
-    expect(extractGnsEvents(reveal)).toHaveLength(2);
+    expect(extractOntEvents(batch)).toHaveLength(1);
+    expect(extractOntEvents(reveal)).toHaveLength(2);
   });
 });
 

@@ -1,15 +1,15 @@
 import { mkdir } from "node:fs/promises";
 import { join, resolve } from "node:path";
 
-import type { ClaimPackage } from "@gns/protocol";
-import type { BitcoinEsploraConfig, BitcoinRpcConfig } from "@gns/bitcoin";
+import type { ClaimPackage } from "@ont/protocol";
+import type { BitcoinEsploraConfig, BitcoinRpcConfig } from "@ont/bitcoin";
 
 import {
   buildCommitArtifacts,
   buildRevealArtifacts,
   maybeWriteJsonFile,
   type FundingInputDescriptor,
-  type GnsCliNetwork
+  type OntCliNetwork
 } from "./builder.js";
 import { broadcastSignedArtifacts, type RpcConnectionOptions } from "./rpc-actions.js";
 import {
@@ -20,7 +20,7 @@ import {
 import { signArtifacts } from "./signer.js";
 
 export interface SubmitClaimResult {
-  readonly kind: "gns-submit-claim-result";
+  readonly kind: "ont-submit-claim-result";
   readonly expectedChain: RpcConnectionOptions["expectedChain"];
   readonly commitTxid: string;
   readonly revealTxid: string;
@@ -38,7 +38,7 @@ export interface SubmitClaimResult {
 
 export async function submitClaim(options: {
   readonly claimPackage: ClaimPackage;
-  readonly network: GnsCliNetwork;
+  readonly network: OntCliNetwork;
   readonly expectedChain: RpcConnectionOptions["expectedChain"];
   readonly rpc: BitcoinRpcConfig | undefined;
   readonly esplora: BitcoinEsploraConfig | undefined;
@@ -128,7 +128,7 @@ export async function submitClaim(options: {
   }
 
   return {
-    kind: "gns-submit-claim-result",
+    kind: "ont-submit-claim-result",
     expectedChain: options.expectedChain,
     commitTxid: signedCommitArtifacts.signedTransactionId,
     revealTxid: signedRevealArtifacts.signedTransactionId,
@@ -151,7 +151,7 @@ function deriveRevealInputsFromCommit(input: {
   readonly commitArtifacts: {
     readonly outputs: ReadonlyArray<{
       readonly vout: number;
-      readonly role: "bond" | "gns_commit" | "change";
+      readonly role: "bond" | "ont_commit" | "change";
       readonly valueSats: string;
       readonly address: string | null;
     }>;

@@ -2,7 +2,7 @@
 
 This note makes one specific future path more concrete:
 
-> what would a GNS batched reveal look like if the Merkle proof moved out of
+> what would an ONT batched reveal look like if the Merkle proof moved out of
 > explicit data-carrier outputs and into a Taproot annex-style witness carrier?
 
 This is **not** a chosen v1 design. It is a protocol research sketch so we can
@@ -41,10 +41,10 @@ So the potential upside is:
 
 ## The High-Level Shape
 
-An annex-based GNS batched reveal would likely have these properties:
+An annex-based ONT batched reveal would likely have these properties:
 
 1. the reveal transaction spends at least one Taproot input
-2. the GNS reveal header stays visible in a normal explicit carrier or other
+2. the ONT reveal header stays visible in a normal explicit carrier or other
    parseable anchor
 3. the Merkle proof bytes move into the Taproot annex of that reveal input
 4. the indexer reads both:
@@ -146,7 +146,7 @@ Minimum new work:
 1. transaction parser must inspect Taproot witness structure
 2. parser must detect whether an annex is present
 3. parser must extract the annex bytes for the relevant input
-4. parser must decide how GNS associates a specific annex-bearing input with the
+4. parser must decide how ONT associates a specific annex-bearing input with the
    reveal event
 5. validation must reconstruct the Merkle proof from annex bytes and verify it
 
@@ -185,7 +185,7 @@ Open design choice:
 My current bias:
 
 - the unsigned artifact should already commit to the exact annex bytes
-- the signer should not be trusted to invent GNS proof content late
+- the signer should not be trusted to invent ONT proof content late
 
 That keeps artifact review and reproducibility cleaner.
 
@@ -234,7 +234,7 @@ So even if it is more space-efficient, it raises the bar for:
 If the reveal has multiple funding inputs, the indexer needs a deterministic
 rule. For example:
 
-- "the first Taproot input is the GNS witness carrier"
+- "the first Taproot input is the ONT witness carrier"
 - or "the input spending a designated reveal-funding output is the carrier"
 
 This cannot be left ambiguous.
@@ -313,4 +313,4 @@ If we continue this line of work, the next research artifact should probably be:
 That would let us answer the next real question:
 
 > is annex-based proof carriage just theoretically attractive, or is it
-> actually a plausible next protocol step for GNS?
+> actually a plausible next protocol step for ONT?

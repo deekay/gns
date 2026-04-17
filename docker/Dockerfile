@@ -12,8 +12,8 @@ RUN npm ci --no-audit --no-fund \
   && npm run build \
   && mkdir -p /app/.data
 
-COPY docker/entrypoint.sh /usr/local/bin/gns-entrypoint
-RUN chmod 755 /usr/local/bin/gns-entrypoint
+COPY docker/entrypoint.sh /usr/local/bin/ont-entrypoint
+RUN chmod 755 /usr/local/bin/ont-entrypoint
 
-ENTRYPOINT ["gns-entrypoint"]
+ENTRYPOINT ["ont-entrypoint"]
 CMD ["web"]

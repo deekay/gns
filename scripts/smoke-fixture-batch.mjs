@@ -10,16 +10,16 @@ const npmExecutable = process.platform === "win32" ? "npm.cmd" : "npm";
 const batchFixturePath = resolve(process.cwd(), "fixtures/demo-chain-batch.json");
 
 const resolver = startProcess("resolver", ["run", "dev:resolver"], {
-  GNS_SOURCE_MODE: "fixture",
-  GNS_FIXTURE_PATH: batchFixturePath,
-  GNS_RESOLVER_PORT: String(resolverPort)
+  ONT_SOURCE_MODE: "fixture",
+  ONT_FIXTURE_PATH: batchFixturePath,
+  ONT_RESOLVER_PORT: String(resolverPort)
 });
 const web = startProcess("web", ["run", "dev:web"], {
-  GNS_SOURCE_MODE: "fixture",
-  GNS_FIXTURE_PATH: batchFixturePath,
-  GNS_WEB_PORT: String(webPort),
-  GNS_RESOLVER_PORT: String(resolverPort),
-  GNS_WEB_RESOLVER_URL: resolverUrl
+  ONT_SOURCE_MODE: "fixture",
+  ONT_FIXTURE_PATH: batchFixturePath,
+  ONT_WEB_PORT: String(webPort),
+  ONT_RESOLVER_PORT: String(resolverPort),
+  ONT_WEB_RESOLVER_URL: resolverUrl
 });
 
 try {
@@ -99,7 +99,7 @@ try {
   console.log(
     JSON.stringify(
       {
-        kind: "gns-batch-fixture-smoke-result",
+        kind: "ont-batch-fixture-smoke-result",
         ok: true,
         fixturePath: batchFixturePath,
         resolverUrl,

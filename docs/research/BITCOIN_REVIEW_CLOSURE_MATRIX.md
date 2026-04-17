@@ -15,7 +15,7 @@ Related notes:
 
 - [BITCOIN_EXPERT_REVIEW_PACKET.md](/Users/davidking/dev/gns/docs/research/BITCOIN_EXPERT_REVIEW_PACKET.md)
 - [LAUNCH_SPEC_V0.md](/Users/davidking/dev/gns/docs/research/LAUNCH_SPEC_V0.md)
-- [GNS_IMPLEMENTATION_AND_VALIDATION.md](/Users/davidking/dev/gns/docs/research/GNS_IMPLEMENTATION_AND_VALIDATION.md)
+- [ONT_IMPLEMENTATION_AND_VALIDATION.md](/Users/davidking/dev/gns/docs/research/ONT_IMPLEMENTATION_AND_VALIDATION.md)
 - [VALUE_RECORD_HISTORY_AND_KEYBASE_NOTES.md](/Users/davidking/dev/gns/docs/research/VALUE_RECORD_HISTORY_AND_KEYBASE_NOTES.md)
 
 Status labels:
@@ -48,7 +48,7 @@ Status labels:
 | Reserved list generation methodology | Use a source-registry plus inclusion-path method with selected and near-miss outputs | provisional but shareable | not the best use of Bitcoin-wizard time | keep [RESERVED_LIST_GENERATION_METHOD.md](/Users/davidking/dev/gns/docs/research/RESERVED_LIST_GENERATION_METHOD.md) aligned with the data build notes |
 | Auction implementation status | Present as experimental but real: simulator + bid artifacts + chain-derived state + private-signet smoke | closed for this review rev | yes | keep status language honest |
 | Merkle implementation status | Present as implemented and strongly validated | closed for this review rev | yes | keep validation evidence centralized |
-| Value-record history | Use Keybase-style signed predecessor chains scoped to ownership intervals | closed for this review rev | maybe, as a systems question rather than a Bitcoin-native blocker | keep implementation and website history view exercised |
+| Value-record history | Use Keybase-style signed predecessor chains scoped to ownership intervals | closed for this review rev | maybe, as a systems question rather than a Bitcoin-native blocker | keep implementation, website history view, and CLI multi-resolver comparison exercised |
 | Resolver transparency roots | Defer until value chains and multi-resolver publish/read are clearer | defer from this review round | maybe only if reviewers raise anti-rollback / forked-view concerns | keep routine value updates off Bitcoin by default |
 | Website / tooling story | Website is good enough for inspection and demo; not yet a full end-user bidder flow | closed for this review rev | no, only as context | keep expectations explicit |
 

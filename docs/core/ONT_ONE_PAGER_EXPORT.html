@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>GNS One-Pager</title>
+    <title>ONT One-Pager</title>
     <style>
       @page {
         size: Letter;
@@ -210,15 +210,15 @@
   <body>
     <main>
       <section class="sheet">
-        <p class="eyebrow">Global Name System</p>
-        <h1>GNS One-Pager</h1>
-        <p class="lead">GNS is a payment-handle system anchored to Bitcoin. It gives people and wallets a readable name they can resolve before money moves, with ownership controlled directly by Bitcoin-anchored records.</p>
+        <p class="eyebrow">Open Name Tags</p>
+        <h1>ONT One-Pager</h1>
+        <p class="lead">ONT is a payment-handle system anchored to Bitcoin. It gives people and wallets a readable name they can resolve before money moves, with ownership controlled directly by Bitcoin-anchored records.</p>
 
         <div class="sheet-grid sheet-grid-first">
           <div class="column">
             <section class="section tight">
               <h2>What The System Does</h2>
-              <p>GNS separates two things:</p>
+              <p>ONT separates two things:</p>
               <ul class="compact-list">
                 <li><strong>ownership</strong>, which is recorded on-chain</li>
                 <li><strong>what the name points to</strong>, which is signed off-chain by the current owner</li>
@@ -254,7 +254,7 @@
           <div class="column">
             <section class="section">
               <h2>Economic Model</h2>
-              <p>GNS allocates names through <strong>bonded capital</strong>, not rent, private allocation, or protocol sales. The bond is not paid to GNS, not burned, and not annual rent. It is bitcoin the claimer still owns, temporarily locked as economic commitment during settlement.</p>
+              <p>ONT allocates names through <strong>bonded capital</strong>, not rent, private allocation, or protocol sales. The bond is not paid to ONT, not burned, and not annual rent. It is bitcoin the claimer still owns, temporarily locked as economic commitment during settlement.</p>
 
               <h3>Bond Curve</h3>
               <div class="table-wrap">
@@ -297,7 +297,7 @@
           <div class="column">
             <section class="section tight">
               <h2>Blockspace Footprint</h2>
-              <p>GNS keeps its pure naming payload relatively small, but it still consumes real Bitcoin blockspace because each successful claim is a pair of ordinary Bitcoin transactions.</p>
+              <p>ONT keeps its pure naming payload relatively small, but it still consumes real Bitcoin blockspace because each successful claim is a pair of ordinary Bitcoin transactions.</p>
               <ul class="compact-list">
                 <li>pure naming payload per completed claim: about <code>117–148 bytes</code></li>
                 <li>observed full claim footprint: about <code>404 vbytes</code></li>
@@ -325,7 +325,7 @@
                 <li>Availability depends on one or more resolvers retaining a copy.</li>
               </ul>
 
-              <p>That means GNS is decentralized for ownership, but only partly decentralized for value availability in v1. The intended direction is stronger distribution and better resolver availability, not moving normal value updates on-chain.</p>
+              <p>That means ONT is decentralized for ownership, but only partly decentralized for value availability in v1. The intended direction is stronger distribution and better resolver availability, not moving normal value updates on-chain.</p>
 
               <h3>Why Resolver Decentralization Is Still Strong</h3>
               <p>Resolvers do not get to invent ownership, and they cannot fake completeness against a client that knows the chain. Because the canonical name set is derivable from Bitcoin, any client can sample names that should exist, query a resolver, and score how complete and up to date it is against ground truth.</p>
@@ -335,15 +335,15 @@
 
           <div class="column">
             <section class="section tight">
-              <h2>The Vision For GNS</h2>
+              <h2>The Vision For ONT</h2>
               <p>The first useful claim is narrow:</p>
               <ul class="compact-list">
                 <li>pay the right person</li>
                 <li>express that choice in words instead of raw addresses</li>
                 <li>let clients verify the current owner-signed payment record before sending</li>
               </ul>
-              <p>From that payment-handle base, GNS can grow into a broader owner-signed record layer if useful clients emerge. The key/value model allows additional records without putting routine updates on Bitcoin or changing the ownership model.</p>
-              <p>As we hand more decision-making to software, human-readable names become more important, not less. Software can interpret intent flexibly, but the final payment target should not rest on a probabilistic guess about which account is the right one. GNS is designed to make payment handles human-readable while keeping ownership cryptographically grounded.</p>
+              <p>From that payment-handle base, ONT can grow into a broader owner-signed record layer if useful clients emerge. The key/value model allows additional records without putting routine updates on Bitcoin or changing the ownership model.</p>
+              <p>As we hand more decision-making to software, human-readable names become more important, not less. Software can interpret intent flexibly, but the final payment target should not rest on a probabilistic guess about which account is the right one. ONT is designed to make payment handles human-readable while keeping ownership cryptographically grounded.</p>
               <p>The system is designed so that the ownership record is public, auditable, and difficult to revoke or forge, while the mutable destination layer stays lightweight and easy to update.</p>
             </section>
 
@@ -360,7 +360,7 @@
           </div>
         </div>
 
-        <p class="foot-strip">Current product surface: https://globalnamesystem.org · Public repository: https://github.com/deekay/gns</p>
+        <p class="foot-strip">Current product surface: https://opennametags.org · Public repository: https://github.com/deekay/ont</p>
       </section>
     </main>
   </body>

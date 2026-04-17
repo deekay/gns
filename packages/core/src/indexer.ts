@@ -3,23 +3,23 @@ import {
   type BitcoinTransactionInBlock,
   type BitcoinTransactionInput,
   type BitcoinTransactionOutput
-} from "@gns/bitcoin";
+} from "@ont/bitcoin";
 import {
   type AuctionBidEventPayload,
   type BatchAnchorEventPayload,
   type BatchRevealEventPayload,
-  GnsEventType,
+  OntEventType,
   normalizeName,
   type CommitEventPayload,
   type RevealEventPayload,
   type RevealProofChunkEventPayload,
   type TransferEventPayload
-} from "@gns/protocol";
+} from "@ont/protocol";
 
 import {
   applyBlockTransactionsWithProvenance,
   createEmptyState,
-  type GnsState,
+  type OntState,
   type NameRecord,
   type PendingBatchAnchorRecord,
   type PendingCommitRecord,
@@ -56,7 +56,7 @@ export interface ExperimentalAuctionBidPayloadSnapshot {
   readonly bidderCommitment: string;
 }
 
-export interface InMemoryGnsIndexerPersistedState {
+export interface InMemoryOntIndexerPersistedState {
   readonly launchHeight: number;
   readonly currentHeight: number | null;
   readonly currentBlockHash: string | null;
@@ -83,8 +83,8 @@ export interface NameRecordSnapshot extends Omit<NameRecord, "requiredBondSats" 
   readonly lastStateHeight?: number;
 }
 
-export interface InMemoryGnsIndexerSnapshot extends InMemoryGnsIndexerPersistedState {
-  readonly recentCheckpoints?: readonly InMemoryGnsIndexerPersistedState[];
+export interface InMemoryOntIndexerSnapshot extends InMemoryOntIndexerPersistedState {
+  readonly recentCheckpoints?: readonly InMemoryOntIndexerPersistedState[];
 }
 
 export interface TransactionOutputSnapshot extends Omit<BitcoinTransactionOutput, "valueSats"> {
@@ -114,7 +114,7 @@ export type TransactionProvenanceEventPayloadSnapshot =
 
 export interface TransactionProvenanceEventSnapshot {
   readonly vout: number;
-  readonly type: GnsEventType;
+  readonly type: OntEventType;
   readonly typeName:
     | "COMMIT"
     | "REVEAL"
@@ -139,15 +139,15 @@ export interface TransactionProvenanceSnapshot {
   readonly invalidatedNames: readonly string[];
 }
 
-export class InMemoryGnsIndexer {
+export class InMemoryOntIndexer {
   private readonly launchHeight: number;
   private readonly recentCheckpointLimit: number;
   private readonly experimentalReservedAuctionCatalog: readonly ExperimentalReservedAuctionCatalogEntry[];
   private readonly experimentalReservedAuctionPolicy: ReservedAuctionPolicy;
-  private readonly state: GnsState;
+  private readonly state: OntState;
   private readonly spentOutpoints: Map<string, ExperimentalSpentOutpointObservation>;
   private readonly transactionProvenance: Map<string, TransactionProvenanceSnapshot>;
-  private recentCheckpoints: InMemoryGnsIndexerPersistedState[];
+  private recentCheckpoints: InMemoryOntIndexerPersistedState[];
   private currentHeight: number | null;
   private currentBlockHash: string | null;
   private processedBlocks: number;
@@ -173,13 +173,13 @@ export class InMemoryGnsIndexer {
   }
 
   public static fromSnapshot(
-    snapshot: InMemoryGnsIndexerSnapshot,
+    snapshot: InMemoryOntIndexerSnapshot,
     options?: {
       readonly experimentalReservedAuctionCatalog?: readonly ExperimentalReservedAuctionCatalogEntry[];
       readonly experimentalReservedAuctionPolicy?: ReservedAuctionPolicy;
     }
-  ): InMemoryGnsIndexer {
-    const indexer = new InMemoryGnsIndexer({
+  ): InMemoryOntIndexer {
+    const indexer = new InMemoryOntIndexer({
       launchHeight: snapshot.launchHeight,
       recentCheckpointLimit: Math.max(1, snapshot.recentCheckpoints?.length ?? 100),
       ...(options?.experimentalReservedAuctionCatalog === undefined
@@ -333,7 +333,7 @@ export class InMemoryGnsIndexer {
   public listRecentCheckpoints(): ReadonlyArray<{ readonly height: number; readonly hash: string }> {
     return this.recentCheckpoints
       .filter(
-        (checkpoint): checkpoint is InMemoryGnsIndexerPersistedState & {
+        (checkpoint): checkpoint is InMemoryOntIndexerPersistedState & {
           readonly currentHeight: number;
           readonly currentBlockHash: string;
         } => checkpoint.currentHeight !== null && checkpoint.currentBlockHash !== null
@@ -390,14 +390,14 @@ export class InMemoryGnsIndexer {
     return this.launchHeight;
   }
 
-  public exportSnapshot(): InMemoryGnsIndexerSnapshot {
+  public exportSnapshot(): InMemoryOntIndexerSnapshot {
     return {
       ...this.createPersistedStateSnapshot(),
       recentCheckpoints: this.recentCheckpoints.map((checkpoint) => structuredClone(checkpoint))
     };
   }
 
-  private hydrate(snapshot: InMemoryGnsIndexerSnapshot | InMemoryGnsIndexerPersistedState): void {
+  private hydrate(snapshot: InMemoryOntIndexerSnapshot | InMemoryOntIndexerPersistedState): void {
     this.state.names.clear();
     this.state.pendingCommits.clear();
     this.state.pendingBatchAnchors.clear();
@@ -457,7 +457,7 @@ export class InMemoryGnsIndexer {
     }
   }
 
-  private createPersistedStateSnapshot(): InMemoryGnsIndexerPersistedState {
+  private createPersistedStateSnapshot(): InMemoryOntIndexerPersistedState {
     return {
       launchHeight: this.launchHeight,
       currentHeight: this.currentHeight,

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { signValueRecord, verifyValueRecord } from "@gns/protocol";
+import { signValueRecord, verifyValueRecord } from "@ont/protocol";
 
 import {
   deriveOwnerPubkey,
@@ -21,10 +21,12 @@ describe("browser value record helpers", () => {
     const input = {
       name: "alice",
       ownerPrivateKeyHex: "0000000000000000000000000000000000000000000000000000000000000001",
+      ownershipRef: "aa".repeat(32),
       sequence: 3,
+      previousRecordHash: "bb".repeat(32),
       valueType: 0x02,
       payloadHex: payloadUtf8ToHex("https://example.com/alice"),
-      exportedAt: "2026-03-29T16:00:00.000Z"
+      issuedAt: "2026-03-29T16:00:00.000Z"
     };
 
     const browserRecord = signBrowserValueRecord(input);
@@ -46,10 +48,12 @@ describe("browser value record helpers", () => {
     const input = {
       name: "bob",
       ownerPrivateKeyHex: "0000000000000000000000000000000000000000000000000000000000000002",
+      ownershipRef: "cc".repeat(32),
       sequence: 7,
+      previousRecordHash: "dd".repeat(32),
       valueType: 0xff,
       payloadHex: "deadbeef",
-      exportedAt: "2026-03-29T16:00:00.000Z"
+      issuedAt: "2026-03-29T16:00:00.000Z"
     };
 
     const browserRecord = signBrowserValueRecord(input);

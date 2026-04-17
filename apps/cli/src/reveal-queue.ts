@@ -1,20 +1,20 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 
-import type { BitcoinEsploraConfig, BitcoinRpcConfig } from "@gns/bitcoin";
+import type { BitcoinEsploraConfig, BitcoinRpcConfig } from "@ont/bitcoin";
 
 import { broadcastSignedTransactionHex, getTransactionConfirmationInfo } from "./rpc-actions.js";
-import type { GnsCliNetwork } from "./builder.js";
+import type { OntCliNetwork } from "./builder.js";
 import type { SignedArtifactsEnvelope } from "./signer.js";
 
-export const REVEAL_QUEUE_FORMAT = "gns-reveal-queue";
+export const REVEAL_QUEUE_FORMAT = "ont-reveal-queue";
 export const REVEAL_QUEUE_VERSION = 1;
 export const DEFAULT_REVEAL_QUEUE_PATH = ".data/reveal-queue.json";
 
 export interface RevealQueueItem {
   readonly id: string;
   readonly createdAt: string;
-  readonly expectedChain: GnsCliNetwork;
+  readonly expectedChain: OntCliNetwork;
   readonly commitTxid: string;
   readonly revealTxid: string;
   readonly signedRevealTransactionHex: string;
@@ -33,7 +33,7 @@ export interface RevealQueueFile {
 }
 
 export interface RevealQueueProcessResult {
-  readonly kind: "gns-reveal-queue-process-result";
+  readonly kind: "ont-reveal-queue-process-result";
   readonly queuePath: string;
   readonly processedCount: number;
   readonly pendingCount: number;
@@ -42,13 +42,13 @@ export interface RevealQueueProcessResult {
 }
 
 export function createRevealQueueItem(input: {
-  readonly expectedChain: GnsCliNetwork;
+  readonly expectedChain: OntCliNetwork;
   readonly commitTxid: string;
   readonly signedRevealArtifacts: SignedArtifactsEnvelope;
 }): RevealQueueItem {
   if (
-    input.signedRevealArtifacts.kind !== "gns-signed-reveal-artifacts" &&
-    input.signedRevealArtifacts.kind !== "gns-signed-batch-reveal-artifacts"
+    input.signedRevealArtifacts.kind !== "ont-signed-reveal-artifacts" &&
+    input.signedRevealArtifacts.kind !== "ont-signed-batch-reveal-artifacts"
   ) {
     throw new Error("queue items require signed reveal or signed batch reveal artifacts");
   }
@@ -122,7 +122,7 @@ export async function processRevealQueueOnce(input: {
   readonly queuePath: string;
   readonly rpc: BitcoinRpcConfig | undefined;
   readonly esplora: BitcoinEsploraConfig | undefined;
-  readonly expectedChain: GnsCliNetwork;
+  readonly expectedChain: OntCliNetwork;
 }): Promise<RevealQueueProcessResult> {
   const queue = await loadRevealQueueFile(input.queuePath);
   const nextItems: RevealQueueItem[] = [];
@@ -202,7 +202,7 @@ export async function processRevealQueueOnce(input: {
   await saveRevealQueueFile(input.queuePath, updated);
 
   return {
-    kind: "gns-reveal-queue-process-result",
+    kind: "ont-reveal-queue-process-result",
     queuePath: resolve(process.cwd(), input.queuePath),
     processedCount,
     pendingCount: updated.items.filter((item) => item.status === "pending").length,
@@ -260,7 +260,7 @@ function parseRevealQueueItem(input: unknown): RevealQueueItem {
   };
 }
 
-function parseChain(value: string): GnsCliNetwork {
+function parseChain(value: string): OntCliNetwork {
   if (value === "main" || value === "signet" || value === "testnet" || value === "regtest") {
     return value;
   }

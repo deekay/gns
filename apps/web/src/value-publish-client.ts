@@ -22,6 +22,7 @@ type NameRecord = {
   readonly name: string;
   readonly status: string;
   readonly currentOwnerPubkey: string;
+  readonly lastStateTxid: string;
   readonly claimHeight: number;
   readonly maturityHeight: number;
   readonly requiredBondSats: string | number | bigint;
@@ -30,11 +31,61 @@ type NameRecord = {
 type ValueRecord = {
   readonly name: string;
   readonly ownerPubkey: string;
+  readonly ownershipRef: string;
   readonly sequence: number;
+  readonly previousRecordHash: string | null;
   readonly valueType: number;
   readonly payloadHex: string;
-  readonly exportedAt: string;
+  readonly issuedAt: string;
   readonly signature: string;
+  readonly recordHash: string;
+};
+
+type ValueHistory = {
+  readonly name: string;
+  readonly ownershipRef: string;
+  readonly currentRecordHash: string;
+  readonly completeFromSequence: number;
+  readonly completeToSequence: number;
+  readonly hasGaps: boolean;
+  readonly hasForks: boolean;
+  readonly records: readonly ValueRecord[];
+};
+
+type ValueCompareSummary = {
+  readonly kind: "ont-multi-resolver-value-history";
+  readonly name: string;
+  readonly resolverCount: number;
+  readonly status: "all_missing" | "consistent" | "lagging" | "conflict";
+  readonly canonicalResolverUrl: string | null;
+  readonly ownershipRef: string | null;
+  readonly currentRecordHash: string | null;
+  readonly currentSequence: number | null;
+  readonly laggingResolverUrls: readonly string[];
+  readonly missingResolverUrls: readonly string[];
+  readonly conflictingResolverUrls: readonly string[];
+  readonly failedResolverUrls: readonly string[];
+};
+
+type ValuePublishFanoutSummary = {
+  readonly kind: "ont-multi-resolver-value-publish";
+  readonly name: string;
+  readonly sequence: number;
+  readonly resolverCount: number;
+  readonly successCount: number;
+  readonly failureCount: number;
+  readonly results: ReadonlyArray<{
+    readonly resolverUrl: string;
+    readonly ok: boolean;
+    readonly status: number | null;
+    readonly code: string | null;
+    readonly message: string | null;
+  }>;
+};
+
+type WebConfig = {
+  readonly resolverCandidates?: readonly string[];
+  readonly resolverFanoutAvailable?: boolean;
 };
 
 const BASE_PATH = document.body.dataset.basePath ?? "";
@@ -65,19 +116,31 @@ const elements = {
   signResult: document.getElementById("valueSignResult"),
   publishResult: document.getElementById("valuePublishResult"),
   downloadSignedValueButton: document.getElementById("downloadSignedValueButton") as HTMLButtonElement | null,
-  publishValueButton: document.getElementById("publishValueButton") as HTMLButtonElement | null
+  publishValueButton: document.getElementById("publishValueButton") as HTMLButtonElement | null,
+  publishValueFanoutButton: document.getElementById("publishValueFanoutButton") as HTMLButtonElement | null,
+  publishModeNote: document.getElementById("valuePublishModeNote")
 };
 
 const state: {
   currentName: NameRecord | null;
   currentValueRecord: ValueRecord | null;
+  currentValueHistory: ValueHistory | null;
+  currentValueCompare: ValueCompareSummary | null;
+  currentValueCompareError: string | null;
   signedRecord: BrowserSignedValueRecord | null;
   lastSuggestedSequence: number | null;
+  resolverCandidates: readonly string[];
+  resolverFanoutAvailable: boolean;
 } = {
   currentName: null,
   currentValueRecord: null,
+  currentValueHistory: null,
+  currentValueCompare: null,
+  currentValueCompareError: null,
   signedRecord: null,
-  lastSuggestedSequence: null
+  lastSuggestedSequence: null,
+  resolverCandidates: [],
+  resolverFanoutAvailable: false
 };
 
 const VALUE_MODE_PROFILE_BUNDLE = "255:bundle";
@@ -88,10 +151,12 @@ if (elements.lookupForm && elements.nameInput) {
 }
 
 async function bootstrap(): Promise<void> {
+  await loadConfig();
+  updateResolverFanoutUi();
   syncWizard();
   renderLookupMessage("Enter a claimed name to load the current owner and published value.");
   renderSignMessage("Load a claimed name first, then sign the next value record locally.");
-  renderPublishMessage("Sign a value record first. Then publish the signed JSON to the resolver.");
+  renderPublishMessage(getDefaultPublishMessage());
   updateValueEditorState();
 
   const initialName = new URL(window.location.href).searchParams.get("name")?.trim().toLowerCase() ?? "";
@@ -174,12 +239,16 @@ async function bootstrap(): Promise<void> {
 
     downloadJsonFile(
       state.signedRecord,
-      `gns-value-${state.signedRecord.name}-sequence-${state.signedRecord.sequence}.json`
+      `ont-value-${state.signedRecord.name}-sequence-${state.signedRecord.sequence}.json`
     );
   });
 
   elements.publishValueButton?.addEventListener("click", async () => {
     await publishSignedRecord();
+  });
+
+  elements.publishValueFanoutButton?.addEventListener("click", async () => {
+    await publishSignedRecord({ fanout: true });
   });
 }
 
@@ -189,7 +258,22 @@ async function loadName(rawName: string): Promise<void> {
   renderLookupMessage("Loading current name state...");
 
   try {
-    const [nameRecord, valueRecord] = await Promise.all([
+    const comparePromise = state.resolverFanoutAvailable
+      ? fetchJson<ValueCompareSummary>(
+          withBasePath(`/api/name/${encodeURIComponent(normalizedName)}/value/compare`)
+        ).then((summary) => ({
+          summary,
+          error: null
+        })).catch((error) => ({
+          summary: null,
+          error: error instanceof Error ? error.message : "Unable to compare configured resolver views."
+        }))
+      : Promise.resolve({
+          summary: null,
+          error: null
+        });
+
+    const [nameRecord, valueRecord, valueHistory, compare] = await Promise.all([
       fetchJson<NameRecord>(withBasePath(`/api/name/${encodeURIComponent(normalizedName)}`)),
       fetchJson<ValueRecord>(withBasePath(`/api/name/${encodeURIComponent(normalizedName)}/value`)).catch((error) => {
         if (isNotFound(error)) {
@@ -197,19 +281,34 @@ async function loadName(rawName: string): Promise<void> {
         }
 
         throw error;
+      }),
+      fetchJson<ValueHistory>(withBasePath(`/api/name/${encodeURIComponent(normalizedName)}/value/history`)).catch((error) => {
+        if (isNotFound(error)) {
+          return null;
+        }
+
+        throw error;
       })
+      ,
+      comparePromise
     ]);
 
     state.currentName = nameRecord;
     state.currentValueRecord = valueRecord;
-    applySuggestedSequence(valueRecord === null ? 0 : valueRecord.sequence + 1);
+    state.currentValueHistory = valueHistory;
+    state.currentValueCompare = compare.summary;
+    state.currentValueCompareError = compare.error;
+    applySuggestedSequence(valueRecord === null ? 1 : valueRecord.sequence + 1);
     applyValueDefaults(valueRecord);
-    renderLookupRecord(nameRecord, valueRecord);
+    renderLookupRecord(nameRecord, valueRecord, valueHistory, compare.summary, compare.error);
     updateDerivedOwnerState();
     syncWizard();
   } catch (error) {
     state.currentName = null;
     state.currentValueRecord = null;
+    state.currentValueHistory = null;
+    state.currentValueCompare = null;
+    state.currentValueCompareError = null;
     state.lastSuggestedSequence = null;
     resetValueInputs();
     invalidateSignedRecord("Load a claimed name first, then sign the next value record locally.");
@@ -251,7 +350,9 @@ function signLocally(): void {
     const signedRecord = signBrowserValueRecord({
       name,
       ownerPrivateKeyHex,
+      ownershipRef: state.currentName.lastStateTxid,
       sequence,
+      previousRecordHash: state.currentValueRecord?.recordHash ?? null,
       valueType,
       payloadHex
     });
@@ -272,16 +373,25 @@ function signLocally(): void {
   }
 }
 
-async function publishSignedRecord(): Promise<void> {
+async function publishSignedRecord(options: {
+  readonly fanout?: boolean;
+} = {}): Promise<void> {
   if (state.signedRecord === null) {
     renderPublishMessage("Sign a value record before publishing it.");
     return;
   }
 
-  renderPublishMessage("Publishing the signed value record...");
+  renderPublishMessage(
+    options.fanout
+      ? "Publishing the signed value record to the configured resolver set..."
+      : "Publishing the signed value record..."
+  );
 
   try {
-    const result = await postJson(withBasePath("/api/values"), state.signedRecord);
+    const result = await postJson(
+      withBasePath(options.fanout ? "/api/values/fanout" : "/api/values"),
+      state.signedRecord
+    );
     renderPublishResult(result);
     await loadName(state.signedRecord.name);
   } catch (error) {
@@ -300,8 +410,12 @@ function invalidateSignedRecord(
   if (elements.publishValueButton) {
     elements.publishValueButton.disabled = true;
   }
+  if (elements.publishValueFanoutButton) {
+    elements.publishValueFanoutButton.disabled = true;
+  }
   renderSignMessage(message);
-  renderPublishMessage("Sign a value record first. Then publish the signed JSON to the resolver.");
+  renderPublishMessage(getDefaultPublishMessage());
+  updateResolverFanoutUi();
   syncWizard();
   if (options.keepSignStepOpen && state.currentName !== null) {
     setDetailsOpen(elements.signStep, true);
@@ -335,7 +449,13 @@ function renderPublishMessage(message: string): void {
   elements.publishResult.textContent = message;
 }
 
-function renderLookupRecord(nameRecord: NameRecord, valueRecord: ValueRecord | null): void {
+function renderLookupRecord(
+  nameRecord: NameRecord,
+  valueRecord: ValueRecord | null,
+  valueHistory: ValueHistory | null,
+  valueCompare: ValueCompareSummary | null,
+  valueCompareError: string | null
+): void {
   if (!elements.lookupResult) {
     return;
   }
@@ -358,12 +478,108 @@ function renderLookupRecord(nameRecord: NameRecord, valueRecord: ValueRecord | n
       </div>
       <div class="result-item">
         <label>Next Sequence</label>
-        <p class="field-value">${escapeHtml(String(state.lastSuggestedSequence ?? 0))}</p>
+        <p class="field-value">${escapeHtml(String(state.lastSuggestedSequence ?? 1))}</p>
+      </div>
+      <div class="result-item">
+        <label>Ownership Ref</label>
+        <p class="field-value">${escapeHtml(truncateMiddle(nameRecord.lastStateTxid, 12, 10))}</p>
       </div>
       <div class="result-item">
         <label>Bond Requirement</label>
         <p class="field-value">${escapeHtml(formatSats(nameRecord.requiredBondSats))}</p>
       </div>
+    </div>
+    ${renderValueHistory(valueHistory)}
+    ${renderResolverCompare(valueCompare, valueCompareError)}
+  `;
+}
+
+function renderValueHistory(valueHistory: ValueHistory | null): string {
+  if (valueHistory === null) {
+    return `
+      <div class="field-note">
+        No value history exists for this ownership interval yet. The next signed record will be sequence 1 with no predecessor.
+      </div>
+    `;
+  }
+
+  const rows = valueHistory.records
+    .slice(-5)
+    .map((record) => {
+      return `
+        <div class="value-history-row">
+          <span>seq ${escapeHtml(String(record.sequence))}</span>
+          <span>${escapeHtml(formatValueType(record.valueType, record.payloadHex))}</span>
+          <span>${escapeHtml(truncateMiddle(record.recordHash, 12, 10))}</span>
+        </div>
+      `;
+    })
+    .join("");
+
+  return `
+    <div class="value-history-card">
+      <div class="value-history-head">
+        <p class="step-list-label">Value History</p>
+        <p class="field-value">Complete sequences ${escapeHtml(String(valueHistory.completeFromSequence))}-${escapeHtml(String(valueHistory.completeToSequence))}${valueHistory.hasGaps ? " · gaps detected" : ""}${valueHistory.hasForks ? " · forks detected" : ""}</p>
+      </div>
+      <div class="value-history-rows">${rows}</div>
+    </div>
+  `;
+}
+
+function renderResolverCompare(
+  valueCompare: ValueCompareSummary | null,
+  valueCompareError: string | null
+): string {
+  if (!state.resolverFanoutAvailable) {
+    return "";
+  }
+
+  if (valueCompareError !== null) {
+    return `<div class="field-note">Resolver comparison unavailable: ${escapeHtml(valueCompareError)}</div>`;
+  }
+
+  if (valueCompare === null) {
+    return `<div class="field-note">Resolver comparison is not available for this name yet.</div>`;
+  }
+
+  const statusLabel =
+    valueCompare.status === "consistent"
+      ? "Consistent"
+      : valueCompare.status === "lagging"
+        ? "Lagging"
+        : valueCompare.status === "conflict"
+          ? "Conflict"
+          : "No visible value";
+
+  const rows = [
+    valueCompare.canonicalResolverUrl === null
+      ? null
+      : `<p><strong>Canonical resolver:</strong> ${escapeHtml(valueCompare.canonicalResolverUrl)}</p>`,
+    valueCompare.currentSequence === null
+      ? `<p><strong>Current sequence:</strong> no resolver currently shows a published value.</p>`
+      : `<p><strong>Current sequence:</strong> ${escapeHtml(String(valueCompare.currentSequence))}</p>`,
+    valueCompare.laggingResolverUrls.length === 0
+      ? null
+      : `<p><strong>Lagging:</strong> ${escapeHtml(valueCompare.laggingResolverUrls.join(", "))}</p>`,
+    valueCompare.missingResolverUrls.length === 0
+      ? null
+      : `<p><strong>Missing:</strong> ${escapeHtml(valueCompare.missingResolverUrls.join(", "))}</p>`,
+    valueCompare.conflictingResolverUrls.length === 0
+      ? null
+      : `<p><strong>Conflicting:</strong> ${escapeHtml(valueCompare.conflictingResolverUrls.join(", "))}</p>`,
+    valueCompare.failedResolverUrls.length === 0
+      ? null
+      : `<p><strong>Failed:</strong> ${escapeHtml(valueCompare.failedResolverUrls.join(", "))}</p>`
+  ].filter((row): row is string => row !== null);
+
+  return `
+    <div class="resolver-compare-card">
+      <div class="value-history-head">
+        <p class="step-list-label">Resolver Comparison</p>
+        <p class="field-value">${escapeHtml(statusLabel)} · ${escapeHtml(String(valueCompare.resolverCount))} configured resolvers</p>
+      </div>
+      <div class="resolver-compare-list">${rows.join("")}</div>
     </div>
   `;
 }
@@ -379,6 +595,10 @@ function renderSignedRecord(record: BrowserSignedValueRecord): void {
   if (elements.publishValueButton) {
     elements.publishValueButton.disabled = false;
   }
+  if (elements.publishValueFanoutButton) {
+    elements.publishValueFanoutButton.disabled = !state.resolverFanoutAvailable;
+  }
+  updateResolverFanoutUi();
 
   elements.signResult.classList.remove("empty");
   elements.signResult.innerHTML = `
@@ -395,6 +615,10 @@ function renderSignedRecord(record: BrowserSignedValueRecord): void {
       <div class="result-item">
         <label>Sequence</label>
         <p class="field-value">${escapeHtml(String(record.sequence))}</p>
+      </div>
+      <div class="result-item">
+        <label>Previous Record</label>
+        <p class="field-value">${escapeHtml(record.previousRecordHash === null ? "None (first in ownership interval)" : truncateMiddle(record.previousRecordHash, 12, 10))}</p>
       </div>
       <div class="result-item">
         <label>Value Type</label>
@@ -415,9 +639,32 @@ function renderPublishResult(result: unknown): void {
   }
 
   const record = isRecord(result) ? result : {};
+  if (record.kind === "ont-multi-resolver-value-publish") {
+    const summary = record as unknown as ValuePublishFanoutSummary;
+    const payloadHex = state.signedRecord?.payloadHex ?? "";
+    const valueType = state.signedRecord?.valueType ?? 0;
+    const failures = summary.results
+      .filter((entry) => !entry.ok)
+      .map((entry) => `<p><strong>${escapeHtml(entry.resolverUrl)}</strong>: ${escapeHtml(entry.message ?? "publish failed")}</p>`)
+      .join("");
+
+    elements.publishResult.classList.remove("empty");
+    elements.publishResult.innerHTML = `
+      <div class="result-title">
+        <h3>Value Published To Resolver Set</h3>
+        <span class="status-pill mature">${escapeHtml(String(summary.successCount))}/${escapeHtml(String(summary.resolverCount))} accepted</span>
+      </div>
+      <p class="result-meta">${escapeHtml(summary.name)} · sequence ${escapeHtml(String(summary.sequence))} · ${escapeHtml(formatValueType(valueType, payloadHex))}</p>
+      <p class="field-value">The same signed value record was sent to ${escapeHtml(String(summary.resolverCount))} configured resolvers. ${escapeHtml(String(summary.successCount))} accepted it and ${escapeHtml(String(summary.failureCount))} rejected or missed it.</p>
+      ${failures === "" ? "" : `<div class="resolver-compare-list">${failures}</div>`}
+    `;
+    return;
+  }
+
   const name = typeof record.name === "string" ? record.name : state.signedRecord?.name ?? "unknown";
   const sequence = typeof record.sequence === "number" ? record.sequence : state.signedRecord?.sequence ?? 0;
   const valueType = typeof record.valueType === "number" ? record.valueType : state.signedRecord?.valueType ?? 0;
+  const recordHash = typeof record.recordHash === "string" ? record.recordHash : "";
   const payloadHex = state.signedRecord?.payloadHex ?? "";
 
   elements.publishResult.classList.remove("empty");
@@ -427,8 +674,41 @@ function renderPublishResult(result: unknown): void {
       <span class="status-pill mature">Resolver updated</span>
     </div>
     <p class="result-meta">${escapeHtml(name)} · sequence ${escapeHtml(String(sequence))} · ${escapeHtml(formatValueType(valueType, payloadHex))}</p>
-    <p class="field-value">The resolver accepted the signed value record and will now serve it for the current on-chain owner.</p>
+    <p class="field-value">The resolver accepted the signed value record and appended it to the current ownership interval${recordHash === "" ? "." : ` at ${escapeHtml(truncateMiddle(recordHash, 12, 10))}.`}</p>
   `;
+}
+
+async function loadConfig(): Promise<void> {
+  try {
+    const config = await fetchJson<WebConfig>(withBasePath("/api/config"));
+    state.resolverCandidates = Array.isArray(config.resolverCandidates)
+      ? config.resolverCandidates.filter((entry): entry is string => typeof entry === "string")
+      : [];
+    state.resolverFanoutAvailable =
+      config.resolverFanoutAvailable === true && state.resolverCandidates.length > 1;
+  } catch {
+    state.resolverCandidates = [];
+    state.resolverFanoutAvailable = false;
+  }
+}
+
+function updateResolverFanoutUi(): void {
+  if (elements.publishValueFanoutButton) {
+    elements.publishValueFanoutButton.hidden = !state.resolverFanoutAvailable;
+    elements.publishValueFanoutButton.disabled = state.signedRecord === null;
+  }
+
+  if (elements.publishModeNote) {
+    elements.publishModeNote.textContent = state.resolverFanoutAvailable
+      ? `The primary publish button updates the hosted resolver. The secondary button fans the same signed JSON out to ${state.resolverCandidates.length} configured resolvers. The owner private key never leaves the page.`
+      : "The publish request only sends the signed JSON record. The owner private key never leaves the page.";
+  }
+}
+
+function getDefaultPublishMessage(): string {
+  return state.resolverFanoutAvailable
+    ? "Sign a value record first. Then publish the signed JSON to the hosted resolver or fan it out to the configured resolver set."
+    : "Sign a value record first. Then publish the signed JSON to the resolver.";
 }
 
 function updateDerivedOwnerState(): void {
@@ -640,6 +920,7 @@ function applySuggestedSequence(nextSequence: number): void {
     currentValue === "" ? null : Number.parseInt(currentValue, 10);
   const shouldReplace =
     currentValue === ""
+    || state.lastSuggestedSequence === null
     || currentSequence === state.lastSuggestedSequence;
 
   state.lastSuggestedSequence = nextSequence;
@@ -738,8 +1019,8 @@ function resolvePayloadHex(mode: "utf8" | "bundle" | "raw", valueType: number, p
 
 function parseNonNegativeInteger(value: string, label: string): number {
   const parsed = Number.parseInt(value, 10);
-  if (!Number.isSafeInteger(parsed) || parsed < 0) {
-    throw new Error(`${label} must be a non-negative safe integer`);
+  if (!Number.isSafeInteger(parsed) || parsed < 1) {
+    throw new Error(`${label} must be a positive safe integer`);
   }
 
   return parsed;

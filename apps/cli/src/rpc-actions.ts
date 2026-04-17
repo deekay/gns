@@ -16,7 +16,7 @@ import {
   testBitcoinRpcMempoolAccept,
   type BitcoinEsploraConfig,
   type BitcoinRpcConfig
-} from "@gns/bitcoin";
+} from "@ont/bitcoin";
 import { Transaction } from "bitcoinjs-lib";
 
 import { parseSignedArtifactsEnvelope, type SignedArtifactsEnvelope } from "./signer.js";
@@ -31,7 +31,7 @@ export interface RpcConnectionOptions {
 }
 
 export interface RevealWatcherResult {
-  readonly kind: "gns-reveal-watch-result";
+  readonly kind: "ont-reveal-watch-result";
   readonly commitTxid: string;
   readonly commitConfirmations: number;
   readonly revealTxid: string;
@@ -50,7 +50,7 @@ export interface RemoteChainTarget {
 }
 
 export interface RpcCheckResult {
-  readonly kind: "gns-rpc-check-result";
+  readonly kind: "ont-rpc-check-result";
   readonly expectedChain: RpcConnectionOptions["expectedChain"];
   readonly rpcUrl: string;
   readonly chain: string;
@@ -67,7 +67,7 @@ export interface EsploraConnectionOptions {
 }
 
 export interface EsploraCheckResult {
-  readonly kind: "gns-esplora-check-result";
+  readonly kind: "ont-esplora-check-result";
   readonly expectedChain: EsploraConnectionOptions["expectedChain"];
   readonly baseUrl: string;
   readonly tipHeight: number;
@@ -75,7 +75,7 @@ export interface EsploraCheckResult {
 }
 
 export interface EsploraAddressCheckResult {
-  readonly kind: "gns-esplora-address-check-result";
+  readonly kind: "ont-esplora-address-check-result";
   readonly baseUrl: string;
   readonly address: string;
   readonly chainStats: {
@@ -102,15 +102,15 @@ export interface EsploraAddressCheckResult {
 }
 
 export function resolveRpcConfig(options: RpcConnectionOptions): BitcoinRpcConfig {
-  const url = options.url ?? process.env.GNS_BITCOIN_RPC_URL;
+  const url = options.url ?? process.env.ONT_BITCOIN_RPC_URL;
   const username =
-    options.username ?? process.env.GNS_BITCOIN_RPC_USERNAME;
+    options.username ?? process.env.ONT_BITCOIN_RPC_USERNAME;
   const password =
-    options.password ?? process.env.GNS_BITCOIN_RPC_PASSWORD;
+    options.password ?? process.env.ONT_BITCOIN_RPC_PASSWORD;
 
   if (!url) {
     throw new Error(
-      "bitcoin rpc url is required via --rpc-url or GNS_BITCOIN_RPC_URL"
+      "bitcoin rpc url is required via --rpc-url or ONT_BITCOIN_RPC_URL"
     );
   }
 
@@ -118,11 +118,11 @@ export function resolveRpcConfig(options: RpcConnectionOptions): BitcoinRpcConfi
 }
 
 export function resolveEsploraConfig(options: EsploraConnectionOptions): BitcoinEsploraConfig {
-  const baseUrl = options.baseUrl ?? process.env.GNS_ESPLORA_BASE_URL;
+  const baseUrl = options.baseUrl ?? process.env.ONT_ESPLORA_BASE_URL;
 
   if (!baseUrl) {
     throw new Error(
-      "bitcoin esplora base url is required via --base-url or GNS_ESPLORA_BASE_URL"
+      "bitcoin esplora base url is required via --base-url or ONT_ESPLORA_BASE_URL"
     );
   }
 
@@ -136,7 +136,7 @@ export function resolveRemoteChainTarget(options: {
   readonly esploraBaseUrl: string | undefined;
   readonly expectedChain: RpcConnectionOptions["expectedChain"];
 }): RemoteChainTarget {
-  if (options.rpcUrl ?? process.env.GNS_BITCOIN_RPC_URL) {
+  if (options.rpcUrl ?? process.env.ONT_BITCOIN_RPC_URL) {
     return {
       kind: "rpc",
       rpc: resolveRpcConfig({
@@ -149,7 +149,7 @@ export function resolveRemoteChainTarget(options: {
     };
   }
 
-  if (options.esploraBaseUrl ?? process.env.GNS_ESPLORA_BASE_URL) {
+  if (options.esploraBaseUrl ?? process.env.ONT_ESPLORA_BASE_URL) {
     return {
       kind: "esplora",
       rpc: undefined,
@@ -161,7 +161,7 @@ export function resolveRemoteChainTarget(options: {
   }
 
   throw new Error(
-    "either Bitcoin Core RPC (--rpc-url or GNS_BITCOIN_RPC_URL) or Esplora (--base-url or GNS_ESPLORA_BASE_URL) is required"
+    "either Bitcoin Core RPC (--rpc-url or ONT_BITCOIN_RPC_URL) or Esplora (--base-url or ONT_ESPLORA_BASE_URL) is required"
   );
 }
 
@@ -173,7 +173,7 @@ export async function checkRpcConnection(options: {
   const blockCount = await getBitcoinRpcBlockCount(options.rpc);
 
   return {
-    kind: "gns-rpc-check-result",
+    kind: "ont-rpc-check-result",
     expectedChain: options.expectedChain,
     rpcUrl: options.rpc.url,
     chain: info.chain,
@@ -197,7 +197,7 @@ export async function checkEsploraConnection(options: {
   const tipHash = await getBitcoinEsploraBlockHash(options.esplora, tipHeight);
 
   return {
-    kind: "gns-esplora-check-result",
+    kind: "ont-esplora-check-result",
     expectedChain: options.expectedChain,
     baseUrl: options.esplora.baseUrl,
     tipHeight,
@@ -215,7 +215,7 @@ export async function checkEsploraAddress(options: {
   ]);
 
   return {
-    kind: "gns-esplora-address-check-result",
+    kind: "ont-esplora-address-check-result",
     baseUrl: options.esplora.baseUrl,
     address: summary.address,
     chainStats: summarizeAddressStats(summary.chain_stats),
@@ -340,7 +340,7 @@ export async function waitForCommitAndBroadcastReveal(options: {
       });
 
       return {
-        kind: "gns-reveal-watch-result",
+        kind: "ont-reveal-watch-result",
         commitTxid: options.commitTxid,
         commitConfirmations: confirmations,
         revealTxid: options.signedRevealArtifacts.signedTransactionId,
@@ -453,7 +453,7 @@ async function maybeInspectTransferRelayCompatibility(options: {
   readonly esplora: BitcoinEsploraConfig | undefined;
   readonly signedArtifacts: SignedArtifactsEnvelope;
 }): Promise<void> {
-  if (options.signedArtifacts.kind !== "gns-signed-transfer-artifacts") {
+  if (options.signedArtifacts.kind !== "ont-signed-transfer-artifacts") {
     return;
   }
 

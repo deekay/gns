@@ -1,8 +1,8 @@
-# Global Name System (GNS)
+# Open Name Tags (ONT)
 
-Global Name System is a payment-handle system anchored to Bitcoin.
+Open Name Tags is a payment-handle system anchored to Bitcoin.
 
-A GNS name is a human-readable handle you can actually own. Its first job is simple: let a wallet or client resolve who should get paid before money moves. The owner can update signed off-chain value records, so the same name can later carry other destinations if clients and applications decide to support them.
+An ONT name is a human-readable handle you can actually own. Its first job is simple: let a wallet or client resolve who should get paid before money moves. The owner can update signed off-chain value records, so the same name can later carry other destinations if clients and applications decide to support them.
 
 The hosted website is mainly a tool surface:
 
@@ -15,15 +15,15 @@ The hosted website is mainly a tool surface:
 
 This repository is where the fuller project explanation lives.
 
-Human-facing amounts in GNS use integer bitcoin notation alongside the conventional BTC equivalent. Example: `₿50,000 (0.0005 BTC)`.
+Human-facing amounts in ONT use integer bitcoin notation alongside the conventional BTC equivalent. Example: `₿50,000 (0.0005 BTC)`.
 
 ## Start Here
 
 If you want the shortest honest project orientation before touching the product surface, start with:
 
 1. [docs/research/BITCOIN_EXPERT_REVIEW_PACKET.md](./docs/research/BITCOIN_EXPERT_REVIEW_PACKET.md)
-2. [docs/core/GNS_FROM_ZERO.md](./docs/core/GNS_FROM_ZERO.md)
-3. [docs/research/GNS_IMPLEMENTATION_AND_VALIDATION.md](./docs/research/GNS_IMPLEMENTATION_AND_VALIDATION.md)
+2. [docs/core/ONT_FROM_ZERO.md](./docs/core/ONT_FROM_ZERO.md)
+3. [docs/research/ONT_IMPLEMENTATION_AND_VALIDATION.md](./docs/research/ONT_IMPLEMENTATION_AND_VALIDATION.md)
 4. [docs/research/MERKLE_BATCHING_STATUS.md](./docs/research/MERKLE_BATCHING_STATUS.md)
 5. [docs/research/LAUNCH_SPEC_V0.md](./docs/research/LAUNCH_SPEC_V0.md)
 6. [docs/research/BITCOIN_REVIEW_CLOSURE_MATRIX.md](./docs/research/BITCOIN_REVIEW_CLOSURE_MATRIX.md)
@@ -31,10 +31,10 @@ If you want the shortest honest project orientation before touching the product 
 
 If you want the fastest first walkthrough, use the hosted private demo:
 
-1. Open [setup](https://globalnamesystem.org/setup) and point Sparrow at the hosted demo wallet endpoint shown there.
+1. Open [setup](https://opennametags.org/setup) and point Sparrow at the hosted demo wallet endpoint shown there.
 2. Request demo coins into the same Sparrow wallet you plan to spend from.
-3. Open [claim prep](https://globalnamesystem.org/claim), choose the name, and save the owner key + backup package.
-4. Build the commit and reveal PSBTs, sign them in Sparrow, and watch the name appear in [explore](https://globalnamesystem.org/explore).
+3. Open [claim prep](https://opennametags.org/claim), choose the name, and save the owner key + backup package.
+4. Build the commit and reveal PSBTs, sign them in Sparrow, and watch the name appear in [explore](https://opennametags.org/explore).
 
 If you want the tightest possible product demo instead of the full docs path, use:
 
@@ -64,14 +64,14 @@ flowchart LR
   F -->|"published to"| D
 ```
 
-GNS has two different authority layers:
+ONT has two different authority layers:
 
 - the **wallet key** signs Bitcoin transactions that establish or transfer ownership
 - the **owner key** signs the off-chain value record that says what the name points to
 
 ## Pick The Path That Fits
 
-There are three practical ways to use GNS today:
+There are three practical ways to use ONT today:
 
 | Path | Best for | What you trust | Works today |
 | --- | --- | --- | --- |
@@ -80,16 +80,16 @@ There are three practical ways to use GNS today:
 | `Offline / Higher-Trust Claim Prep` | Preparing claims without depending on the hosted site UI | Local browser bundle plus your own signer | Yes |
 
 Hosted private demo:
-- website: [https://globalnamesystem.org](https://globalnamesystem.org)
-- setup: [https://globalnamesystem.org/setup](https://globalnamesystem.org/setup)
-- claim prep: [https://globalnamesystem.org/claim](https://globalnamesystem.org/claim)
-- experimental auction lab + chain-derived bid feed: [https://globalnamesystem.org/auctions](https://globalnamesystem.org/auctions)
+- website: [https://opennametags.org](https://opennametags.org)
+- setup: [https://opennametags.org/setup](https://opennametags.org/setup)
+- claim prep: [https://opennametags.org/claim](https://opennametags.org/claim)
+- experimental auction lab + chain-derived bid feed: [https://opennametags.org/auctions](https://opennametags.org/auctions)
 
 Self-hosted website + resolver:
 - quick guide: [SELF_HOSTING.md](./docs/core/SELF_HOSTING.md)
 
 Offline / higher-trust claim prep:
-- offline architect: [https://globalnamesystem.org/claim/offline](https://globalnamesystem.org/claim/offline)
+- offline architect: [https://opennametags.org/claim/offline](https://opennametags.org/claim/offline)
 
 ## What Works Today
 
@@ -130,25 +130,25 @@ For the shortest presenter-friendly version, use [docs/demo/FLINT_DEMO.md](./doc
 
 Use the homepage to look up a name, see the quick model, and choose whether you want `Setup`, `Claim`, or `Explore`.
 
-![GNS homepage](./docs/assets/website-home.png)
+![ONT homepage](./docs/assets/website-home.png)
 
 ### 2. Set up Sparrow and request demo coins
 
 Use the setup page to point Sparrow at the hosted private signet wallet endpoint, confirm it sees the demo chain, then fund the same wallet you plan to spend from.
 
-![GNS setup](./docs/assets/website-setup.png)
+![ONT setup](./docs/assets/website-setup.png)
 
 ### 3. Prepare the claim
 
 On claim prep, pick the name, generate or paste the owner key, save the backup package, and build the commit/reveal signer handoff.
 
-![GNS claim prep](./docs/assets/website-claim.png)
+![ONT claim prep](./docs/assets/website-claim.png)
 
 ### 4. Publish what the name points to
 
 Once the name is active, use the values tool to publish ordered key/value pairs that describe where the name should resolve.
 
-![GNS value bundle](./docs/assets/website-values-bundle.png)
+![ONT value bundle](./docs/assets/website-values-bundle.png)
 
 ### 5. Inspect the live prototype status
 
@@ -165,11 +165,11 @@ Use the auction page to inspect both:
   post-release transfer, and an intentionally early losing-bond spend on a
   dedicated smoke lot
 
-## What GNS Is
+## What ONT Is
 
-GNS names are first-class strings like `satoshi`.
+ONT names are first-class strings like `satoshi`.
 
-Ownership is derived from Bitcoin transactions. Mutable value records stay off-chain and are signed by the current owner key. That means GNS uses Bitcoin as a notary for ownership and state transitions, not as a general-purpose database.
+Ownership is derived from Bitcoin transactions. Mutable value records stay off-chain and are signed by the current owner key. That means ONT uses Bitcoin as a notary for ownership and state transitions, not as a general-purpose database.
 
 The result is a payment handle that can point to:
 
@@ -182,7 +182,7 @@ Payment handles are useful because people do not think in raw addresses.
 
 Today, readable payment handles usually depend on a service, account, domain, or operator that sits between the payer and the recipient. That can be a good transitional convenience, but it means the handle's availability and correctness inherit someone else's infrastructure and policies.
 
-GNS is trying to offer a different model:
+ONT is trying to offer a different model:
 
 - no suffixes
 - no registrar
@@ -194,7 +194,7 @@ The clearest current wording is:
 
 > a payment handle you can actually own.
 
-Adjacent work is worth keeping in mind here too. Systems like Pubky / PKARR (which the old Slashtags project now points to) explore self-sovereign routing around public keys and signed DHT records while intentionally avoiding a scarce global human-readable namespace. GNS is trying to solve a different layer: Bitcoin-anchored ownership of shared human-readable payment handles, with broader owner-signed records possible later. For a short internal comparison note, see [docs/research/GNS_VS_PUBKY_PKARR.md](./docs/research/GNS_VS_PUBKY_PKARR.md).
+Adjacent work is worth keeping in mind here too. Systems like Pubky / PKARR (which the old Slashtags project now points to) explore self-sovereign routing around public keys and signed DHT records while intentionally avoiding a scarce global human-readable namespace. ONT is trying to solve a different layer: Bitcoin-anchored ownership of shared human-readable payment handles, with broader owner-signed records possible later. For a short internal comparison note, see [docs/research/ONT_VS_PUBKY_PKARR.md](./docs/research/ONT_VS_PUBKY_PKARR.md).
 
 ## How Ownership Works
 
@@ -212,7 +212,7 @@ Claims are backed by locked bitcoin bonds, not fees paid to an issuer.
 
 - shorter names require larger bonds
 - longer names quickly fall toward a floor
-- the bond is not paid to GNS
+- the bond is not paid to ONT
 - the claimer keeps the bitcoin and only gives up liquidity for the settlement period
 
 ### Transfers
@@ -235,7 +235,7 @@ What a name points to is intentionally off-chain.
 
 ## Bonding And Namespace Allocation
 
-GNS tries to make namespace allocation as neutral as possible.
+ONT tries to make namespace allocation as neutral as possible.
 
 It does that by using locked bitcoin bonds instead of:
 
@@ -275,7 +275,7 @@ This is intentional. The fairness mechanism is the opportunity cost of locking c
 
 ## Blockspace Footprint
 
-GNS keeps its pure naming payload small, but it still consumes real Bitcoin blockspace because each successful claim is a pair of ordinary Bitcoin transactions.
+ONT keeps its pure naming payload small, but it still consumes real Bitcoin blockspace because each successful claim is a pair of ordinary Bitcoin transactions.
 
 Current implementation summary:
 
@@ -283,7 +283,7 @@ Current implementation summary:
 - observed full claim footprint: about `404 vbytes`
 - observed full serialized footprint: about `566 raw bytes`
 
-So GNS is compact as protocol data, but it still competes in the normal fee market like any other transaction. The main brakes on overuse are:
+So ONT is compact as protocol data, but it still competes in the normal fee market like any other transaction. The main brakes on overuse are:
 
 - fee pressure
 - bond capital lockup
@@ -291,7 +291,7 @@ So GNS is compact as protocol data, but it still competes in the normal fee mark
 
 ## Resolver And Availability Model
 
-GNS has two different availability stories:
+ONT has two different availability stories:
 
 ### Ownership
 
@@ -315,12 +315,12 @@ That means v1 is decentralized for ownership, but still only partly decentralize
 
 The current hosted product is here:
 
-- Home / lookup: [https://globalnamesystem.org](https://globalnamesystem.org)
-- Explore: [https://globalnamesystem.org/explore](https://globalnamesystem.org/explore)
-- Claim prep: [https://globalnamesystem.org/claim](https://globalnamesystem.org/claim)
-- Transfer prep: [https://globalnamesystem.org/transfer](https://globalnamesystem.org/transfer)
-- Setup: [https://globalnamesystem.org/setup](https://globalnamesystem.org/setup)
-- Offline claim architect: [https://globalnamesystem.org/claim/offline](https://globalnamesystem.org/claim/offline)
+- Home / lookup: [https://opennametags.org](https://opennametags.org)
+- Explore: [https://opennametags.org/explore](https://opennametags.org/explore)
+- Claim prep: [https://opennametags.org/claim](https://opennametags.org/claim)
+- Transfer prep: [https://opennametags.org/transfer](https://opennametags.org/transfer)
+- Setup: [https://opennametags.org/setup](https://opennametags.org/setup)
+- Offline claim architect: [https://opennametags.org/claim/offline](https://opennametags.org/claim/offline)
 
 The website is intentionally becoming more tool-oriented over time. The deeper explanation, economics, and design rationale are expected to live here in the repo.
 
@@ -382,7 +382,7 @@ npm run test:regtest-cli-suite
 ### Private signet demo with Sparrow
 
 - guide: [SPARROW_PRIVATE_SIGNET.md](./docs/demo/SPARROW_PRIVATE_SIGNET.md)
-- one-command session helper: `/path/to/gns/scripts/start-private-signet-sparrow-session.sh`
+- one-command session helper: `/path/to/ont/scripts/start-private-signet-sparrow-session.sh`
 - official Sparrow download: [https://sparrowwallet.com/download/](https://sparrowwallet.com/download/)
 
 ## Repository Map
@@ -418,7 +418,7 @@ This is a TypeScript monorepo using `npm` workspaces.
 
 Start here:
 
-- [docs/core/GNS_ONE_PAGER.md](./docs/core/GNS_ONE_PAGER.md): short overview of the design, economics, and blockspace footprint
+- [docs/core/ONT_ONE_PAGER.md](./docs/core/ONT_ONE_PAGER.md): short overview of the design, economics, and blockspace footprint
 - [docs/README.md](./docs/README.md): documentation index
 - [docs/core/SELF_HOSTING.md](./docs/core/SELF_HOSTING.md): run your own website + resolver stack
 - [docs/core/ARCHITECTURE.md](./docs/core/ARCHITECTURE.md): system structure, trust boundaries, and runtime modes
@@ -431,7 +431,7 @@ More exploratory and draft-oriented material lives under [`docs/research/`](./do
 
 ## Status
 
-GNS is currently in active prototype phase.
+ONT is currently in active prototype phase.
 
 It is useful for local, regtest, signet, and private-signet experimentation, but it is **not ready for mainnet use**.
 

@@ -96,7 +96,7 @@ If scale or operational behavior later makes `electrs` a poor fit, we can revisi
 
 Add one new service role to the private demo VPS:
 
-- `gns-private-electrum` or `electrs-private-signet`
+- `ont-private-electrum` or `electrs-private-signet`
 
 It should:
 
@@ -108,7 +108,7 @@ New public surface:
 
 - a dedicated host or port for the private demo wallet endpoint
 - example shape:
-  - `signet-wallet.globalnamesystem.org:50002`
+  - `signet-wallet.opennametags.org:50002`
   - or `<server-ip>:50002` as an earlier milestone
 
 ### Phase 2: Update The User Path
@@ -147,8 +147,8 @@ For the current VPS layout, the minimum set is:
 The existing pieces can stay:
 
 - `bitcoind-private-signet`
-- `gns-private-resolver`
-- `gns-private-web`
+- `ont-private-resolver`
+- `ont-private-web`
 - the private demo funding helper
 - the private demo auto-miner
 

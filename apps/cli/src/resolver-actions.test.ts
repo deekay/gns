@@ -5,6 +5,7 @@ import {
   fetchNameActivity,
   fetchRecentActivity,
   fetchNameRecord,
+  fetchNameValueHistoryFromResolvers,
   fetchTransactionProvenance,
   fetchNameValueRecord,
   ResolverHttpError
@@ -243,5 +244,241 @@ describe("resolver actions", () => {
     expect(result.name).toBe("example123456");
     expect(result.activity[0]?.txid).toBe("cc".repeat(32));
     expect(globalThis.fetch).toHaveBeenCalledWith("http://127.0.0.1:8787/name/example123456/activity?limit=4");
+  });
+
+  it("summarizes multi-resolver value history agreement and lag", async () => {
+    globalThis.fetch = vi.fn(async (input) => {
+      const url = String(input);
+
+      if (url === "http://resolver-a.test/name/example123456/value/history") {
+        return new Response(
+          JSON.stringify({
+            name: "example123456",
+            ownershipRef: "aa".repeat(32),
+            currentRecordHash: "33".repeat(32),
+            completeFromSequence: 1,
+            completeToSequence: 2,
+            hasGaps: false,
+            hasForks: false,
+            records: [
+              {
+                format: "ont-value-record",
+                recordVersion: 2,
+                name: "example123456",
+                ownerPubkey: "11".repeat(32),
+                ownershipRef: "aa".repeat(32),
+                sequence: 1,
+                previousRecordHash: null,
+                valueType: 1,
+                payloadHex: "01",
+                issuedAt: "2026-04-15T12:00:00.000Z",
+                signature: "44".repeat(64),
+                recordHash: "22".repeat(32)
+              },
+              {
+                format: "ont-value-record",
+                recordVersion: 2,
+                name: "example123456",
+                ownerPubkey: "11".repeat(32),
+                ownershipRef: "aa".repeat(32),
+                sequence: 2,
+                previousRecordHash: "22".repeat(32),
+                valueType: 1,
+                payloadHex: "02",
+                issuedAt: "2026-04-15T12:01:00.000Z",
+                signature: "55".repeat(64),
+                recordHash: "33".repeat(32)
+              }
+            ]
+          }),
+          {
+            status: 200,
+            headers: {
+              "content-type": "application/json"
+            }
+          }
+        );
+      }
+
+      if (url === "http://resolver-b.test/name/example123456/value/history") {
+        return new Response(
+          JSON.stringify({
+            name: "example123456",
+            ownershipRef: "aa".repeat(32),
+            currentRecordHash: "22".repeat(32),
+            completeFromSequence: 1,
+            completeToSequence: 1,
+            hasGaps: false,
+            hasForks: false,
+            records: [
+              {
+                format: "ont-value-record",
+                recordVersion: 2,
+                name: "example123456",
+                ownerPubkey: "11".repeat(32),
+                ownershipRef: "aa".repeat(32),
+                sequence: 1,
+                previousRecordHash: null,
+                valueType: 1,
+                payloadHex: "01",
+                issuedAt: "2026-04-15T12:00:00.000Z",
+                signature: "44".repeat(64),
+                recordHash: "22".repeat(32)
+              }
+            ]
+          }),
+          {
+            status: 200,
+            headers: {
+              "content-type": "application/json"
+            }
+          }
+        );
+      }
+
+      return new Response(
+        JSON.stringify({
+          error: "value_not_found",
+          message: "No value record yet."
+        }),
+        {
+          status: 404,
+          headers: {
+            "content-type": "application/json"
+          }
+        }
+      );
+    }) as typeof fetch;
+
+    const result = await fetchNameValueHistoryFromResolvers({
+      name: "Example123456",
+      resolverUrls: [
+        "http://resolver-a.test",
+        "http://resolver-b.test",
+        "http://resolver-c.test"
+      ]
+    });
+
+    expect(result.status).toBe("lagging");
+    expect(result.canonicalResolverUrl).toBe("http://resolver-a.test");
+    expect(result.currentSequence).toBe(2);
+    expect(result.laggingResolverUrls).toEqual(["http://resolver-b.test"]);
+    expect(result.missingResolverUrls).toEqual(["http://resolver-c.test"]);
+  });
+
+  it("marks divergent successors in the same ownership interval as a conflict", async () => {
+    globalThis.fetch = vi.fn(async (input) => {
+      const url = String(input);
+
+      if (url === "http://resolver-a.test/name/example123456/value/history") {
+        return new Response(
+          JSON.stringify({
+            name: "example123456",
+            ownershipRef: "aa".repeat(32),
+            currentRecordHash: "33".repeat(32),
+            completeFromSequence: 1,
+            completeToSequence: 2,
+            hasGaps: false,
+            hasForks: false,
+            records: [
+              {
+                format: "ont-value-record",
+                recordVersion: 2,
+                name: "example123456",
+                ownerPubkey: "11".repeat(32),
+                ownershipRef: "aa".repeat(32),
+                sequence: 1,
+                previousRecordHash: null,
+                valueType: 1,
+                payloadHex: "01",
+                issuedAt: "2026-04-15T12:00:00.000Z",
+                signature: "44".repeat(64),
+                recordHash: "22".repeat(32)
+              },
+              {
+                format: "ont-value-record",
+                recordVersion: 2,
+                name: "example123456",
+                ownerPubkey: "11".repeat(32),
+                ownershipRef: "aa".repeat(32),
+                sequence: 2,
+                previousRecordHash: "22".repeat(32),
+                valueType: 1,
+                payloadHex: "02",
+                issuedAt: "2026-04-15T12:01:00.000Z",
+                signature: "55".repeat(64),
+                recordHash: "33".repeat(32)
+              }
+            ]
+          }),
+          {
+            status: 200,
+            headers: {
+              "content-type": "application/json"
+            }
+          }
+        );
+      }
+
+      return new Response(
+        JSON.stringify({
+          name: "example123456",
+          ownershipRef: "aa".repeat(32),
+          currentRecordHash: "44".repeat(32),
+          completeFromSequence: 1,
+          completeToSequence: 2,
+          hasGaps: false,
+          hasForks: false,
+          records: [
+            {
+              format: "ont-value-record",
+              recordVersion: 2,
+              name: "example123456",
+              ownerPubkey: "11".repeat(32),
+              ownershipRef: "aa".repeat(32),
+              sequence: 1,
+              previousRecordHash: null,
+              valueType: 1,
+              payloadHex: "01",
+              issuedAt: "2026-04-15T12:00:00.000Z",
+              signature: "44".repeat(64),
+              recordHash: "22".repeat(32)
+            },
+            {
+              format: "ont-value-record",
+              recordVersion: 2,
+              name: "example123456",
+              ownerPubkey: "11".repeat(32),
+              ownershipRef: "aa".repeat(32),
+              sequence: 2,
+              previousRecordHash: "22".repeat(32),
+              valueType: 1,
+              payloadHex: "ff",
+              issuedAt: "2026-04-15T12:01:30.000Z",
+              signature: "66".repeat(64),
+              recordHash: "44".repeat(32)
+            }
+          ]
+        }),
+        {
+          status: 200,
+          headers: {
+            "content-type": "application/json"
+          }
+        }
+      );
+    }) as typeof fetch;
+
+    const result = await fetchNameValueHistoryFromResolvers({
+      name: "Example123456",
+      resolverUrls: [
+        "http://resolver-a.test",
+        "http://resolver-b.test"
+      ]
+    });
+
+    expect(result.status).toBe("conflict");
+    expect(result.currentSequence).toBe(2);
+    expect(result.conflictingResolverUrls).toEqual(["http://resolver-b.test"]);
   });
 });

@@ -18,7 +18,7 @@ import {
   encodeRevealProofChunkPayload
 } from "./wire.js";
 
-export const BATCH_CLAIM_PACKAGE_FORMAT = "gns-batch-claim-package";
+export const BATCH_CLAIM_PACKAGE_FORMAT = "ont-batch-claim-package";
 export const BATCH_CLAIM_PACKAGE_VERSION = 1;
 export const DEFAULT_BATCH_PROOF_CHUNK_BYTES = MERKLE_PROOF_STEP_LENGTH * 2;
 

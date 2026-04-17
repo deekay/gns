@@ -1,6 +1,6 @@
-# GNS Hype Video Script
+# ONT Hype Video Script
 
-This is a messaging draft for the short GNS explainer / hype video.
+This is a messaging draft for the short ONT explainer / hype video.
 
 It is intentionally script-like rather than protocol-spec-like. The goal is to make the core ideas legible quickly, while staying aligned with the deeper docs.
 
@@ -12,13 +12,13 @@ If you are paying someone or approving a merchant, raw addresses and opaque acco
 
 Readable payment handles exist, but they usually depend on a service provider, account, domain, or operator.
 
-Global Name System is a different approach.
+Open Name Tags is a different approach.
 
-A GNS name is a human-readable payment handle anchored to Bitcoin. It gives you a way to say who should get paid before money moves, without relying on a gatekeeper-controlled alias.
+An ONT name is a human-readable payment handle anchored to Bitcoin. It gives you a way to say who should get paid before money moves, without relying on a gatekeeper-controlled alias.
 
 There is still a cost to claiming a name. Naming is never free. The difference is what kind of cost it is.
 
-Most naming systems make you pay a third party. GNS uses a bond instead. You lock bitcoin you still own. That bond has a real financial cost because capital has time value and opportunity cost, but it does not have to be paid to a registrar, a company, or a treasury. It is pricing without tribute to a gatekeeper.
+Most naming systems make you pay a third party. ONT uses a bond instead. You lock bitcoin you still own. That bond has a real financial cost because capital has time value and opportunity cost, but it does not have to be paid to a registrar, a company, or a treasury. It is pricing without tribute to a gatekeeper.
 
 Here is how it works.
 
@@ -26,23 +26,23 @@ To claim a name, you lock bitcoin as a bond. The name goes through a settlement 
 
 What the name points to can change. A payment address first; other owner-signed key/value records later if clients support them. Those records live off-chain and are signed by the current owner. The mutable pointer stays lightweight. The ownership record is what stays permanent.
 
-This matters even more as software starts acting on your behalf. Let the model infer what you want. Do not let the model guess who gets paid. When software routes a payment without a human inspecting every character, the final destination should not rest on a probabilistic guess. GNS gives human-readable payment handles cryptographically grounded ownership.
+This matters even more as software starts acting on your behalf. Let the model infer what you want. Do not let the model guess who gets paid. When software routes a payment without a human inspecting every character, the final destination should not rest on a probabilistic guess. ONT gives human-readable payment handles cryptographically grounded ownership.
 
-Other naming systems charge rent or depend on organizations that can change terms, remove access, or govern the namespace for their own interests. GNS is meant to be different: no token, no founder allocation, no whitelist, no protocol-level sale of names. Just a public namespace open under the same rules for everyone.
+Other naming systems charge rent or depend on organizations that can change terms, remove access, or govern the namespace for their own interests. ONT is meant to be different: no token, no founder allocation, no whitelist, no protocol-level sale of names. Just a public namespace open under the same rules for everyone.
 
 The first proof point is simple: pay the right person in words you control. Broader key/value uses can come later. The payment problem alone is already real.
 
-GNS is currently live on a private signet: a controlled Bitcoin test environment where anyone can inspect the idea, search names, prepare claims, and verify the ownership history for themselves.
+ONT is currently live on a private signet: a controlled Bitcoin test environment where anyone can inspect the idea, search names, prepare claims, and verify the ownership history for themselves.
 
 A payment handle you control, anchored to Bitcoin, for choosing who gets paid before money moves.
 
-That is Global Name System.
+That is Open Name Tags.
 
 ## Messaging Notes
 
 - Lead first with payment handles, not with generic naming ambition.
 - Lead with the idea that bonds are still pricing, but a special form of pricing.
-- Emphasize that GNS does not make naming free; it changes who gets paid and what the claimant retains.
+- Emphasize that ONT does not make naming free; it changes who gets paid and what the claimant retains.
 - Keep the difference between:
   - ordinary Bitcoin fee-market costs
   - and the protocol's own bond pricing

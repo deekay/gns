@@ -1,5 +1,5 @@
 {
-  "name": "@gns/bitcoin",
+  "name": "@ont/bitcoin",
   "version": "0.0.0",
   "private": true,
   "type": "module",

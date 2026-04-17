@@ -26,7 +26,7 @@ npm run dev:cli -- create-claim-package <name> \
 
 That gives you:
 
-- one owner key for GNS ownership and off-chain value updates
+- one owner key for ONT ownership and off-chain value updates
 - one funding WIF/address for signet transaction inputs
 - one claim package ready for `build-commit-artifacts` or `submit-claim`
 
@@ -35,11 +35,11 @@ That gives you:
 This is the exact public endpoint used to validate the prototype:
 
 ```bash
-export GNS_ESPLORA_BASE_URL="https://mempool.space/signet/api"
-export GNS_EXPECT_CHAIN="signet"
+export ONT_ESPLORA_BASE_URL="https://mempool.space/signet/api"
+export ONT_EXPECT_CHAIN="signet"
 TIP=$(curl -sS https://mempool.space/signet/api/blocks/tip/height)
-export GNS_LAUNCH_HEIGHT="$TIP"
-export GNS_RPC_END_HEIGHT="$TIP"
+export ONT_LAUNCH_HEIGHT="$TIP"
+export ONT_RPC_END_HEIGHT="$TIP"
 ```
 
 Then run:
@@ -61,7 +61,7 @@ Expected output includes:
 Or run the resolver:
 
 ```bash
-GNS_RESOLVER_PORT=8790 npm run dev:resolver
+ONT_RESOLVER_PORT=8790 npm run dev:resolver
 curl -s http://127.0.0.1:8790/health
 ```
 
@@ -81,33 +81,33 @@ That node can be:
 
 - A running `bitcoind` with signet enabled
 - RPC enabled for the current user or a dedicated service user
-- The signet node should be synced at least past your chosen `GNS_LAUNCH_HEIGHT`
+- The signet node should be synced at least past your chosen `ONT_LAUNCH_HEIGHT`
 
 ## Environment
 
 Example environment for a remote signet node:
 
 ```bash
-export GNS_SOURCE_MODE="rpc"
-export GNS_BITCOIN_RPC_URL="https://your-remote-signet-node.example/rpc"
-export GNS_BITCOIN_RPC_USERNAME="bitcoinrpc"
-export GNS_BITCOIN_RPC_PASSWORD="your-rpc-password"
-export GNS_ESPLORA_BASE_URL=""
-export GNS_EXPECT_CHAIN="signet"
-export GNS_LAUNCH_HEIGHT="100"
-export GNS_RPC_POLL_INTERVAL_MS="10000"
-export GNS_RESOLVER_PORT="8787"
-export GNS_WEB_PORT="3000"
+export ONT_SOURCE_MODE="rpc"
+export ONT_BITCOIN_RPC_URL="https://your-remote-signet-node.example/rpc"
+export ONT_BITCOIN_RPC_USERNAME="bitcoinrpc"
+export ONT_BITCOIN_RPC_PASSWORD="your-rpc-password"
+export ONT_ESPLORA_BASE_URL=""
+export ONT_EXPECT_CHAIN="signet"
+export ONT_LAUNCH_HEIGHT="100"
+export ONT_RPC_POLL_INTERVAL_MS="10000"
+export ONT_RESOLVER_PORT="8787"
+export ONT_WEB_PORT="3000"
 ```
 
 Notes:
 
-- `GNS_SOURCE_MODE` can be `auto`, `fixture`, `rpc`, or `esplora`. For remote signet work, setting it explicitly avoids ambiguity.
-- `GNS_EXPECT_CHAIN` defaults to `signet` in the apps, but setting it explicitly makes intent obvious.
-- `GNS_LAUNCH_HEIGHT` is required in RPC mode if no snapshot exists yet.
-- `GNS_LAUNCH_HEIGHT` is also required in Esplora mode if no snapshot exists yet.
-- `GNS_SNAPSHOT_PATH` is optional. If unset, each app uses a default file under `.data/`.
-- Only set one remote source at a time. If `GNS_BITCOIN_RPC_URL` and `GNS_ESPLORA_BASE_URL` are both set, startup will fail.
+- `ONT_SOURCE_MODE` can be `auto`, `fixture`, `rpc`, or `esplora`. For remote signet work, setting it explicitly avoids ambiguity.
+- `ONT_EXPECT_CHAIN` defaults to `signet` in the apps, but setting it explicitly makes intent obvious.
+- `ONT_LAUNCH_HEIGHT` is required in RPC mode if no snapshot exists yet.
+- `ONT_LAUNCH_HEIGHT` is also required in Esplora mode if no snapshot exists yet.
+- `ONT_SNAPSHOT_PATH` is optional. If unset, each app uses a default file under `.data/`.
+- Only set one remote source at a time. If `ONT_BITCOIN_RPC_URL` and `ONT_ESPLORA_BASE_URL` are both set, startup will fail.
 
 ## Check The Remote RPC First
 
@@ -129,7 +129,7 @@ npm run dev:cli -- check-rpc \
 
 Expected output includes:
 
-- `kind: "gns-rpc-check-result"`
+- `kind: "ont-rpc-check-result"`
 - `chain: "signet"`
 - `blocks`
 - `headers`
@@ -164,7 +164,7 @@ Resolver health:
 curl -s http://127.0.0.1:8787/health
 ```
 
-If you override `GNS_RESOLVER_PORT`, use that port in the health URL instead.
+If you override `ONT_RESOLVER_PORT`, use that port in the health URL instead.
 
 Expected health fields in RPC mode:
 
@@ -181,7 +181,7 @@ In RPC mode:
 - the app saves an index snapshot to disk
 - on restart it attempts to restore from that snapshot
 - it verifies the saved head block hash against Bitcoin Core
-- if the saved head is no longer on the active chain, it discards the snapshot state and rebuilds from `GNS_LAUNCH_HEIGHT`
+- if the saved head is no longer on the active chain, it discards the snapshot state and rebuilds from `ONT_LAUNCH_HEIGHT`
 
 Current prototype limitation:
 
@@ -192,20 +192,20 @@ Current prototype limitation:
 You can cap the sync range for debugging:
 
 ```bash
-export GNS_RPC_END_HEIGHT="200"
+export ONT_RPC_END_HEIGHT="200"
 ```
 
-`GNS_RPC_END_HEIGHT` currently caps both RPC and Esplora sync windows in the prototype.
+`ONT_RPC_END_HEIGHT` currently caps both RPC and Esplora sync windows in the prototype.
 
 You can change the resolver polling cadence:
 
 ```bash
-export GNS_RPC_POLL_INTERVAL_MS="5000"
+export ONT_RPC_POLL_INTERVAL_MS="5000"
 ```
 
 If `3000` or `8787` is already taken on your machine, move both apps together:
 
 ```bash
-export GNS_RESOLVER_PORT="8788"
-export GNS_WEB_PORT="3001"
+export ONT_RESOLVER_PORT="8788"
+export ONT_WEB_PORT="3001"
 ```

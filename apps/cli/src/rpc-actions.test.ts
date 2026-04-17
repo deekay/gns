@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Transaction, payments } from "bitcoinjs-lib";
 
-import { createBitcoinRpcConfig } from "@gns/bitcoin";
+import { createBitcoinRpcConfig } from "@ont/bitcoin";
 
 import {
   broadcastSignedArtifacts,
@@ -53,7 +53,7 @@ describe("checkRpcConnection", () => {
               initialblockdownload: false
             },
             error: null,
-            id: "gns"
+            id: "ont"
           }),
           { status: 200, headers: { "content-type": "application/json" } }
         );
@@ -64,7 +64,7 @@ describe("checkRpcConnection", () => {
           JSON.stringify({
             result: 2345,
             error: null,
-            id: "gns"
+            id: "ont"
           }),
           { status: 200, headers: { "content-type": "application/json" } }
         );
@@ -79,7 +79,7 @@ describe("checkRpcConnection", () => {
         expectedChain: "signet"
       })
     ).resolves.toMatchObject({
-      kind: "gns-rpc-check-result",
+      kind: "ont-rpc-check-result",
       expectedChain: "signet",
       rpcUrl: "https://remote-signet.example/rpc",
       chain: "signet",
@@ -116,7 +116,7 @@ describe("checkEsploraConnection", () => {
         expectedChain: "signet"
       })
     ).resolves.toMatchObject({
-      kind: "gns-esplora-check-result",
+      kind: "ont-esplora-check-result",
       expectedChain: "signet",
       baseUrl: "https://mempool.space/signet/api",
       tipHeight: 2345,
@@ -177,7 +177,7 @@ describe("checkEsploraConnection", () => {
         address: "tb1qexample"
       })
     ).resolves.toMatchObject({
-      kind: "gns-esplora-address-check-result",
+      kind: "ont-esplora-address-check-result",
       address: "tb1qexample",
       chainStats: {
         fundedSats: 50000
@@ -222,7 +222,7 @@ describe("broadcastSignedArtifacts", () => {
               maxdatacarriersize: 100000
             },
             error: null,
-            id: "gns"
+            id: "ont"
           }),
           { status: 200, headers: { "content-type": "application/json" } }
         );
@@ -239,7 +239,7 @@ describe("broadcastSignedArtifacts", () => {
               }
             ],
             error: null,
-            id: "gns"
+            id: "ont"
           }),
           { status: 200, headers: { "content-type": "application/json" } }
         );
@@ -250,7 +250,7 @@ describe("broadcastSignedArtifacts", () => {
           JSON.stringify({
             result: transactionId,
             error: null,
-            id: "gns"
+            id: "ont"
           }),
           { status: 200, headers: { "content-type": "application/json" } }
         );
@@ -265,7 +265,7 @@ describe("broadcastSignedArtifacts", () => {
         esplora: undefined,
         expectedChain: "signet",
         signedArtifacts: {
-          kind: "gns-signed-transfer-artifacts",
+          kind: "ont-signed-transfer-artifacts",
           network: "signet",
           signedTransactionHex: transactionHex,
           signedTransactionId: transactionId,
@@ -301,7 +301,7 @@ describe("broadcastSignedArtifacts", () => {
               maxdatacarriersize: 100000
             },
             error: null,
-            id: "gns"
+            id: "ont"
           }),
           { status: 200, headers: { "content-type": "application/json" } }
         );
@@ -318,7 +318,7 @@ describe("broadcastSignedArtifacts", () => {
               }
             ],
             error: null,
-            id: "gns"
+            id: "ont"
           }),
           { status: 200, headers: { "content-type": "application/json" } }
         );
@@ -337,7 +337,7 @@ describe("broadcastSignedArtifacts", () => {
         esplora: undefined,
         expectedChain: "signet",
         signedArtifacts: {
-          kind: "gns-signed-transfer-artifacts",
+          kind: "ont-signed-transfer-artifacts",
           network: "signet",
           signedTransactionHex: transactionHex,
           signedTransactionId: transactionId,

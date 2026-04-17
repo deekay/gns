@@ -22,7 +22,7 @@ async function main() {
     const saleName = createScenarioName("psal");
     logStep(giftName, "claiming gift-flow name");
     const summary = {
-      kind: "gns-private-signet-transfer-smoke-summary",
+      kind: "ont-private-signet-transfer-smoke-summary",
       startedAt: new Date().toISOString(),
       names: {
         gift: giftName,

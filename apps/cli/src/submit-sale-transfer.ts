@@ -1,19 +1,19 @@
 import { mkdir } from "node:fs/promises";
 import { join, resolve } from "node:path";
 
-import type { BitcoinEsploraConfig, BitcoinRpcConfig } from "@gns/bitcoin";
+import type { BitcoinEsploraConfig, BitcoinRpcConfig } from "@ont/bitcoin";
 
 import {
   buildSaleTransferArtifacts,
   maybeWriteJsonFile,
   type FundingInputDescriptor,
-  type GnsCliNetwork
+  type OntCliNetwork
 } from "./builder.js";
 import { broadcastSignedArtifacts, type RpcConnectionOptions } from "./rpc-actions.js";
 import { signArtifacts } from "./signer.js";
 
 export interface SubmitSaleTransferResult {
-  readonly kind: "gns-submit-sale-transfer-result";
+  readonly kind: "ont-submit-sale-transfer-result";
   readonly mode: "sale";
   readonly expectedChain: RpcConnectionOptions["expectedChain"];
   readonly transferTxid: string;
@@ -33,7 +33,7 @@ export async function submitSaleTransfer(options: {
   readonly sellerPaymentSats: bigint;
   readonly sellerPaymentAddress: string;
   readonly feeSats: bigint;
-  readonly network: GnsCliNetwork;
+  readonly network: OntCliNetwork;
   readonly expectedChain: RpcConnectionOptions["expectedChain"];
   readonly rpc: BitcoinRpcConfig | undefined;
   readonly esplora: BitcoinEsploraConfig | undefined;
@@ -90,7 +90,7 @@ export async function submitSaleTransfer(options: {
   }
 
   return {
-    kind: "gns-submit-sale-transfer-result",
+    kind: "ont-submit-sale-transfer-result",
     mode: "sale",
     expectedChain: options.expectedChain,
     transferTxid: signedTransferArtifacts.signedTransactionId,

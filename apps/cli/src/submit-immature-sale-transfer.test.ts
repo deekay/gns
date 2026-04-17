@@ -7,7 +7,7 @@ import ECPairFactory from "ecpair";
 import { initEccLib, networks, payments, Transaction } from "bitcoinjs-lib";
 import * as tinysecp from "tiny-secp256k1";
 
-import { createBitcoinRpcConfig } from "@gns/bitcoin";
+import { createBitcoinRpcConfig } from "@ont/bitcoin";
 
 import { submitImmatureSaleTransfer } from "./submit-immature-sale-transfer.js";
 
@@ -42,7 +42,7 @@ describe("submitImmatureSaleTransfer", () => {
   let sandboxDir: string;
 
   beforeEach(async () => {
-    sandboxDir = await mkdtemp(join(tmpdir(), "gns-submit-immature-sale-transfer-"));
+    sandboxDir = await mkdtemp(join(tmpdir(), "ont-submit-immature-sale-transfer-"));
   });
 
   afterEach(async () => {
@@ -73,7 +73,7 @@ describe("submitImmatureSaleTransfer", () => {
               bestblockhash: "hash100"
             },
             error: null,
-            id: "gns"
+            id: "ont"
           }),
           { status: 200, headers: { "content-type": "application/json" } }
         );
@@ -89,7 +89,7 @@ describe("submitImmatureSaleTransfer", () => {
               maxdatacarriersize: 100000
             },
             error: null,
-            id: "gns"
+            id: "ont"
           }),
           { status: 200, headers: { "content-type": "application/json" } }
         );
@@ -109,7 +109,7 @@ describe("submitImmatureSaleTransfer", () => {
               }
             ],
             error: null,
-            id: "gns"
+            id: "ont"
           }),
           { status: 200, headers: { "content-type": "application/json" } }
         );
@@ -123,7 +123,7 @@ describe("submitImmatureSaleTransfer", () => {
           JSON.stringify({
             result: txid,
             error: null,
-            id: "gns"
+            id: "ont"
           }),
           { status: 200, headers: { "content-type": "application/json" } }
         );
@@ -174,7 +174,7 @@ describe("submitImmatureSaleTransfer", () => {
       outDir
     });
 
-    expect(result.kind).toBe("gns-submit-immature-sale-transfer-result");
+    expect(result.kind).toBe("ont-submit-immature-sale-transfer-result");
     expect(result.mode).toBe("immature-sale");
     expect(result.outDir).toBe(outDir);
     expect(result.transferTxid).toHaveLength(64);

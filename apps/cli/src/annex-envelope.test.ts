@@ -11,7 +11,7 @@ import {
   encodeCommitPayload,
   parseClaimPackage,
   PROTOCOL_NAME
-} from "@gns/protocol";
+} from "@ont/protocol";
 
 import {
   buildExperimentalAnnexRevealEnvelope,
@@ -155,8 +155,8 @@ describe("experimental annex envelope flow", () => {
       signedEnvelope: reparsedSigned
     });
 
-    expect(reparsedUnsigned.kind).toBe("gns-batch-reveal-annex-artifacts");
-    expect(reparsedSigned.kind).toBe("gns-signed-batch-reveal-annex-artifacts");
+    expect(reparsedUnsigned.kind).toBe("ont-batch-reveal-annex-artifacts");
+    expect(reparsedSigned.kind).toBe("ont-signed-batch-reveal-annex-artifacts");
     expect(reparsedSigned.signedTransactionId).toBe(reparsedUnsigned.unsignedBaseTransactionId);
     expect(reparsedSigned.signedTransactionWitnessId).not.toBe(reparsedSigned.signedTransactionId);
     expect(reparsedSigned.signedPsbtBase64).toBeNull();
@@ -238,11 +238,11 @@ describe("experimental annex envelope flow", () => {
     });
 
     const decodedPayload = decodeBatchRevealPayload(
-      Buffer.from(unsignedEnvelope.gnsBatchRevealPayloadHex ?? "", "hex")
+      Buffer.from(unsignedEnvelope.ontBatchRevealPayloadHex ?? "", "hex")
     );
 
     expect(unsignedEnvelope.semanticMode).toBe("batch_claim_package");
-    expect(unsignedEnvelope.gnsBatchRevealPayloadHex).not.toBe(batchClaimPackage.revealPayloadHex);
+    expect(unsignedEnvelope.ontBatchRevealPayloadHex).not.toBe(batchClaimPackage.revealPayloadHex);
     expect(decodedPayload.anchorTxid).toBe(batchClaimPackage.batchAnchorTxid);
     expect(decodedPayload.bondVout).toBe(batchClaimPackage.bondVout);
     expect(decodedPayload.proofBytesLength).toBe(batchClaimPackage.batchProofBytes);

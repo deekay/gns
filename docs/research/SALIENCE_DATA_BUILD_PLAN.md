@@ -86,7 +86,7 @@ These fields define what the candidate is.
 | `candidate_id` | Stable internal identifier for the candidate row |
 | `entity_id` | Stable grouped identifier shared by aliases that refer to the same entity |
 | `display_name` | Human-readable source-facing name, e.g. `Coca-Cola` |
-| `normalized_name` | V1 GNS form, e.g. `cocacola` |
+| `normalized_name` | V1 ONT form, e.g. `cocacola` |
 | `script_fit` | `direct_v1_fit`, `official_latin_alias`, or `out_of_scope_non_v1_script` |
 | `raw_primary_label` | Primary label from the strongest source row |
 | `official_latin_name` | Official or widely coordinated Latin-script form when applicable |

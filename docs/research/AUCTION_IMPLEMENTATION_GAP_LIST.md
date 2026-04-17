@@ -24,14 +24,14 @@ auction protocol.
 
 What exists today:
 
-- configurable reserved-class policy in `@gns/core`
+- configurable reserved-class policy in `@ont/core`
 - single-auction and market-level simulators
 - fixture-backed expected outcomes
 - website-facing auction lab at `/auctions`
-- shared `gns-auction-bid-package` artifact in `@gns/protocol`
+- shared `ont-auction-bid-package` artifact in `@ont/protocol`
 - CLI creation and inspection of those bid packages
 - website download utility for those bid packages
-- an experimental `AUCTION_BID` event payload in `@gns/protocol`
+- an experimental `AUCTION_BID` event payload in `@ont/protocol`
 - an experimental unsigned/signed auction bid artifact flow in CLI + architect
 - core/indexer support for recording structurally valid `AUCTION_BID`
   transactions and deriving lot-level experimental auction state from them

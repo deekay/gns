@@ -394,7 +394,7 @@ design decision on batch sizing.
 
 ## Current Recommendation
 
-If GNS wants one footprint-focused v1 improvement to pursue seriously before launch, Merkle batching now looks like the cleanest candidate.
+If ONT wants one footprint-focused v1 improvement to pursue seriously before launch, Merkle batching now looks like the cleanest candidate.
 
 The right framing is:
 

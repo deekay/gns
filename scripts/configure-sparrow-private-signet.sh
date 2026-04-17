@@ -12,10 +12,10 @@ Note:
   demo VPS. If you do not have that access yet, use the self-host path instead.
 
 Environment:
-  GNS_PRIVATE_SIGNET_SSH_TARGET  Preferred SSH target for the private signet demo.
-  GNS_PRIVATE_SIGNET_SSH_KEY     Optional SSH key path.
-  GNS_SSH_TARGET                 Shared fallback SSH target.
-  GNS_SSH_KEY                    Shared fallback SSH key path.
+  ONT_PRIVATE_SIGNET_SSH_TARGET  Preferred SSH target for the private signet demo.
+  ONT_PRIVATE_SIGNET_SSH_KEY     Optional SSH key path.
+  ONT_SSH_TARGET                 Shared fallback SSH target.
+  ONT_SSH_KEY                    Shared fallback SSH key path.
 EOF
 }
 
@@ -24,14 +24,14 @@ if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
   exit 0
 fi
 
-REMOTE="${1:-${GNS_PRIVATE_SIGNET_SSH_TARGET:-${GNS_SSH_TARGET:-}}}"
-SSH_KEY_PATH="${2:-${GNS_PRIVATE_SIGNET_SSH_KEY:-${GNS_SSH_KEY:-}}}"
+REMOTE="${1:-${ONT_PRIVATE_SIGNET_SSH_TARGET:-${ONT_SSH_TARGET:-}}}"
+SSH_KEY_PATH="${2:-${ONT_PRIVATE_SIGNET_SSH_KEY:-${ONT_SSH_KEY:-}}}"
 SPARROW_HOME="${SPARROW_HOME:-$HOME/.sparrow}"
 SPARROW_SIGNET_CONFIG="${SPARROW_SIGNET_CONFIG:-$SPARROW_HOME/signet/config}"
 
 if [[ -z "$REMOTE" ]]; then
   echo "Missing SSH target. This hosted private-signet path currently requires granted SSH access." >&2
-  echo "Pass [user@host] or set GNS_PRIVATE_SIGNET_SSH_TARGET. If you do not have demo SSH access, use the self-host path instead." >&2
+  echo "Pass [user@host] or set ONT_PRIVATE_SIGNET_SSH_TARGET. If you do not have demo SSH access, use the self-host path instead." >&2
   usage
   exit 1
 fi
@@ -57,13 +57,13 @@ CONFIG_LINES=$(
   ssh \
     "${SSH_ARGS[@]}" \
     "$REMOTE" \
-    "grep -E 'GNS_BITCOIN_RPC_(URL|USERNAME|PASSWORD)|GNS_WEB_NETWORK_LABEL' /etc/gns/gns-private.env"
+    "grep -E 'ONT_BITCOIN_RPC_(URL|USERNAME|PASSWORD)|ONT_WEB_NETWORK_LABEL' /etc/ont/ont-private.env"
 )
 
-RPC_URL=$(printf '%s\n' "$CONFIG_LINES" | sed -n 's/^GNS_BITCOIN_RPC_URL=//p')
-RPC_USERNAME=$(printf '%s\n' "$CONFIG_LINES" | sed -n 's/^GNS_BITCOIN_RPC_USERNAME=//p')
-RPC_PASSWORD=$(printf '%s\n' "$CONFIG_LINES" | sed -n 's/^GNS_BITCOIN_RPC_PASSWORD=//p')
-NETWORK_LABEL=$(printf '%s\n' "$CONFIG_LINES" | sed -n 's/^GNS_WEB_NETWORK_LABEL=//p')
+RPC_URL=$(printf '%s\n' "$CONFIG_LINES" | sed -n 's/^ONT_BITCOIN_RPC_URL=//p')
+RPC_USERNAME=$(printf '%s\n' "$CONFIG_LINES" | sed -n 's/^ONT_BITCOIN_RPC_USERNAME=//p')
+RPC_PASSWORD=$(printf '%s\n' "$CONFIG_LINES" | sed -n 's/^ONT_BITCOIN_RPC_PASSWORD=//p')
+NETWORK_LABEL=$(printf '%s\n' "$CONFIG_LINES" | sed -n 's/^ONT_WEB_NETWORK_LABEL=//p')
 
 if [[ -z "$RPC_URL" || -z "$RPC_USERNAME" || -z "$RPC_PASSWORD" ]]; then
   echo "Could not read the private signet RPC settings from $REMOTE" >&2

@@ -1,12 +1,12 @@
-import { PRODUCT_NAME, REVEAL_WINDOW_BLOCKS } from "@gns/protocol";
+import { PRODUCT_NAME, REVEAL_WINDOW_BLOCKS } from "@ont/protocol";
 
 export type PageKind = "home" | "explore" | "auctions" | "claim" | "values" | "transfer" | "setup" | "explainer";
-const GITHUB_REPO_URL = "https://github.com/deekay/gns";
+const GITHUB_REPO_URL = "https://github.com/deekay/ont";
 const GITHUB_BLOB_BASE_URL = `${GITHUB_REPO_URL}/blob/main`;
 const DOC_URLS = {
   readme: `${GITHUB_BLOB_BASE_URL}/README.md`,
-  fromZero: `${GITHUB_BLOB_BASE_URL}/docs/core/GNS_FROM_ZERO.md`,
-  implementation: `${GITHUB_BLOB_BASE_URL}/docs/research/GNS_IMPLEMENTATION_AND_VALIDATION.md`,
+  fromZero: `${GITHUB_BLOB_BASE_URL}/docs/core/ONT_FROM_ZERO.md`,
+  implementation: `${GITHUB_BLOB_BASE_URL}/docs/research/ONT_IMPLEMENTATION_AND_VALIDATION.md`,
   merkleStatus: `${GITHUB_BLOB_BASE_URL}/docs/research/MERKLE_BATCHING_STATUS.md`,
   launchSpec: `${GITHUB_BLOB_BASE_URL}/docs/research/LAUNCH_SPEC_V0.md`,
   testing: `${GITHUB_BLOB_BASE_URL}/docs/core/TESTING.md`
@@ -49,7 +49,7 @@ export function renderPageHtml(options: PageShellOptions): string {
       : pageKind === "claim"
       ? `${PRODUCT_NAME} Claim Prep`
       : pageKind === "auctions"
-      ? `${PRODUCT_NAME} Auction Lab`
+      ? `${PRODUCT_NAME} Auctions`
       : pageKind === "values"
         ? `${PRODUCT_NAME} Value Publishing`
       : pageKind === "transfer"
@@ -61,20 +61,20 @@ export function renderPageHtml(options: PageShellOptions): string {
           : `${PRODUCT_NAME} Explorer`;
   const description =
     pageKind === "home"
-      ? "Search a payment handle, inspect ownership, and choose whether to explore, claim, or review the current Global Name System prototype."
+      ? "Search a name, inspect ownership, and choose whether to explore, claim, or review the current Open Name Tags prototype."
       : pageKind === "claim"
-      ? "Prepare a Global Name System claim package, then finish the commit and reveal flow in Sparrow or another external signer."
+      ? "Prepare an Open Name Tags claim package, then finish the commit and reveal flow in Sparrow or another external signer."
       : pageKind === "auctions"
-      ? "Experimental reserved-auction lab showing pending, released, live, soft-close, and settled states from the current auction simulator."
+      ? "Current interface for the reserved-name auction flow, including policy controls, live states, and chain-derived bid activity."
       : pageKind === "values"
-        ? "Sign a Global Name System value record locally in the browser, then publish the signed record to the resolver."
+        ? "Sign an Open Name Tags value record locally in the browser, then publish the signed record to the resolver."
       : pageKind === "transfer"
-        ? "Prepare a Global Name System transfer handoff, then finish the gift or sale flow in the CLI and your signer."
+        ? "Prepare an Open Name Tags transfer handoff, then finish the gift or sale flow in the CLI and your signer."
       : pageKind === "setup"
           ? "Set up Sparrow, connect to the hosted demo wallet endpoint, request demo coins, and complete the private signet walkthrough."
         : pageKind === "explainer"
-          ? "Quick orientation for using the hosted Global Name System tools."
-        : "Explorer for browsing claimed names and resolver status in Global Name System.";
+          ? "Quick orientation for using the hosted Open Name Tags tools."
+        : "Explorer for browsing claimed names and resolver status in Open Name Tags.";
 
   const pageScripts = [
     `<script type="module" src="${withBasePath("/app.js", basePath)}"></script>`,
@@ -106,7 +106,7 @@ export function renderPageHtml(options: PageShellOptions): string {
       <main class="content-grid">
         ${
           pageKind === "home"
-            ? renderHomePageSections(basePath, includePrivateBatchSmoke, includePrivateAuctionSmoke)
+            ? renderHomePageSections(basePath)
             : pageKind === "auctions"
             ? renderAuctionsPageSections(includePrivateAuctionSmoke)
             : pageKind === "claim"
@@ -166,7 +166,7 @@ function renderHeroSection(
       <div class="hero-copy">
         <h1>Publish An Off-Chain Value</h1>
         <p class="lede">
-          Load the current name state, sign a value record locally in the browser, then publish only the signed record.
+          Load the current name state, sign a value record locally in the browser, then publish only the signed record. The website targets the hosted resolver; the CLI can fan the same signed JSON out to several resolvers.
         </p>
         <p id="chainSummary" class="hero-status">
           ${escapeHtml(configuredNetworkLabel)} · Height - · 0 names · 0 pending
@@ -180,7 +180,7 @@ function renderHeroSection(
       <div class="hero-copy">
         <h1>Quick Overview</h1>
         <p class="lede">
-          What GNS is and how to use the hosted tools. Full project documentation lives in the repo.
+          How the current prototype works, what is live today, and where to go next.
         </p>
       </div>
     </header>`;
@@ -214,12 +214,12 @@ function renderHeroSection(
   if (pageKind === "auctions") {
     return `<header class="hero hero-single hero-page">
       <div class="hero-copy">
-        <h1>Experimental Reserved Auction Lab</h1>
+        <h1>Auctions</h1>
         <p class="lede">
-          Pending unlock, opening-floor pressure, no-bid release to the ordinary lane, live bidding, soft close, and settled winner states rendered from the current reserved-auction simulator.
+          Current interface for the reserved-name auction flow, including policy controls, simulated market states, and observed bid activity.
         </p>
         <p class="hero-status">
-          Experimental product slice · curated simulator states plus a chain-derived experimental AUCTION_BID feed.
+          Reserved-name flow · curated simulator states plus a chain-derived AUCTION_BID feed.
         </p>
       </div>
     </header>`;
@@ -234,17 +234,38 @@ function renderHeroSection(
         <div class="hero-home-intro-copy">
           <p class="hero-card-label">What that means</p>
           <p class="lede">
-            Use a readable name as a payment handle you control, so people and wallets can resolve who gets paid before money moves.
-          </p>
-          <p class="hero-home-subcopy">
-            Ownership is public and auditable. The current owner signs the payment record, and the same key/value model can carry other destinations later.
+            An ONT name is a human-readable name with verifiable ownership.
           </p>
         </div>
-        <div class="hero-home-proof-row" aria-label="Name ownership summary">
-          <span>Payment handle</span>
-          <span>Public ownership</span>
-          <span>Owner-signed values</span>
-          <span>Bonded, not rented</span>
+        <div class="hero-home-principles" aria-label="Name ownership summary">
+          <article class="hero-home-principle">
+            <div class="hero-home-principle-head">
+              <p class="hero-home-principle-kicker">01</p>
+              <h3>Anchored To Bitcoin</h3>
+            </div>
+            <p>Ownership is anchored to Bitcoin and publicly auditable.</p>
+          </article>
+          <article class="hero-home-principle">
+            <div class="hero-home-principle-head">
+              <p class="hero-home-principle-kicker">02</p>
+              <h3>Bonded, Not Rented</h3>
+            </div>
+            <p>It is bonded, not rented.</p>
+          </article>
+          <article class="hero-home-principle">
+            <div class="hero-home-principle-head">
+              <p class="hero-home-principle-kicker">03</p>
+              <h3>Costly To Hoard</h3>
+            </div>
+            <p>Claiming names requires bonded bitcoin, which makes large-scale hoarding costly.</p>
+          </article>
+          <article class="hero-home-principle">
+            <div class="hero-home-principle-head">
+              <p class="hero-home-principle-kicker">04</p>
+              <h3>Maps To Payments</h3>
+            </div>
+            <p>You can map it to destinations like <span class="mono">cashapp -&gt; $alice1234</span>, <span class="mono">btc -&gt; bc1qxy...0wlh</span>, or <span class="mono">website -&gt; https://alice.example</span>.</p>
+          </article>
         </div>
       </article>
     </div>
@@ -266,7 +287,7 @@ function renderPrimaryNav(configuredBasePath: string, pageKind: PageKind, favico
   return `<nav class="site-nav" aria-label="Primary">
     <a class="site-nav-brand" href="${withBasePath("/", configuredBasePath)}">
       <img class="site-nav-brand-mark" src="${faviconDataUrl}" alt="" aria-hidden="true" />
-      <span>Global Name System</span>
+      <span>Open Name Tags</span>
     </a>
     <div class="site-nav-links">
       ${links
@@ -299,19 +320,9 @@ function renderPanelHead(title: string, summary: string, infoBody?: string): str
   </div>`;
 }
 
-function renderHomePageSections(
-  configuredBasePath: string,
-  includePrivateBatchSmoke: boolean,
-  includePrivateAuctionSmoke: boolean
-): string {
+function renderHomePageSections(configuredBasePath: string): string {
   return `${renderSearchSection()}
-    ${renderHomeActionsSection(configuredBasePath)}
-    ${renderHomeModelSection()}
-    ${renderHomeExampleSection(configuredBasePath)}
-    ${includePrivateBatchSmoke ? renderPrivateBatchSmokeSection(false) : ""}
-    ${includePrivateAuctionSmoke ? renderPrivateAuctionSmokeSection(false) : ""}
-    ${renderHomeDocsSection()}
-    ${renderHomeStatusSection()}`;
+    ${renderHomeActionsSection(configuredBasePath)}`;
 }
 
 function renderExplorePageSections(
@@ -369,16 +380,17 @@ function renderSetupPageSections(
 }
 
 function renderExplainerPageSections(configuredBasePath: string): string {
-  return `${renderWhyGnsSection(configuredBasePath)}
-    ${renderUsingGnsSection(configuredBasePath)}`;
+  return `${renderHomeModelSection()}
+    ${renderUsingOntSection(configuredBasePath)}
+    ${renderHomeDocsSection()}`;
 }
 
 function renderAuctionLabSection(): string {
   return `<section id="auction-lab" class="panel panel-list">
     ${renderPanelHead(
-      "Reserved Auction States",
-      "Experimental website view of the current reserved-auction simulator and stub launch policy.",
-      `<p>This is not the live on-chain reserved lane yet.</p>
+      "Reserved Name Auction States",
+      "Current simulator-backed view of the reserved-name auction flow and policy controls.",
+      `<p>This page shows the current auction surface in the prototype.</p>
       <ul>
         <li>The policy values are temporary and intentionally easy to change.</li>
         <li>The states come from the same simulator and fixtures used in automated tests.</li>
@@ -395,7 +407,7 @@ function renderAuctionLabSection(): string {
           <button type="submit">Apply simulator override</button>
           <button id="auctionPolicyResetButton" type="button">Reset defaults</button>
         </div>
-        <p id="auctionPolicyControlsResult" class="tx-panel-note">This only changes the simulator-backed auction lab and bid-package previews on this page.</p>
+        <p id="auctionPolicyControlsResult" class="tx-panel-note">This only changes the simulator-backed auction view and bid-package previews on this page.</p>
       </div>
     </form>
     <p id="auctionLabMeta" class="helper-text">Loading the current reserved-auction policy and state fixtures.</p>
@@ -407,19 +419,19 @@ function renderAuctionLabSection(): string {
 function renderExperimentalAuctionFeedSection(): string {
   return `<section id="experimental-auction-feed" class="panel panel-list">
     ${renderPanelHead(
-      "Chain-Derived Experimental Bids",
-      "Resolver-backed experimental auction state derived from observed AUCTION_BID transactions.",
-      `<p>This sits one step closer to protocol behavior than the curated simulator lab above.</p>
+      "Chain-Derived Bid Feed",
+      "Resolver-backed auction state derived from observed AUCTION_BID transactions.",
+      `<p>This sits one step closer to protocol behavior than the curated simulator view above.</p>
       <ul>
-        <li>Lots still come from the current experimental auction catalog.</li>
+        <li>Lots still come from the current reserved-name auction catalog.</li>
         <li>Leaders, minimum next bids, stale-state rejection, and bond spend/release summaries are derived from observed AUCTION_BID transactions.</li>
         <li>Lots that attract no valid opening bid through the release window are marked as released back to the ordinary lane.</li>
         <li>Bids that merely clear the normal increment are not enough during soft close if they would extend the auction. Late extension bids use the stronger soft-close increment rule.</li>
         <li>Same-bidder replacement is only recognized when the later bid spends the prior bid bond outpoint.</li>
-        <li>The current slice is still experimental: bids are derived and classified, not yet settled by a full reserved-auction engine.</li>
+        <li>This feed is still derived and classified, not yet settled by a full reserved-auction engine.</li>
       </ul>`
     )}
-    <p id="experimentalAuctionMeta" class="helper-text">Loading chain-derived experimental auction state.</p>
+    <p id="experimentalAuctionMeta" class="helper-text">Loading chain-derived auction state.</p>
     <div id="experimentalAuctionList" class="activity-list"></div>
   </section>`;
 }
@@ -427,8 +439,8 @@ function renderExperimentalAuctionFeedSection(): string {
 function renderAuctionLabNotesSection(): string {
   return `<section class="panel panel-guide">
     ${renderPanelHead(
-      "What This Covers",
-      "Current auction work is end-to-end at the experimental simulator layer, not a live on-chain reserved-name market yet."
+      "Current Scope",
+      "The auction surface is becoming part of the core story, but some pieces are still prototype-stage."
     )}
     <div class="guide-grid">
       <article class="guide-card">
@@ -439,16 +451,16 @@ function renderAuctionLabNotesSection(): string {
           <li>A stronger soft-close increment rule so bids that extend the clock must escalate more than ordinary mid-auction bids.</li>
           <li>Single-auction and market-level simulators with bidder budget pressure.</li>
           <li>CLI commands, fixture scenarios, and this website-facing auction state view.</li>
-          <li>Experimental bid-package handoffs from the CLI and directly from the auction lab page.</li>
-          <li>Chain-derived experimental auction state from observed <code>AUCTION_BID</code> transactions, including stale bid rejection and derived bond spend/release summaries.</li>
+          <li>Auction bid-package handoffs from the CLI and directly from the auctions page.</li>
+          <li>Chain-derived auction state from observed <code>AUCTION_BID</code> transactions, including stale bid rejection and derived bond spend/release summaries.</li>
           <li>Replacement-style rebids are now recognized only when the later bid spends the earlier bid bond.</li>
         </ul>
       </article>
       <article class="guide-card">
-        <h3>Still Experimental</h3>
+        <h3>Still In Progress</h3>
         <ul class="guide-list">
           <li>No full reserved-auction settlement engine yet.</li>
-          <li>The chain-derived feed is still an experimental prototype, not the final launch market.</li>
+          <li>The chain-derived feed is still a prototype, not the final launch market.</li>
           <li>The values here are the current prototype defaults, not locked protocol parameters.</li>
         </ul>
       </article>
@@ -459,276 +471,126 @@ function renderAuctionLabNotesSection(): string {
 function renderHomeActionsSection(configuredBasePath: string): string {
   return `<section id="start-here" class="panel panel-guide panel-home">
     ${renderPanelHead(
-      "Start Here",
-      "Set up a wallet, prepare a claim, inspect the experimental auction states, use the offline batch tools, or browse the registry."
+      "Choose A Path",
+      "Use the home page to do one thing quickly: understand the model, try the prototype, or inspect the live registry."
     )}
     <div class="path-grid">
       <article class="path-card">
-        <h3>Setup</h3>
-        <p>Get Sparrow ready, connect to the hosted demo wallet endpoint, and fund the same wallet you will use to sign the claim.</p>
+        <h3>Understand ONT</h3>
+        <p>Read the overview when you want how the current prototype works, what is live today, and where to go next.</p>
+        <div class="path-card-actions">
+          <a class="action-link secondary" href="${withBasePath("/explainer", configuredBasePath)}">Open overview</a>
+        </div>
+      </article>
+      <article class="path-card">
+        <h3>Try The Prototype</h3>
+        <p>Set up Sparrow, prepare a claim, and walk through the hosted signet flow with the same wallet you will use to sign.</p>
         <div class="path-card-actions">
           <a class="action-link secondary" href="${withBasePath("/setup", configuredBasePath)}">Open setup</a>
         </div>
       </article>
       <article class="path-card">
-        <h3>Claim</h3>
-        <p>Prepare the claim package, save the backup, and build the signer handoff.</p>
-        <div class="path-card-actions">
-          <a class="action-link secondary" href="${withBasePath("/claim", configuredBasePath)}">Open claim prep</a>
-        </div>
-      </article>
-      <article class="path-card">
-        <h3>Auctions</h3>
-        <p>Review the current reserved-auction prototype states with the same fixtures and stub policy values used in simulator tests.</p>
-        <div class="path-card-actions">
-          <a class="action-link secondary" href="${withBasePath("/auctions", configuredBasePath)}">Open auction lab</a>
-        </div>
-      </article>
-      <article class="path-card">
-        <h3>Offline / Batch</h3>
-        <p>Use the offline architect when you want local PSBT generation, ordinary-lane batch commits, or later one-by-one batch reveal PSBTs.</p>
-        <div class="path-card-actions">
-          <a class="action-link secondary" href="${withBasePath("/claim/offline", configuredBasePath)}">Open offline architect</a>
-        </div>
-      </article>
-      <article class="path-card">
-        <h3>Explore</h3>
-        <p>Browse recent names, current activity, pending claims, and the full tracked registry.</p>
+        <h3>Explore The Registry</h3>
+        <p>Resolve a name, browse recent activity, and inspect the current visible registry without working through the full claim flow.</p>
         <div class="path-card-actions">
           <a class="action-link secondary" href="${withBasePath("/explore", configuredBasePath)}">Open explorer</a>
         </div>
       </article>
     </div>
-    <p class="tool-handoff-note">Fastest hosted loop: <a href="${withBasePath("/setup", configuredBasePath)}">Setup</a> → <a href="${withBasePath("/claim", configuredBasePath)}">Claim</a> → <a href="${withBasePath("/explore", configuredBasePath)}">Explore</a> → <a href="${withBasePath(`/values?name=${PRIVATE_DEMO_NAMES.value}`, configuredBasePath)}">Values</a>.</p>
-    <p class="tool-handoff-note">Best docs path: <a href="${DOC_URLS.fromZero}" target="_blank" rel="noreferrer noopener">From Zero</a> → <a href="${DOC_URLS.implementation}" target="_blank" rel="noreferrer noopener">Implementation &amp; Validation</a> → <a href="${DOC_URLS.merkleStatus}" target="_blank" rel="noreferrer noopener">Merkle Batching Status</a> → <a href="${DOC_URLS.launchSpec}" target="_blank" rel="noreferrer noopener">Launch Spec v0</a>.</p>
+    <p class="tool-handoff-note">More links: <a href="${DOC_URLS.fromZero}" target="_blank" rel="noreferrer noopener">Read From Zero</a>, <a href="${withBasePath("/claim", configuredBasePath)}">Claim prep</a>, <a href="${withBasePath("/values", configuredBasePath)}">Values</a>, <a href="${withBasePath("/transfer", configuredBasePath)}">Transfer</a>, <a href="${withBasePath("/claim/offline", configuredBasePath)}">Offline architect</a>, and <a href="${withBasePath("/auctions", configuredBasePath)}">Auctions</a>.</p>
   </section>`;
 }
 
 function renderHomeModelSection(): string {
-  return `<section id="how-gns-works" class="panel panel-guide panel-home">
+  return `<section id="how-ont-works" class="panel panel-guide">
     ${renderPanelHead(
-      "How It Fits Together",
-      "Ownership is recorded on-chain. What the name points to is signed off-chain by the current owner."
+      "How It Works",
+      "Claim the name on-chain, publish the current destination off-chain, and let clients resolve both together."
     )}
     <div class="guide-grid">
       <article class="guide-card">
-        <h3>1. Claim On-Chain</h3>
-        <p>Your wallet key signs the Bitcoin transactions that claim or transfer the name. Ordinary names use commit/reveal today, while the launch research now points toward a separate reserved lane for salient existing names.</p>
-        <ul class="guide-list">
-          <li><strong>Commit:</strong> hide the intended name.</li>
-          <li><strong>Reveal:</strong> publish it within the reveal window.</li>
-          <li><strong>Settling:</strong> the name is already claimed, but bond continuity still matters until maturity.</li>
-        </ul>
+        <h3>Claim On-Chain</h3>
+        <p>Bitcoin transactions establish the owner of the name. The current prototype uses commit and reveal for ordinary claims.</p>
       </article>
       <article class="guide-card">
-        <h3>2. Point It Somewhere</h3>
-        <p>Your owner key signs the current value record after the claim succeeds.</p>
-        <ul class="guide-list">
-          <li><strong>Owner key:</strong> controls updates and transfers later.</li>
-          <li><strong>Key/value bundle:</strong> one current record can carry several destinations.</li>
-          <li><strong>Values:</strong> stay off-chain and can change over time.</li>
-        </ul>
+        <h3>Publish A Destination</h3>
+        <p>After a claim succeeds, the owner can publish the current destination for the name. One owner-signed bundle can carry entries like <span class="mono">cashapp -&gt; $alice1234</span>, <span class="mono">btc -&gt; bc1qxy...0wlh</span>, or <span class="mono">website -&gt; https://alice.example</span>.</p>
       </article>
       <article class="guide-card">
-        <h3>3. Review It</h3>
-        <p>Resolvers, CLI tools, and the website combine chain ownership with the latest owner-signed value. The ordinary-lane Merkle path is now validated through batched commit, individual batch reveal, and later transfer behavior.</p>
-        <ul class="guide-list">
-          <li><strong>Website:</strong> browse names, provenance, value records, and transfer prep.</li>
-          <li><strong>Offline architect:</strong> build single-claim or batched ordinary-lane artifacts locally.</li>
-          <li><strong>Released:</strong> if settlement fails, the name returns to the pool.</li>
-        </ul>
-      </article>
-    </div>
-  </section>`;
-}
-
-function renderHomeExampleSection(configuredBasePath: string): string {
-  return `<section id="bundle-example" class="panel panel-guide panel-home">
-    ${renderPanelHead(
-      "Live Examples And Batch Path",
-      "The hosted demo still has a few seeded example names, while the newer Merkle-batched flow is now surfaced as a live proof panel below and validated through the offline builder, fixture stack, and controlled-chain tests."
-    )}
-    <div class="guide-grid">
-      <article class="guide-card">
-        <h3>Hosted Demo Names</h3>
-        <p>These older seeded examples are still useful for quickly inspecting claim, value, and transfer states in the hosted explorer:</p>
-        <ul class="guide-list">
-          <li><strong><a class="detail-link" href="${withBasePath(`/names/${PRIVATE_DEMO_NAMES.claim}`, configuredBasePath)}">${PRIVATE_DEMO_NAMES.claim}</a></strong> → plain claimed name with no current value.</li>
-          <li><strong><a class="detail-link" href="${withBasePath(`/names/${PRIVATE_DEMO_NAMES.value}`, configuredBasePath)}">${PRIVATE_DEMO_NAMES.value}</a></strong> → mature name with repeatable key/value pairs.</li>
-          <li><strong><a class="detail-link" href="${withBasePath(`/names/${PRIVATE_DEMO_NAMES.transfer}`, configuredBasePath)}">${PRIVATE_DEMO_NAMES.transfer}</a></strong> → transferred name with a recipient-owned bundle.</li>
-        </ul>
-        <div class="guide-card-actions">
-          <a class="action-link secondary" href="${withBasePath("/explore", configuredBasePath)}">Open explorer</a>
-        </div>
-      </article>
-      <article class="guide-card">
-        <h3>Merkle-Batched Claims</h3>
-        <p>The current implemented batching path is for ordinary claims: one batch anchor, then later one-by-one reveals against the anchored Merkle root.</p>
-        <ul class="guide-list">
-          <li>The offline architect can build a batch commit bundle and reveal-ready package per name.</li>
-          <li>The website and resolver understand batch anchors and batch reveals in provenance views.</li>
-          <li>The hosted private signet demo now publishes a dedicated batch-smoke status panel with one batch anchor, two reveals, and a later transfer check.</li>
-          <li>The old public-signet smoke runner still exists in the repo as an optional legacy script, but it is not part of the active hosted demo path.</li>
-        </ul>
-        <div class="guide-card-actions">
-          <a class="action-link secondary" href="${withBasePath("/claim/offline", configuredBasePath)}">Open offline architect</a>
-          <a class="action-link secondary" href="${withBasePath("/explore", configuredBasePath)}">Open explorer batch smoke</a>
-          <a class="action-link secondary" href="${DOC_URLS.merkleStatus}" target="_blank" rel="noreferrer noopener">Read batching status</a>
-        </div>
-      </article>
-      <article class="guide-card">
-        <h3>Value Bundle Shape</h3>
-        <p>The values tool publishes an ordered list of key/value entries. Keys are repeatable and app-defined.</p>
-        <ul class="guide-list">
-          <li>You can use whatever keys make sense to you.</li>
-          <li>You can repeat a key more than once.</li>
-          <li>The protocol does not need to know which services exist in advance.</li>
-        </ul>
-        <div class="guide-card-actions">
-          <a class="action-link secondary" href="${withBasePath(`/values?name=${PRIVATE_DEMO_NAMES.value}`, configuredBasePath)}">Inspect ${PRIVATE_DEMO_NAMES.value} in values tool</a>
-        </div>
+        <h3>Resolve And Verify</h3>
+        <p>Clients combine public ownership data with the latest owner-authorized record to decide what the name means right now.</p>
       </article>
     </div>
   </section>`;
 }
 
 function renderHomeDocsSection(): string {
-  return `<section id="current-docs" class="panel panel-guide panel-home">
-    ${renderPanelHead(
-      "Current Docs And Status",
-      "Use these notes when you want the current framing, implementation status, and launch direction instead of the older broad-story materials."
-    )}
-    <div class="guide-grid">
-      <article class="guide-card">
-        <h3>Start Here</h3>
-        <p><a class="detail-link" href="${DOC_URLS.fromZero}" target="_blank" rel="noreferrer noopener">GNS From Zero</a> is the shortest honest orientation for someone new to the project.</p>
-      </article>
-      <article class="guide-card">
-        <h3>What Is Implemented</h3>
-        <p><a class="detail-link" href="${DOC_URLS.implementation}" target="_blank" rel="noreferrer noopener">Implementation &amp; Validation</a> separates real prototype behavior from design direction and experiments.</p>
-      </article>
-      <article class="guide-card">
-        <h3>Merkle Batching</h3>
-        <p><a class="detail-link" href="${DOC_URLS.merkleStatus}" target="_blank" rel="noreferrer noopener">Merkle Batching Status</a> explains exactly what batching covers today, what has been validated, and what is still out of scope.</p>
-      </article>
-      <article class="guide-card">
-        <h3>Launch Direction</h3>
-        <p><a class="detail-link" href="${DOC_URLS.launchSpec}" target="_blank" rel="noreferrer noopener">Launch Spec v0</a> is the current working summary of the ordinary lane, reserved lane, and deferred-auction direction.</p>
-      </article>
-    </div>
-  </section>`;
-}
-
-function renderHomeStatusSection(): string {
-  return `<section id="prototype-status" class="panel panel-guide panel-home">
+  return `<section id="current-docs" class="panel panel-guide">
     ${renderPanelHead(
       "Current Status",
-      "The hosted demo and self-host path are real. Some parts of the protocol are still prototype-stage."
+      "The hosted demo is real, but it is still a prototype. Use this page to separate what works now from what is still under active design."
     )}
     <div class="guide-grid">
       <article class="guide-card">
-        <h3>Works Well Today</h3>
+        <h3>Works Today</h3>
         <ul class="guide-list">
-          <li>Hosted private demo claims</li>
-          <li>Self-hosted website + resolver</li>
-          <li>Browser value publishing and key/value bundles</li>
-          <li>Explicit ordinary-lane Merkle batching through batch anchor, reveal, and later transfer semantics</li>
+          <li>Hosted signet setup and claim prep</li>
+          <li>Self-hosted website and resolver</li>
+          <li>Browser value publishing</li>
+          <li>Ordinary-lane Merkle batching through batch anchor, reveal, and later transfer semantics</li>
         </ul>
       </article>
       <article class="guide-card">
         <h3>Still Prototype</h3>
         <ul class="guide-list">
-          <li>Transfers still lean on CLI and signer flow.</li>
-          <li>The active hosted live-chain proof paths today are private signet and regtest, not shared public signet.</li>
-          <li>The old shared public-signet path has been retired from the active demo and validation story.</li>
+          <li>Transfers still rely on external signer and CLI steps.</li>
           <li>Resolver availability is only partly decentralized in v1.</li>
+          <li>The reserved-name auction lane is still in progress.</li>
           <li>Mainnet-ready usage is not the current claim.</li>
         </ul>
       </article>
       <article class="guide-card">
-        <h3>Fast Rule Of Thumb</h3>
+        <h3>Read Next</h3>
         <ul class="guide-list">
-          <li>Use the website to try the model.</li>
-          <li>Use the docs links above to understand the current framing and status.</li>
-          <li>Use the offline architect when you want less trust in the hosted site.</li>
+          <li><a class="detail-link" href="${DOC_URLS.fromZero}" target="_blank" rel="noreferrer noopener">ONT From Zero</a></li>
+          <li><a class="detail-link" href="${DOC_URLS.implementation}" target="_blank" rel="noreferrer noopener">Implementation &amp; Validation</a></li>
+          <li><a class="detail-link" href="${DOC_URLS.launchSpec}" target="_blank" rel="noreferrer noopener">Launch Spec v0</a></li>
         </ul>
       </article>
     </div>
   </section>`;
 }
 
-function renderWhyGnsSection(configuredBasePath: string): string {
-  return `<section id="why-gns" class="panel panel-guide">
-    ${renderPanelHead(
-      "What A GNS Name Is",
-      "A payment handle you can actually own, anchored to Bitcoin, with owner-signed records for what the name resolves to.",
-      `<p>A GNS name is claimed on-chain, then the owner signs off-chain records such as payment targets. Other key/value uses can grow later as clients decide to support them.</p>
-      <ul>
-        <li><strong>Bonded:</strong> you lock bond capital instead of paying rent.</li>
-        <li><strong>No suffix:</strong> names are first-class strings.</li>
-        <li><strong>On-chain:</strong> claims and transfers are publicly verifiable.</li>
-      </ul>`
-    )}
-    <div class="guide-grid">
-      <article class="guide-card">
-        <h3>Payment Handle First</h3>
-        <p>A GNS name is best understood first as a human-readable payment handle: a way to say who should get paid without copying a raw address.</p>
-      </article>
-      <article class="guide-card">
-        <h3>Ownership And Values Are Separate</h3>
-        <p><strong>Bonded, not rented or sold.</strong> Bitcoin transactions establish ownership. The current owner then signs the mutable off-chain value record that says where payments should resolve.</p>
-      </article>
-      <article class="guide-card">
-        <h3>Key/Value Uses Can Grow</h3>
-        <p>The value record is intentionally app-defined. Payments are the first useful handle story; additional client-supported records can come later without changing the ownership model.</p>
-      </article>
-    </div>
-    <div class="hero-cta-row section-cta-row">
-      <a class="action-link" href="${DOC_URLS.fromZero}" target="_blank" rel="noreferrer noopener">Read From Zero</a>
-      <a class="action-link secondary" href="${DOC_URLS.readme}" target="_blank" rel="noreferrer noopener">Open README</a>
-    </div>
-  </section>`;
-}
-
-function renderUsingGnsSection(configuredBasePath: string): string {
-  return `<section id="using-gns" class="panel panel-guide">
+function renderUsingOntSection(configuredBasePath: string): string {
+  return `<section id="using-ont" class="panel panel-guide">
     ${renderPanelHead(
       "Use The Current Prototype",
-      "The site is a working product surface for setup, browsing, claim prep, value publication, transfer prep, and offline batch tooling."
+      "The website is organized around a few clear surfaces instead of one giant walkthrough."
     )}
     <div class="guide-grid">
       <article class="guide-card">
-        <h3>Setup</h3>
-        <p>Get Sparrow ready, connect to the hosted demo wallet endpoint, and fund the same wallet you will use to sign the claim.</p>
-      </article>
-      <article class="guide-card">
-        <h3>Claim</h3>
-        <p>Prepare the claim package, save the backup, and build the signer handoff. The actual signing still happens in your wallet.</p>
-      </article>
-      <article class="guide-card">
-        <h3>Offline / Batch</h3>
-        <p>The offline architect can build ordinary single-claim artifacts, ordinary batch commit bundles, and later one-by-one batch reveal PSBTs from saved reveal-ready packages.</p>
-      </article>
-      <article class="guide-card">
-        <h3>Transfer</h3>
-        <p>Prepare the transfer handoff from the current name state, then finish the ownership change in your external signer flow.</p>
+        <h3>Setup And Claim</h3>
+        <p>Use setup to connect Sparrow to the hosted demo wallet server, then use claim prep to generate the signer files and backups.</p>
       </article>
       <article class="guide-card">
         <h3>Explore</h3>
-        <p>Browse recent names, current state, and the tracked registry. Use the detail pages when you want the deeper provenance view.</p>
+        <p>Use Explore when you want live registry data: name lookups, recent activity, pending claims, and the tracked namespace.</p>
       </article>
       <article class="guide-card">
-        <h3>Docs And Status</h3>
-        <p>Use the GitHub docs when you want the current framing, implementation status, Merkle batching status, and launch research instead of only the hosted walkthrough.</p>
+        <h3>Values And Transfer</h3>
+        <p>Use the values and transfer surfaces after a name exists and you want to manage what it points to or hand off control.</p>
+      </article>
+      <article class="guide-card">
+        <h3>Advanced Paths</h3>
+        <p>Use the offline architect for local artifact generation and the Auctions page for the reserved-name flow.</p>
       </article>
     </div>
     <div class="hero-cta-row section-cta-row">
       <a class="action-link" href="${withBasePath("/setup", configuredBasePath)}">Open setup</a>
       <a class="action-link" href="${withBasePath("/claim", configuredBasePath)}">Open claim prep</a>
-      <a class="action-link secondary" href="${withBasePath("/claim/offline", configuredBasePath)}">Open offline architect</a>
-      <a class="action-link secondary" href="${withBasePath("/transfer", configuredBasePath)}">Open transfer prep</a>
       <a class="action-link secondary" href="${withBasePath("/explore", configuredBasePath)}">Open explorer</a>
-      <a class="action-link secondary" href="${DOC_URLS.implementation}" target="_blank" rel="noreferrer noopener">Implementation status</a>
+      <a class="action-link secondary" href="${withBasePath("/values", configuredBasePath)}">Open values</a>
+      <a class="action-link secondary" href="${withBasePath("/transfer", configuredBasePath)}">Open transfer</a>
     </div>
   </section>`;
 }
@@ -955,15 +817,15 @@ function renderPrivateBatchSmokeSection(collapsible = false): string {
 }
 
 function renderPrivateAuctionSmokeSection(collapsible = false): string {
-  const body = `<p id="privateAuctionSmokeMeta" class="helper-text">Checking the latest private signet experimental auction smoke run.</p>
+  const body = `<p id="privateAuctionSmokeMeta" class="helper-text">Checking the latest private signet auction smoke run.</p>
     <div id="privateAuctionSmokeResult" class="result-card empty">Loading the latest private signet auction smoke status...</div>`;
 
   if (!collapsible) {
     return `<section class="panel panel-live-smoke">
     ${renderPanelHead(
       "Private Signet Auction Smoke",
-      "Latest status from the hosted private signet experimental auction flow.",
-      `<p>This is the current live-chain proof for the experimental reserved-auction slice.</p>
+      "Latest status from the hosted private signet auction flow.",
+      `<p>This is the current live-chain proof for the reserved-name auction slice.</p>
       <ul>
         <li>It starts with an empty dedicated smoke lot from the private auction catalog.</li>
         <li>It submits an opening bid, then a higher bid, settles the lot into a live owned name, publishes a winner value record, and later transfers that name after the winner lock clears.</li>
@@ -979,7 +841,7 @@ function renderPrivateAuctionSmokeSection(collapsible = false): string {
     <summary class="panel-summary">
       <div class="panel-summary-copy">
         <h2>Private Signet Auction Smoke</h2>
-        <p>Latest status from the hosted private signet experimental auction flow: bidding, settlement, winner handoff, post-release transfer, and release-valve checks.</p>
+        <p>Latest status from the hosted private signet auction flow: bidding, settlement, winner handoff, post-release transfer, and release-valve checks.</p>
       </div>
       <span class="summary-chip">Open auction smoke</span>
     </summary>
@@ -1015,7 +877,7 @@ function renderClaimGuideSection(collapsible: boolean): string {
       ${renderPanelHead(
         "How To Claim",
         "Prepare the claim package here, then commit and reveal in your signer.",
-        `<p>The protocol bytes come from GNS. Signatures and broadcast still come from your signer.</p>`
+        `<p>The protocol bytes come from ONT. Signatures and broadcast still come from your signer.</p>`
       )}
       ${body}
     </section>`;
@@ -1260,7 +1122,7 @@ function renderSignerWorkflowSection(collapsible: boolean): string {
       ${renderPanelHead(
         "Sparrow Workflow",
         "Commit first, confirm it, then reveal.",
-        `<p>Claim bytes and PSBTs come from GNS. Signatures and broadcast still happen in Sparrow.</p>`
+        `<p>Claim bytes and PSBTs come from ONT. Signatures and broadcast still happen in Sparrow.</p>`
       )}
       ${body}
     </section>`;
@@ -1279,7 +1141,7 @@ function renderSignerWorkflowSection(collapsible: boolean): string {
 }
 
 function renderSetupQuickstartSection(configuredBasePath: string, privateSignetElectrumEndpoint: string | null): string {
-  const endpoint = parseElectrumEndpoint(privateSignetElectrumEndpoint ?? "globalnamesystem.org:50001:t");
+  const endpoint = parseElectrumEndpoint(privateSignetElectrumEndpoint ?? "opennametags.org:50001:t");
   const transportNote = endpoint.transport === "s" ? "SSL on" : "SSL off";
   return `<section id="setup-start" class="panel panel-guide">
     ${renderPanelHead(
@@ -1489,7 +1351,7 @@ function renderValuesToolSection(): string {
                 <div class="draft-actions">
                   <button id="addValueBundleEntryButton" type="button" class="secondary-button">Add pair</button>
                 </div>
-                <span class="field-hint">List as many ordered key/value pairs as you want. Keys are app-defined and repeatable.</span>
+                <span class="field-hint">List as many ordered key/value pairs as you want. For example: <span class="mono">cashapp -&gt; $alice1234</span>, <span class="mono">btc -&gt; bc1qxy...0wlh</span>, <span class="mono">website -&gt; https://alice.example</span>. Keys are app-defined and repeatable.</span>
               </div>
             </div>
             <div class="draft-actions claim-step-actions">
@@ -1514,9 +1376,10 @@ function renderValuesToolSection(): string {
           <span id="valueStepPublishState" class="summary-chip wizard-step-state">After step 2</span>
         </summary>
         <div class="wizard-step-body">
-          <p class="field-note">The publish request only sends the signed JSON record. The owner private key never leaves the page.</p>
+          <p id="valuePublishModeNote" class="field-note">The publish request only sends the signed JSON record. The owner private key never leaves the page.</p>
           <div class="draft-actions claim-step-actions">
             <button id="publishValueButton" type="button" disabled>Publish signed record</button>
+            <button id="publishValueFanoutButton" type="button" class="secondary-button" hidden disabled>Publish to configured resolver set</button>
           </div>
           <div id="valuePublishResult" class="result-card empty">
             Sign a value record first. Then this step will publish it to the resolver and reload the current visible value.
@@ -1541,6 +1404,8 @@ function renderValuesGuideSection(configuredBasePath: string): string {
           <li>Reads the current name state from the resolver.</li>
           <li>Signs the next value record locally in your browser.</li>
           <li>Uploads only the signed JSON record.</li>
+          <li>The same signed JSON can be republished to multiple resolvers through the CLI prototype.</li>
+          <li>Deployments that configure more than one resolver can fan the same signed JSON out from this page too.</li>
         </ul>
       </article>
       <article class="guide-card">
@@ -1556,7 +1421,7 @@ function renderValuesGuideSection(configuredBasePath: string): string {
         <ul class="guide-list">
           <li>A single HTTPS target</li>
           <li>A single Bitcoin payment target</li>
-          <li>A bundled list of repeatable key/value entries</li>
+          <li>A bundled list of repeatable key/value entries like <span class="mono">cashapp -&gt; $alice1234</span>, <span class="mono">btc -&gt; bc1qxy...0wlh</span>, and <span class="mono">website -&gt; https://alice.example</span></li>
         </ul>
         <div class="guide-card-actions">
           <a class="action-link secondary" href="${withBasePath("/values", configuredBasePath)}">Open values tool</a>

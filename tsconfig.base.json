@@ -18,11 +18,11 @@
     "exactOptionalPropertyTypes": true,
     "baseUrl": ".",
     "paths": {
-      "@gns/architect": ["packages/architect/src/index.ts"],
-      "@gns/bitcoin": ["packages/bitcoin/src/index.ts"],
-      "@gns/core": ["packages/core/src/index.ts"],
-      "@gns/db": ["packages/db/src/index.ts"],
-      "@gns/protocol": ["packages/protocol/src/index.ts"]
+      "@ont/architect": ["packages/architect/src/index.ts"],
+      "@ont/bitcoin": ["packages/bitcoin/src/index.ts"],
+      "@ont/core": ["packages/core/src/index.ts"],
+      "@ont/db": ["packages/db/src/index.ts"],
+      "@ont/protocol": ["packages/protocol/src/index.ts"]
     }
   }
 }

@@ -21,7 +21,7 @@ describe("key/value bundle helpers", () => {
     const decoded = decodeProfileBundlePayloadHex(payloadHex);
     expect(decoded).not.toBeNull();
     expect(decoded).toMatchObject({
-      kind: "gns-key-value-bundle",
+      kind: "ont-key-value-bundle",
       version: 1,
       entries: [
         { key: "website", value: "https://example.com" },
@@ -60,7 +60,7 @@ describe("key/value bundle helpers", () => {
   it("rejects legacy payload shapes", () => {
     const legacyHex = Buffer.from(
       JSON.stringify({
-        kind: "gns-profile-bundle",
+        kind: "ont-profile-bundle",
         version: 1,
         website: "https://example.com"
       }),

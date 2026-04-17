@@ -10,7 +10,7 @@ import {
   parseTransferPackage,
   PRODUCT_NAME,
   PROTOCOL_NAME
-} from "@gns/protocol";
+} from "@ont/protocol";
 
 import {
   buildAuctionBidArtifacts,
@@ -23,7 +23,7 @@ import {
   buildTransferArtifacts,
   maybeWriteJsonFile,
   parseFundingInputDescriptor,
-  type GnsCliNetwork,
+  type OntCliNetwork,
   type WalletDerivationDescriptor
 } from "./builder.js";
 import {
@@ -38,7 +38,7 @@ import {
   simulateReservedAuction,
   simulateReservedAuctionStateAtBlock,
   type SerializedReservedAuctionPolicy
-} from "@gns/core";
+} from "@ont/core";
 import {
   buildExperimentalAnnexRevealEnvelope,
   buildExperimentalAnnexRevealEnvelopeFromBatchClaimPackage,
@@ -64,8 +64,11 @@ import {
   fetchNameActivity,
   fetchRecentActivity,
   fetchNameRecord,
+  fetchNameValueHistoryFromResolvers,
+  fetchNameValueHistory,
   fetchTransactionProvenance,
   fetchNameValueRecord,
+  resolveResolverUrls,
   ResolverHttpError
 } from "./resolver-actions.js";
 import {
@@ -80,7 +83,12 @@ import { submitClaim } from "./submit-claim.js";
 import { submitImmatureSaleTransfer } from "./submit-immature-sale-transfer.js";
 import { submitSaleTransfer } from "./submit-sale-transfer.js";
 import { submitTransfer } from "./submit-transfer.js";
-import { createSignedValueRecord, loadSignedValueRecord, publishValueRecord } from "./value-records.js";
+import {
+  createSignedValueRecord,
+  loadSignedValueRecord,
+  publishValueRecord,
+  publishValueRecordToResolvers
+} from "./value-records.js";
 
 void main().catch((error) => {
   console.error(error instanceof Error ? error.message : String(error));
@@ -213,6 +221,9 @@ async function main(): Promise<void> {
       return;
     case "get-value":
       await getValueCommand(args);
+      return;
+    case "get-value-history":
+      await getValueHistoryCommand(args);
       return;
     case "list-activity":
       await listActivityCommand(args);
@@ -1199,8 +1210,8 @@ async function watchAndBroadcastRevealCommand(args: readonly string[]): Promise<
 
   const signedRevealArtifacts = await loadSignedArtifacts(signedArtifactsPath);
   if (
-    signedRevealArtifacts.kind !== "gns-signed-reveal-artifacts" &&
-    signedRevealArtifacts.kind !== "gns-signed-batch-reveal-artifacts"
+    signedRevealArtifacts.kind !== "ont-signed-reveal-artifacts" &&
+    signedRevealArtifacts.kind !== "ont-signed-batch-reveal-artifacts"
   ) {
     throw new Error(
       "watch-and-broadcast-reveal requires a signed reveal or signed batch reveal artifacts file"
@@ -1246,8 +1257,8 @@ async function enqueueRevealCommand(args: readonly string[]): Promise<void> {
 
   const signedArtifacts = await loadSignedArtifacts(signedArtifactsPath);
   if (
-    signedArtifacts.kind !== "gns-signed-reveal-artifacts" &&
-    signedArtifacts.kind !== "gns-signed-batch-reveal-artifacts"
+    signedArtifacts.kind !== "ont-signed-reveal-artifacts" &&
+    signedArtifacts.kind !== "ont-signed-batch-reveal-artifacts"
   ) {
     throw new Error(
       "enqueue-reveal requires a signed reveal or signed batch reveal artifacts file"
@@ -1268,7 +1279,7 @@ async function enqueueRevealCommand(args: readonly string[]): Promise<void> {
   console.log(
     JSON.stringify(
       {
-        kind: "gns-reveal-queue-enqueue-result",
+        kind: "ont-reveal-queue-enqueue-result",
         queuePath: resolve(process.cwd(), queuePath),
         queuedCount: updatedQueue.items.length,
         lastQueuedId: `${commitTxid}:${signedArtifacts.signedTransactionId}`
@@ -1626,11 +1637,59 @@ async function signValueRecordCommand(args: readonly string[]): Promise<void> {
     throw new Error("sign-value-record requires --owner-private-key-hex");
   }
 
+  const resolverUrl = resolveSingleResolverUrlOption(parsed, {
+    command: "sign-value-record",
+    multiResolverMessage:
+      "sign-value-record automatic chain field lookup still uses one resolver at a time; use --resolver-url for a single source, or pass explicit --ownership-ref, --previous-record-hash, and --sequence"
+  });
+  let ownershipRef = parsed.options.get("ownership-ref");
+  const previousRecordHashProvided = parsed.options.has("previous-record-hash");
+  let previousRecordHash = previousRecordHashProvided
+    ? parseNullableHashOption(parsed.options.get("previous-record-hash"))
+    : undefined;
+  let sequence = parsed.options.has("sequence")
+    ? parseRequiredInteger(parsed.options.get("sequence"), "sequence")
+    : undefined;
+
+  if (ownershipRef === undefined || previousRecordHash === undefined || sequence === undefined) {
+    if (resolverUrl === undefined) {
+      throw new Error(
+        "sign-value-record requires either --resolver-url for automatic chain fields or explicit --ownership-ref, --previous-record-hash, and --sequence"
+      );
+    }
+
+    const [nameRecord, currentValueRecord] = await Promise.all([
+      fetchNameRecord({ name, resolverUrl }),
+      fetchNameValueRecord({ name, resolverUrl }).catch((error) => {
+        if (error instanceof ResolverHttpError && error.code === "value_not_found") {
+          return null;
+        }
+
+        throw error;
+      })
+    ]);
+
+    ownershipRef ??= nameRecord.lastStateTxid;
+    if (!previousRecordHashProvided) {
+      previousRecordHash = currentValueRecord?.recordHash ?? null;
+    }
+    sequence ??= currentValueRecord === null ? 1 : currentValueRecord.sequence + 1;
+  }
+
+  if (ownershipRef === undefined || previousRecordHash === undefined || sequence === undefined) {
+    throw new Error("unable to resolve value-record chain fields");
+  }
+
   const record = createSignedValueRecord({
     name,
     ownerPrivateKeyHex,
-    sequence: parseRequiredInteger(parsed.options.get("sequence"), "sequence"),
+    ownershipRef,
+    sequence,
+    previousRecordHash,
     valueType: parseRequiredByte(parsed.options.get("value-type"), "value-type"),
+    ...(parsed.options.has("issued-at")
+      ? { issuedAt: parsed.options.get("issued-at") as string }
+      : {}),
     ...(parsed.options.has("payload-utf8")
       ? { payloadUtf8: parsed.options.get("payload-utf8") as string }
       : {}),
@@ -1652,12 +1711,17 @@ async function publishValueRecordCommand(args: readonly string[]): Promise<void>
   }
 
   const valueRecord = await loadSignedValueRecord(recordPath);
-  const result = await publishValueRecord({
-    valueRecord,
-    ...(parsed.options.has("resolver-url")
-      ? { resolverUrl: parsed.options.get("resolver-url") as string }
-      : {})
-  });
+  const resolverUrls = resolveCliResolverUrls(parsed);
+  const result =
+    resolverUrls.length > 1
+      ? await publishValueRecordToResolvers({
+          valueRecord,
+          resolverUrls
+        })
+      : await publishValueRecord({
+          valueRecord,
+          ...(resolverUrls[0] === undefined ? {} : { resolverUrl: resolverUrls[0] })
+        });
 
   console.log(JSON.stringify(result, null, 2));
 }
@@ -1671,11 +1735,12 @@ async function claimPlanCommand(args: readonly string[]): Promise<void> {
   }
 
   try {
+    const resolverUrl = resolveSingleResolverUrlOption(parsed, {
+      command: "claim-plan"
+    });
     const result = await fetchClaimPlan({
       name,
-      ...(parsed.options.has("resolver-url")
-        ? { resolverUrl: parsed.options.get("resolver-url") as string }
-        : {})
+      ...(resolverUrl === undefined ? {} : { resolverUrl })
     });
 
     console.log(JSON.stringify(result, null, 2));
@@ -1699,11 +1764,12 @@ async function getNameCommand(args: readonly string[]): Promise<void> {
   }
 
   try {
+    const resolverUrl = resolveSingleResolverUrlOption(parsed, {
+      command: "get-name"
+    });
     const result = await fetchNameRecord({
       name,
-      ...(parsed.options.has("resolver-url")
-        ? { resolverUrl: parsed.options.get("resolver-url") as string }
-        : {})
+      ...(resolverUrl === undefined ? {} : { resolverUrl })
     });
 
     console.log(JSON.stringify(result, null, 2));
@@ -1727,11 +1793,12 @@ async function getNameActivityCommand(args: readonly string[]): Promise<void> {
   }
 
   try {
+    const resolverUrl = resolveSingleResolverUrlOption(parsed, {
+      command: "get-name-activity"
+    });
     const result = await fetchNameActivity({
       name,
-      ...(parsed.options.has("resolver-url")
-        ? { resolverUrl: parsed.options.get("resolver-url") as string }
-        : {}),
+      ...(resolverUrl === undefined ? {} : { resolverUrl }),
       ...(parsed.options.has("limit")
         ? { limit: parseRequiredInteger(parsed.options.get("limit"), "limit") }
         : {})
@@ -1758,12 +1825,50 @@ async function getValueCommand(args: readonly string[]): Promise<void> {
   }
 
   try {
-    const result = await fetchNameValueRecord({
-      name,
-      ...(parsed.options.has("resolver-url")
-        ? { resolverUrl: parsed.options.get("resolver-url") as string }
-        : {})
-    });
+    const resolverUrls = resolveCliResolverUrls(parsed);
+    const result =
+      resolverUrls.length > 1
+        ? await fetchNameValueHistoryFromResolvers({
+            name,
+            resolverUrls
+          })
+        : await fetchNameValueRecord({
+            name,
+            ...(resolverUrls[0] === undefined ? {} : { resolverUrl: resolverUrls[0] })
+          });
+
+    console.log(JSON.stringify(result, null, 2));
+  } catch (error) {
+    if (error instanceof ResolverHttpError) {
+      console.log(JSON.stringify(error.payload, null, 2));
+      process.exitCode = 1;
+      return;
+    }
+
+    throw error;
+  }
+}
+
+async function getValueHistoryCommand(args: readonly string[]): Promise<void> {
+  const parsed = parseOptions(args);
+  const name = parsed.positionals[0] ?? parsed.options.get("name");
+
+  if (!name) {
+    throw new Error("get-value-history requires a name");
+  }
+
+  try {
+    const resolverUrls = resolveCliResolverUrls(parsed);
+    const result =
+      resolverUrls.length > 1
+        ? await fetchNameValueHistoryFromResolvers({
+            name,
+            resolverUrls
+          })
+        : await fetchNameValueHistory({
+            name,
+            ...(resolverUrls[0] === undefined ? {} : { resolverUrl: resolverUrls[0] })
+          });
 
     console.log(JSON.stringify(result, null, 2));
   } catch (error) {
@@ -1786,11 +1891,12 @@ async function getTxCommand(args: readonly string[]): Promise<void> {
   }
 
   try {
+    const resolverUrl = resolveSingleResolverUrlOption(parsed, {
+      command: "get-tx"
+    });
     const result = await fetchTransactionProvenance({
       txid,
-      ...(parsed.options.has("resolver-url")
-        ? { resolverUrl: parsed.options.get("resolver-url") as string }
-        : {})
+      ...(resolverUrl === undefined ? {} : { resolverUrl })
     });
 
     console.log(JSON.stringify(result, null, 2));
@@ -1809,10 +1915,11 @@ async function listActivityCommand(args: readonly string[]): Promise<void> {
   const parsed = parseOptions(args);
 
   try {
+    const resolverUrl = resolveSingleResolverUrlOption(parsed, {
+      command: "list-activity"
+    });
     const result = await fetchRecentActivity({
-      ...(parsed.options.has("resolver-url")
-        ? { resolverUrl: parsed.options.get("resolver-url") as string }
-        : {}),
+      ...(resolverUrl === undefined ? {} : { resolverUrl }),
       ...(parsed.options.has("limit")
         ? { limit: parseRequiredInteger(parsed.options.get("limit"), "limit") }
         : {})
@@ -1998,6 +2105,13 @@ function parseOptions(args: readonly string[]): {
   };
 }
 
+function parseResolverUrlList(value: string): readonly string[] {
+  return value
+    .split(/[\s,]+/u)
+    .map((entry) => entry.trim())
+    .filter((entry) => entry.length > 0);
+}
+
 function parseRequiredBigInt(value: string | undefined, label: string): bigint {
   if (!value) {
     throw new Error(`--${label} is required`);
@@ -2037,6 +2151,19 @@ function parseRequiredInteger(value: string | undefined, label: string): number 
   return parsed;
 }
 
+function parseNullableHashOption(value: string | undefined): string | null {
+  if (value === undefined || value.toLowerCase() === "null" || value === "") {
+    return null;
+  }
+
+  const normalized = value.trim().toLowerCase();
+  if (!/^[0-9a-f]{64}$/.test(normalized)) {
+    throw new Error("--previous-record-hash must be 64 hex characters or null");
+  }
+
+  return normalized;
+}
+
 function parseOptionalInteger(value: string | undefined): number | undefined {
   if (value === undefined) {
     return undefined;
@@ -2051,7 +2178,7 @@ function parseOptionalInteger(value: string | undefined): number | undefined {
   return parsed;
 }
 
-function parseNetwork(value: string | undefined): GnsCliNetwork {
+function parseNetwork(value: string | undefined): OntCliNetwork {
   if (value === undefined) {
     return "signet";
   }
@@ -2162,7 +2289,7 @@ function printUsage(): void {
   console.log("    Experimental: build one unsigned Taproot-annex batch reveal envelope from a single carrier input");
   console.log("");
   console.log("  build-experimental-annex-reveal-envelope-from-batch-claim-package <batch-claim-package> --carrier-prevout <txid:vout:valueSats> --wif <wif> [--network signet|testnet|regtest|main] [--fee-sats <amount>] [--carrier-input-index <n>] [--change-address <addr>] [--write <path>]");
-  console.log("    Experimental: reuse a real reveal-ready batch claim package so the explicit header carries actual GNS batch reveal semantics and the annex carries the real Merkle proof bytes");
+  console.log("    Experimental: reuse a real reveal-ready batch claim package so the explicit header carries actual ONT batch reveal semantics and the annex carries the real Merkle proof bytes");
   console.log("");
   console.log("  sign-experimental-annex-reveal-envelope <unsigned-envelope-json> --wif <wif> [--write <path>]");
   console.log("    Experimental: attach an annex-aware Taproot key-path witness and emit a signed annex envelope");
@@ -2215,11 +2342,14 @@ function printUsage(): void {
   console.log("  submit-sale-transfer --prev-state-txid <txid> --new-owner-pubkey <hex32> --owner-private-key-hex <hex32> --seller-input <txid:vout:valueSats:address> [--seller-input ...] --buyer-input <txid:vout:valueSats:address> [--buyer-input ...] --seller-payment-sats <amount> --seller-payment-address <addr> --fee-sats <amount> --wif <wif> [--wif ...] [--seller-change-address <addr>] [--buyer-change-address <addr>] [--flags <0-255>] [--network signet|testnet|regtest|main] [--expected-chain signet|testnet|regtest|main] [--rpc-url <url> --rpc-username <user> --rpc-password <pass> | --base-url <url>] [--out-dir <dir>]");
   console.log("    Build, sign, and broadcast a prototype cooperative mature-sale transfer with explicit seller payment output");
   console.log("");
-  console.log("  sign-value-record --name <name> --owner-private-key-hex <hex32> --sequence <n> --value-type <0-255> [--payload-utf8 <text> | --payload-hex <hex>] [--write <path>]");
-  console.log("    Sign an off-chain value record using the current owner key");
+  console.log("  sign-value-record --name <name> --owner-private-key-hex <hex32> --resolver-url <url> --value-type <0-255> [--payload-utf8 <text> | --payload-hex <hex>] [--write <path>]");
+  console.log("    Sign the exact next off-chain value record using resolver-derived ownershipRef and predecessor hash");
   console.log("");
-  console.log("  publish-value-record <value-record-json> [--resolver-url <url>]");
-  console.log("    Publish a signed value record to the prototype resolver");
+  console.log("  sign-value-record --name <name> --owner-private-key-hex <hex32> --ownership-ref <txid> --previous-record-hash <hash|null> --sequence <n> --value-type <0-255> [--payload-utf8 <text> | --payload-hex <hex>] [--issued-at <iso>] [--write <path>]");
+  console.log("    Sign an off-chain value record using explicit value-chain fields");
+  console.log("");
+  console.log("  publish-value-record <value-record-json> [--resolver-url <url> | --resolver-urls <url1,url2,...>]");
+  console.log("    Publish one signed value record to one resolver or fan it out across several resolvers");
   console.log("");
   console.log("  claim-plan <name> [--resolver-url <url>]");
   console.log("    Fetch the resolver's availability view and claim guidance for one name");
@@ -2230,14 +2360,59 @@ function printUsage(): void {
   console.log("  get-name-activity <name> [--resolver-url <url>] [--limit <n>]");
   console.log("    Fetch recent resolver activity related to one name");
   console.log("");
-  console.log("  get-value <name> [--resolver-url <url>]");
-  console.log("    Fetch the resolver's current signed off-chain value record for one name");
+  console.log("  get-value <name> [--resolver-url <url> | --resolver-urls <url1,url2,...>]");
+  console.log("    Fetch the current signed off-chain value record, or compare value visibility across several resolvers");
+  console.log("");
+  console.log("  get-value-history <name> [--resolver-url <url> | --resolver-urls <url1,url2,...>]");
+  console.log("    Fetch one resolver's current value-record history chain, or compare history agreement across several resolvers");
   console.log("");
   console.log("  list-activity [--resolver-url <url>] [--limit <n>]");
-  console.log("    Fetch recent chain activity with parsed Global Name System events and invalidation outcomes");
+  console.log("    Fetch recent chain activity with parsed Open Name Tags events and invalidation outcomes");
   console.log("");
   console.log("  get-tx <txid> [--resolver-url <url>]");
   console.log("    Fetch the resolver's stored provenance record for one transaction");
+}
+
+function resolveCliResolverUrls(parsed: {
+  readonly options: Map<string, string>;
+}): readonly string[] {
+  const singular = parsed.options.get("resolver-url");
+  const plural = parsed.options.get("resolver-urls");
+
+  if (singular !== undefined && plural !== undefined) {
+    throw new Error("use either --resolver-url or --resolver-urls, not both");
+  }
+
+  if (plural !== undefined) {
+    const resolverUrls = parseResolverUrlList(plural);
+    if (resolverUrls.length === 0) {
+      throw new Error("--resolver-urls must include at least one resolver URL");
+    }
+    return resolverUrls;
+  }
+
+  return resolveResolverUrls(singular === undefined ? undefined : [singular]);
+}
+
+function resolveSingleResolverUrlOption(
+  parsed: {
+    readonly options: Map<string, string>;
+  },
+  input: {
+    readonly command: string;
+    readonly multiResolverMessage?: string;
+  }
+): string | undefined {
+  const resolverUrls = resolveCliResolverUrls(parsed);
+
+  if (resolverUrls.length > 1) {
+    throw new Error(
+      input.multiResolverMessage
+      ?? `${input.command} accepts one resolver at a time; use --resolver-url or a single-item --resolver-urls value`
+    );
+  }
+
+  return resolverUrls[0];
 }
 
 function sleep(ms: number): Promise<void> {

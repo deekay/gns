@@ -19,9 +19,9 @@ initEccLib(tinysecp);
 
 const ECPair = ECPairFactory(tinysecp);
 const NETWORK = networks.regtest;
-const PROTOCOL_MAGIC = Buffer.from("gns", "utf8");
+const PROTOCOL_MAGIC = Buffer.from("ont", "utf8");
 const EXPERIMENTAL_ANNEX_TYPE = 0xf0;
-const EXPERIMENTAL_ANNEX_FORMAT = "gns-batch-proof-v0";
+const EXPERIMENTAL_ANNEX_FORMAT = "ont-batch-proof-v0";
 
 const signerKeyPair = ECPair.fromPrivateKey(Buffer.alloc(32, 71), {
   network: NETWORK,
@@ -65,7 +65,7 @@ console.log("JSON:");
 console.log(
   JSON.stringify(
     {
-      kind: "gns-annex-artifact-roundtrip-spike",
+      kind: "ont-annex-artifact-roundtrip-spike",
       unsignedEnvelope,
       signedEnvelope,
       verification
@@ -124,7 +124,7 @@ function buildUnsignedEnvelope({ signerInternalPubkey, changeAddress }) {
   });
 
   return {
-    kind: "gns-batch-reveal-annex-artifacts",
+    kind: "ont-batch-reveal-annex-artifacts",
     network: "regtest",
     psbtBase64: psbt.toBase64(),
     unsignedBaseTransactionHex: transaction.toHex(),
@@ -199,7 +199,7 @@ function signUnsignedEnvelope({ unsignedEnvelope, signerWif }) {
   tx.setWitness(unsignedEnvelope.carrierInputIndex, [signature, annex]);
 
   return {
-    kind: "gns-signed-batch-reveal-annex-artifacts",
+    kind: "ont-signed-batch-reveal-annex-artifacts",
     network: unsignedEnvelope.network,
     signedTransactionHex: tx.toHex(),
     signedTransactionId: tx.getId(),
@@ -298,7 +298,7 @@ function parseIllustrativeHybridHeader(bytes) {
   }
 
   if (!Buffer.from(bytes.subarray(0, 3)).equals(PROTOCOL_MAGIC)) {
-    throw new Error("illustrative hybrid header is missing the gns magic");
+    throw new Error("illustrative hybrid header is missing the ont magic");
   }
 
   const nameLength = bytes[73];

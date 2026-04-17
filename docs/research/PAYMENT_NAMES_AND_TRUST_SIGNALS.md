@@ -1,6 +1,6 @@
 # Payment Names and Trust Signals
 
-This note tries to make the payment-handle GNS story more concrete.
+This note tries to make the payment-handle ONT story more concrete.
 
 The main idea is that modern payment UX is not only about routing money. It is
 also about helping a human feel confident that they are paying the right person
@@ -50,11 +50,11 @@ So the user is often left asking:
 - is this the same merchant as last time?
 - what changed since my last payment?
 
-That is the gap GNS can help fill.
+That is the gap ONT can help fill.
 
 ## The Job To Be Done
 
-GNS should be thought of first as payment handles people can actually own, not
+ONT should be thought of first as payment handles people can actually own, not
 just prettier Bitcoin addresses.
 
 The deeper job is:
@@ -71,7 +71,7 @@ That suggests a stronger product shape:
 
 ## A Useful Payment UX Model
 
-A payment client built on GNS should ideally walk through four stages.
+A payment client built on ONT should ideally walk through four stages.
 
 ### 1. Discovery
 
@@ -113,11 +113,11 @@ take over:
 - stablecoin rails later
 - or whatever other payment instruction types clients support
 
-## What Should Live In Core GNS
+## What Should Live In Core ONT
 
-Core GNS should stay narrow and authoritative.
+Core ONT should stay narrow and authoritative.
 
-Things that belong in GNS itself:
+Things that belong in ONT itself:
 
 - the human-readable name
 - chain-derived ownership
@@ -127,7 +127,7 @@ Things that belong in GNS itself:
   available
 - sequence and freshness semantics for those owner-signed records
 
-If the payment-handle story stays central, core GNS should mostly answer:
+If the payment-handle story stays central, core ONT should mostly answer:
 
 - who owns this name?
 - what did the current owner sign as the latest payment record?
@@ -135,12 +135,12 @@ If the payment-handle story stays central, core GNS should mostly answer:
 
 That is already useful and already meaningfully better than a raw address.
 
-## What Should Not Live In Core GNS
+## What Should Not Live In Core ONT
 
-Core GNS should probably not try to directly absorb all the social and product
+Core ONT should probably not try to directly absorb all the social and product
 signals that make modern payment apps feel reassuring.
 
-Things that likely do **not** belong in core GNS:
+Things that likely do **not** belong in core ONT:
 
 - mutuals or follower graphs
 - social reputation scores
@@ -154,9 +154,9 @@ Things that likely do **not** belong in core GNS:
 Those things may matter a lot in practice, but they are not the same as
 canonical name ownership.
 
-## Public Layers Enabled By GNS
+## Public Layers Enabled By ONT
 
-On top of core GNS, public overlays could add more context without changing
+On top of core ONT, public overlays could add more context without changing
 canonical ownership.
 
 Examples:
@@ -165,13 +165,13 @@ Examples:
 - public merchant descriptors
 - optional avatars or profile fields
 - proof bundles showing that multiple public identities point back to the same
-  GNS-controlled key
+  ONT-controlled key
 - resolver-distributed context records that clients can choose to display
 
 These are useful as public signals, but they should remain clearly secondary to
 the base question of who owns the name and what that owner signed.
 
-## Private Layers Enabled By GNS
+## Private Layers Enabled By ONT
 
 A separate private client-memory layer can add the kinds of signals people
 already rely on in existing payment apps.
@@ -189,12 +189,12 @@ Examples:
 This is not public name resolution. It is personal trust memory.
 
 That is why it likely belongs in client state or in a separate encrypted sync
-layer rather than in the GNS resolver itself. See
+layer rather than in the ONT resolver itself. See
 [PRIVATE_RELATIONSHIP_GRAPH_AND_NOSTR.md](./PRIVATE_RELATIONSHIP_GRAPH_AND_NOSTR.md).
 
 ## Stablecoins and Multi-Rail Payments
 
-A useful implication of the payment-handle framing is that GNS does not need to
+A useful implication of the payment-handle framing is that ONT does not need to
 be limited to Bitcoin-only destinations just because Bitcoin anchors the
 namespace.
 
@@ -211,14 +211,14 @@ That means a name could later resolve to a payment bundle containing:
 - stablecoin payment endpoints
 - or other rail-specific records that clients know how to interpret
 
-This would let GNS stay Bitcoin-anchored while still being useful in a broader
+This would let ONT stay Bitcoin-anchored while still being useful in a broader
 payments world.
 
 ## A Good Architectural Split
 
 The cleanest split may be:
 
-### GNS core
+### ONT core
 
 - names
 - ownership
@@ -256,7 +256,7 @@ And it explains why a sovereign naming layer is useful:
 
 - current payment UX depends heavily on names and trust signals
 - Bitcoin mostly gives settlement without enough human context
-- GNS can restore some of that context in a layered way without collapsing back
+- ONT can restore some of that context in a layered way without collapsing back
   into a centralized platform
 
 ## Open Questions

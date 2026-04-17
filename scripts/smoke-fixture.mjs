@@ -8,12 +8,12 @@ const webUrl = `http://127.0.0.1:${webPort}`;
 const npmExecutable = process.platform === "win32" ? "npm.cmd" : "npm";
 
 const resolver = startProcess("resolver", ["run", "dev:resolver"], {
-  GNS_RESOLVER_PORT: String(resolverPort)
+  ONT_RESOLVER_PORT: String(resolverPort)
 });
 const web = startProcess("web", ["run", "dev:web"], {
-  GNS_WEB_PORT: String(webPort),
-  GNS_RESOLVER_PORT: String(resolverPort),
-  GNS_WEB_RESOLVER_URL: resolverUrl
+  ONT_WEB_PORT: String(webPort),
+  ONT_RESOLVER_PORT: String(resolverPort),
+  ONT_WEB_RESOLVER_URL: resolverUrl
 });
 
 try {
@@ -42,7 +42,7 @@ try {
   console.log(
     JSON.stringify(
       {
-        kind: "gns-fixture-smoke-result",
+        kind: "ont-fixture-smoke-result",
         ok: true,
         resolverUrl,
         webUrl,

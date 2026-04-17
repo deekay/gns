@@ -1,6 +1,6 @@
 # Cold-User Walkthrough
 
-Use this when you want a first-time user to try GNS with little or no coaching and give back useful notes.
+Use this when you want a first-time user to try ONT with little or no coaching and give back useful notes.
 
 This is not a protocol test. It is a product-usability test for the current hosted private demo and repo entry points.
 
@@ -19,7 +19,7 @@ Best fit:
 
 - comfortable installing desktop software
 - comfortable running one terminal command
-- not already familiar with the GNS claim flow
+- not already familiar with the ONT claim flow
 
 Avoid:
 
@@ -31,8 +31,8 @@ Avoid:
 Keep the session as cold as possible.
 
 - Start by sending only the link you want tested:
-  - website: [https://globalnamesystem.org](https://globalnamesystem.org)
-  - repo: [https://github.com/deekay/gns](https://github.com/deekay/gns)
+  - website: [https://opennametags.org](https://opennametags.org)
+  - repo: [https://github.com/deekay/ont](https://github.com/deekay/ont)
 - Do not explain the flow up front.
 - Let the tester narrate what they think each page is for.
 - Do not rescue immediately when they pause.
@@ -69,7 +69,7 @@ is actually clear.
 
 Capture the first point where they hesitate on each of these:
 
-- understanding what GNS is
+- understanding what ONT is
 - choosing between website vs GitHub vs self-hosting
 - wallet setup
 - understanding that Sparrow is the supported hosted-demo wallet path

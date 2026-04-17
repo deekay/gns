@@ -6,21 +6,48 @@ import {
   parseSignedValueRecord,
   signValueRecord,
   type SignedValueRecord
-} from "@gns/protocol";
+} from "@ont/protocol";
+
+import { resolveResolverUrl, resolveResolverUrls } from "./resolver-actions.js";
+
+export interface MultiResolverValuePublishResult {
+  readonly resolverUrl: string;
+  readonly ok: boolean;
+  readonly status: number | null;
+  readonly code: string | null;
+  readonly message: string | null;
+  readonly payload: unknown;
+}
+
+export interface MultiResolverValuePublishSummary {
+  readonly kind: "ont-multi-resolver-value-publish";
+  readonly name: string;
+  readonly sequence: number;
+  readonly resolverCount: number;
+  readonly successCount: number;
+  readonly failureCount: number;
+  readonly results: readonly MultiResolverValuePublishResult[];
+}
 
 export function createSignedValueRecord(options: {
   readonly name: string;
   readonly ownerPrivateKeyHex: string;
+  readonly ownershipRef: string;
   readonly sequence: number;
+  readonly previousRecordHash: string | null;
   readonly valueType: number;
   readonly payloadUtf8?: string;
   readonly payloadHex?: string;
+  readonly issuedAt?: string;
 }): SignedValueRecord {
   return signValueRecord({
     name: options.name,
     ownerPrivateKeyHex: options.ownerPrivateKeyHex,
+    ownershipRef: options.ownershipRef,
     sequence: options.sequence,
+    previousRecordHash: options.previousRecordHash,
     valueType: options.valueType,
+    ...(options.issuedAt === undefined ? {} : { issuedAt: options.issuedAt }),
     payloadHex: resolvePayloadHex(
       options.payloadUtf8 === undefined && options.payloadHex === undefined
         ? {}
@@ -68,6 +95,52 @@ export async function publishValueRecord(options: {
   return parsed;
 }
 
+export async function publishValueRecordToResolvers(options: {
+  readonly resolverUrls?: readonly string[];
+  readonly valueRecord: SignedValueRecord;
+}): Promise<MultiResolverValuePublishSummary> {
+  const resolverUrls = resolveResolverUrls(options.resolverUrls);
+  const results = await Promise.all(
+    resolverUrls.map(async (resolverUrl): Promise<MultiResolverValuePublishResult> => {
+      try {
+        const payload = await publishValueRecord({
+          resolverUrl,
+          valueRecord: options.valueRecord
+        });
+        return {
+          resolverUrl,
+          ok: true,
+          status: 201,
+          code: null,
+          message: null,
+          payload
+        };
+      } catch (error) {
+        return {
+          resolverUrl,
+          ok: false,
+          status: null,
+          code: "resolver_publish_failed",
+          message: error instanceof Error ? error.message : "Unable to publish the signed value record.",
+          payload: null
+        };
+      }
+    })
+  );
+
+  const successCount = results.filter((result) => result.ok).length;
+
+  return {
+    kind: "ont-multi-resolver-value-publish",
+    name: options.valueRecord.name,
+    sequence: options.valueRecord.sequence,
+    resolverCount: resolverUrls.length,
+    successCount,
+    failureCount: resolverUrls.length - successCount,
+    results
+  };
+}
+
 function resolvePayloadHex(input: {
   readonly payloadUtf8?: string;
   readonly payloadHex?: string;
@@ -81,17 +154,4 @@ function resolvePayloadHex(input: {
   }
 
   return input.payloadHex ?? "";
-}
-
-function resolveResolverUrl(explicitResolverUrl: string | undefined): string {
-  if (explicitResolverUrl) {
-    return explicitResolverUrl;
-  }
-
-  if (process.env.GNS_RESOLVER_URL) {
-    return process.env.GNS_RESOLVER_URL;
-  }
-
-  const port = process.env.GNS_RESOLVER_PORT ?? "8787";
-  return `http://127.0.0.1:${port}`;
 }

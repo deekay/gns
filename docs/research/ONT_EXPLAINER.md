@@ -1,9 +1,9 @@
-# Global Name System (GNS)
+# Open Name Tags (ONT)
 
 Status note:
 
-- for the cleanest current intro, start with [GNS_FROM_ZERO.md](../core/GNS_FROM_ZERO.md)
-- for what is actually implemented and validated, use [GNS_IMPLEMENTATION_AND_VALIDATION.md](./GNS_IMPLEMENTATION_AND_VALIDATION.md)
+- for the cleanest current intro, start with [ONT_FROM_ZERO.md](../core/ONT_FROM_ZERO.md)
+- for what is actually implemented and validated, use [ONT_IMPLEMENTATION_AND_VALIDATION.md](./ONT_IMPLEMENTATION_AND_VALIDATION.md)
 - for the current launch direction, use [LAUNCH_SPEC_V0.md](./LAUNCH_SPEC_V0.md)
 
 This explainer still describes the core model accurately, but the launch-allocation
@@ -19,9 +19,9 @@ If you want to pay the right person or merchant, raw addresses and opaque accoun
 
 Readable payment handles exist, but they usually depend on a service, account, domain, or operator between the payer and the recipient. That can be useful, especially during transition, but it also means availability and correctness inherit someone else's infrastructure and policies.
 
-GNS is a different approach. A name like `satoshi` is not a subscription. It is something you own outright, in the same way you own a private key. The record of ownership is public, permanent, and verifiable by anyone without asking anyone's permission.
+ONT is a different approach. A name like `satoshi` is not a subscription. It is something you own outright, in the same way you own a private key. The record of ownership is public, permanent, and verifiable by anyone without asking anyone's permission.
 
-Human-facing amounts in GNS use integer bitcoin notation alongside the conventional BTC equivalent. Example: `₿50,000 (0.0005 BTC)`.
+Human-facing amounts in ONT use integer bitcoin notation alongside the conventional BTC equivalent. Example: `₿50,000 (0.0005 BTC)`.
 
 ---
 
@@ -36,19 +36,19 @@ Most naming systems charge you by routing payment to a gatekeeper:
 - a DAO treasury
 - or some other operator with the power to change terms later
 
-GNS uses pricing too, but a different kind. It uses a **bond**. A bond still has a real financial cost because capital has time value and opportunity cost. But the cost does not have to be paid to a third party. You lock bitcoin you still own instead of spending it forever to a provider.
+ONT uses pricing too, but a different kind. It uses a **bond**. A bond still has a real financial cost because capital has time value and opportunity cost. But the cost does not have to be paid to a third party. You lock bitcoin you still own instead of spending it forever to a provider.
 
 That distinction matters both economically and psychologically. For many people, especially retail users who may simply hold bitcoin in cold storage anyway, locking capital can feel very different from losing it permanently. For larger institutions and brands, the distinction may matter less in practice because both fees and bonds are just balance-sheet decisions. But the protocol stays consistent for everyone: the claimant bears a cost, yet no central operator collects tribute.
 
-GNS claims still pay normal Bitcoin transaction fees. The point is not that naming becomes free. The point is that the protocol's own pricing mechanism is self-sovereign rather than gatekeeper-controlled.
+ONT claims still pay normal Bitcoin transaction fees. The point is not that naming becomes free. The point is that the protocol's own pricing mechanism is self-sovereign rather than gatekeeper-controlled.
 
 ---
 
-## What GNS Names Are For
+## What ONT Names Are For
 
-A GNS name is best understood first as a human-readable payment handle.
+An ONT name is best understood first as a human-readable payment handle.
 
-The first question GNS is trying to solve is:
+The first question ONT is trying to solve is:
 
 - who do I mean before money moves?
 
@@ -59,13 +59,13 @@ From there, the same structure can support other records too:
 
 The name is the stable layer. What it points to can change. The ownership cannot be taken from you.
 
-This matters increasingly as software acts on behalf of people. When software routes a payment or resolves an address without a human inspecting every character, the final payment target should not rest on a probabilistic guess or an unverifiable alias. GNS names carry cryptographic ownership guarantees at the protocol level — not because a company promises to honor them, but because the record of ownership is anchored to an immutable public ledger that no single party controls.
+This matters increasingly as software acts on behalf of people. When software routes a payment or resolves an address without a human inspecting every character, the final payment target should not rest on a probabilistic guess or an unverifiable alias. ONT names carry cryptographic ownership guarantees at the protocol level — not because a company promises to honor them, but because the record of ownership is anchored to an immutable public ledger that no single party controls.
 
 ---
 
 ## How Ownership Works
 
-GNS uses a **capital bond** rather than an annual fee to establish and protect name ownership. To claim a name, you lock a required amount of bitcoin in a dedicated output you control. The bond is not a payment to anyone — it is capital you retain, locked temporarily as a commitment to the name.
+ONT uses a **capital bond** rather than an annual fee to establish and protect name ownership. To claim a name, you lock a required amount of bitcoin in a dedicated output you control. The bond is not a payment to anyone — it is capital you retain, locked temporarily as a commitment to the name.
 
 - **The Bond:** Shorter names require larger bonds. A 1-character name requires `₿100,000,000 (1 BTC)`; names of 12 characters and longer floor at `₿50,000 (0.0005 BTC)`. This ensures high-value names are backed by real economic commitment.
 - **Settlement:** A newly claimed name is in a settlement period for approximately one year (52,000 blocks). During this time the bond must remain parked. If it is spent or broken before settlement completes, the name is immediately released back to the public pool.
@@ -73,13 +73,13 @@ GNS uses a **capital bond** rather than an annual fee to establish and protect n
 
 Scarcity comes from locked capital and time, not from fees paid to a registrar or burned into nothing. You keep your bitcoin.
 
-That said, a GNS claim is not costless. In addition to posting the bond, the claimant also pays ordinary on-chain transaction fees for the commit and reveal transactions. At low fee levels those costs may be small relative to the bond. At higher fee levels they may become comparable to, or even exceed, the smallest bond tiers. That is not a payment to a centralized operator or registry. It is payment into Bitcoin's normal fee market, which is consistent with the system's decentralization story even if it makes claiming more expensive in absolute terms.
+That said, an ONT claim is not costless. In addition to posting the bond, the claimant also pays ordinary on-chain transaction fees for the commit and reveal transactions. At low fee levels those costs may be small relative to the bond. At higher fee levels they may become comparable to, or even exceed, the smallest bond tiers. That is not a payment to a centralized operator or registry. It is payment into Bitcoin's normal fee market, which is consistent with the system's decentralization story even if it makes claiming more expensive in absolute terms.
 
 ---
 
 ## Claiming A Name
 
-GNS uses a two-step commit/reveal process to prevent front-running by bots or miners.
+ONT uses a two-step commit/reveal process to prevent front-running by bots or miners.
 
 1. **Commit:** You post a hash of your intended name. This hides your intent while establishing your place in the queue.
 2. **Reveal:** You reveal the plaintext name within a short window. If no valid reveal arrives in time, the claim expires and the bitcoin stays with you.
@@ -90,7 +90,7 @@ The two-step process means no one can copy your claim from the mempool and beat 
 
 ## No Suffixes, No Hierarchy
 
-GNS uses a flat namespace. A name is just `satoshi` — not `satoshi.gns` or `satoshi.btc`. There is no root authority, no TLD, no hierarchy to maintain. Every name of the same length is treated identically by the protocol.
+ONT uses a flat namespace. A name is just `satoshi` — not `satoshi.ont` or `satoshi.btc`. There is no root authority, no TLD, no hierarchy to maintain. Every name of the same length is treated identically by the protocol.
 
 ---
 
@@ -119,7 +119,7 @@ public rules and public on-chain outcomes rather than private approvals.
 
 ## Comparison to Rented Handles
 
-| Feature | GNS | Typical service-controlled handle |
+| Feature | ONT | Typical service-controlled handle |
 | :--- | :--- | :--- |
 | **Cost model** | Bonded capital the claimant still owns | Fees, rent, or account dependence |
 | **Control** | Current owner key signs updates | Provider account or operator controls availability |
@@ -130,9 +130,9 @@ public rules and public on-chain outcomes rather than private approvals.
 
 ## Data Availability: An Honest Assessment
 
-GNS separates two concerns with different trust profiles, and it is worth being explicit about both.
+ONT separates two concerns with different trust profiles, and it is worth being explicit about both.
 
-**Ownership state** is recorded on an immutable public ledger. Every claim, reveal, and transfer is a permanent on-chain event. The canonical registry is always recoverable from that record alone — if every GNS resolver disappeared tonight, any operator could reconstruct the entire namespace from scratch. Ownership truth does not depend on any resolver being available, honest, or even aware that GNS exists.
+**Ownership state** is recorded on an immutable public ledger. Every claim, reveal, and transfer is a permanent on-chain event. The canonical registry is always recoverable from that record alone — if every ONT resolver disappeared tonight, any operator could reconstruct the entire namespace from scratch. Ownership truth does not depend on any resolver being available, honest, or even aware that ONT exists.
 
 **Off-chain value records** — what a name actually points to — are a separate matter. These are stored and served by resolvers. They are signed by the name's current owner key, so their authenticity is always verifiable without trusting anyone. But their availability depends on at least one resolver having a copy.
 
@@ -159,7 +159,7 @@ No single operator needs to be trusted. A hosted resolver at launch is a conveni
 
 ## How the Guarantee Holds
 
-The properties GNS provides — that your name cannot be revoked, forged, or censored — hold because ownership is anchored to a public ledger with no administrator. This is not a promise made by a company. It is a property of the record itself.
+The properties ONT provides — that your name cannot be revoked, forged, or censored — hold because ownership is anchored to a public ledger with no administrator. This is not a promise made by a company. It is a property of the record itself.
 
 Anyone can verify ownership. Anyone can run a resolver. Anyone can audit the full history of every name from the first block. The system does not ask you to trust it; it asks you to verify it.
 
@@ -167,7 +167,7 @@ Anyone can verify ownership. Anyone can run a resolver. Anyone can audit the ful
 
 ## Future Directions
 
-- **Silent Payments:** Generating unique, one-time payment addresses directly from a GNS name, so senders never reuse an address.
+- **Silent Payments:** Generating unique, one-time payment addresses directly from an ONT name, so senders never reuse an address.
 - **Taproot integration:** Hiding ownership commitments inside standard key material for zero visible on-chain footprint.
 
 More speculative directions are documented separately in [FUTURE_EXPLORATIONS.md](./FUTURE_EXPLORATIONS.md).

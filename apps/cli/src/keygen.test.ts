@@ -10,7 +10,7 @@ describe("key generation helpers", () => {
   it("creates distinct owner and funding material for signet", () => {
     const generated = generateLiveAccount("signet");
 
-    expect(generated.kind).toBe("gns-generated-live-account");
+    expect(generated.kind).toBe("ont-generated-live-account");
     expect(generated.ownerPrivateKeyHex).toMatch(/^[0-9a-f]{64}$/);
     expect(generated.ownerPubkey).toMatch(/^[0-9a-f]{64}$/);
     expect(generated.fundingWif[0]).toMatch(/[cKLM]/);

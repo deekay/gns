@@ -2,7 +2,7 @@
 
 This note asks a narrow quantitative question:
 
-> if the current GNS batched reveal kept a small explicit reveal header, but
+> if the current ONT batched reveal kept a small explicit reveal header, but
 > moved the Merkle proof bytes from explicit proof outputs into a Taproot
 > annex-like witness carrier, would the footprint economics meaningfully
 > improve?

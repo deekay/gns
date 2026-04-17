@@ -2,7 +2,7 @@ import ECPairFactory from "ecpair";
 import { initEccLib, networks, Psbt } from "bitcoinjs-lib";
 import * as tinysecp from "tiny-secp256k1";
 
-import type { GnsCliNetwork } from "./builder.js";
+import type { OntCliNetwork } from "./builder.js";
 
 initEccLib(tinysecp);
 
@@ -10,13 +10,13 @@ const ECPair = ECPairFactory(tinysecp);
 
 export interface BuiltArtifactsEnvelope {
   readonly kind:
-    | "gns-commit-artifacts"
-    | "gns-reveal-artifacts"
-    | "gns-transfer-artifacts"
-    | "gns-auction-bid-artifacts"
-    | "gns-batch-commit-artifacts"
-    | "gns-batch-reveal-artifacts";
-  readonly network: GnsCliNetwork;
+    | "ont-commit-artifacts"
+    | "ont-reveal-artifacts"
+    | "ont-transfer-artifacts"
+    | "ont-auction-bid-artifacts"
+    | "ont-batch-commit-artifacts"
+    | "ont-batch-reveal-artifacts";
+  readonly network: OntCliNetwork;
   readonly psbtBase64: string;
   readonly commitTxid?: string;
   readonly revealTxid?: string;
@@ -26,13 +26,13 @@ export interface BuiltArtifactsEnvelope {
 
 export interface SignedArtifacts {
   readonly kind:
-    | "gns-signed-commit-artifacts"
-    | "gns-signed-reveal-artifacts"
-    | "gns-signed-transfer-artifacts"
-    | "gns-signed-auction-bid-artifacts"
-    | "gns-signed-batch-commit-artifacts"
-    | "gns-signed-batch-reveal-artifacts";
-  readonly network: GnsCliNetwork;
+    | "ont-signed-commit-artifacts"
+    | "ont-signed-reveal-artifacts"
+    | "ont-signed-transfer-artifacts"
+    | "ont-signed-auction-bid-artifacts"
+    | "ont-signed-batch-commit-artifacts"
+    | "ont-signed-batch-reveal-artifacts";
+  readonly network: OntCliNetwork;
   readonly signedTransactionHex: string;
   readonly signedTransactionId: string;
   readonly signedPsbtBase64: string;
@@ -41,13 +41,13 @@ export interface SignedArtifacts {
 
 export interface SignedArtifactsEnvelope {
   readonly kind:
-    | "gns-signed-commit-artifacts"
-    | "gns-signed-reveal-artifacts"
-    | "gns-signed-transfer-artifacts"
-    | "gns-signed-auction-bid-artifacts"
-    | "gns-signed-batch-commit-artifacts"
-    | "gns-signed-batch-reveal-artifacts";
-  readonly network: GnsCliNetwork;
+    | "ont-signed-commit-artifacts"
+    | "ont-signed-reveal-artifacts"
+    | "ont-signed-transfer-artifacts"
+    | "ont-signed-auction-bid-artifacts"
+    | "ont-signed-batch-commit-artifacts"
+    | "ont-signed-batch-reveal-artifacts";
+  readonly network: OntCliNetwork;
   readonly signedTransactionHex: string;
   readonly signedTransactionId: string;
   readonly signedPsbtBase64: string;
@@ -59,15 +59,15 @@ export function parseBuiltArtifactsEnvelope(input: unknown): BuiltArtifactsEnvel
   const kind = assertString(record.kind, "kind");
 
   if (
-    kind !== "gns-commit-artifacts" &&
-    kind !== "gns-reveal-artifacts" &&
-    kind !== "gns-transfer-artifacts" &&
-    kind !== "gns-auction-bid-artifacts" &&
-    kind !== "gns-batch-commit-artifacts" &&
-    kind !== "gns-batch-reveal-artifacts"
+    kind !== "ont-commit-artifacts" &&
+    kind !== "ont-reveal-artifacts" &&
+    kind !== "ont-transfer-artifacts" &&
+    kind !== "ont-auction-bid-artifacts" &&
+    kind !== "ont-batch-commit-artifacts" &&
+    kind !== "ont-batch-reveal-artifacts"
   ) {
     throw new Error(
-      "artifacts kind must be gns-commit-artifacts, gns-reveal-artifacts, gns-transfer-artifacts, gns-auction-bid-artifacts, gns-batch-commit-artifacts, or gns-batch-reveal-artifacts"
+      "artifacts kind must be ont-commit-artifacts, ont-reveal-artifacts, ont-transfer-artifacts, ont-auction-bid-artifacts, ont-batch-commit-artifacts, or ont-batch-reveal-artifacts"
     );
   }
 
@@ -130,7 +130,7 @@ export function signArtifacts(options: {
   const signedTransactionId = transaction.getId();
 
   if (
-    options.artifacts.kind === "gns-commit-artifacts" &&
+    options.artifacts.kind === "ont-commit-artifacts" &&
     options.artifacts.commitTxid &&
     options.artifacts.commitTxid !== signedTransactionId
   ) {
@@ -138,7 +138,7 @@ export function signArtifacts(options: {
   }
 
   if (
-    options.artifacts.kind === "gns-batch-commit-artifacts" &&
+    options.artifacts.kind === "ont-batch-commit-artifacts" &&
     options.artifacts.commitTxid &&
     options.artifacts.commitTxid !== signedTransactionId
   ) {
@@ -146,7 +146,7 @@ export function signArtifacts(options: {
   }
 
   if (
-    options.artifacts.kind === "gns-reveal-artifacts" &&
+    options.artifacts.kind === "ont-reveal-artifacts" &&
     options.artifacts.revealTxid &&
     options.artifacts.revealTxid !== signedTransactionId
   ) {
@@ -154,7 +154,7 @@ export function signArtifacts(options: {
   }
 
   if (
-    options.artifacts.kind === "gns-batch-reveal-artifacts" &&
+    options.artifacts.kind === "ont-batch-reveal-artifacts" &&
     options.artifacts.revealTxid &&
     options.artifacts.revealTxid !== signedTransactionId
   ) {
@@ -162,7 +162,7 @@ export function signArtifacts(options: {
   }
 
   if (
-    options.artifacts.kind === "gns-transfer-artifacts" &&
+    options.artifacts.kind === "ont-transfer-artifacts" &&
     options.artifacts.transferTxid &&
     options.artifacts.transferTxid !== signedTransactionId
   ) {
@@ -170,7 +170,7 @@ export function signArtifacts(options: {
   }
 
   if (
-    options.artifacts.kind === "gns-auction-bid-artifacts" &&
+    options.artifacts.kind === "ont-auction-bid-artifacts" &&
     options.artifacts.bidTxid &&
     options.artifacts.bidTxid !== signedTransactionId
   ) {
@@ -179,17 +179,17 @@ export function signArtifacts(options: {
 
   return {
     kind: (
-      options.artifacts.kind === "gns-commit-artifacts"
-        ? "gns-signed-commit-artifacts"
-        : options.artifacts.kind === "gns-batch-commit-artifacts"
-          ? "gns-signed-batch-commit-artifacts"
-        : options.artifacts.kind === "gns-reveal-artifacts"
-          ? "gns-signed-reveal-artifacts"
-          : options.artifacts.kind === "gns-batch-reveal-artifacts"
-            ? "gns-signed-batch-reveal-artifacts"
-          : options.artifacts.kind === "gns-auction-bid-artifacts"
-            ? "gns-signed-auction-bid-artifacts"
-          : "gns-signed-transfer-artifacts"
+      options.artifacts.kind === "ont-commit-artifacts"
+        ? "ont-signed-commit-artifacts"
+        : options.artifacts.kind === "ont-batch-commit-artifacts"
+          ? "ont-signed-batch-commit-artifacts"
+        : options.artifacts.kind === "ont-reveal-artifacts"
+          ? "ont-signed-reveal-artifacts"
+          : options.artifacts.kind === "ont-batch-reveal-artifacts"
+            ? "ont-signed-batch-reveal-artifacts"
+          : options.artifacts.kind === "ont-auction-bid-artifacts"
+            ? "ont-signed-auction-bid-artifacts"
+          : "ont-signed-transfer-artifacts"
     ),
     network: options.artifacts.network,
     signedTransactionHex: transaction.toHex(),
@@ -204,15 +204,15 @@ export function parseSignedArtifactsEnvelope(input: unknown): SignedArtifactsEnv
   const kind = assertString(record.kind, "kind");
 
   if (
-    kind !== "gns-signed-commit-artifacts" &&
-    kind !== "gns-signed-reveal-artifacts" &&
-    kind !== "gns-signed-transfer-artifacts" &&
-    kind !== "gns-signed-auction-bid-artifacts" &&
-    kind !== "gns-signed-batch-commit-artifacts" &&
-    kind !== "gns-signed-batch-reveal-artifacts"
+    kind !== "ont-signed-commit-artifacts" &&
+    kind !== "ont-signed-reveal-artifacts" &&
+    kind !== "ont-signed-transfer-artifacts" &&
+    kind !== "ont-signed-auction-bid-artifacts" &&
+    kind !== "ont-signed-batch-commit-artifacts" &&
+    kind !== "ont-signed-batch-reveal-artifacts"
   ) {
     throw new Error(
-      "signed artifacts kind must be gns-signed-commit-artifacts, gns-signed-reveal-artifacts, gns-signed-transfer-artifacts, gns-signed-auction-bid-artifacts, gns-signed-batch-commit-artifacts, or gns-signed-batch-reveal-artifacts"
+      "signed artifacts kind must be ont-signed-commit-artifacts, ont-signed-reveal-artifacts, ont-signed-transfer-artifacts, ont-signed-auction-bid-artifacts, ont-signed-batch-commit-artifacts, or ont-signed-batch-reveal-artifacts"
     );
   }
 
@@ -226,7 +226,7 @@ export function parseSignedArtifactsEnvelope(input: unknown): SignedArtifactsEnv
   };
 }
 
-function resolveNetwork(name: GnsCliNetwork) {
+function resolveNetwork(name: OntCliNetwork) {
   switch (name) {
     case "main":
       return networks.bitcoin;
@@ -262,7 +262,7 @@ function assertInteger(value: unknown, label: string): number {
   return value as number;
 }
 
-function parseNetwork(value: string): GnsCliNetwork {
+function parseNetwork(value: string): OntCliNetwork {
   if (value === "main" || value === "signet" || value === "testnet" || value === "regtest") {
     return value;
   }

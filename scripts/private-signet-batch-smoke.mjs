@@ -12,14 +12,14 @@ import {
 } from "./private-signet-smoke-lib.mjs";
 
 const REMOTE_STATUS_PATH =
-  process.env.GNS_PRIVATE_SIGNET_BATCH_SMOKE_REMOTE_STATUS_PATH
-  ?? "/var/lib/gns/private-batch-smoke-summary.json";
+  process.env.ONT_PRIVATE_SIGNET_BATCH_SMOKE_REMOTE_STATUS_PATH
+  ?? "/var/lib/ont/private-batch-smoke-summary.json";
 const PUBLISH_REMOTE_STATUS =
-  (process.env.GNS_PRIVATE_SIGNET_BATCH_SMOKE_PUBLISH_REMOTE_STATUS ?? "1") !== "0";
+  (process.env.ONT_PRIVATE_SIGNET_BATCH_SMOKE_PUBLISH_REMOTE_STATUS ?? "1") !== "0";
 const CONFIGURED_ALPHA_NAME =
-  normalizeOptionalName(process.env.GNS_PRIVATE_SIGNET_BATCH_SMOKE_ALPHA_NAME);
+  normalizeOptionalName(process.env.ONT_PRIVATE_SIGNET_BATCH_SMOKE_ALPHA_NAME);
 const CONFIGURED_BETA_NAME =
-  normalizeOptionalName(process.env.GNS_PRIVATE_SIGNET_BATCH_SMOKE_BETA_NAME);
+  normalizeOptionalName(process.env.ONT_PRIVATE_SIGNET_BATCH_SMOKE_BETA_NAME);
 
 void main().catch((error) => {
   console.error(error instanceof Error ? error.stack ?? error.message : String(error));
@@ -28,7 +28,7 @@ void main().catch((error) => {
 
 async function main() {
   const summary = {
-    kind: "gns-private-signet-batch-smoke-summary",
+    kind: "ont-private-signet-batch-smoke-summary",
     status: "running",
     message: "Starting private signet batched ordinary-claim smoke flow.",
     startedAt: new Date().toISOString()

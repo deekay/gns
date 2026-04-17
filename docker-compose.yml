@@ -7,13 +7,13 @@ services:
     env_file:
       - .env
     environment:
-      GNS_RESOLVER_PORT: "8787"
-      GNS_SNAPSHOT_PATH: /app/.data/resolver-snapshot.json
-      GNS_VALUE_STORE_PATH: /app/.data/value-records.json
+      ONT_RESOLVER_PORT: "8787"
+      ONT_SNAPSHOT_PATH: /app/.data/resolver-snapshot.json
+      ONT_VALUE_STORE_PATH: /app/.data/value-records.json
     ports:
-      - "${GNS_RESOLVER_BIND:-127.0.0.1}:${GNS_RESOLVER_PORT:-8787}:8787"
+      - "${ONT_RESOLVER_BIND:-127.0.0.1}:${ONT_RESOLVER_PORT:-8787}:8787"
     volumes:
-      - gns_data:/app/.data
+      - ont_data:/app/.data
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8787/health >/dev/null || exit 1"]
@@ -30,15 +30,15 @@ services:
     env_file:
       - .env
     environment:
-      GNS_WEB_PORT: "3000"
-      GNS_WEB_RESOLVER_URL: http://resolver:8787
-      GNS_RESOLVER_PORT: "8787"
-      GNS_WEB_PRIVATE_SIGNET_FUNDING_ENABLED: "${GNS_WEB_PRIVATE_SIGNET_FUNDING_ENABLED:-false}"
+      ONT_WEB_PORT: "3000"
+      ONT_WEB_RESOLVER_URL: http://resolver:8787
+      ONT_RESOLVER_PORT: "8787"
+      ONT_WEB_PRIVATE_SIGNET_FUNDING_ENABLED: "${ONT_WEB_PRIVATE_SIGNET_FUNDING_ENABLED:-false}"
     depends_on:
       resolver:
         condition: service_healthy
     ports:
-      - "${GNS_WEB_BIND:-127.0.0.1}:${GNS_WEB_PORT:-3000}:3000"
+      - "${ONT_WEB_BIND:-127.0.0.1}:${ONT_WEB_PORT:-3000}:3000"
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:3000/api/health >/dev/null || exit 1"]
@@ -56,10 +56,10 @@ services:
     env_file:
       - .env
     environment:
-      GNS_SNAPSHOT_PATH: /app/.data/indexer-snapshot.json
-      GNS_SNAPSHOT_KEY: indexer
+      ONT_SNAPSHOT_PATH: /app/.data/indexer-snapshot.json
+      ONT_SNAPSHOT_KEY: indexer
     volumes:
-      - gns_data:/app/.data
+      - ont_data:/app/.data
 
 volumes:
-  gns_data:
+  ont_data:

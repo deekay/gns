@@ -14,38 +14,38 @@ const TSX_BIN = resolve(ROOT, "node_modules/.bin/tsx");
 const CLI_ENTRY = "apps/cli/src/index.ts";
 
 const SSH_TARGET =
-  process.env.GNS_PRIVATE_SIGNET_SSH_TARGET
-  ?? process.env.GNS_SSH_TARGET
+  process.env.ONT_PRIVATE_SIGNET_SSH_TARGET
+  ?? process.env.ONT_SSH_TARGET
   ?? "";
 const SSH_KEY =
-  process.env.GNS_PRIVATE_SIGNET_SSH_KEY
-  ?? process.env.GNS_SSH_KEY
+  process.env.ONT_PRIVATE_SIGNET_SSH_KEY
+  ?? process.env.ONT_SSH_KEY
   ?? "";
 const SSH_SOCKET =
-  process.env.GNS_PRIVATE_SIGNET_SSH_SOCKET
-  ?? "/tmp/gns-private-signet.sock";
+  process.env.ONT_PRIVATE_SIGNET_SSH_SOCKET
+  ?? "/tmp/ont-private-signet.sock";
 const REMOTE_RPC_PORT = Number.parseInt(
-  process.env.GNS_PRIVATE_SIGNET_REMOTE_RPC_PORT
+  process.env.ONT_PRIVATE_SIGNET_REMOTE_RPC_PORT
     ?? "39332",
   10
 );
 const REMOTE_RESOLVER_PORT = Number.parseInt(
-  process.env.GNS_PRIVATE_SIGNET_REMOTE_RESOLVER_PORT
+  process.env.ONT_PRIVATE_SIGNET_REMOTE_RESOLVER_PORT
     ?? "8788",
   10
 );
 const LOCAL_RPC_PORT = Number.parseInt(
-  process.env.GNS_PRIVATE_SIGNET_LOCAL_RPC_PORT
+  process.env.ONT_PRIVATE_SIGNET_LOCAL_RPC_PORT
     ?? "39342",
   10
 );
 const LOCAL_RESOLVER_PORT = Number.parseInt(
-  process.env.GNS_PRIVATE_SIGNET_LOCAL_RESOLVER_PORT
+  process.env.ONT_PRIVATE_SIGNET_LOCAL_RESOLVER_PORT
     ?? "18788",
   10
 );
 const RPC_USERNAME =
-  process.env.GNS_PRIVATE_SIGNET_RPC_USERNAME
+  process.env.ONT_PRIVATE_SIGNET_RPC_USERNAME
   ?? "gnsrpcprivate";
 
 export const COMMIT_FEE_SATS = 1_000n;
@@ -54,7 +54,7 @@ export const TRANSFER_FEE_SATS = 1_000n;
 export const REQUIRED_BOND_SATS = 50_000n;
 export const FUNDING_SATS = 400_000n;
 export const MATURITY_BLOCKS = Number.parseInt(
-  process.env.GNS_PRIVATE_SIGNET_TEST_MATURITY_BLOCKS
+  process.env.ONT_PRIVATE_SIGNET_TEST_MATURITY_BLOCKS
     ?? "12",
   10
 );
@@ -653,7 +653,7 @@ export async function createClaimPackage({
 
 export async function fundAddress(address, sats) {
   const amountBtc = satsToBtcString(sats);
-  const txid = (await runRemote(`gns-private-signet-fund ${shellEscape(address)} ${shellEscape(amountBtc)}`)).trim();
+  const txid = (await runRemote(`ont-private-signet-fund ${shellEscape(address)} ${shellEscape(amountBtc)}`)).trim();
   if (!txid) {
     throw new Error(`private signet funding did not return a txid for ${address}`);
   }
@@ -663,7 +663,7 @@ export async function fundAddress(address, sats) {
 }
 
 export async function mineBlocks(blocks) {
-  await runRemote(`gns-private-signet-mine ${Number.parseInt(String(blocks), 10)}`);
+  await runRemote(`ont-private-signet-mine ${Number.parseInt(String(blocks), 10)}`);
 }
 
 export async function waitForAddressUtxo(txid, address, attempts = 40) {
@@ -752,7 +752,7 @@ export async function getRemotePrivateRpcPassword() {
     return cachedRpcPassword;
   }
 
-  cachedRpcPassword = (await runRemote(`awk -F= '/^GNS_BITCOIN_RPC_PASSWORD=/{print $2}' /etc/gns/gns-private.env`)).trim();
+  cachedRpcPassword = (await runRemote(`awk -F= '/^ONT_BITCOIN_RPC_PASSWORD=/{print $2}' /etc/ont/ont-private.env`)).trim();
   if (!cachedRpcPassword) {
     throw new Error("unable to read private signet RPC password from VPS");
   }
@@ -801,7 +801,7 @@ export async function runRemote(command) {
 
 export function ensureSshConfig() {
   if (!SSH_TARGET) {
-    throw new Error("Set GNS_PRIVATE_SIGNET_SSH_TARGET or GNS_SSH_TARGET before running private-signet smoke checks.");
+    throw new Error("Set ONT_PRIVATE_SIGNET_SSH_TARGET or ONT_SSH_TARGET before running private-signet smoke checks.");
   }
 
   if (SSH_KEY && !existsSync(SSH_KEY)) {

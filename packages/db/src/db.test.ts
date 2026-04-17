@@ -13,7 +13,7 @@ import {
 
 describe("indexer snapshot persistence", () => {
   it("round-trips a snapshot through disk", () => {
-    const tempDir = mkdtempSync(join(tmpdir(), "gns-db-test-"));
+    const tempDir = mkdtempSync(join(tmpdir(), "ont-db-test-"));
     const filePath = join(tempDir, "snapshot.json");
 
     const snapshot = {

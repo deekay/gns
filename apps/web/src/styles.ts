@@ -182,7 +182,7 @@ body {
 
 .hero-home-banner h1 {
   max-width: none;
-  font-size: clamp(2.35rem, 5.4vw, 4.35rem);
+  font-size: clamp(2.15rem, 4.9vw, 3.95rem);
   line-height: 0.98;
   letter-spacing: -0.035em;
   text-wrap: balance;
@@ -197,52 +197,99 @@ body {
 .hero-home-intro {
   max-width: none;
   min-height: 0;
-  padding: 22px 26px;
+  padding: 24px 28px 28px;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(240px, auto);
   gap: 18px;
-  align-items: center;
+  align-items: start;
+  background:
+    radial-gradient(circle at top left, rgba(176, 90, 43, 0.1), transparent 24%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(255, 252, 246, 0.96)),
+    var(--panel);
 }
 
 .hero-home-intro-copy {
   display: grid;
   gap: 10px;
+  align-content: start;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(31, 29, 26, 0.08);
+}
+
+.hero-home-intro .hero-card-label {
+  margin: 0;
+  color: var(--accent-strong);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 0.72rem;
+  font-weight: 800;
 }
 
 .hero-home-intro .lede {
   margin: 0;
-  max-width: 44ch;
-  font-size: 1.02rem;
-  line-height: 1.55;
+  max-width: 30ch;
+  font-size: clamp(1.18rem, 1.7vw, 1.52rem);
+  line-height: 1.14;
+  letter-spacing: -0.02em;
+  color: var(--ink);
 }
 
-.hero-home-subcopy {
-  margin: 0;
-  max-width: 46ch;
-  color: var(--muted);
-  line-height: 1.55;
+.hero-home-principles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
 }
 
-.hero-home-proof-row {
+.hero-home-principle {
+  min-height: 0;
+  padding: 18px 18px 17px;
+  border-radius: 22px;
+  border: 1px solid rgba(31, 29, 26, 0.09);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(252, 247, 240, 0.9)),
+    rgba(255, 255, 255, 0.86);
+  box-shadow: 0 10px 26px rgba(77, 53, 23, 0.07);
+  display: grid;
+  gap: 10px;
+  align-content: start;
+}
+
+.hero-home-principle-head {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  justify-content: flex-end;
-  margin-top: 0;
-  max-width: 380px;
+  align-items: center;
+  gap: 12px;
+  min-height: 34px;
 }
 
-.hero-home-proof-row span {
+.hero-home-principle-kicker {
+  margin: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   border: 1px solid rgba(127, 53, 20, 0.12);
-  border-radius: 999px;
-  background: rgba(176, 90, 43, 0.07);
+  background: rgba(176, 90, 43, 0.08);
   color: var(--accent-strong);
-  padding: 7px 10px;
-  font-size: 0.82rem;
-  font-weight: 700;
-  white-space: nowrap;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  flex: 0 0 auto;
+}
+
+.hero-home-principle h3 {
+  margin: 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", serif;
+  font-size: 1.14rem;
+  line-height: 1.02;
+  letter-spacing: -0.015em;
+}
+
+.hero-home-principle p:last-child {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
+  font-size: 0.98rem;
 }
 
 .hero-copy,
@@ -868,6 +915,27 @@ h2 {
   gap: 8px;
 }
 
+.resolver-compare-card {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(31, 29, 26, 0.08);
+  background: rgba(176, 90, 43, 0.06);
+}
+
+.resolver-compare-list {
+  display: grid;
+  gap: 6px;
+}
+
+.resolver-compare-list p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
 .value-history-row {
   display: grid;
   grid-template-columns: 0.6fr 1.4fr 1fr;
@@ -1446,7 +1514,10 @@ button:disabled {
 
 .path-card-actions {
   margin-top: auto;
-  padding-top: 4px;
+  padding-top: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .path-support-row {
@@ -1454,7 +1525,7 @@ button:disabled {
 }
 
 .path-card-actions .action-link {
-  align-self: flex-start;
+  align-self: center;
 }
 
 .guide-list {
@@ -2125,13 +2196,11 @@ button:disabled {
   }
 
   .hero-home-intro {
-    grid-template-columns: 1fr;
-    align-items: start;
+    gap: 20px;
   }
 
-  .hero-home-proof-row {
-    justify-content: flex-start;
-    max-width: none;
+  .hero-home-principles {
+    grid-template-columns: 1fr;
   }
 
   .summary-grid,
@@ -2217,7 +2286,7 @@ button:disabled {
   }
 
   .hero-home-banner h1 {
-    font-size: clamp(2rem, 10vw, 3rem);
+    font-size: clamp(1.9rem, 8.8vw, 2.75rem);
   }
 
   .hero-home-intro,
@@ -2225,9 +2294,17 @@ button:disabled {
     padding: 20px;
   }
 
-  .hero-home-proof-row span {
-    font-size: 0.78rem;
-    padding: 6px 9px;
+  .hero-home-principle {
+    padding: 16px;
+  }
+
+  .hero-home-intro .lede {
+    max-width: 24ch;
+    font-size: clamp(1.12rem, 5.4vw, 1.3rem);
+  }
+
+  .hero-home-principle h3 {
+    font-size: 1.06rem;
   }
 
   .hero-page .hero-copy {

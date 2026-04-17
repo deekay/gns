@@ -1,6 +1,6 @@
-# GNS From Zero
+# ONT From Zero
 
-This note is meant for someone who knows little or nothing about GNS and wants
+This note is meant for someone who knows little or nothing about ONT and wants
 the shortest honest orientation before reading deeper design or protocol notes.
 
 It is not a specification. It is a framing and status document.
@@ -13,7 +13,7 @@ Related notes:
 
 ## The Short Version
 
-Global Name System (GNS) is an attempt to give Bitcoin human-readable payment
+Open Name Tags (ONT) is an attempt to give Bitcoin human-readable payment
 handles people can actually own.
 
 The first user problem is simple:
@@ -26,7 +26,7 @@ The first user problem is simple:
 The project is best framed today as **payment handles first, broader
 owner-signed key/value records later**.
 
-## What GNS Is Trying To Solve
+## What ONT Is Trying To Solve
 
 Bitcoin addresses are not a human interface. People want readable payment
 handles, but readable handles usually depend on a service, account, domain, or
@@ -35,7 +35,7 @@ operator between the payer and the recipient.
 That means the human-readable layer around payment is usually rented,
 revocable, or platform-controlled.
 
-GNS explores a different approach:
+ONT explores a different approach:
 
 - ownership is anchored to Bitcoin
 - the human-readable string is flat, like `satoshi`
@@ -45,7 +45,7 @@ GNS explores a different approach:
 
 ## The Core Design Idea
 
-GNS separates two things:
+ONT separates two things:
 
 - **ownership**, which is derived from on-chain events
 - **values**, which are signed off-chain by the current owner
@@ -64,7 +64,7 @@ But the current story should start with:
 
 ## Why Bonds Instead Of Fees
 
-GNS uses a **bonded-capital** model rather than annual rent.
+ONT uses a **bonded-capital** model rather than annual rent.
 
 The claimant locks bitcoin they still own instead of paying protocol rent to a
 registrar, treasury, or operator.
@@ -88,7 +88,7 @@ The intended moral intuition is:
 
 ## What The Claim Lifecycle Looks Like
 
-At a high level, GNS uses:
+At a high level, ONT uses:
 
 1. `COMMIT`
 2. `REVEAL`
@@ -100,7 +100,7 @@ The commit/reveal structure is there to reduce front-running.
 Transfers and value updates are separate:
 
 - Bitcoin transaction keys fund and sign the Bitcoin transaction flow
-- owner keys control later GNS updates and transfers
+- owner keys control later ONT updates and transfers
 
 ## Current Direction vs Current Prototype
 
@@ -158,7 +158,7 @@ So the right way to read the repo today is:
 
 Every successful ordinary claim is a pair of Bitcoin transactions.
 
-If GNS is going to be taken seriously by Bitcoin protocol-minded reviewers, we
+If ONT is going to be taken seriously by Bitcoin protocol-minded reviewers, we
 need to show that we are thinking carefully about chain footprint.
 
 That is why a lot of recent work has focused on Merkle batching:
@@ -183,7 +183,7 @@ That means:
 
 - batch anchors work
 - batch reveals verify correctly
-- bad proofs are rejected by GNS even when the Bitcoin transaction itself
+- bad proofs are rejected by ONT even when the Bitcoin transaction itself
   confirms
 - names claimed through batch anchors still participate in the normal later
   transfer rules
@@ -223,7 +223,7 @@ sequence right now:
 
 1. [BITCOIN_EXPERT_ONE_PAGER.md](/Users/davidking/dev/gns/docs/research/BITCOIN_EXPERT_ONE_PAGER.md)
 2. [BITCOIN_EXPERT_REVIEW_PACKET.md](/Users/davidking/dev/gns/docs/research/BITCOIN_EXPERT_REVIEW_PACKET.md)
-3. [GNS_IMPLEMENTATION_AND_VALIDATION.md](/Users/davidking/dev/gns/docs/research/GNS_IMPLEMENTATION_AND_VALIDATION.md)
+3. [ONT_IMPLEMENTATION_AND_VALIDATION.md](/Users/davidking/dev/gns/docs/research/ONT_IMPLEMENTATION_AND_VALIDATION.md)
 4. [MERKLE_BATCHING_STATUS.md](/Users/davidking/dev/gns/docs/research/MERKLE_BATCHING_STATUS.md)
 5. [LAUNCH_SPEC_V0.md](/Users/davidking/dev/gns/docs/research/LAUNCH_SPEC_V0.md)
 6. [BITCOIN_PROTOCOL_REVIEW_QUESTIONS.md](/Users/davidking/dev/gns/docs/research/BITCOIN_PROTOCOL_REVIEW_QUESTIONS.md)

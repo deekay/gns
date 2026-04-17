@@ -6,7 +6,7 @@ envelope from
 
 The narrow question here is:
 
-> if GNS keeps a small explicit `BATCH_REVEAL` header, but moves proof bytes
+> if ONT keeps a small explicit `BATCH_REVEAL` header, but moves proof bytes
 > into a Taproot annex carrier, does the economics still look clearly better
 > after adding realistic header and Taproot overheads?
 
@@ -77,7 +77,7 @@ The annex payload is modeled as:
 - `proofBytes`
 - plus `2` non-proof bytes:
   - required annex prefix marker
-  - one GNS proof-format byte
+  - one ONT proof-format byte
 
 So the annex witness element is modeled as:
 

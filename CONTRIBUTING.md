@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for helping with Global Name System.
+Thanks for helping with Open Name Tags.
 
 This repository is still a prototype, so the most helpful contributions tend to be:
 
@@ -61,7 +61,7 @@ npm run sparrow:private-signet:start
 From anywhere:
 
 ```bash
-/path/to/gns/scripts/start-private-signet-sparrow-session.sh
+/path/to/ont/scripts/start-private-signet-sparrow-session.sh
 ```
 
 ### Seed or reset the private signet demo
@@ -119,7 +119,7 @@ Please make sure:
 - `npm run check` passes
 - docs are updated if the user flow changed
 - new scripts have executable permissions if they are meant to be run directly
-- website copy reflects the current product name: `Global Name System`
+- website copy reflects the current product name: `Open Name Tags`
 
 ## Good First Areas
 

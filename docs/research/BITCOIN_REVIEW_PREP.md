@@ -1,6 +1,6 @@
 # Bitcoin Review Prep
 
-This note is the practical checklist for getting GNS into a clean state before
+This note is the practical checklist for getting ONT into a clean state before
 sharing it with technically sophisticated Bitcoin reviewers.
 
 Related notes:
@@ -14,9 +14,9 @@ Related notes:
 The current recommended reading order is:
 
 1. [BITCOIN_EXPERT_ONE_PAGER.md](/Users/davidking/dev/gns/docs/research/BITCOIN_EXPERT_ONE_PAGER.md)
-2. [GNS_FROM_ZERO.md](/Users/davidking/dev/gns/docs/core/GNS_FROM_ZERO.md)
+2. [ONT_FROM_ZERO.md](/Users/davidking/dev/gns/docs/core/ONT_FROM_ZERO.md)
 3. [BITCOIN_EXPERT_REVIEW_PACKET.md](/Users/davidking/dev/gns/docs/research/BITCOIN_EXPERT_REVIEW_PACKET.md)
-4. [GNS_IMPLEMENTATION_AND_VALIDATION.md](/Users/davidking/dev/gns/docs/research/GNS_IMPLEMENTATION_AND_VALIDATION.md)
+4. [ONT_IMPLEMENTATION_AND_VALIDATION.md](/Users/davidking/dev/gns/docs/research/ONT_IMPLEMENTATION_AND_VALIDATION.md)
 5. [BITCOIN_PROTOCOL_REVIEW_QUESTIONS.md](/Users/davidking/dev/gns/docs/research/BITCOIN_PROTOCOL_REVIEW_QUESTIONS.md)
 
 Then use the deeper appendices only as needed.
@@ -31,10 +31,19 @@ The intended shortcut is:
 npm run review:refresh
 ```
 
+If you only want the local packet refresh without remote private-signet or
+regtest targets, use:
+
+```bash
+npm run review:refresh:local
+```
+
 That script:
 
 - reruns local package tests
 - reruns the fixture batch smoke
+- reruns the fixture browser E2E smoke, including the configured
+  multi-resolver value fanout/lagging-resolver browser path
 - reruns private-signet batch smoke if private-signet SSH env is configured
 - reruns private-signet auction smoke if private-signet SSH env is configured
 - refreshes the private auction phase gallery
@@ -44,11 +53,11 @@ That script:
 
 After the refresh run, check:
 
-- [https://globalnamesystem.org/gns-private/api/experimental-auctions](https://globalnamesystem.org/gns-private/api/experimental-auctions)
-- [https://globalnamesystem.org/api/private-batch-smoke-status](https://globalnamesystem.org/api/private-batch-smoke-status)
-- [https://globalnamesystem.org/api/private-auction-smoke-status](https://globalnamesystem.org/api/private-auction-smoke-status)
-- [https://globalnamesystem.org/auctions](https://globalnamesystem.org/auctions)
-- [https://globalnamesystem.org/gns-private/auctions](https://globalnamesystem.org/gns-private/auctions)
+- [https://opennametags.org/ont-private/api/experimental-auctions](https://opennametags.org/ont-private/api/experimental-auctions)
+- [https://opennametags.org/api/private-batch-smoke-status](https://opennametags.org/api/private-batch-smoke-status)
+- [https://opennametags.org/api/private-auction-smoke-status](https://opennametags.org/api/private-auction-smoke-status)
+- [https://opennametags.org/auctions](https://opennametags.org/auctions)
+- [https://opennametags.org/ont-private/auctions](https://opennametags.org/ont-private/auctions)
 
 ## What We Should Say Out Loud
 

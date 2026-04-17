@@ -43,7 +43,7 @@ read_env_value() {
   printf '%s' "$fallback"
 }
 
-section "GNS self-host preflight"
+section "ONT self-host preflight"
 
 if command -v docker >/dev/null 2>&1; then
   pass "$(docker --version | head -n 1)"
@@ -96,9 +96,9 @@ if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1 &
 fi
 
 section "Configured defaults"
-info "Source mode: $(read_env_value "GNS_SOURCE_MODE" "fixture")"
-info "Web URL: http://127.0.0.1:$(read_env_value "GNS_WEB_PORT" "3000")"
-info "Resolver URL: http://127.0.0.1:$(read_env_value "GNS_RESOLVER_PORT" "8787")"
+info "Source mode: $(read_env_value "ONT_SOURCE_MODE" "fixture")"
+info "Web URL: http://127.0.0.1:$(read_env_value "ONT_WEB_PORT" "3000")"
+info "Resolver URL: http://127.0.0.1:$(read_env_value "ONT_RESOLVER_PORT" "8787")"
 
 section "Next step"
 if [[ "$failures" -eq 0 ]]; then

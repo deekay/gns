@@ -13,17 +13,17 @@ Examples:
   ./scripts/bootstrap-private-signet-vps.sh root@example.com ~/.ssh/your_key
 
 Environment:
-  GNS_SSH_TARGET                     Default SSH target when the first argument is omitted.
-  GNS_SSH_KEY                        Optional SSH key path when the second argument is omitted.
-  GNS_BITCOIN_VERSION                 Bitcoin Core source tag to clone for contrib/signet/miner. Default: 30.2
-  GNS_PRIVATE_SIGNET_WEB_PORT         Public web port for the private signet demo. Default: 3001
-  GNS_PRIVATE_SIGNET_RESOLVER_PORT    Private resolver port. Default: 8788
-  GNS_PRIVATE_SIGNET_RPC_PORT         Local Bitcoin RPC port. Default: 39332
-  GNS_PRIVATE_SIGNET_P2P_PORT         P2P port for the private signet node. Default: 39333
-  GNS_PRIVATE_SIGNET_ELECTRUM_PORT    Public Electrum port for the private signet demo. Default: 50001
-  GNS_PRIVATE_SIGNET_CHALLENGE        Signet challenge hex. Default: 51
-  GNS_PRIVATE_SIGNET_BASE_PATH        Web base path. Default: /gns-private
-  GNS_PRIVATE_SIGNET_BOOTSTRAP_BLOCKS Initial blocks to mine for mature demo funds. Default: 110
+  ONT_SSH_TARGET                     Default SSH target when the first argument is omitted.
+  ONT_SSH_KEY                        Optional SSH key path when the second argument is omitted.
+  ONT_BITCOIN_VERSION                 Bitcoin Core source tag to clone for contrib/signet/miner. Default: 30.2
+  ONT_PRIVATE_SIGNET_WEB_PORT         Public web port for the private signet demo. Default: 3001
+  ONT_PRIVATE_SIGNET_RESOLVER_PORT    Private resolver port. Default: 8788
+  ONT_PRIVATE_SIGNET_RPC_PORT         Local Bitcoin RPC port. Default: 39332
+  ONT_PRIVATE_SIGNET_P2P_PORT         P2P port for the private signet node. Default: 39333
+  ONT_PRIVATE_SIGNET_ELECTRUM_PORT    Public Electrum port for the private signet demo. Default: 50001
+  ONT_PRIVATE_SIGNET_CHALLENGE        Signet challenge hex. Default: 51
+  ONT_PRIVATE_SIGNET_BASE_PATH        Web base path. Default: /ont-private
+  ONT_PRIVATE_SIGNET_BOOTSTRAP_BLOCKS Initial blocks to mine for mature demo funds. Default: 110
 EOF
 }
 
@@ -37,11 +37,11 @@ if [[ $# -gt 2 ]]; then
   exit 1
 fi
 
-REMOTE="${1:-${GNS_SSH_TARGET:-}}"
-SSH_KEY_PATH="${2:-${GNS_SSH_KEY:-}}"
+REMOTE="${1:-${ONT_SSH_TARGET:-}}"
+SSH_KEY_PATH="${2:-${ONT_SSH_KEY:-}}"
 
 if [[ -z "$REMOTE" ]]; then
-  echo "Missing SSH target. Pass <user@host> or set GNS_SSH_TARGET." >&2
+  echo "Missing SSH target. Pass <user@host> or set ONT_SSH_TARGET." >&2
   usage
   exit 1
 fi
@@ -51,15 +51,15 @@ if [[ -n "$SSH_KEY_PATH" && ! -f "$SSH_KEY_PATH" ]]; then
   exit 1
 fi
 
-BITCOIN_VERSION="${GNS_BITCOIN_VERSION:-30.2}"
-WEB_PORT="${GNS_PRIVATE_SIGNET_WEB_PORT:-3001}"
-RESOLVER_PORT="${GNS_PRIVATE_SIGNET_RESOLVER_PORT:-8788}"
-RPC_PORT="${GNS_PRIVATE_SIGNET_RPC_PORT:-39332}"
-P2P_PORT="${GNS_PRIVATE_SIGNET_P2P_PORT:-39333}"
-ELECTRUM_PORT="${GNS_PRIVATE_SIGNET_ELECTRUM_PORT:-50001}"
-CHALLENGE="${GNS_PRIVATE_SIGNET_CHALLENGE:-51}"
-BASE_PATH="${GNS_PRIVATE_SIGNET_BASE_PATH:-/gns-private}"
-BOOTSTRAP_BLOCKS="${GNS_PRIVATE_SIGNET_BOOTSTRAP_BLOCKS:-110}"
+BITCOIN_VERSION="${ONT_BITCOIN_VERSION:-30.2}"
+WEB_PORT="${ONT_PRIVATE_SIGNET_WEB_PORT:-3001}"
+RESOLVER_PORT="${ONT_PRIVATE_SIGNET_RESOLVER_PORT:-8788}"
+RPC_PORT="${ONT_PRIVATE_SIGNET_RPC_PORT:-39332}"
+P2P_PORT="${ONT_PRIVATE_SIGNET_P2P_PORT:-39333}"
+ELECTRUM_PORT="${ONT_PRIVATE_SIGNET_ELECTRUM_PORT:-50001}"
+CHALLENGE="${ONT_PRIVATE_SIGNET_CHALLENGE:-51}"
+BASE_PATH="${ONT_PRIVATE_SIGNET_BASE_PATH:-/ont-private}"
+BOOTSTRAP_BLOCKS="${ONT_PRIVATE_SIGNET_BOOTSTRAP_BLOCKS:-110}"
 PUBLIC_HOST="${REMOTE#*@}"
 
 SSH_ARGS=(
@@ -84,7 +84,7 @@ rsync -az --delete \
   --exclude '.DS_Store' \
   -e "ssh ${SSH_ARGS[*]}" \
   "$ROOT_DIR/" \
-  "$REMOTE:/opt/gns/app/"
+  "$REMOTE:/opt/ont/app/"
 
 ssh "${SSH_ARGS[@]}" "$REMOTE" "BITCOIN_VERSION='$BITCOIN_VERSION' WEB_PORT='$WEB_PORT' RESOLVER_PORT='$RESOLVER_PORT' RPC_PORT='$RPC_PORT' P2P_PORT='$P2P_PORT' ELECTRUM_PORT='$ELECTRUM_PORT' CHALLENGE='$CHALLENGE' BASE_PATH='$BASE_PATH' BOOTSTRAP_BLOCKS='$BOOTSTRAP_BLOCKS' PUBLIC_HOST='$PUBLIC_HOST' bash -s" <<'EOF'
 set -euo pipefail
@@ -95,11 +95,11 @@ apt-get update
 apt-get install -y ca-certificates curl gnupg jq build-essential git rsync python3 libssl-dev
 
 id -u bitcoin >/dev/null 2>&1 || useradd --system --home /var/lib/bitcoind --shell /usr/sbin/nologin --create-home bitcoin
-id -u gns >/dev/null 2>&1 || useradd --system --create-home --home /var/lib/gns --shell /usr/sbin/nologin gns
+id -u ont >/dev/null 2>&1 || useradd --system --create-home --home /var/lib/ont --shell /usr/sbin/nologin ont
 
 install -d -o bitcoin -g bitcoin -m 750 /var/lib/bitcoind-private-signet
-install -d -o gns -g gns -m 755 /var/lib/gns
-install -d -o root -g root -m 755 /etc/gns
+install -d -o ont -g ont -m 755 /var/lib/ont
+install -d -o root -g root -m 755 /etc/ont
 install -d -o root -g root -m 755 /opt/bitcoin-source-${BITCOIN_VERSION}
 
 if [[ ! -d /opt/bitcoin-source-${BITCOIN_VERSION}/.git ]]; then
@@ -107,10 +107,10 @@ if [[ ! -d /opt/bitcoin-source-${BITCOIN_VERSION}/.git ]]; then
   git clone --depth 1 --branch "v${BITCOIN_VERSION}" https://github.com/bitcoin/bitcoin /opt/bitcoin-source-${BITCOIN_VERSION}
 fi
 
-chown -R gns:gns /opt/gns/app /var/lib/gns
+chown -R ont:ont /opt/ont/app /var/lib/ont
 
-cc -O3 -pthread -o /usr/local/bin/gns-grind-header-fast /opt/gns/app/scripts/grind-header-fast.c -lcrypto
-chmod 755 /usr/local/bin/gns-grind-header-fast
+cc -O3 -pthread -o /usr/local/bin/ont-grind-header-fast /opt/ont/app/scripts/grind-header-fast.c -lcrypto
+chmod 755 /usr/local/bin/ont-grind-header-fast
 
 RPC_PASSWORD=$(openssl rand -hex 24)
 
@@ -137,11 +137,11 @@ CONF
 chown root:bitcoin /etc/bitcoin-private-signet.conf
 chmod 640 /etc/bitcoin-private-signet.conf
 
-if id -u gns >/dev/null 2>&1; then
-  usermod -a -G bitcoin gns
+if id -u ont >/dev/null 2>&1; then
+  usermod -a -G bitcoin ont
 fi
 
-cat >/usr/local/bin/gns-private-signet-ensure-wallet <<'SCRIPT'
+cat >/usr/local/bin/ont-private-signet-ensure-wallet <<'SCRIPT'
 #!/usr/bin/env bash
 set -euo pipefail
 
@@ -163,9 +163,9 @@ fi
 
 cat "${ADDRESS_FILE}"
 SCRIPT
-chmod 755 /usr/local/bin/gns-private-signet-ensure-wallet
+chmod 755 /usr/local/bin/ont-private-signet-ensure-wallet
 
-cat >/usr/local/bin/gns-private-signet-mine <<'SCRIPT'
+cat >/usr/local/bin/ont-private-signet-mine <<'SCRIPT'
 #!/usr/bin/env bash
 set -euo pipefail
 
@@ -174,8 +174,8 @@ CONF=/etc/bitcoin-private-signet.conf
 DATADIR=/var/lib/bitcoind-private-signet
 CLI="/usr/local/bin/bitcoin-cli -conf=${CONF} -datadir=${DATADIR}"
 BITCOIN_SOURCE=/opt/bitcoin-source-30.2
-GRIND_CMD="/usr/local/bin/gns-grind-header-fast"
-ADDRESS=$(/usr/local/bin/gns-private-signet-ensure-wallet)
+GRIND_CMD="/usr/local/bin/ont-grind-header-fast"
+ADDRESS=$(/usr/local/bin/ont-private-signet-ensure-wallet)
 MINER_CLI="${CLI} -rpcwallet=miner"
 
 for _ in $(seq 1 "${BLOCKS}"); do
@@ -188,15 +188,15 @@ for _ in $(seq 1 "${BLOCKS}"); do
     --set-block-time -1
 done
 SCRIPT
-chmod 755 /usr/local/bin/gns-private-signet-mine
-sed -i "s|/opt/bitcoin-source-30.2|/opt/bitcoin-source-${BITCOIN_VERSION}|g" /usr/local/bin/gns-private-signet-mine
+chmod 755 /usr/local/bin/ont-private-signet-mine
+sed -i "s|/opt/bitcoin-source-30.2|/opt/bitcoin-source-${BITCOIN_VERSION}|g" /usr/local/bin/ont-private-signet-mine
 
-cat >/usr/local/bin/gns-private-signet-fund <<'SCRIPT'
+cat >/usr/local/bin/ont-private-signet-fund <<'SCRIPT'
 #!/usr/bin/env bash
 set -euo pipefail
 
 if [[ $# -ne 2 ]]; then
-  echo "Usage: gns-private-signet-fund <address> <amount-btc>" >&2
+  echo "Usage: ont-private-signet-fund <address> <amount-btc>" >&2
   exit 1
 fi
 
@@ -206,20 +206,20 @@ CONF=/etc/bitcoin-private-signet.conf
 DATADIR=/var/lib/bitcoind-private-signet
 CLI="/usr/local/bin/bitcoin-cli -conf=${CONF} -datadir=${DATADIR}"
 
-/usr/local/bin/gns-private-signet-ensure-wallet >/dev/null
+/usr/local/bin/ont-private-signet-ensure-wallet >/dev/null
 TXID=$(${CLI} -rpcwallet=miner sendtoaddress "${ADDRESS}" "${AMOUNT}")
-/usr/local/bin/gns-private-signet-mine 1 >/dev/null
+/usr/local/bin/ont-private-signet-mine 1 >/dev/null
 echo "${TXID}"
 SCRIPT
-chmod 755 /usr/local/bin/gns-private-signet-fund
+chmod 755 /usr/local/bin/ont-private-signet-fund
 
-install -m 755 /opt/gns/app/scripts/private-signet-auto-mine.sh /usr/local/bin/gns-private-signet-auto-mine
+install -m 755 /opt/ont/app/scripts/private-signet-auto-mine.sh /usr/local/bin/ont-private-signet-auto-mine
 
-cat >/etc/default/gns-private-signet-auto-mine <<'ENVFILE'
-GNS_PRIVATE_SIGNET_AUTO_MINE_INTERVAL_SECONDS=30
+cat >/etc/default/ont-private-signet-auto-mine <<'ENVFILE'
+ONT_PRIVATE_SIGNET_AUTO_MINE_INTERVAL_SECONDS=30
 ENVFILE
-chown root:root /etc/default/gns-private-signet-auto-mine
-chmod 644 /etc/default/gns-private-signet-auto-mine
+chown root:root /etc/default/ont-private-signet-auto-mine
+chmod 644 /etc/default/ont-private-signet-auto-mine
 
 cat >/etc/systemd/system/bitcoind-private-signet.service <<'SERVICE'
 [Unit]
@@ -246,17 +246,17 @@ LimitNOFILE=65536
 WantedBy=multi-user.target
 SERVICE
 
-cat >/etc/systemd/system/gns-private-signet-auto-mine.service <<'SERVICE'
+cat >/etc/systemd/system/ont-private-signet-auto-mine.service <<'SERVICE'
 [Unit]
-Description=Global Name System private signet auto-miner
+Description=Open Name Tags private signet auto-miner
 After=bitcoind-private-signet.service
 Requires=bitcoind-private-signet.service
 
 [Service]
 User=bitcoin
 Group=bitcoin
-EnvironmentFile=-/etc/default/gns-private-signet-auto-mine
-ExecStart=/usr/local/bin/gns-private-signet-auto-mine
+EnvironmentFile=-/etc/default/ont-private-signet-auto-mine
+ExecStart=/usr/local/bin/ont-private-signet-auto-mine
 Restart=always
 RestartSec=5
 NoNewPrivileges=true
@@ -267,49 +267,49 @@ LimitNOFILE=65536
 WantedBy=multi-user.target
 SERVICE
 
-cat >/etc/gns/gns-private.env <<ENVFILE
-GNS_SOURCE_MODE=rpc
-GNS_EXPECT_CHAIN=signet
-GNS_BITCOIN_RPC_URL=http://127.0.0.1:${RPC_PORT}
-GNS_BITCOIN_RPC_USERNAME=gnsrpcprivate
-GNS_BITCOIN_RPC_PASSWORD=${RPC_PASSWORD}
-GNS_LAUNCH_HEIGHT=1
-GNS_RESOLVER_PORT=${RESOLVER_PORT}
-GNS_WEB_PORT=${WEB_PORT}
-GNS_WEB_BASE_PATH=${BASE_PATH}
-GNS_EXPERIMENTAL_AUCTION_FIXTURE_DIR=/opt/gns/app/fixtures/auction/private-signet-lab
-GNS_EXPERIMENTAL_AUCTION_BASE_WINDOW_BLOCKS=8
-GNS_EXPERIMENTAL_AUCTION_SOFT_CLOSE_EXTENSION_BLOCKS=4
-GNS_EXPERIMENTAL_AUCTION_NO_BID_RELEASE_BLOCKS=16
-GNS_EXPERIMENTAL_AUCTION_TOP_COLLISION_LOCK_BLOCKS=24
-GNS_EXPERIMENTAL_AUCTION_MAJOR_EXISTING_NAME_LOCK_BLOCKS=12
-GNS_EXPERIMENTAL_AUCTION_PUBLIC_IDENTITY_LOCK_BLOCKS=8
-GNS_WEB_NETWORK_LABEL=Private Signet (Fast Maturity Demo)
-GNS_WEB_PRIVATE_BATCH_SMOKE_STATUS_PATH=/var/lib/gns/private-batch-smoke-summary.json
-GNS_WEB_PRIVATE_AUCTION_SMOKE_STATUS_PATH=/var/lib/gns/private-auction-smoke-summary.json
-GNS_TEST_OVERRIDE_INITIAL_MATURITY_BLOCKS=12
-GNS_TEST_OVERRIDE_EPOCH_LENGTH_BLOCKS=12
-GNS_TEST_OVERRIDE_MIN_MATURITY_BLOCKS=4
-GNS_WEB_PRIVATE_SIGNET_ELECTRUM_ENDPOINT=${PUBLIC_HOST}:${ELECTRUM_PORT}:t
-GNS_SNAPSHOT_PATH=/var/lib/gns/private-signet-resolver-snapshot.json
-GNS_VALUE_STORE_PATH=/var/lib/gns/private-signet-value-records.json
+cat >/etc/ont/ont-private.env <<ENVFILE
+ONT_SOURCE_MODE=rpc
+ONT_EXPECT_CHAIN=signet
+ONT_BITCOIN_RPC_URL=http://127.0.0.1:${RPC_PORT}
+ONT_BITCOIN_RPC_USERNAME=gnsrpcprivate
+ONT_BITCOIN_RPC_PASSWORD=${RPC_PASSWORD}
+ONT_LAUNCH_HEIGHT=1
+ONT_RESOLVER_PORT=${RESOLVER_PORT}
+ONT_WEB_PORT=${WEB_PORT}
+ONT_WEB_BASE_PATH=${BASE_PATH}
+ONT_EXPERIMENTAL_AUCTION_FIXTURE_DIR=/opt/ont/app/fixtures/auction/private-signet-lab
+ONT_EXPERIMENTAL_AUCTION_BASE_WINDOW_BLOCKS=8
+ONT_EXPERIMENTAL_AUCTION_SOFT_CLOSE_EXTENSION_BLOCKS=4
+ONT_EXPERIMENTAL_AUCTION_NO_BID_RELEASE_BLOCKS=16
+ONT_EXPERIMENTAL_AUCTION_TOP_COLLISION_LOCK_BLOCKS=24
+ONT_EXPERIMENTAL_AUCTION_MAJOR_EXISTING_NAME_LOCK_BLOCKS=12
+ONT_EXPERIMENTAL_AUCTION_PUBLIC_IDENTITY_LOCK_BLOCKS=8
+ONT_WEB_NETWORK_LABEL=Private Signet (Fast Maturity Demo)
+ONT_WEB_PRIVATE_BATCH_SMOKE_STATUS_PATH=/var/lib/ont/private-batch-smoke-summary.json
+ONT_WEB_PRIVATE_AUCTION_SMOKE_STATUS_PATH=/var/lib/ont/private-auction-smoke-summary.json
+ONT_TEST_OVERRIDE_INITIAL_MATURITY_BLOCKS=12
+ONT_TEST_OVERRIDE_EPOCH_LENGTH_BLOCKS=12
+ONT_TEST_OVERRIDE_MIN_MATURITY_BLOCKS=4
+ONT_WEB_PRIVATE_SIGNET_ELECTRUM_ENDPOINT=${PUBLIC_HOST}:${ELECTRUM_PORT}:t
+ONT_SNAPSHOT_PATH=/var/lib/ont/private-signet-resolver-snapshot.json
+ONT_VALUE_STORE_PATH=/var/lib/ont/private-signet-value-records.json
 ENVFILE
 
-chown root:gns /etc/gns/gns-private.env
-chmod 640 /etc/gns/gns-private.env
+chown root:ont /etc/ont/ont-private.env
+chmod 640 /etc/ont/ont-private.env
 
-cat >/etc/systemd/system/gns-private-resolver.service <<'SERVICE'
+cat >/etc/systemd/system/ont-private-resolver.service <<'SERVICE'
 [Unit]
-Description=Global Name System resolver service (private signet)
+Description=Open Name Tags resolver service (private signet)
 After=network-online.target bitcoind-private-signet.service
 Wants=network-online.target
 Requires=bitcoind-private-signet.service
 
 [Service]
-User=gns
-Group=gns
-WorkingDirectory=/opt/gns/app
-EnvironmentFile=/etc/gns/gns-private.env
+User=ont
+Group=ont
+WorkingDirectory=/opt/ont/app
+EnvironmentFile=/etc/ont/ont-private.env
 ExecStart=/usr/bin/npm run dev:resolver
 Restart=on-failure
 RestartSec=5
@@ -321,18 +321,18 @@ LimitNOFILE=65536
 WantedBy=multi-user.target
 SERVICE
 
-cat >/etc/systemd/system/gns-private-web.service <<'SERVICE'
+cat >/etc/systemd/system/ont-private-web.service <<'SERVICE'
 [Unit]
-Description=Global Name System web service (private signet)
-After=network-online.target gns-private-resolver.service
+Description=Open Name Tags web service (private signet)
+After=network-online.target ont-private-resolver.service
 Wants=network-online.target
-Requires=gns-private-resolver.service
+Requires=ont-private-resolver.service
 
 [Service]
-User=gns
-Group=gns
-WorkingDirectory=/opt/gns/app
-EnvironmentFile=/etc/gns/gns-private.env
+User=ont
+Group=ont
+WorkingDirectory=/opt/ont/app
+EnvironmentFile=/etc/ont/ont-private.env
 ExecStart=/usr/bin/npm run dev:web
 Restart=on-failure
 RestartSec=5
@@ -361,23 +361,23 @@ wait_for_rpc() {
 }
 
 wait_for_rpc
-/usr/local/bin/gns-private-signet-ensure-wallet >/dev/null
+/usr/local/bin/ont-private-signet-ensure-wallet >/dev/null
 
 CURRENT_BLOCKS=$(/usr/local/bin/bitcoin-cli -conf=/etc/bitcoin-private-signet.conf -datadir=/var/lib/bitcoind-private-signet getblockcount)
 if [[ "$CURRENT_BLOCKS" -lt "${BOOTSTRAP_BLOCKS}" ]]; then
-  /usr/local/bin/gns-private-signet-mine "$((BOOTSTRAP_BLOCKS - CURRENT_BLOCKS))"
+  /usr/local/bin/ont-private-signet-mine "$((BOOTSTRAP_BLOCKS - CURRENT_BLOCKS))"
 fi
 
-su -s /bin/bash gns -c 'cd /opt/gns/app && npm ci --no-audit --no-fund'
-GNS_PRIVATE_SIGNET_RPC_PORT="${RPC_PORT}" \
-GNS_PRIVATE_SIGNET_P2P_PORT="${P2P_PORT}" \
-GNS_PRIVATE_SIGNET_ELECTRUM_PORT="${ELECTRUM_PORT}" \
-GNS_PRIVATE_SIGNET_RPC_USERNAME="gnsrpcprivate" \
-GNS_PRIVATE_SIGNET_RPC_PASSWORD="${RPC_PASSWORD}" \
-  /opt/gns/app/scripts/install-private-signet-electrum.sh
-systemctl enable --now gns-private-signet-auto-mine.service
-systemctl enable --now gns-private-resolver.service
-systemctl enable --now gns-private-web.service
+su -s /bin/bash ont -c 'cd /opt/ont/app && npm ci --no-audit --no-fund'
+ONT_PRIVATE_SIGNET_RPC_PORT="${RPC_PORT}" \
+ONT_PRIVATE_SIGNET_P2P_PORT="${P2P_PORT}" \
+ONT_PRIVATE_SIGNET_ELECTRUM_PORT="${ELECTRUM_PORT}" \
+ONT_PRIVATE_SIGNET_RPC_USERNAME="gnsrpcprivate" \
+ONT_PRIVATE_SIGNET_RPC_PASSWORD="${RPC_PASSWORD}" \
+  /opt/ont/app/scripts/install-private-signet-electrum.sh
+systemctl enable --now ont-private-signet-auto-mine.service
+systemctl enable --now ont-private-resolver.service
+systemctl enable --now ont-private-web.service
 
 ufw allow ${WEB_PORT}/tcp >/dev/null
 
@@ -408,13 +408,13 @@ echo "[private signet]"
 /usr/local/bin/bitcoin-cli -conf=/etc/bitcoin-private-signet.conf -datadir=/var/lib/bitcoind-private-signet getblockchaininfo
 echo
 echo "[private resolver service]"
-systemctl --no-pager --full status gns-private-resolver.service | sed -n '1,30p'
+systemctl --no-pager --full status ont-private-resolver.service | sed -n '1,30p'
 echo
 echo "[private web service]"
-systemctl --no-pager --full status gns-private-web.service | sed -n '1,30p'
+systemctl --no-pager --full status ont-private-web.service | sed -n '1,30p'
 echo
 echo "[private auto-miner service]"
-systemctl --no-pager --full status gns-private-signet-auto-mine.service | sed -n '1,30p'
+systemctl --no-pager --full status ont-private-signet-auto-mine.service | sed -n '1,30p'
 echo
 echo "[private electrum service]"
 systemctl --no-pager --full status electrs-private-signet.service | sed -n '1,30p'

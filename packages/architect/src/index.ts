@@ -31,11 +31,11 @@ import {
   parseAuctionBidPackage,
   parseClaimPackage,
   signTransferAuthorization
-} from "@gns/protocol";
+} from "@ont/protocol";
 
 const bip32 = BIP32Factory(tinysecp);
 
-export type GnsCliNetwork = "main" | "signet" | "testnet" | "regtest";
+export type OntCliNetwork = "main" | "signet" | "testnet" | "regtest";
 
 export interface FundingInputDescriptor {
   readonly txid: string;
@@ -76,12 +76,12 @@ export interface BuildClaimPsbtBundleInput {
   readonly availableUtxos: ReadonlyArray<ClaimPsbtWalletUtxo>;
   readonly commitFeeSats?: bigint;
   readonly revealFeeSats?: bigint;
-  readonly network: GnsCliNetwork;
+  readonly network: OntCliNetwork;
 }
 
 export interface ClaimPsbtBundle {
-  readonly kind: "gns-claim-psbt-bundle";
-  readonly network: GnsCliNetwork;
+  readonly kind: "ont-claim-psbt-bundle";
+  readonly network: OntCliNetwork;
   readonly wallet: {
     readonly masterFingerprint: string;
     readonly accountXpub: string;
@@ -115,7 +115,7 @@ export interface BuildCommitArtifactsOptions {
   readonly claimPackage: ClaimPackage;
   readonly fundingInputs: ReadonlyArray<FundingInputDescriptor>;
   readonly feeSats: bigint;
-  readonly network: GnsCliNetwork;
+  readonly network: OntCliNetwork;
   readonly bondAddress?: string;
   readonly changeAddress?: string;
   readonly walletDerivation?: WalletDerivationDescriptor;
@@ -125,7 +125,7 @@ export interface BuildRevealArtifactsOptions {
   readonly claimPackage: ClaimPackage;
   readonly fundingInputs: ReadonlyArray<FundingInputDescriptor>;
   readonly feeSats: bigint;
-  readonly network: GnsCliNetwork;
+  readonly network: OntCliNetwork;
   readonly changeAddress?: string;
   readonly walletDerivation?: WalletDerivationDescriptor;
 }
@@ -134,7 +134,7 @@ export interface BuildBatchCommitArtifactsOptions {
   readonly claimPackages: ReadonlyArray<ClaimPackage>;
   readonly fundingInputs: ReadonlyArray<FundingInputDescriptor>;
   readonly feeSats: bigint;
-  readonly network: GnsCliNetwork;
+  readonly network: OntCliNetwork;
   readonly changeAddress?: string;
   readonly walletDerivation?: WalletDerivationDescriptor;
   readonly proofChunkBytes?: number;
@@ -144,7 +144,7 @@ export interface BuildBatchRevealArtifactsOptions {
   readonly claimPackage: BatchClaimPackage;
   readonly fundingInputs: ReadonlyArray<FundingInputDescriptor>;
   readonly feeSats: bigint;
-  readonly network: GnsCliNetwork;
+  readonly network: OntCliNetwork;
   readonly changeAddress?: string;
   readonly walletDerivation?: WalletDerivationDescriptor;
 }
@@ -153,7 +153,7 @@ export interface BuildAuctionBidArtifactsOptions {
   readonly bidPackage: AuctionBidPackage;
   readonly fundingInputs: ReadonlyArray<FundingInputDescriptor>;
   readonly feeSats: bigint;
-  readonly network: GnsCliNetwork;
+  readonly network: OntCliNetwork;
   readonly bondAddress: string;
   readonly changeAddress?: string;
   readonly bondVout?: number;
@@ -170,7 +170,7 @@ export interface BuildTransferArtifactsOptions {
   readonly currentBondInput: FundingInputDescriptor;
   readonly additionalFundingInputs?: ReadonlyArray<FundingInputDescriptor>;
   readonly feeSats: bigint;
-  readonly network: GnsCliNetwork;
+  readonly network: OntCliNetwork;
   readonly bondAddress: string;
   readonly changeAddress?: string;
   readonly flags?: number;
@@ -185,7 +185,7 @@ export interface BuildSaleTransferArtifactsOptions {
   readonly sellerPaymentSats: bigint;
   readonly sellerPaymentAddress: string;
   readonly feeSats: bigint;
-  readonly network: GnsCliNetwork;
+  readonly network: OntCliNetwork;
   readonly sellerChangeAddress?: string;
   readonly buyerChangeAddress?: string;
   readonly flags?: number;
@@ -203,15 +203,15 @@ export interface BuildImmatureSaleTransferArtifactsOptions {
   readonly salePriceSats: bigint;
   readonly sellerPayoutAddress: string;
   readonly feeSats: bigint;
-  readonly network: GnsCliNetwork;
+  readonly network: OntCliNetwork;
   readonly bondAddress: string;
   readonly buyerChangeAddress?: string;
   readonly flags?: number;
 }
 
 export interface CommitArtifacts {
-  readonly kind: "gns-commit-artifacts";
-  readonly network: GnsCliNetwork;
+  readonly kind: "ont-commit-artifacts";
+  readonly network: OntCliNetwork;
   readonly feeSats: string;
   readonly totalInputSats: string;
   readonly changeValueSats: string;
@@ -221,7 +221,7 @@ export interface CommitArtifacts {
   readonly psbtBase64: string;
   readonly outputs: ReadonlyArray<{
     readonly vout: number;
-    readonly role: "bond" | "gns_commit" | "change";
+    readonly role: "bond" | "ont_commit" | "change";
     readonly valueSats: string;
     readonly address: string | null;
     readonly scriptHex: string;
@@ -230,8 +230,8 @@ export interface CommitArtifacts {
 }
 
 export interface RevealArtifacts {
-  readonly kind: "gns-reveal-artifacts";
-  readonly network: GnsCliNetwork;
+  readonly kind: "ont-reveal-artifacts";
+  readonly network: OntCliNetwork;
   readonly feeSats: string;
   readonly totalInputSats: string;
   readonly changeValueSats: string;
@@ -241,7 +241,7 @@ export interface RevealArtifacts {
   readonly psbtBase64: string;
   readonly outputs: ReadonlyArray<{
     readonly vout: number;
-    readonly role: "gns_reveal" | "change";
+    readonly role: "ont_reveal" | "change";
     readonly valueSats: string;
     readonly address: string | null;
     readonly scriptHex: string;
@@ -249,8 +249,8 @@ export interface RevealArtifacts {
 }
 
 export interface BatchCommitArtifacts {
-  readonly kind: "gns-batch-commit-artifacts";
-  readonly network: GnsCliNetwork;
+  readonly kind: "ont-batch-commit-artifacts";
+  readonly network: OntCliNetwork;
   readonly feeSats: string;
   readonly totalInputSats: string;
   readonly changeValueSats: string;
@@ -263,7 +263,7 @@ export interface BatchCommitArtifacts {
   readonly proofChunkBytes: number;
   readonly outputs: ReadonlyArray<{
     readonly vout: number;
-    readonly role: "gns_batch_anchor" | "bond" | "change";
+    readonly role: "ont_batch_anchor" | "bond" | "change";
     readonly claimName: string | null;
     readonly valueSats: string;
     readonly address: string | null;
@@ -273,8 +273,8 @@ export interface BatchCommitArtifacts {
 }
 
 export interface BatchRevealArtifacts {
-  readonly kind: "gns-batch-reveal-artifacts";
-  readonly network: GnsCliNetwork;
+  readonly kind: "ont-batch-reveal-artifacts";
+  readonly network: OntCliNetwork;
   readonly feeSats: string;
   readonly totalInputSats: string;
   readonly changeValueSats: string;
@@ -284,7 +284,7 @@ export interface BatchRevealArtifacts {
   readonly psbtBase64: string;
   readonly outputs: ReadonlyArray<{
     readonly vout: number;
-    readonly role: "gns_batch_reveal" | "gns_reveal_proof_chunk" | "change";
+    readonly role: "ont_batch_reveal" | "ont_reveal_proof_chunk" | "change";
     readonly valueSats: string;
     readonly address: string | null;
     readonly scriptHex: string;
@@ -292,8 +292,8 @@ export interface BatchRevealArtifacts {
 }
 
 export interface AuctionBidArtifacts {
-  readonly kind: "gns-auction-bid-artifacts";
-  readonly network: GnsCliNetwork;
+  readonly kind: "ont-auction-bid-artifacts";
+  readonly network: OntCliNetwork;
   readonly feeSats: string;
   readonly totalInputSats: string;
   readonly changeValueSats: string;
@@ -303,7 +303,7 @@ export interface AuctionBidArtifacts {
   readonly psbtBase64: string;
   readonly outputs: ReadonlyArray<{
     readonly vout: number;
-    readonly role: "auction_bid_bond" | "gns_auction_bid" | "change";
+    readonly role: "auction_bid_bond" | "ont_auction_bid" | "change";
     readonly valueSats: string;
     readonly address: string | null;
     readonly scriptHex: string;
@@ -318,9 +318,9 @@ export interface AuctionBidArtifacts {
 }
 
 export interface TransferArtifacts {
-  readonly kind: "gns-transfer-artifacts";
+  readonly kind: "ont-transfer-artifacts";
   readonly mode?: "gift" | "sale" | "immature-sale";
-  readonly network: GnsCliNetwork;
+  readonly network: OntCliNetwork;
   readonly feeSats: string;
   readonly totalInputSats: string;
   readonly changeValueSats: string;
@@ -332,7 +332,7 @@ export interface TransferArtifacts {
     readonly vout: number;
     readonly role:
       | "successor_bond"
-      | "gns_transfer"
+      | "ont_transfer"
       | "change"
       | "seller_payment"
       | "seller_change"
@@ -344,21 +344,21 @@ export interface TransferArtifacts {
 }
 
 interface CommitBuilderOutput {
-  readonly role: "bond" | "gns_commit" | "change";
+  readonly role: "bond" | "ont_commit" | "change";
   readonly valueSats: bigint;
   readonly address: string | null;
   readonly script: Uint8Array;
 }
 
 interface RevealBuilderOutput {
-  readonly role: "gns_reveal" | "change";
+  readonly role: "ont_reveal" | "change";
   readonly valueSats: bigint;
   readonly address: string | null;
   readonly script: Uint8Array;
 }
 
 interface BatchCommitBuilderOutput {
-  readonly role: "gns_batch_anchor" | "bond" | "change";
+  readonly role: "ont_batch_anchor" | "bond" | "change";
   readonly valueSats: bigint;
   readonly address: string | null;
   readonly script: Uint8Array;
@@ -366,14 +366,14 @@ interface BatchCommitBuilderOutput {
 }
 
 interface BatchRevealBuilderOutput {
-  readonly role: "gns_batch_reveal" | "gns_reveal_proof_chunk" | "change";
+  readonly role: "ont_batch_reveal" | "ont_reveal_proof_chunk" | "change";
   readonly valueSats: bigint;
   readonly address: string | null;
   readonly script: Uint8Array;
 }
 
 interface AuctionBidBuilderOutput {
-  readonly role: "auction_bid_bond" | "gns_auction_bid" | "change";
+  readonly role: "auction_bid_bond" | "ont_auction_bid" | "change";
   readonly valueSats: bigint;
   readonly address: string | null;
   readonly script: Uint8Array;
@@ -382,7 +382,7 @@ interface AuctionBidBuilderOutput {
 interface TransferBuilderOutput {
   readonly role:
     | "successor_bond"
-    | "gns_transfer"
+    | "ont_transfer"
     | "change"
     | "seller_payment"
     | "seller_change"
@@ -520,7 +520,7 @@ export function buildClaimPsbtBundle(input: BuildClaimPsbtBundleInput): ClaimPsb
   });
 
   return {
-    kind: "gns-claim-psbt-bundle",
+    kind: "ont-claim-psbt-bundle",
     network: input.network,
     wallet: {
       masterFingerprint: walletDerivation.masterFingerprint,
@@ -589,7 +589,7 @@ export function pickFreshAccountAddress(
   walletDerivation: WalletDerivationDescriptor,
   utxos: ReadonlyArray<ClaimPsbtWalletUtxo>,
   bondDestination: string,
-  network: GnsCliNetwork,
+  network: OntCliNetwork,
   branch: number
 ): WalletAccountAddress {
   const usedAddresses = new Set<string>([bondDestination, ...utxos.map((utxo) => utxo.address)]);
@@ -647,7 +647,7 @@ export function buildCommitArtifacts(options: BuildCommitArtifactsOptions): Comm
           script: bondScript
         },
         {
-          role: "gns_commit" as const,
+          role: "ont_commit" as const,
           valueSats: 0n,
           address: null,
           script: commitOpReturnScript
@@ -655,7 +655,7 @@ export function buildCommitArtifacts(options: BuildCommitArtifactsOptions): Comm
       ]
     : [
         {
-          role: "gns_commit" as const,
+          role: "ont_commit" as const,
           valueSats: 0n,
           address: null,
           script: commitOpReturnScript
@@ -717,7 +717,7 @@ export function buildCommitArtifacts(options: BuildCommitArtifactsOptions): Comm
   const updatedClaimPackage = withCommitTxid(claimPackage, commitTxid);
 
   return {
-    kind: "gns-commit-artifacts",
+    kind: "ont-commit-artifacts",
     network: options.network,
     feeSats: options.feeSats.toString(),
     totalInputSats: totalInputSats.toString(),
@@ -762,7 +762,7 @@ export function buildRevealArtifacts(options: BuildRevealArtifactsOptions): Reve
 
   const outputs: RevealBuilderOutput[] = [
     {
-      role: "gns_reveal" as const,
+      role: "ont_reveal" as const,
       valueSats: 0n,
       address: null,
       script: revealScript
@@ -815,7 +815,7 @@ export function buildRevealArtifacts(options: BuildRevealArtifactsOptions): Reve
   }
 
   return {
-    kind: "gns-reveal-artifacts",
+    kind: "ont-reveal-artifacts",
     network: options.network,
     feeSats: options.feeSats.toString(),
     totalInputSats: totalInputSats.toString(),
@@ -901,7 +901,7 @@ export function buildBatchCommitArtifacts(
 
   const outputs: BatchCommitBuilderOutput[] = [
     {
-      role: "gns_batch_anchor",
+      role: "ont_batch_anchor",
       valueSats: 0n,
       address: null,
       script: batchAnchorScript,
@@ -980,7 +980,7 @@ export function buildBatchCommitArtifacts(
   );
 
   return {
-    kind: "gns-batch-commit-artifacts",
+    kind: "ont-batch-commit-artifacts",
     network: options.network,
     feeSats: options.feeSats.toString(),
     totalInputSats: totalInputSats.toString(),
@@ -1025,13 +1025,13 @@ export function buildBatchRevealArtifacts(
     changeAddress === null ? null : toSupportedOutputScript(changeAddress, network, "change address");
   const outputs: BatchRevealBuilderOutput[] = [
     {
-      role: "gns_batch_reveal",
+      role: "ont_batch_reveal",
       valueSats: 0n,
       address: null,
       script: compileOpReturn(claimPackage.revealPayloadHex)
     },
     ...claimPackage.revealProofChunkPayloadsHex.map((payloadHex) => ({
-      role: "gns_reveal_proof_chunk" as const,
+      role: "ont_reveal_proof_chunk" as const,
       valueSats: 0n,
       address: null,
       script: compileOpReturn(payloadHex)
@@ -1084,7 +1084,7 @@ export function buildBatchRevealArtifacts(
   }
 
   return {
-    kind: "gns-batch-reveal-artifacts",
+    kind: "ont-batch-reveal-artifacts",
     network: options.network,
     feeSats: options.feeSats.toString(),
     totalInputSats: totalInputSats.toString(),
@@ -1189,7 +1189,7 @@ export function buildAuctionBidArtifacts(
           script: bidBondScript
         },
         {
-          role: "gns_auction_bid",
+          role: "ont_auction_bid",
           valueSats: 0n,
           address: null,
           script: auctionBidScript
@@ -1197,7 +1197,7 @@ export function buildAuctionBidArtifacts(
       ]
     : [
         {
-          role: "gns_auction_bid",
+          role: "ont_auction_bid",
           valueSats: 0n,
           address: null,
           script: auctionBidScript
@@ -1256,7 +1256,7 @@ export function buildAuctionBidArtifacts(
   }
 
   return {
-    kind: "gns-auction-bid-artifacts",
+    kind: "ont-auction-bid-artifacts",
     network: options.network,
     feeSats: options.feeSats.toString(),
     totalInputSats: totalInputSats.toString(),
@@ -1336,7 +1336,7 @@ export function buildTransferArtifacts(options: BuildTransferArtifactsOptions): 
             script: successorBondScript
           },
           {
-            role: "gns_transfer",
+            role: "ont_transfer",
             valueSats: 0n,
             address: null,
             script: transferOpReturnScript
@@ -1344,7 +1344,7 @@ export function buildTransferArtifacts(options: BuildTransferArtifactsOptions): 
         ]
       : [
           {
-            role: "gns_transfer",
+            role: "ont_transfer",
             valueSats: 0n,
             address: null,
             script: transferOpReturnScript
@@ -1402,7 +1402,7 @@ export function buildTransferArtifacts(options: BuildTransferArtifactsOptions): 
   }
 
   return {
-    kind: "gns-transfer-artifacts",
+    kind: "ont-transfer-artifacts",
     mode: "gift",
     network: options.network,
     feeSats: options.feeSats.toString(),
@@ -1489,7 +1489,7 @@ export function buildSaleTransferArtifacts(
 
   const outputs: TransferBuilderOutput[] = [
     {
-      role: "gns_transfer",
+      role: "ont_transfer",
       valueSats: 0n,
       address: null,
       script: transferOpReturnScript
@@ -1556,7 +1556,7 @@ export function buildSaleTransferArtifacts(
   }
 
   return {
-    kind: "gns-transfer-artifacts",
+    kind: "ont-transfer-artifacts",
     mode: "sale",
     network: options.network,
     feeSats: options.feeSats.toString(),
@@ -1649,7 +1649,7 @@ export function buildImmatureSaleTransferArtifacts(
             script: successorBondScript
           },
           {
-            role: "gns_transfer",
+            role: "ont_transfer",
             valueSats: 0n,
             address: null,
             script: transferOpReturnScript
@@ -1657,7 +1657,7 @@ export function buildImmatureSaleTransferArtifacts(
         ]
       : [
           {
-            role: "gns_transfer",
+            role: "ont_transfer",
             valueSats: 0n,
             address: null,
             script: transferOpReturnScript
@@ -1722,7 +1722,7 @@ export function buildImmatureSaleTransferArtifacts(
   }
 
   return {
-    kind: "gns-transfer-artifacts",
+    kind: "ont-transfer-artifacts",
     mode: "immature-sale",
     network: options.network,
     feeSats: options.feeSats.toString(),
@@ -1742,7 +1742,7 @@ export function buildImmatureSaleTransferArtifacts(
   };
 }
 
-function resolveNetwork(name: GnsCliNetwork) {
+function resolveNetwork(name: OntCliNetwork) {
   switch (name) {
     case "main":
       return networks.bitcoin;
@@ -1889,7 +1889,7 @@ function inferInputDerivationPath(
 export function inferWalletAccountDerivationPath(
   address: string,
   walletDerivation: WalletDerivationDescriptor,
-  networkName: GnsCliNetwork
+  networkName: OntCliNetwork
 ): string | null {
   return inferInputDerivationPath(address, walletDerivation, resolveNetwork(networkName));
 }
@@ -1921,7 +1921,7 @@ function parseDerivationPath(path: string): number[] {
 
 export function deriveWalletAccountAddress(
   walletDerivation: WalletDerivationDescriptor,
-  networkName: GnsCliNetwork,
+  networkName: OntCliNetwork,
   branch: number,
   index: number
 ): WalletAccountAddress {

@@ -14,8 +14,8 @@ import {
   isBitcoinEsploraHeadCurrent,
   isBitcoinRpcHeadCurrent,
   loadBitcoinBlocksFromSource
-} from "@gns/bitcoin";
-import { InMemoryGnsIndexer } from "@gns/core";
+} from "@ont/bitcoin";
+import { InMemoryOntIndexer } from "@ont/core";
 import {
   createDatabaseConfig,
   ensureDatabaseSchema,
@@ -24,44 +24,44 @@ import {
   saveIndexerSnapshotDatabase,
   saveIndexerSnapshotFile,
   type DatabaseConfig
-} from "@gns/db";
-import { PRODUCT_NAME, PROTOCOL_NAME } from "@gns/protocol";
+} from "@ont/db";
+import { PRODUCT_NAME, PROTOCOL_NAME } from "@ont/protocol";
 
 const currentDir = dirname(fileURLToPath(import.meta.url));
 
 void main();
 
 async function main(): Promise<void> {
-  const sourceMode = parseSourceMode(process.env.GNS_SOURCE_MODE);
+  const sourceMode = parseSourceMode(process.env.ONT_SOURCE_MODE);
   const fixturePath =
-    (process.env.GNS_FIXTURE_PATH) === undefined
+    (process.env.ONT_FIXTURE_PATH) === undefined
       ? resolve(currentDir, "../../../fixtures/demo-chain.json")
-      : resolve(process.cwd(), process.env.GNS_FIXTURE_PATH ?? "");
-  const launchHeight = parseOptionalInteger(process.env.GNS_LAUNCH_HEIGHT);
-  const endHeight = parseOptionalInteger(process.env.GNS_RPC_END_HEIGHT);
-  const expectedChain = parseExpectedChain(process.env.GNS_EXPECT_CHAIN ?? "signet");
+      : resolve(process.cwd(), process.env.ONT_FIXTURE_PATH ?? "");
+  const launchHeight = parseOptionalInteger(process.env.ONT_LAUNCH_HEIGHT);
+  const endHeight = parseOptionalInteger(process.env.ONT_RPC_END_HEIGHT);
+  const expectedChain = parseExpectedChain(process.env.ONT_EXPECT_CHAIN ?? "signet");
   const snapshotPath =
-    (process.env.GNS_SNAPSHOT_PATH) === undefined
+    (process.env.ONT_SNAPSHOT_PATH) === undefined
       ? resolve(process.cwd(), ".data/indexer-snapshot.json")
-      : resolve(process.cwd(), process.env.GNS_SNAPSHOT_PATH ?? "");
+      : resolve(process.cwd(), process.env.ONT_SNAPSHOT_PATH ?? "");
   const database = resolveDatabaseConfig();
   const snapshotDocumentKey =
-    process.env.GNS_SNAPSHOT_KEY?.trim() || "indexer";
+    process.env.ONT_SNAPSHOT_KEY?.trim() || "indexer";
   const configuredRpcUrl = resolveConfiguredEndpoint(
-    process.env.GNS_BITCOIN_RPC_URL,
-    "GNS_BITCOIN_RPC_URL"
+    process.env.ONT_BITCOIN_RPC_URL,
+    "ONT_BITCOIN_RPC_URL"
   );
   const configuredEsploraBaseUrl = resolveConfiguredEndpoint(
-    process.env.GNS_ESPLORA_BASE_URL,
-    "GNS_ESPLORA_BASE_URL"
+    process.env.ONT_ESPLORA_BASE_URL,
+    "ONT_ESPLORA_BASE_URL"
   );
   const rpc =
     sourceMode === "fixture" || sourceMode === "esplora" || configuredRpcUrl === undefined
       ? undefined
       : createBitcoinRpcConfig(
         configuredRpcUrl,
-          process.env.GNS_BITCOIN_RPC_USERNAME,
-          process.env.GNS_BITCOIN_RPC_PASSWORD
+          process.env.ONT_BITCOIN_RPC_USERNAME,
+          process.env.ONT_BITCOIN_RPC_PASSWORD
         );
   const esplora =
     sourceMode === "fixture" || sourceMode === "rpc" || configuredEsploraBaseUrl === undefined
@@ -70,13 +70,13 @@ async function main(): Promise<void> {
 
   if (sourceMode === "rpc" && rpc === undefined) {
     throw new Error(
-      "GNS_SOURCE_MODE=rpc requires a real GNS_BITCOIN_RPC_URL"
+      "ONT_SOURCE_MODE=rpc requires a real ONT_BITCOIN_RPC_URL"
     );
   }
 
   if (sourceMode === "esplora" && esplora === undefined) {
     throw new Error(
-      "GNS_SOURCE_MODE=esplora requires a real GNS_ESPLORA_BASE_URL"
+      "ONT_SOURCE_MODE=esplora requires a real ONT_ESPLORA_BASE_URL"
     );
   }
 
@@ -85,7 +85,7 @@ async function main(): Promise<void> {
   }
 
   let restoredFromSnapshot = false;
-  let indexer: InMemoryGnsIndexer;
+  let indexer: InMemoryOntIndexer;
   let source: "fixture" | "rpc" | "esplora";
   let descriptor: string;
   let syncMode: "fixture" | "rpc-oneshot" | "esplora-oneshot";
@@ -98,16 +98,16 @@ async function main(): Promise<void> {
     rpcChainInfo = await assertBitcoinRpcChain(rpc, expectedChain);
 
     try {
-      indexer = InMemoryGnsIndexer.fromSnapshot(await loadSnapshot(database, snapshotPath, snapshotDocumentKey));
+      indexer = InMemoryOntIndexer.fromSnapshot(await loadSnapshot(database, snapshotPath, snapshotDocumentKey));
       restoredFromSnapshot = true;
     } catch {
       if (launchHeight === undefined) {
         throw new Error(
-          "GNS_LAUNCH_HEIGHT is required for rpc mode when no snapshot is available"
+          "ONT_LAUNCH_HEIGHT is required for rpc mode when no snapshot is available"
         );
       }
 
-      indexer = new InMemoryGnsIndexer({ launchHeight });
+      indexer = new InMemoryOntIndexer({ launchHeight });
     }
 
     if (
@@ -126,12 +126,12 @@ async function main(): Promise<void> {
       } else {
         if (launchHeight === undefined) {
           throw new Error(
-            "GNS_LAUNCH_HEIGHT is required to rebuild after a reorg mismatch"
+            "ONT_LAUNCH_HEIGHT is required to rebuild after a reorg mismatch"
           );
         }
 
         restoredFromSnapshot = false;
-        indexer = new InMemoryGnsIndexer({ launchHeight });
+        indexer = new InMemoryOntIndexer({ launchHeight });
       }
     }
 
@@ -149,16 +149,16 @@ async function main(): Promise<void> {
     syncMode = "esplora-oneshot";
 
     try {
-      indexer = InMemoryGnsIndexer.fromSnapshot(await loadSnapshot(database, snapshotPath, snapshotDocumentKey));
+      indexer = InMemoryOntIndexer.fromSnapshot(await loadSnapshot(database, snapshotPath, snapshotDocumentKey));
       restoredFromSnapshot = true;
     } catch {
       if (launchHeight === undefined) {
         throw new Error(
-          "GNS_LAUNCH_HEIGHT is required for esplora mode when no snapshot is available"
+          "ONT_LAUNCH_HEIGHT is required for esplora mode when no snapshot is available"
         );
       }
 
-      indexer = new InMemoryGnsIndexer({ launchHeight });
+      indexer = new InMemoryOntIndexer({ launchHeight });
     }
 
     if (
@@ -180,12 +180,12 @@ async function main(): Promise<void> {
       } else {
         if (launchHeight === undefined) {
           throw new Error(
-            "GNS_LAUNCH_HEIGHT is required to rebuild after an esplora reorg mismatch"
+            "ONT_LAUNCH_HEIGHT is required to rebuild after an esplora reorg mismatch"
           );
         }
 
         restoredFromSnapshot = false;
-        indexer = new InMemoryGnsIndexer({ launchHeight });
+        indexer = new InMemoryOntIndexer({ launchHeight });
       }
     }
 
@@ -207,7 +207,7 @@ async function main(): Promise<void> {
     source = loaded.source;
     descriptor = loaded.descriptor;
     syncMode = "fixture";
-    indexer = new InMemoryGnsIndexer({ launchHeight: loaded.launchHeight });
+    indexer = new InMemoryOntIndexer({ launchHeight: loaded.launchHeight });
     indexer.ingestBlocks(loaded.blocks);
   }
 
@@ -256,7 +256,7 @@ function parseOptionalInteger(value: string | undefined): number | undefined {
 
 function parseExpectedChain(value: string): BitcoinRpcChain {
   if (value !== "main" && value !== "test" && value !== "signet" && value !== "regtest") {
-    throw new Error(`invalid GNS_EXPECT_CHAIN value: ${value}`);
+    throw new Error(`invalid ONT_EXPECT_CHAIN value: ${value}`);
   }
 
   return value;
@@ -271,7 +271,7 @@ function parseSourceMode(value: string | undefined): "auto" | "fixture" | "rpc" 
     return value;
   }
 
-  throw new Error("GNS_SOURCE_MODE must be one of auto, fixture, rpc, esplora");
+  throw new Error("ONT_SOURCE_MODE must be one of auto, fixture, rpc, esplora");
 }
 
 function resolveConfiguredEndpoint(value: string | undefined, envName: string): string | undefined {
@@ -306,14 +306,14 @@ function looksLikePlaceholderEndpoint(value: string): boolean {
 }
 
 function resolveDatabaseConfig(): DatabaseConfig | null {
-  const connectionString = process.env.GNS_DATABASE_URL?.trim() ?? "";
+  const connectionString = process.env.ONT_DATABASE_URL?.trim() ?? "";
   if (connectionString === "") {
     return null;
   }
 
   return createDatabaseConfig(connectionString, {
     schema:
-      process.env.GNS_DATABASE_SCHEMA?.trim()
+      process.env.ONT_DATABASE_SCHEMA?.trim()
       || "public"
   });
 }
@@ -339,7 +339,7 @@ async function saveSnapshot(
   database: DatabaseConfig | null,
   snapshotPath: string,
   documentKey: string,
-  indexer: InMemoryGnsIndexer
+  indexer: InMemoryOntIndexer
 ): Promise<void> {
   const snapshot = indexer.exportSnapshot();
 

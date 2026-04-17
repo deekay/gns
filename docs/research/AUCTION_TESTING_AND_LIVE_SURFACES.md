@@ -14,7 +14,7 @@ This matters because it is easy to blur together three different things:
 Related notes:
 
 - [TESTING.md](/Users/davidking/dev/gns/docs/core/TESTING.md)
-- [GNS_IMPLEMENTATION_AND_VALIDATION.md](/Users/davidking/dev/gns/docs/research/GNS_IMPLEMENTATION_AND_VALIDATION.md)
+- [ONT_IMPLEMENTATION_AND_VALIDATION.md](/Users/davidking/dev/gns/docs/research/ONT_IMPLEMENTATION_AND_VALIDATION.md)
 - [RESERVED_AUCTION_SIMULATOR.md](/Users/davidking/dev/gns/docs/research/RESERVED_AUCTION_SIMULATOR.md)
 - [AUCTION_IMPLEMENTATION_GAP_LIST.md](/Users/davidking/dev/gns/docs/research/AUCTION_IMPLEMENTATION_GAP_LIST.md)
 
@@ -61,8 +61,8 @@ Current local coverage includes:
 
 As of this audit, both still pass locally:
 
-- `npm test -w @gns/core`
-- `npm test -w @gns/web`
+- `npm test -w @ont/core`
+- `npm test -w @ont/web`
 
 ### 2. Controlled-chain regtest
 
@@ -106,7 +106,7 @@ This is the strongest live demo evidence we currently have.
 
 The public auction lab at:
 
-- [https://globalnamesystem.org/auctions](https://globalnamesystem.org/auctions)
+- [https://opennametags.org/auctions](https://opennametags.org/auctions)
 
 uses curated fixture cases from `/api/auctions`.
 
@@ -132,7 +132,7 @@ because that claim is stable and fixture-backed.
 
 The private chain-derived experimental auction feed at:
 
-- [https://globalnamesystem.org/gns-private/api/experimental-auctions](https://globalnamesystem.org/gns-private/api/experimental-auctions)
+- [https://opennametags.org/ont-private/api/experimental-auctions](https://opennametags.org/ont-private/api/experimental-auctions)
 
 is different.
 
@@ -170,7 +170,7 @@ So the right statement is:
 
 The live private smoke summary at:
 
-- [https://globalnamesystem.org/api/private-auction-smoke-status](https://globalnamesystem.org/api/private-auction-smoke-status)
+- [https://opennametags.org/api/private-auction-smoke-status](https://opennametags.org/api/private-auction-smoke-status)
 
 fills much of that gap.
 
@@ -193,7 +193,7 @@ proves the key live transitions.
 
 The clearest accurate wording today is:
 
-> GNS reserved auctions are tested across simulator, package, regtest, and
+> ONT reserved auctions are tested across simulator, package, regtest, and
 > hosted private-signet layers. The public auction lab shows all major phases
 > through curated fixture cases, while the private signet live feed and smoke
 > summary show real chain-derived examples across the same major phases on the

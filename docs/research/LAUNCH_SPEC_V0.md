@@ -1,4 +1,4 @@
-# GNS Launch Spec v0
+# ONT Launch Spec v0
 
 This note is the current best attempt to turn recent launch research into one
 provisional specification.
@@ -391,7 +391,7 @@ assumptions:
 If someone asks what we are currently converging toward, the shortest accurate
 answer is:
 
-> GNS is currently converging toward a two-lane launch. Ordinary names keep a
+> ONT is currently converging toward a two-lane launch. Ordinary names keep a
 > simple commit/reveal path with an objective floor table and a fixed ordinary
 > lock. Salient existing names go to a broad reserved lane, unlock later, and
 > are priced by deferred on-chain auctions where the protocol fixes the time

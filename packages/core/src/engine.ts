@@ -3,16 +3,16 @@ import {
   type BitcoinTransactionInput,
   type BitcoinTransactionOutput,
   getOpReturnPayloads
-} from "@gns/bitcoin";
+} from "@ont/bitcoin";
 import {
   type AuctionBidEventPayload,
   type BatchAnchorEventPayload,
   type BatchRevealEventPayload,
-  GnsEventType,
+  OntEventType,
   computeBatchCommitLeafHash,
   computeCommitHash,
   decodeMerkleProof,
-  decodeGnsPayload,
+  decodeOntPayload,
   getEventTypeName,
   type CommitEventPayload,
   type RevealEventPayload,
@@ -22,7 +22,7 @@ import {
   type MerkleProofStep,
   verifyMerkleProof,
   verifyTransferAuthorization
-} from "@gns/protocol";
+} from "@ont/protocol";
 
 import { createClaimState, getClaimedNameStatus } from "./state.js";
 
@@ -75,14 +75,14 @@ export interface NameRecord {
   readonly winningCommitTxIndex: number;
 }
 
-export interface ParsedGnsEvent {
+export interface ParsedOntEvent {
   readonly txid: string;
   readonly blockHeight: number;
   readonly txIndex: number;
   readonly vout: number;
   readonly inputs: readonly BitcoinTransactionInput[];
   readonly outputs: readonly BitcoinTransactionOutput[];
-  readonly type: GnsEventType;
+  readonly type: OntEventType;
   readonly payload:
     | CommitEventPayload
     | RevealEventPayload
@@ -95,7 +95,7 @@ export interface ParsedGnsEvent {
 
 export interface ProvenanceEventRecord {
   vout: number;
-  type: GnsEventType;
+  type: OntEventType;
   typeName:
     | "COMMIT"
     | "REVEAL"
@@ -127,13 +127,13 @@ export interface TransactionProvenanceRecord {
   readonly invalidatedNames: readonly string[];
 }
 
-export interface GnsState {
+export interface OntState {
   readonly pendingCommits: Map<string, PendingCommitRecord>;
   readonly pendingBatchAnchors: Map<string, PendingBatchAnchorRecord>;
   readonly names: Map<string, NameRecord>;
 }
 
-export function createEmptyState(): GnsState {
+export function createEmptyState(): OntState {
   return {
     pendingCommits: new Map(),
     pendingBatchAnchors: new Map(),
@@ -141,10 +141,10 @@ export function createEmptyState(): GnsState {
   };
 }
 
-export function extractGnsEvents(transaction: BitcoinTransactionInBlock): ParsedGnsEvent[] {
+export function extractOntEvents(transaction: BitcoinTransactionInBlock): ParsedOntEvent[] {
   return getOpReturnPayloads(transaction.tx).flatMap(({ vout, payload }) => {
     try {
-      const decoded = decodeGnsPayload(payload);
+      const decoded = decodeOntPayload(payload);
 
       return [
         {
@@ -165,16 +165,16 @@ export function extractGnsEvents(transaction: BitcoinTransactionInBlock): Parsed
 }
 
 export function applyBlockTransactions(
-  state: GnsState,
+  state: OntState,
   transactions: readonly BitcoinTransactionInBlock[],
   launchHeight: number
-): GnsState {
+): OntState {
   applyBlockTransactionsWithProvenance(state, transactions, launchHeight);
   return state;
 }
 
 export function applyBlockTransactionsWithProvenance(
-  state: GnsState,
+  state: OntState,
   transactions: readonly BitcoinTransactionInBlock[],
   launchHeight: number
 ): TransactionProvenanceRecord[] {
@@ -199,7 +199,7 @@ export function applyBlockTransactionsWithProvenance(
   return provenance;
 }
 
-export function refreshDerivedState(state: GnsState, currentHeight: number): GnsState {
+export function refreshDerivedState(state: OntState, currentHeight: number): OntState {
   for (const [name, record] of state.names.entries()) {
     const continuityIntact = record.status !== "invalid";
 
@@ -233,32 +233,32 @@ interface DeferredRevealApplicationResult {
 type RevealApplicationResult = EventApplicationResult | DeferredRevealApplicationResult;
 
 function applyEvent(
-  state: GnsState,
-  event: ParsedGnsEvent,
+  state: OntState,
+  event: ParsedOntEvent,
   launchHeight: number
 ): EventApplicationResult {
   switch (event.type) {
-    case GnsEventType.Commit:
+    case OntEventType.Commit:
       return applyCommit(state, event);
-    case GnsEventType.Reveal:
+    case OntEventType.Reveal:
       return normalizeRevealOutcome(applyReveal(state, event, launchHeight), event);
-    case GnsEventType.Transfer:
+    case OntEventType.Transfer:
       return applyTransfer(state, event);
-    case GnsEventType.BatchAnchor:
+    case OntEventType.BatchAnchor:
       return applyBatchAnchor(state, event);
-    case GnsEventType.BatchReveal:
+    case OntEventType.BatchReveal:
       return normalizeBatchRevealOutcome(applyBatchReveal(state, event, launchHeight), event);
-    case GnsEventType.RevealProofChunk:
+    case OntEventType.RevealProofChunk:
       return {
         validationStatus: "ignored",
         reason: "proof_chunk_requires_batch_reveal_header",
         affectedName: null
       };
-    case GnsEventType.AuctionBid:
+    case OntEventType.AuctionBid:
       return applyAuctionBid(
         state,
-        event as ParsedGnsEvent & {
-          readonly type: GnsEventType.AuctionBid;
+        event as ParsedOntEvent & {
+          readonly type: OntEventType.AuctionBid;
           readonly payload: AuctionBidEventPayload;
         }
       );
@@ -266,7 +266,7 @@ function applyEvent(
 }
 
 function applySingleBlockTransactions(
-  state: GnsState,
+  state: OntState,
   transactions: readonly BitcoinTransactionInBlock[],
   launchHeight: number
 ): TransactionProvenanceRecord[] {
@@ -282,7 +282,7 @@ function applySingleBlockTransactions(
 
   pruneExpiredPendingCommits(state, blockHeight);
   const deferredReveals: Array<{
-    readonly event: ParsedGnsEvent;
+    readonly event: ParsedOntEvent;
     readonly provenanceEvent: ProvenanceEventRecord;
     readonly kind: "legacy" | "batch";
   }> = [];
@@ -298,10 +298,10 @@ function applySingleBlockTransactions(
 
     const spentImmatureBonds = collectSpentImmatureBonds(state, transaction);
 
-    for (const event of extractGnsEvents(transaction)) {
-      if (event.type === GnsEventType.Reveal || event.type === GnsEventType.BatchReveal) {
+    for (const event of extractOntEvents(transaction)) {
+      if (event.type === OntEventType.Reveal || event.type === OntEventType.BatchReveal) {
         const result =
-          event.type === GnsEventType.Reveal
+          event.type === OntEventType.Reveal
             ? applyReveal(state, event, launchHeight)
             : applyBatchReveal(state, event, launchHeight);
         const provenanceEvent = createProvenanceEventRecord(
@@ -310,7 +310,7 @@ function applySingleBlockTransactions(
             ? {
                 validationStatus: "ignored",
                 reason:
-                  event.type === GnsEventType.Reveal
+                  event.type === OntEventType.Reveal
                     ? "reveal_waiting_for_same_block_commit"
                     : "batch_reveal_waiting_for_same_block_anchor",
                 affectedName: result.affectedName
@@ -323,7 +323,7 @@ function applySingleBlockTransactions(
           deferredReveals.push({
             event,
             provenanceEvent,
-            kind: event.type === GnsEventType.Reveal ? "legacy" : "batch"
+            kind: event.type === OntEventType.Reveal ? "legacy" : "batch"
           });
         }
 
@@ -364,8 +364,8 @@ function applySingleBlockTransactions(
 }
 
 function applyAuctionBid(
-  _state: GnsState,
-  event: ParsedGnsEvent & { readonly type: GnsEventType.AuctionBid; readonly payload: AuctionBidEventPayload }
+  _state: OntState,
+  event: ParsedOntEvent & { readonly type: OntEventType.AuctionBid; readonly payload: AuctionBidEventPayload }
 ): EventApplicationResult {
   const bondOutput = event.outputs[event.payload.bondVout] ?? null;
 
@@ -400,7 +400,7 @@ function applyAuctionBid(
   };
 }
 
-function applyCommit(state: GnsState, event: ParsedGnsEvent): EventApplicationResult {
+function applyCommit(state: OntState, event: ParsedOntEvent): EventApplicationResult {
   const payload = event.payload as CommitEventPayload;
   const bondOutput = event.outputs[payload.bondVout];
 
@@ -422,7 +422,7 @@ function applyCommit(state: GnsState, event: ParsedGnsEvent): EventApplicationRe
   };
 }
 
-function applyBatchAnchor(state: GnsState, event: ParsedGnsEvent): EventApplicationResult {
+function applyBatchAnchor(state: OntState, event: ParsedOntEvent): EventApplicationResult {
   const payload = event.payload as BatchAnchorEventPayload;
   const bondOutputs = event.outputs.slice(0, payload.leafCount + 1).map((output, index) => ({
     vout: index,
@@ -451,8 +451,8 @@ function applyBatchAnchor(state: GnsState, event: ParsedGnsEvent): EventApplicat
 }
 
 function applyReveal(
-  state: GnsState,
-  event: ParsedGnsEvent,
+  state: OntState,
+  event: ParsedOntEvent,
   launchHeight: number
 ): RevealApplicationResult {
   const payload = event.payload as RevealEventPayload;
@@ -546,8 +546,8 @@ function applyReveal(
 }
 
 function applyBatchReveal(
-  state: GnsState,
-  event: ParsedGnsEvent,
+  state: OntState,
+  event: ParsedOntEvent,
   launchHeight: number
 ): RevealApplicationResult {
   const payload = event.payload as BatchRevealEventPayload;
@@ -684,7 +684,7 @@ function applyBatchReveal(
   };
 }
 
-function pruneExpiredPendingCommits(state: GnsState, currentHeight: number): void {
+function pruneExpiredPendingCommits(state: OntState, currentHeight: number): void {
   for (const [txid, pending] of state.pendingCommits.entries()) {
     if (pending.revealDeadlineHeight < currentHeight) {
       state.pendingCommits.delete(txid);
@@ -698,7 +698,7 @@ function pruneExpiredPendingCommits(state: GnsState, currentHeight: number): voi
   }
 }
 
-function applyTransfer(state: GnsState, event: ParsedGnsEvent): EventApplicationResult {
+function applyTransfer(state: OntState, event: ParsedOntEvent): EventApplicationResult {
   const payload = event.payload as TransferEventPayload;
   const record = findNameRecordByLastStateTxid(state, payload.prevStateTxid);
 
@@ -794,7 +794,7 @@ function applyTransfer(state: GnsState, event: ParsedGnsEvent): EventApplication
 }
 
 function collectSpentImmatureBonds(
-  state: GnsState,
+  state: OntState,
   transaction: BitcoinTransactionInBlock
 ): NameRecord[] {
   return [...state.names.values()].filter(
@@ -806,7 +806,7 @@ function collectSpentImmatureBonds(
 }
 
 function invalidateBrokenBondContinuity(
-  state: GnsState,
+  state: OntState,
   transaction: BitcoinTransactionInBlock,
   spentRecords: readonly NameRecord[]
 ): string[] {
@@ -841,7 +841,7 @@ function invalidateBrokenBondContinuity(
   return invalidatedNames;
 }
 
-function findNameRecordByLastStateTxid(state: GnsState, txid: string): NameRecord | null {
+function findNameRecordByLastStateTxid(state: OntState, txid: string): NameRecord | null {
   for (const record of state.names.values()) {
     if (record.lastStateTxid === txid) {
       return record;
@@ -869,7 +869,7 @@ function compareCommitOrder(existing: NameRecord, candidate: PendingCommitRecord
 
 function normalizeRevealOutcome(
   outcome: RevealApplicationResult,
-  event: ParsedGnsEvent
+  event: ParsedOntEvent
 ): EventApplicationResult {
   if ("deferred" in outcome) {
     return {
@@ -884,7 +884,7 @@ function normalizeRevealOutcome(
 
 function normalizeBatchRevealOutcome(
   outcome: RevealApplicationResult,
-  event: ParsedGnsEvent
+  event: ParsedOntEvent
 ): EventApplicationResult {
   if ("deferred" in outcome) {
     return {
@@ -929,8 +929,8 @@ function collectBatchRevealProof(
     }
 
     try {
-      const decoded = decodeGnsPayload(Buffer.from(output.dataHex, "hex"));
-      if (decoded.type !== GnsEventType.RevealProofChunk) {
+      const decoded = decodeOntPayload(Buffer.from(output.dataHex, "hex"));
+      if (decoded.type !== OntEventType.RevealProofChunk) {
         continue;
       }
 
@@ -987,7 +987,7 @@ function createTransactionProvenanceRecord(
 }
 
 function createProvenanceEventRecord(
-  event: ParsedGnsEvent,
+  event: ParsedOntEvent,
   outcome: EventApplicationResult
 ): ProvenanceEventRecord {
   return {

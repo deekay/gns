@@ -1,4 +1,4 @@
-export const PROFILE_BUNDLE_KIND = "gns-key-value-bundle";
+export const PROFILE_BUNDLE_KIND = "ont-key-value-bundle";
 export const PROFILE_BUNDLE_VERSION = 1;
 
 export interface ProfileBundleEntry {

@@ -5,7 +5,7 @@ export function normalizeName(input: string): string {
 
   if (!NAME_PATTERN.test(normalized)) {
     throw new Error(
-      `invalid GNS name: must be lowercase alphanumeric and ${NAME_MIN_LENGTH}-${NAME_MAX_LENGTH} characters`
+      `invalid ONT name: must be lowercase alphanumeric and ${NAME_MIN_LENGTH}-${NAME_MAX_LENGTH} characters`
     );
   }
 

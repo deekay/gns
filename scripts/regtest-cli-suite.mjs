@@ -10,21 +10,21 @@ import os from "node:os";
 import { Psbt, networks } from "bitcoinjs-lib";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const SSH_TARGET = process.env.GNS_REGTEST_SSH_TARGET ?? process.env.GNS_SSH_TARGET ?? "";
-const SSH_KEY = process.env.GNS_REGTEST_SSH_KEY ?? process.env.GNS_SSH_KEY ?? "";
-const RPC_USER = process.env.GNS_REGTEST_RPC_USERNAME ?? "gnsregtest";
-const RPC_PASSWORD = process.env.GNS_REGTEST_RPC_PASSWORD ?? "gnsregtestpass";
-const LOCAL_RPC_PORT = Number.parseInt(process.env.GNS_REGTEST_LOCAL_RPC_PORT ?? "38443", 10);
-const REMOTE_RPC_PORT = Number.parseInt(process.env.GNS_REGTEST_REMOTE_RPC_PORT ?? "18443", 10);
-const RESOLVER_PORT = Number.parseInt(process.env.GNS_REGTEST_RESOLVER_PORT ?? "8793", 10);
+const SSH_TARGET = process.env.ONT_REGTEST_SSH_TARGET ?? process.env.ONT_SSH_TARGET ?? "";
+const SSH_KEY = process.env.ONT_REGTEST_SSH_KEY ?? process.env.ONT_SSH_KEY ?? "";
+const RPC_USER = process.env.ONT_REGTEST_RPC_USERNAME ?? "gnsregtest";
+const RPC_PASSWORD = process.env.ONT_REGTEST_RPC_PASSWORD ?? "gnsregtestpass";
+const LOCAL_RPC_PORT = Number.parseInt(process.env.ONT_REGTEST_LOCAL_RPC_PORT ?? "38443", 10);
+const REMOTE_RPC_PORT = Number.parseInt(process.env.ONT_REGTEST_REMOTE_RPC_PORT ?? "18443", 10);
+const RESOLVER_PORT = Number.parseInt(process.env.ONT_REGTEST_RESOLVER_PORT ?? "8793", 10);
 const POLL_INTERVAL_MS = 250;
-const TUNNEL_SOCKET = process.env.GNS_REGTEST_TUNNEL_SOCKET ?? "/tmp/gns-regtest-vps-rpc.sock";
-const REMOTE_CONF = "/etc/bitcoin-regtest-gns.conf";
-const REMOTE_DATADIR = "/var/lib/bitcoind-regtest-gns";
-const REMOTE_WALLET = "gns-e2e";
+const TUNNEL_SOCKET = process.env.ONT_REGTEST_TUNNEL_SOCKET ?? "/tmp/ont-regtest-vps-rpc.sock";
+const REMOTE_CONF = "/etc/bitcoin-regtest-ont.conf";
+const REMOTE_DATADIR = "/var/lib/bitcoind-regtest-ont";
+const REMOTE_WALLET = "ont-e2e";
 const BASE_REGTEST_BLOCKS = 110;
 const TEST_INITIAL_MATURITY_BLOCKS = Number.parseInt(
-  process.env.GNS_REGTEST_TEST_INITIAL_MATURITY_BLOCKS ?? "32",
+  process.env.ONT_REGTEST_TEST_INITIAL_MATURITY_BLOCKS ?? "32",
   10
 );
 const MATURITY_BLOCKS = TEST_INITIAL_MATURITY_BLOCKS;
@@ -60,7 +60,7 @@ void main().catch(async (error) => {
 
 async function main() {
   ensureSshConfig();
-  suiteState.artifactDir = await mkdtemp(join(tmpdir(), "gns-regtest-suite-"));
+  suiteState.artifactDir = await mkdtemp(join(tmpdir(), "ont-regtest-suite-"));
   log(`Artifacts: ${suiteState.artifactDir}`);
 
   await ensureBuild();
@@ -433,12 +433,14 @@ async function main() {
       claimedName,
       "--owner-private-key-hex",
       giftRecipient.ownerPrivateKeyHex,
+      "--resolver-url",
+      resolverUrl(),
       "--sequence",
       "1",
       "--value-type",
       String(VALUE_TYPE_HTTPS),
       "--payload-utf8",
-      "https://example.com/gns/" + claimedName,
+      "https://example.com/ont/" + claimedName,
       "--write",
       join(suiteState.artifactDir, "gifted-value.json")
     ]);
@@ -456,7 +458,54 @@ async function main() {
       resolverUrl()
     ]);
     assertEqual(fetchedValue.sequence, 1, "published value sequence");
-    summary.values[claimedName] = fetchedValue;
+    const transferValueHistory = await cliJson([
+      "get-value-history",
+      claimedName,
+      "--resolver-url",
+      resolverUrl()
+    ]);
+    assertEqual(transferValueHistory.ownershipRef, giftTransfer.transferTxid, "gift transfer value ownership ref");
+    assertEqual(transferValueHistory.records.length, 1, "gift transfer value history resets to one record");
+    assertEqual(transferValueHistory.records[0].sequence, 1, "gift transfer first value sequence");
+
+    await cliJson([
+      "sign-value-record",
+      "--name",
+      claimedName,
+      "--owner-private-key-hex",
+      giftRecipient.ownerPrivateKeyHex,
+      "--resolver-url",
+      resolverUrl(),
+      "--value-type",
+      String(VALUE_TYPE_HTTPS),
+      "--payload-utf8",
+      "https://example.com/ont/" + claimedName + "/updated",
+      "--write",
+      join(suiteState.artifactDir, "gifted-value-updated.json")
+    ]);
+    const updatedValuePublish = await cliJson([
+      "publish-value-record",
+      join(suiteState.artifactDir, "gifted-value-updated.json"),
+      "--resolver-url",
+      resolverUrl()
+    ]);
+    assertEqual(updatedValuePublish.ok, true, "publish updated value result");
+    const valueHistory = await cliJson([
+      "get-value-history",
+      claimedName,
+      "--resolver-url",
+      resolverUrl()
+    ]);
+    assertEqual(valueHistory.records.length, 2, "value history record count");
+    assertEqual(valueHistory.records[1].previousRecordHash, valueHistory.records[0].recordHash, "value history predecessor hash");
+    const updatedFetchedValue = await cliJson([
+      "get-value",
+      claimedName,
+      "--resolver-url",
+      resolverUrl()
+    ]);
+    assertEqual(updatedFetchedValue.sequence, 2, "updated value sequence");
+    summary.values[claimedName] = updatedFetchedValue;
 
     const staleValueAttempt = await runCli(
       [
@@ -465,8 +514,10 @@ async function main() {
         claimedName,
         "--owner-private-key-hex",
         giftRecipient.ownerPrivateKeyHex,
+        "--resolver-url",
+        resolverUrl(),
         "--sequence",
-        "1",
+        "2",
         "--value-type",
         String(VALUE_TYPE_HTTPS),
         "--payload-utf8",
@@ -486,7 +537,7 @@ async function main() {
       ],
       { expectExitCode: 1 }
     );
-    assertContains(staleValuePublish.stderr, "Value record sequence must increase", "stale sequence feedback");
+    assertContains(staleValuePublish.stderr, "exact next sequence", "stale sequence feedback");
 
     await cliJson([
       "sign-value-record",
@@ -494,8 +545,10 @@ async function main() {
       claimedName,
       "--owner-private-key-hex",
       primaryOwner.ownerPrivateKeyHex,
+      "--resolver-url",
+      resolverUrl(),
       "--sequence",
-      "2",
+      "3",
       "--value-type",
       String(VALUE_TYPE_HTTPS),
       "--payload-utf8",
@@ -727,7 +780,7 @@ async function main() {
       join(suiteState.artifactDir, "summary.json"),
       JSON.stringify(
         {
-          kind: "gns-regtest-cli-suite-summary",
+          kind: "ont-regtest-cli-suite-summary",
           artifactDir: suiteState.artifactDir,
           resolverUrl: resolverUrl(),
           rpcUrl: rpcUrl(),
@@ -743,7 +796,7 @@ async function main() {
       resolve(ROOT, ".data/last-regtest-suite-summary.json"),
       JSON.stringify(
         {
-          kind: "gns-regtest-cli-suite-summary",
+          kind: "ont-regtest-cli-suite-summary",
           artifactDir: suiteState.artifactDir,
           resolverUrl: resolverUrl(),
           rpcUrl: rpcUrl(),
@@ -876,27 +929,27 @@ async function startResolver() {
     cwd: ROOT,
     env: {
       ...process.env,
-      GNS_SOURCE_MODE: "rpc",
-      GNS_BITCOIN_RPC_URL: rpcUrl(),
-      GNS_BITCOIN_RPC_USERNAME: RPC_USER,
-      GNS_BITCOIN_RPC_PASSWORD: RPC_PASSWORD,
-      GNS_EXPECT_CHAIN: "regtest",
-      GNS_LAUNCH_HEIGHT: "0",
-      GNS_RPC_POLL_INTERVAL_MS: String(POLL_INTERVAL_MS),
-      GNS_TEST_OVERRIDE_INITIAL_MATURITY_BLOCKS: String(TEST_INITIAL_MATURITY_BLOCKS),
-      GNS_TEST_OVERRIDE_MIN_MATURITY_BLOCKS: String(TEST_INITIAL_MATURITY_BLOCKS),
-      GNS_RESOLVER_PORT: String(RESOLVER_PORT),
-      GNS_SNAPSHOT_PATH: snapshotPath,
-      GNS_VALUE_STORE_PATH: valueStorePath,
-      GNS_EXPERIMENTAL_AUCTION_FIXTURE_DIR: AUCTION_FIXTURE_DIR,
-      GNS_EXPERIMENTAL_AUCTION_BASE_WINDOW_BLOCKS: String(REGTEST_AUCTION_BASE_WINDOW_BLOCKS),
-      GNS_EXPERIMENTAL_AUCTION_SOFT_CLOSE_EXTENSION_BLOCKS: String(
+      ONT_SOURCE_MODE: "rpc",
+      ONT_BITCOIN_RPC_URL: rpcUrl(),
+      ONT_BITCOIN_RPC_USERNAME: RPC_USER,
+      ONT_BITCOIN_RPC_PASSWORD: RPC_PASSWORD,
+      ONT_EXPECT_CHAIN: "regtest",
+      ONT_LAUNCH_HEIGHT: "0",
+      ONT_RPC_POLL_INTERVAL_MS: String(POLL_INTERVAL_MS),
+      ONT_TEST_OVERRIDE_INITIAL_MATURITY_BLOCKS: String(TEST_INITIAL_MATURITY_BLOCKS),
+      ONT_TEST_OVERRIDE_MIN_MATURITY_BLOCKS: String(TEST_INITIAL_MATURITY_BLOCKS),
+      ONT_RESOLVER_PORT: String(RESOLVER_PORT),
+      ONT_SNAPSHOT_PATH: snapshotPath,
+      ONT_VALUE_STORE_PATH: valueStorePath,
+      ONT_EXPERIMENTAL_AUCTION_FIXTURE_DIR: AUCTION_FIXTURE_DIR,
+      ONT_EXPERIMENTAL_AUCTION_BASE_WINDOW_BLOCKS: String(REGTEST_AUCTION_BASE_WINDOW_BLOCKS),
+      ONT_EXPERIMENTAL_AUCTION_SOFT_CLOSE_EXTENSION_BLOCKS: String(
         REGTEST_AUCTION_SOFT_CLOSE_EXTENSION_BLOCKS
       ),
-      GNS_EXPERIMENTAL_AUCTION_NO_BID_RELEASE_BLOCKS: String(
+      ONT_EXPERIMENTAL_AUCTION_NO_BID_RELEASE_BLOCKS: String(
         REGTEST_AUCTION_NO_BID_RELEASE_BLOCKS
       ),
-      GNS_EXPERIMENTAL_AUCTION_MAJOR_EXISTING_NAME_LOCK_BLOCKS: String(
+      ONT_EXPERIMENTAL_AUCTION_MAJOR_EXISTING_NAME_LOCK_BLOCKS: String(
         REGTEST_AUCTION_MAJOR_LOCK_BLOCKS
       )
     },
@@ -1074,6 +1127,8 @@ async function runAuctionLifecycleScenario() {
     settledState.normalizedName,
     "--owner-private-key-hex",
     betaBidder.ownerPrivateKeyHex,
+    "--resolver-url",
+    resolverUrl(),
     "--sequence",
     "1",
     "--value-type",
@@ -1219,8 +1274,10 @@ async function runAuctionLifecycleScenario() {
     settledState.normalizedName,
     "--owner-private-key-hex",
     auctionTransferRecipient.ownerPrivateKeyHex,
+    "--resolver-url",
+    resolverUrl(),
     "--sequence",
-    "2",
+    "1",
     "--value-type",
     String(VALUE_TYPE_HTTPS),
     "--payload-utf8",
@@ -1241,7 +1298,24 @@ async function runAuctionLifecycleScenario() {
     "--resolver-url",
     resolverUrl()
   ]);
-  assertEqual(transferredValueRecord.sequence, 2, "auction transfer recipient value sequence");
+  assertEqual(transferredValueRecord.sequence, 1, "auction transfer recipient value sequence");
+  const transferredValueHistory = await cliJson([
+    "get-value-history",
+    settledState.normalizedName,
+    "--resolver-url",
+    resolverUrl()
+  ]);
+  assertEqual(
+    transferredValueHistory.ownershipRef,
+    matureAuctionTransfer.transferTxid,
+    "auction transfer value ownership ref"
+  );
+  assertEqual(
+    transferredValueHistory.records.length,
+    1,
+    "auction transfer value history resets to one record"
+  );
+  assertEqual(transferredValueHistory.records[0].sequence, 1, "auction transfer first value sequence");
 
   return {
     name: settledState.normalizedName,
@@ -1268,7 +1342,7 @@ async function submitAuctionBid(input) {
     input.bidderAccount.fundingAddress,
     input.bidAmountSats + AUCTION_BID_FEE_SATS + AUCTION_BID_FUNDING_PADDING_SATS
   );
-  const { createAuctionBidPackage } = await import("@gns/protocol");
+  const { createAuctionBidPackage } = await import("@ont/protocol");
   const bidPackage = createAuctionBidPackage({
     auctionId: input.auctionState.auctionId,
     name: input.auctionState.normalizedName,
@@ -1782,7 +1856,7 @@ async function claimNameWithInvalidBatchReveal(input) {
 async function writeTamperedBatchRevealArtifacts(input) {
   const builtArtifacts = JSON.parse(await readFile(input.sourcePath, "utf8"));
   const proofOutputIndex = builtArtifacts.outputs.findIndex(
-    (candidate) => candidate.role === "gns_reveal_proof_chunk"
+    (candidate) => candidate.role === "ont_reveal_proof_chunk"
   );
 
   if (proofOutputIndex < 0) {
@@ -1911,12 +1985,12 @@ async function runCli(args, input = {}) {
     cwd: ROOT,
     env: {
       ...process.env,
-      GNS_BITCOIN_RPC_URL: rpcUrl(),
-      GNS_BITCOIN_RPC_USERNAME: RPC_USER,
-      GNS_BITCOIN_RPC_PASSWORD: RPC_PASSWORD,
-      GNS_RESOLVER_URL: resolverUrl(),
-      GNS_TEST_OVERRIDE_INITIAL_MATURITY_BLOCKS: String(TEST_INITIAL_MATURITY_BLOCKS),
-      GNS_TEST_OVERRIDE_MIN_MATURITY_BLOCKS: String(TEST_INITIAL_MATURITY_BLOCKS)
+      ONT_BITCOIN_RPC_URL: rpcUrl(),
+      ONT_BITCOIN_RPC_USERNAME: RPC_USER,
+      ONT_BITCOIN_RPC_PASSWORD: RPC_PASSWORD,
+      ONT_RESOLVER_URL: resolverUrl(),
+      ONT_TEST_OVERRIDE_INITIAL_MATURITY_BLOCKS: String(TEST_INITIAL_MATURITY_BLOCKS),
+      ONT_TEST_OVERRIDE_MIN_MATURITY_BLOCKS: String(TEST_INITIAL_MATURITY_BLOCKS)
     },
     allowFailure: true
   });
@@ -1945,7 +2019,7 @@ async function rpcCall(method, params = [], wallet = null) {
     },
     body: JSON.stringify({
       jsonrpc: "1.0",
-      id: "gns-regtest-suite",
+      id: "ont-regtest-suite",
       method,
       params
     })
@@ -1994,7 +2068,7 @@ async function cleanup() {
 
 function ensureSshConfig() {
   if (!SSH_TARGET) {
-    throw new Error("Set GNS_REGTEST_SSH_TARGET or GNS_SSH_TARGET before running regtest-cli-suite.");
+    throw new Error("Set ONT_REGTEST_SSH_TARGET or ONT_SSH_TARGET before running regtest-cli-suite.");
   }
 
   if (SSH_KEY && !existsSync(SSH_KEY)) {

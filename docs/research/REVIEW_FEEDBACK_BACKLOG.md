@@ -1,6 +1,6 @@
 # Reviewer Feedback Backlog
 
-This document captures the major open questions and objections raised during recent external review of the GNS video, one-pager, and prototype framing.
+This document captures the major open questions and objections raised during recent external review of the ONT video, one-pager, and prototype framing.
 
 Its job is not to resolve everything immediately. Its job is to preserve the real points of contention so they can be worked through deliberately before broader outreach.
 
@@ -50,7 +50,7 @@ This came up most clearly around the maturity schedule and epoch logic.
 
 ### Why It Matters
 
-People are trying to assess whether GNS is governed by stable protocol rules or by future discretionary changes.
+People are trying to assess whether ONT is governed by stable protocol rules or by future discretionary changes.
 
 ### Current Status
 
@@ -154,17 +154,17 @@ Open. There is a real worldview split here between:
 - "existing brands are a bootstrapping problem"
 - and "this is a major utility problem if not addressed"
 
-## 7. Why GNS Instead Of DNS Plus Ranking Signals
+## 7. Why ONT Instead Of DNS Plus Ranking Signals
 
 ### Concern
 
-Reviewers are not yet fully convinced that GNS solves a sufficiently important problem that DNS, search, ranking signals, or other trust signals do not already cover.
+Reviewers are not yet fully convinced that ONT solves a sufficiently important problem that DNS, search, ranking signals, or other trust signals do not already cover.
 
 The current AI/agent framing helped, but it did not close the case by itself.
 
 ### Why It Matters
 
-If GNS is framed only as "another naming system," skepticism stays high. The product thesis needs to make clear what DNS does not do and why that matters more in an agentic world.
+If ONT is framed only as "another naming system," skepticism stays high. The product thesis needs to make clear what DNS does not do and why that matters more in an agentic world.
 
 ### Current Status
 
@@ -310,7 +310,7 @@ There is a live disagreement about whether the brand problem is:
 
 ### Why It Matters
 
-This distinction drives whether GNS should be optimized mainly for future-native adoption or must solve more of the legacy brand-mapping problem before launch.
+This distinction drives whether ONT should be optimized mainly for future-native adoption or must solve more of the legacy brand-mapping problem before launch.
 
 ### Current Status
 
@@ -320,7 +320,7 @@ Open. This likely needs a clearer protocol and product stance, not just economic
 
 ### Concern
 
-There is real interest in sharing GNS with sharper Bitcoin developers and potentially attracting outside implementation help, but only after the strongest open issues are addressed clearly enough.
+There is real interest in sharing ONT with sharper Bitcoin developers and potentially attracting outside implementation help, but only after the strongest open issues are addressed clearly enough.
 
 ### Why It Matters
 
@@ -334,15 +334,15 @@ Open. This backlog is part of getting to that point.
 
 ### Concern
 
-If GNS contemplates long-lived names and premium lock periods measured in many years, reviewers may reasonably ask what happens if Bitcoin's current signature assumptions become vulnerable before those timelines finish.
+If ONT contemplates long-lived names and premium lock periods measured in many years, reviewers may reasonably ask what happens if Bitcoin's current signature assumptions become vulnerable before those timelines finish.
 
-The concern is not that GNS must solve post-quantum migration by itself. The concern is that long-duration commitments make it harder to ignore.
+The concern is not that ONT must solve post-quantum migration by itself. The concern is that long-duration commitments make it harder to ignore.
 
 ### Why It Matters
 
 For decade-scale names or bonds, "we'll think about it later" is not a satisfying answer. We should have an explicit position on:
 
-- what GNS can and cannot promise
+- what ONT can and cannot promise
 - whether owner-key migration is part of the design story
 - and how dependent the answer is on Bitcoin's own future path
 
@@ -357,6 +357,6 @@ If we work through these one by one, the most leveraged order is probably:
 1. premium brands and top-end squatting
 2. fixed bonds versus auction dynamics
 3. batching / Merkle / lower-footprint launch options
-4. why GNS over DNS + ranking signals in the agentic age
+4. why ONT over DNS + ranking signals in the agentic age
 5. resolver decentralization and discovery
 6. owner-key loss and possible future recovery

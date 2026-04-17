@@ -11,7 +11,7 @@ import {
   encodeCommitPayload,
   parseClaimPackage,
   PROTOCOL_NAME
-} from "@gns/protocol";
+} from "@ont/protocol";
 
 import {
   buildAuctionBidArtifacts,
@@ -178,7 +178,7 @@ describe("signArtifacts", () => {
       wifs: [fundingKey.toWIF()]
     });
 
-    expect(signed.kind).toBe("gns-signed-commit-artifacts");
+    expect(signed.kind).toBe("ont-signed-commit-artifacts");
     expect(signed.signedTransactionId).toBe(artifacts.commitTxid);
 
     const transaction = Transaction.fromHex(signed.signedTransactionHex);
@@ -206,7 +206,7 @@ describe("signArtifacts", () => {
       wifs: [fundingKey.toWIF()]
     });
 
-    expect(signed.kind).toBe("gns-signed-batch-commit-artifacts");
+    expect(signed.kind).toBe("ont-signed-batch-commit-artifacts");
     expect(signed.signedTransactionId).toBe(artifacts.commitTxid);
 
     const transaction = Transaction.fromHex(signed.signedTransactionHex);
@@ -247,7 +247,7 @@ describe("signArtifacts", () => {
       wifs: [fundingKey.toWIF()]
     });
 
-    expect(signed.kind).toBe("gns-signed-batch-reveal-artifacts");
+    expect(signed.kind).toBe("ont-signed-batch-reveal-artifacts");
     expect(signed.signedTransactionId).toBe(artifacts.revealTxid);
 
     const transaction = Transaction.fromHex(signed.signedTransactionHex);
@@ -293,7 +293,7 @@ describe("signArtifacts", () => {
       wifs: [fundingKey.toWIF()]
     });
 
-    expect(signed.kind).toBe("gns-signed-transfer-artifacts");
+    expect(signed.kind).toBe("ont-signed-transfer-artifacts");
     expect(signed.signedTransactionId).toBe(artifacts.transferTxid);
 
     const transaction = Transaction.fromHex(signed.signedTransactionHex);
@@ -326,7 +326,7 @@ describe("signArtifacts", () => {
       wifs: [fundingKey.toWIF()]
     });
 
-    expect(signed.kind).toBe("gns-signed-auction-bid-artifacts");
+    expect(signed.kind).toBe("ont-signed-auction-bid-artifacts");
     expect(signed.signedTransactionId).toBe(artifacts.bidTxid);
 
     const transaction = Transaction.fromHex(signed.signedTransactionHex);
@@ -365,7 +365,7 @@ describe("signArtifacts", () => {
       wifs: [fundingKey.toWIF()]
     });
 
-    expect(signed.kind).toBe("gns-signed-auction-bid-artifacts");
+    expect(signed.kind).toBe("ont-signed-auction-bid-artifacts");
     expect(signed.signedTransactionId).toBe(artifacts.bidTxid);
 
     const transaction = Transaction.fromHex(signed.signedTransactionHex);

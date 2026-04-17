@@ -2,7 +2,7 @@
 
 This note answers one narrower follow-up question:
 
-> if GNS ever moves batched reveal proofs into a Taproot annex carrier, what
+> if ONT ever moves batched reveal proofs into a Taproot annex carrier, what
 > exactly would the unsigned and signed reveal artifacts need to contain so the
 > builder, signer, and indexer all agree on the same bytes?
 
@@ -21,7 +21,7 @@ Related notes:
 ## Why The Envelope Matters
 
 For the current explicit batched reveal flow, `txid` is a decent artifact
-integrity check because the GNS proof bytes live in ordinary transaction
+integrity check because the ONT proof bytes live in ordinary transaction
 outputs.
 
 For an annex-based reveal, that changes.
@@ -60,7 +60,7 @@ witness annex carries proof bytes
 That gives us three useful properties at once:
 
 - the proof payload moves into cheaper witness space
-- the base transaction still contains a parseable GNS reveal event
+- the base transaction still contains a parseable ONT reveal event
 - the on-chain header commits to the exact annex content, so the annex is not
   "floating" outside the protocol semantics
 
@@ -110,7 +110,7 @@ Because [BIP371](https://bips.dev/371/) does not define a standard PSBT annex
 field, the cleanest research model is:
 
 - PSBT carries the base unsigned transaction inputs and outputs
-- a GNS sidecar envelope carries the exact annex bytes and related metadata
+- an ONT sidecar envelope carries the exact annex bytes and related metadata
 
 So the artifact is not "PSBT alone". It is:
 
@@ -127,7 +127,7 @@ One plausible unsigned envelope shape:
 
 ```json
 {
-  "kind": "gns-batch-reveal-annex-artifacts",
+  "kind": "ont-batch-reveal-annex-artifacts",
   "network": "signet",
   "psbtBase64": "...",
   "unsignedBaseTransactionHex": "...",
@@ -142,7 +142,7 @@ One plausible unsigned envelope shape:
   "annexHex": "...",
   "annexSha256": "...",
   "annexBytesLength": 99,
-  "annexFormat": "gns-batch-proof-v0",
+  "annexFormat": "ont-batch-proof-v0",
   "anchorTxid": "...",
   "name": "markzuckerberg",
   "bondVout": 2
@@ -170,7 +170,7 @@ One plausible signed envelope shape:
 
 ```json
 {
-  "kind": "gns-signed-batch-reveal-annex-artifacts",
+  "kind": "ont-signed-batch-reveal-annex-artifacts",
   "network": "signet",
   "signedTransactionHex": "...",
   "signedTransactionId": "...",
@@ -308,7 +308,7 @@ The current bias should be:
 Because for witness-bearing transactions, `txid` is only the base transaction
 identifier.
 
-If GNS semantics depend on witness annex bytes, then:
+If ONT semantics depend on witness annex bytes, then:
 
 - `txid` alone does not prove the intended proof bytes were used
 
@@ -320,7 +320,7 @@ The artifact and protocol both need to care about:
 
 ## Product And Review Implications
 
-If GNS ever adopts this path, the product story changes.
+If ONT ever adopts this path, the product story changes.
 
 Users and reviewers would need to understand:
 
@@ -360,7 +360,7 @@ model:
 - **unsigned artifact includes exact annex bytes**
 - **signed artifact includes `wtxid`**
 
-That is probably the cleanest version of an annex-based GNS reveal that still
+That is probably the cleanest version of an annex-based ONT reveal that still
 feels reviewable and protocol-legible.
 
 ## Next Questions
@@ -370,7 +370,7 @@ The next useful follow-ups after this note are:
 1. can we refine the rough annex weight model using this hybrid
    `explicit-header + annex` envelope instead of the earlier upper-bound style
    estimate?
-2. what exact annex byte format should `gns-batch-proof-v0` use?
+2. what exact annex byte format should `ont-batch-proof-v0` use?
 3. can bitcoinjs-lib or adjacent tooling realistically support this without
    invasive custom finalization work?
 4. is the custom-tooling cost worth it relative to simply keeping explicit proof

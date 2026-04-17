@@ -121,19 +121,19 @@ npm run dev:cli -- simulate-reserved-auction-market fixtures/auction/market-capi
 Create an experimental bid package from a lab case:
 
 ```bash
-npm run dev:cli -- create-auction-bid-package fixtures/auction/lab/04-soft-close-google.json --bidder-id operator_alpha --amount-sats 1700000000 --write /tmp/gns-auction-bid-package.json
+npm run dev:cli -- create-auction-bid-package fixtures/auction/lab/04-soft-close-google.json --bidder-id operator_alpha --amount-sats 1700000000 --write /tmp/ont-auction-bid-package.json
 ```
 
 Turn that package into signable experimental bid artifacts:
 
 ```bash
-npm run dev:cli -- build-auction-bid-artifacts /tmp/gns-auction-bid-package.json --input <txid:vout:valueSats:address> --fee-sats 100000 --bond-address <address> --change-address <address> --write /tmp/gns-auction-bid-artifacts.json
+npm run dev:cli -- build-auction-bid-artifacts /tmp/ont-auction-bid-package.json --input <txid:vout:valueSats:address> --fee-sats 100000 --bond-address <address> --change-address <address> --write /tmp/ont-auction-bid-artifacts.json
 ```
 
 Sign the experimental bid artifacts:
 
 ```bash
-npm run dev:cli -- sign-artifacts /tmp/gns-auction-bid-artifacts.json --wif <wif> --write /tmp/gns-signed-auction-bid-artifacts.json
+npm run dev:cli -- sign-artifacts /tmp/ont-auction-bid-artifacts.json --wif <wif> --write /tmp/ont-signed-auction-bid-artifacts.json
 ```
 
 ## Current Website Surface

@@ -17,8 +17,8 @@ Today the repo has:
 - a prototype off-chain value-record flow through the CLI and resolver
 - a prototype cooperative mature-sale transfer flow through the CLI
 - a terminal-only live-testing path for generating owner/funding keys and creating claim packages without the browser
-- a source-mode override via `GNS_SOURCE_MODE=auto|fixture|rpc|esplora` so local demos do not accidentally inherit stale remote-node env
-- an optional Postgres/Supabase-backed persistence mode when `GNS_DATABASE_URL` is set
+- a source-mode override via `ONT_SOURCE_MODE=auto|fixture|rpc|esplora` so local demos do not accidentally inherit stale remote-node env
+- an optional Postgres/Supabase-backed persistence mode when `ONT_DATABASE_URL` is set
 
 Today the repo does **not** yet have:
 
@@ -47,7 +47,7 @@ Starts the website at:
 Override with:
 
 ```bash
-GNS_WEB_PORT=3001 npm run dev:web
+ONT_WEB_PORT=3001 npm run dev:web
 ```
 
 The website does not index Bitcoin itself. It proxies to the resolver.
@@ -61,7 +61,7 @@ Starts the resolver at:
 Override with:
 
 ```bash
-GNS_RESOLVER_PORT=8788 npm run dev:resolver
+ONT_RESOLVER_PORT=8788 npm run dev:resolver
 ```
 
 The resolver currently:
@@ -108,7 +108,7 @@ Then open:
 If `3000` or `8787` is already taken on your machine, use:
 
 ```bash
-GNS_WEB_PORT=3001 GNS_RESOLVER_PORT=8788 npm run dev:all
+ONT_WEB_PORT=3001 ONT_RESOLVER_PORT=8788 npm run dev:all
 ```
 
 Then open:
@@ -118,7 +118,7 @@ Then open:
 If you have old remote-node env vars hanging around in your shell and want to force the reliable local path, use:
 
 ```bash
-GNS_SOURCE_MODE=fixture GNS_WEB_PORT=3001 GNS_RESOLVER_PORT=8788 npm run dev:all
+ONT_SOURCE_MODE=fixture ONT_WEB_PORT=3001 ONT_RESOLVER_PORT=8788 npm run dev:all
 ```
 
 ### 2a. Repeatable smoke test for fixture mode
@@ -163,8 +163,8 @@ The backing API is:
 And the most relevant automated coverage is:
 
 ```bash
-npm test -w @gns/core
-npm test -w @gns/web
+npm test -w @ont/core
+npm test -w @ont/web
 ```
 
 That coverage includes:
@@ -180,7 +180,7 @@ That coverage includes:
 - same-bidder replacement when the later bid spends the prior bid bond
 - derived accepted-bid bond / release summaries for experimental lots
 - early-vs-allowed bond-spend classification from observed bid bond outpoints,
-  including plain non-GNS spending transactions
+  including plain non-ONT spending transactions
 - settled-winner materialization into a real name record once the auction
   reaches settlement
 
@@ -209,6 +209,32 @@ then checks:
 The goal is not to simulate every signer step. It is to prove that the
 resolver, web app, provenance surfaces, and offline review flow all remain
 coherent when names arrive through a batched ordinary-lane commit.
+
+### 2c. Browser E2E smoke for the website
+
+If you want a real browser-level smoke pass across the current website flows,
+install the Playwright browser once:
+
+```bash
+npm run playwright:install
+```
+
+Then run:
+
+```bash
+npm run test:e2e:fixture-web
+```
+
+This boots two resolvers plus the web app against a custom fixture chain and
+drives a headless browser through:
+
+- the homepage docs/demo surface
+- the browser claim-draft flow
+- the value page loading a claimed name, signing a value locally, fanning one
+  signed record out to the configured resolver set, then proving the UI marks a
+  later primary-only update as a lagging-resolver case
+- the auction lab page shell
+- the offline claim architect with batch commit/reveal tooling visible
 
 ## Full CLI Integration Suite: Controlled Chain
 
@@ -239,7 +265,7 @@ What it covers today:
 - successful claim commit/reveal flow
 - successful ordinary-lane batched claim flow with one batch anchor and two queued reveals
 - successful immature gift transfer for a name originally claimed through a batch anchor
-- invalid ordinary-lane batch reveal that is valid Bitcoin, confirms on-chain, and is ignored by GNS because the Merkle proof is wrong
+- invalid ordinary-lane batch reveal that is valid Bitcoin, confirms on-chain, and is ignored by ONT because the Merkle proof is wrong
 - duplicate claim that does not overtake the earlier winner
 - missed reveal window / stale reveal handling
 - immature gift transfer with bond continuity
@@ -257,7 +283,7 @@ Artifacts:
 Important note:
 
 - the suite uses explicit test-only maturity overrides so the mature-sale case finishes in minutes instead of requiring a full `52,000`-block wait
-- production behavior is unchanged unless `GNS_TEST_OVERRIDE_*` env vars are set
+- production behavior is unchanged unless `ONT_TEST_OVERRIDE_*` env vars are set
 
 ## Private Signet On The Existing VPS
 
@@ -280,18 +306,18 @@ npm run sparrow:private-signet:tunnel
 Direct scripts you can run from anywhere:
 
 ```bash
-/path/to/gns/scripts/configure-sparrow-private-signet.sh
-/path/to/gns/scripts/print-private-signet-sparrow-config.sh
-/path/to/gns/scripts/open-private-signet-sparrow-tunnel.sh
-/path/to/gns/scripts/launch-sparrow-signet.sh
-/path/to/gns/scripts/start-private-signet-sparrow-session.sh
+/path/to/ont/scripts/configure-sparrow-private-signet.sh
+/path/to/ont/scripts/print-private-signet-sparrow-config.sh
+/path/to/ont/scripts/open-private-signet-sparrow-tunnel.sh
+/path/to/ont/scripts/launch-sparrow-signet.sh
+/path/to/ont/scripts/start-private-signet-sparrow-session.sh
 ```
 
 If you do not want to pass the SSH target and key every time, set:
 
 ```bash
-export GNS_PRIVATE_SIGNET_SSH_TARGET=root@<server-ip>
-export GNS_PRIVATE_SIGNET_SSH_KEY=~/.ssh/<your-key>
+export ONT_PRIVATE_SIGNET_SSH_TARGET=root@<server-ip>
+export ONT_PRIVATE_SIGNET_SSH_KEY=~/.ssh/<your-key>
 ```
 
 Bootstrap it once with:
@@ -358,7 +384,7 @@ Those focused smokes cover:
   it also checks that a settled winner resolves as a real owned name with the
   expected owner key and winning bond anchor
 - `auction-phase-gallery`: refreshes dedicated private-signet lots so the live
-  `/gns-private/api/experimental-auctions` feed can simultaneously show real
+  `/ont-private/api/experimental-auctions` feed can simultaneously show real
   `pending_unlock`, `awaiting_opening_bid`, `live_bidding`, and `soft_close`
   phases alongside the smoke-driven `settled` and
   `released_to_ordinary_lane` examples
@@ -372,19 +398,19 @@ The batch and auction smokes write local summaries to:
 - `./.data/private-signet-demo/batch-smoke-summary.json`
 - `./.data/private-signet-demo/auction-smoke-summary.json`
 
-If `GNS_PRIVATE_SIGNET_BATCH_SMOKE_PUBLISH_REMOTE_STATUS` is not set to `0`,
+If `ONT_PRIVATE_SIGNET_BATCH_SMOKE_PUBLISH_REMOTE_STATUS` is not set to `0`,
 it also publishes that summary to the VPS path in
-`GNS_PRIVATE_SIGNET_BATCH_SMOKE_REMOTE_STATUS_PATH`, which defaults to:
+`ONT_PRIVATE_SIGNET_BATCH_SMOKE_REMOTE_STATUS_PATH`, which defaults to:
 
-- `/var/lib/gns/private-batch-smoke-summary.json`
-- `/var/lib/gns/private-auction-smoke-summary.json`
+- `/var/lib/ont/private-batch-smoke-summary.json`
+- `/var/lib/ont/private-auction-smoke-summary.json`
 
 On the private signet deployment, the experimental auction feed now uses a
 shorter hosted-demo overrides than the default research policy:
 
-- `GNS_EXPERIMENTAL_AUCTION_BASE_WINDOW_BLOCKS=8`
-- `GNS_EXPERIMENTAL_AUCTION_SOFT_CLOSE_EXTENSION_BLOCKS=4`
-- `GNS_EXPERIMENTAL_AUCTION_NO_BID_RELEASE_BLOCKS=16`
+- `ONT_EXPERIMENTAL_AUCTION_BASE_WINDOW_BLOCKS=8`
+- `ONT_EXPERIMENTAL_AUCTION_SOFT_CLOSE_EXTENSION_BLOCKS=4`
+- `ONT_EXPERIMENTAL_AUCTION_NO_BID_RELEASE_BLOCKS=16`
 
 That keeps the private auction smoke practical while preserving the same
 auction-state machinery.
@@ -407,25 +433,25 @@ and the canonical reseed runs it automatically after the auction smoke so the
 private live feed stays review-friendly.
 
 If the private web service is configured with
-`GNS_WEB_PRIVATE_BATCH_SMOKE_STATUS_PATH=/var/lib/gns/private-batch-smoke-summary.json`,
+`ONT_WEB_PRIVATE_BATCH_SMOKE_STATUS_PATH=/var/lib/ont/private-batch-smoke-summary.json`,
 the site can surface that status at:
 
 - `/api/private-batch-smoke-status`
 
 If the private or root-domain web service is also configured with
-`GNS_WEB_PRIVATE_AUCTION_SMOKE_STATUS_PATH=/var/lib/gns/private-auction-smoke-summary.json`,
+`ONT_WEB_PRIVATE_AUCTION_SMOKE_STATUS_PATH=/var/lib/ont/private-auction-smoke-summary.json`,
 the site can surface the hosted auction smoke at:
 
 - `/api/private-auction-smoke-status`
 
-On `globalnamesystem.org`, the domain bootstrap now also routes:
+On `opennametags.org`, the domain bootstrap now also routes:
 
-- `/gns-private/*`
+- `/ont-private/*`
 
 to the private signet web service, so paths like:
 
-- `/gns-private/api/experimental-auctions`
-- `/gns-private/api/private-auction-smoke-status`
+- `/ont-private/api/experimental-auctions`
+- `/ont-private/api/private-auction-smoke-status`
 
 are available through the shared public domain as well.
 
@@ -434,18 +460,18 @@ Useful server-side commands:
 ```bash
 ssh -i ~/.ssh/<your-key> root@<server-ip>
 systemctl status bitcoind-private-signet
-systemctl status gns-private-resolver
-systemctl status gns-private-web
-gns-private-signet-mine 1
-gns-private-signet-fund <address> <amount-btc>
+systemctl status ont-private-resolver
+systemctl status ont-private-web
+ont-private-signet-mine 1
+ont-private-signet-fund <address> <amount-btc>
 ```
 
 Important notes:
 
 - the private chain still reports `chain=signet`, but it is isolated by a custom signet challenge
-- the private web app is configured separately with `GNS_WEB_BASE_PATH=/gns-private`
+- the private web app is configured separately with `ONT_WEB_BASE_PATH=/ont-private`
 - the private web app hides the public live-smoke panel so it does not look broken or unfunded
-- the direct private demo URL on the VPS is `http://<server-ip>:3001/gns-private`
+- the direct private demo URL on the VPS is `http://<server-ip>:3001/ont-private`
 
 ## Troubleshooting
 
@@ -475,13 +501,13 @@ lsof -tiTCP:8788 -sTCP:LISTEN 2>/dev/null | xargs -r kill
 Then restart cleanly:
 
 ```bash
-GNS_WEB_PORT=3001 GNS_RESOLVER_PORT=8788 npm run dev:all
+ONT_WEB_PORT=3001 ONT_RESOLVER_PORT=8788 npm run dev:all
 ```
 
 If you previously exported a placeholder RPC URL and the resolver still tries to boot remotely, force fixture mode explicitly:
 
 ```bash
-GNS_SOURCE_MODE=fixture GNS_WEB_PORT=3001 GNS_RESOLVER_PORT=8788 npm run dev:all
+ONT_SOURCE_MODE=fixture ONT_WEB_PORT=3001 ONT_RESOLVER_PORT=8788 npm run dev:all
 ```
 
 Then hard-refresh the browser and open:
@@ -549,7 +575,7 @@ Open:
 
 - `http://127.0.0.1:3000`
 
-If you changed `GNS_WEB_PORT`, open that port instead.
+If you changed `ONT_WEB_PORT`, open that port instead.
 
 What you should see:
 
@@ -625,7 +651,7 @@ If you then paste a `commit txid` and click `Prepare Draft` again, you should al
 After downloading the claim package from the browser, you can validate it locally:
 
 ```bash
-npm run dev:cli -- inspect-claim-package ./gns-claim-bob-commit-ready.json
+npm run dev:cli -- inspect-claim-package ./ont-claim-bob-commit-ready.json
 ```
 
 What you should see:
@@ -657,13 +683,13 @@ Current prototype assumptions:
 Example commit build:
 
 ```bash
-npm run dev:cli -- build-commit-artifacts ./gns-claim-bob-commit-ready.json \
+npm run dev:cli -- build-commit-artifacts ./ont-claim-bob-commit-ready.json \
   --input aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa:0:30000000:tb1qqvpsxqcrqvpsxqcrqvpsxqcrqvpsxqcr7mrzn4 \
   --fee-sats 1000 \
   --network signet \
   --bond-address tb1qqyqszqgpqyqszqgpqyqszqgpqyqszqgpw0yxjz \
   --change-address tb1qqgpqyqszqgpqyqszqgpqyqszqgpqyqszltzre5 \
-  --write-package ./gns-claim-bob-reveal-ready.json
+  --write-package ./ont-claim-bob-reveal-ready.json
 ```
 
 What you should get:
@@ -676,7 +702,7 @@ What you should get:
 Example reveal build:
 
 ```bash
-npm run dev:cli -- build-reveal-artifacts ./gns-claim-bob-reveal-ready.json \
+npm run dev:cli -- build-reveal-artifacts ./ont-claim-bob-reveal-ready.json \
   --input bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb:1:15000:tb1qqszqgpqyqszqgpqyqszqgpqyqszqgpqy7ty85f \
   --fee-sats 500 \
   --network signet \
@@ -694,7 +720,7 @@ What you should get:
 Once you have written commit or reveal artifacts to disk, the CLI can sign the embedded PSBT:
 
 ```bash
-npm run dev:cli -- sign-artifacts ./gns-commit-artifacts.json \
+npm run dev:cli -- sign-artifacts ./ont-commit-artifacts.json \
   --wif cMpMxK92W1DjqDvWV3pMn4xLwAuQJhNF3MFqkEHUQRPQofUJku8R
 ```
 
@@ -713,22 +739,22 @@ Current limitation:
 Once you have a signed artifacts JSON file, you can broadcast it directly:
 
 ```bash
-npm run dev:cli -- broadcast-transaction ./gns-signed-commit-artifacts.json \
+npm run dev:cli -- broadcast-transaction ./ont-signed-commit-artifacts.json \
   --expected-chain signet
 ```
 
 By default, the CLI will read RPC credentials from:
 
 ```bash
-GNS_BITCOIN_RPC_URL
-GNS_BITCOIN_RPC_USERNAME
-GNS_BITCOIN_RPC_PASSWORD
+ONT_BITCOIN_RPC_URL
+ONT_BITCOIN_RPC_USERNAME
+ONT_BITCOIN_RPC_PASSWORD
 ```
 
 You can also pass them explicitly:
 
 ```bash
-npm run dev:cli -- broadcast-transaction ./gns-signed-commit-artifacts.json \
+npm run dev:cli -- broadcast-transaction ./ont-signed-commit-artifacts.json \
   --rpc-url http://127.0.0.1:38332 \
   --rpc-username bitcoinrpc \
   --rpc-password your-password \
@@ -740,7 +766,7 @@ npm run dev:cli -- broadcast-transaction ./gns-signed-commit-artifacts.json \
 After signing the reveal transaction, the CLI can poll your node until the commit confirms and then broadcast the reveal:
 
 ```bash
-npm run dev:cli -- watch-and-broadcast-reveal ./gns-signed-reveal-artifacts.json \
+npm run dev:cli -- watch-and-broadcast-reveal ./ont-signed-reveal-artifacts.json \
   --commit-txid <commit-txid> \
   --expected-chain signet \
   --poll-interval-ms 10000 \
@@ -763,7 +789,7 @@ Current note:
 If you want the reveal to survive process restarts, enqueue it on disk:
 
 ```bash
-npm run dev:cli -- enqueue-reveal ./gns-signed-reveal-artifacts.json \
+npm run dev:cli -- enqueue-reveal ./ont-signed-reveal-artifacts.json \
   --commit-txid <commit-txid> \
   --expected-chain signet
 ```
@@ -818,7 +844,7 @@ Once you have:
 you can run the full prototype flow in one step:
 
 ```bash
-npm run dev:cli -- submit-claim ./gns-claim-bob-commit-ready.json \
+npm run dev:cli -- submit-claim ./ont-claim-bob-commit-ready.json \
   --commit-input aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa:0:30000000:tb1qqvpsxqcrqvpsxqcrqvpsxqcrqvpsxqcr7mrzn4 \
   --commit-fee-sats 1000 \
   --reveal-input bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb:1:15000:tb1qqvpsxqcrqvpsxqcrqvpsxqcrqvpsxqcr7mrzn4 \
@@ -884,7 +910,7 @@ What this does:
 
 - builds unsigned transfer artifacts with a successor bond output
 - signs the transaction inputs with the supplied WIF
-- embeds the owner authorization in the GNS transfer payload
+- embeds the owner authorization in the ONT transfer payload
 - broadcasts the signed transfer transaction through Bitcoin Core RPC
 - writes the unsigned and signed transfer artifacts to `--out-dir`
 
@@ -901,7 +927,7 @@ This flow is intended for the immature-sale case where:
 - the seller spends the current live bond outpoint
 - the buyer funds the successor bond, the sale price, and the fee
 - the seller receives one payout output containing their reclaimed bond value plus the sale price
-- the transaction carries the GNS transfer event in one on-chain step
+- the transaction carries the ONT transfer event in one on-chain step
 
 Example:
 
@@ -941,7 +967,7 @@ This flow is intended for the mature-sale case where:
 
 - the seller contributes at least one Bitcoin input to bind the exact transaction
 - the buyer contributes payment inputs
-- the transaction pays the seller and carries the GNS transfer event in one on-chain step
+- the transaction pays the seller and carries the ONT transfer event in one on-chain step
 
 Example:
 
@@ -966,7 +992,7 @@ npm run dev:cli -- submit-sale-transfer \
 What this does:
 
 - builds an unsigned cooperative sale transaction
-- includes the GNS transfer event plus an explicit seller payment output
+- includes the ONT transfer event plus an explicit seller payment output
 - requires signatures from the seller and buyer inputs
 - broadcasts the signed transaction through Bitcoin Core RPC
 - writes sale-transfer artifacts to `--out-dir`
@@ -986,7 +1012,7 @@ Sign a value record:
 npm run dev:cli -- sign-value-record \
   --name bob \
   --owner-private-key-hex 4a4a4a4a4a4a4a4a4a4a4a4a4a4a4a4a4a4a4a4a4a4a4a4a4a4a4a4a4a4a4a4a \
-  --sequence 1 \
+  --resolver-url http://127.0.0.1:8787 \
   --value-type 2 \
   --payload-utf8 "https://example.com/bob" \
   --write .data/bob-value-record.json
@@ -998,17 +1024,54 @@ Publish the signed value record to the resolver:
 npm run dev:cli -- publish-value-record .data/bob-value-record.json
 ```
 
+Publish the exact same signed record to several resolvers:
+
+```bash
+npm run dev:cli -- publish-value-record \
+  .data/bob-value-record.json \
+  --resolver-urls http://127.0.0.1:8787,http://127.0.0.1:8788
+```
+
+If you also want the website values page to compare or fan out across several
+resolvers, configure the web app with an allowlist first:
+
+```bash
+ONT_WEB_RESOLVER_URLS=http://127.0.0.1:8787,http://127.0.0.1:8788 npm run dev:web
+```
+
+The values page will then:
+
+- compare current value-history visibility across that configured resolver set
+- expose a second publish button that fans the same signed JSON out to that set
+- avoid arbitrary browser-entered resolver URLs, so the web server is not an
+  open proxy
+
 What the resolver validates:
 
 - the record signature verifies against the owner pubkey
 - the name currently exists in the resolver
 - the record owner pubkey matches the resolver's current owner pubkey
-- the sequence increases relative to the current owner-visible value record
+- the record `ownershipRef` matches the current ownership interval
+- the sequence is exactly next for that interval
+- the `previousRecordHash` points to the current value-chain head
 
 Read the current value directly from the resolver:
 
 ```bash
 curl -s http://127.0.0.1:8787/name/bob/value
+```
+
+Read the value history chain:
+
+```bash
+curl -s http://127.0.0.1:8787/name/bob/value/history
+```
+
+Compare value-history visibility across several resolvers:
+
+```bash
+npm run dev:cli -- get-value-history bob \
+  --resolver-urls http://127.0.0.1:8787,http://127.0.0.1:8788
 ```
 
 Important note for fixture mode:
@@ -1048,14 +1111,14 @@ You need:
 In each terminal where you want to run the apps:
 
 ```bash
-export GNS_BITCOIN_RPC_URL="https://your-remote-signet-node.example/rpc"
-export GNS_BITCOIN_RPC_USERNAME="bitcoinrpc"
-export GNS_BITCOIN_RPC_PASSWORD="your-rpc-password"
-export GNS_EXPECT_CHAIN="signet"
-export GNS_LAUNCH_HEIGHT="100"
-export GNS_RPC_POLL_INTERVAL_MS="10000"
-export GNS_RESOLVER_PORT="8787"
-export GNS_WEB_PORT="3000"
+export ONT_BITCOIN_RPC_URL="https://your-remote-signet-node.example/rpc"
+export ONT_BITCOIN_RPC_USERNAME="bitcoinrpc"
+export ONT_BITCOIN_RPC_PASSWORD="your-rpc-password"
+export ONT_EXPECT_CHAIN="signet"
+export ONT_LAUNCH_HEIGHT="100"
+export ONT_RPC_POLL_INTERVAL_MS="10000"
+export ONT_RESOLVER_PORT="8787"
+export ONT_WEB_PORT="3000"
 ```
 
 ### 2a. Check the remote RPC before doing anything else
@@ -1076,7 +1139,7 @@ npm run dev:cli -- check-rpc \
 
 Expected important fields:
 
-- `"kind":"gns-rpc-check-result"`
+- `"kind":"ont-rpc-check-result"`
 - `"chain":"signet"`
 - `"blocks"`
 - `"headers"`
@@ -1086,8 +1149,8 @@ If this check fails, do not keep going to resolver startup or claim submission u
 Optional:
 
 ```bash
-export GNS_SNAPSHOT_PATH=".data/gns-snapshot.json"
-export GNS_RPC_END_HEIGHT="200"
+export ONT_SNAPSHOT_PATH=".data/ont-snapshot.json"
+export ONT_RPC_END_HEIGHT="200"
 ```
 
 ### 3. Run the resolver in RPC mode
@@ -1144,7 +1207,7 @@ When RPC mode is active:
 - the app writes a snapshot file to disk
 - on restart it tries to restore from that snapshot
 - it verifies the saved head block hash against Bitcoin Core
-- if the saved head is no longer on the active chain, it discards the snapshot state and rebuilds from `GNS_LAUNCH_HEIGHT`
+- if the saved head is no longer on the active chain, it discards the snapshot state and rebuilds from `ONT_LAUNCH_HEIGHT`
 
 Current prototype behavior on reorg:
 

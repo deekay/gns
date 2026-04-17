@@ -1,10 +1,10 @@
 # Private Relationship Graph and Nostr
 
-This note explores a higher-layer idea that should stay clearly separate from the core purpose of GNS.
+This note explores a higher-layer idea that should stay clearly separate from the core purpose of ONT.
 
 The idea is simple:
 
-- GNS provides public human-readable names and public authority
+- ONT provides public human-readable names and public authority
 - a separate encrypted layer could provide private relationship memory on top
 
 Examples of that private memory:
@@ -16,9 +16,9 @@ Examples of that private memory:
 - contact or messaging relationships
 - client preferences that should follow me across devices
 
-## Why This Is Not The Core GNS Value Layer
+## Why This Is Not The Core ONT Value Layer
 
-GNS value records are currently much closer to:
+ONT value records are currently much closer to:
 
 - public or semi-public resolution data
 - name-centric records
@@ -32,8 +32,8 @@ A private relationship graph is a different thing:
 
 That is why this should be treated as:
 
-- a layer built on GNS
-- not what the GNS resolver layer itself is for
+- a layer built on ONT
+- not what the ONT resolver layer itself is for
 
 ## Why Nostr Is A Plausible Substrate
 
@@ -59,11 +59,11 @@ Nostr already has several ingredients that are relevant here.
 
 [NIP-60](https://github.com/nostr-protocol/nips/blob/master/60.md) already uses relays to store encrypted Cashu wallet state so a wallet can move across applications.
 
-That does not prove Nostr is the right answer for GNS private data, but it does show that the ecosystem is already using Nostr for exactly this kind of "private, portable, user-controlled app state" pattern.
+That does not prove Nostr is the right answer for ONT private data, but it does show that the ecosystem is already using Nostr for exactly this kind of "private, portable, user-controlled app state" pattern.
 
-## What Nostr Seems Better At Than GNS For This
+## What Nostr Seems Better At Than ONT For This
 
-If the goal is encrypted personal sync, Nostr has some clear advantages over trying to overload the GNS resolver layer:
+If the goal is encrypted personal sync, Nostr has some clear advantages over trying to overload the ONT resolver layer:
 
 - it is user-centric
 - it already has relay and client conventions for personal state
@@ -81,7 +81,7 @@ This makes Nostr look like a more natural substrate for:
 
 ## What Nostr Does Not Solve
 
-Nostr should not be confused with GNS's core authority model.
+Nostr should not be confused with ONT's core authority model.
 
 Nostr is not a replacement for:
 
@@ -118,7 +118,7 @@ So the right framing is probably:
 
 The cleanest architecture may be:
 
-- GNS for public names and public authority
+- ONT for public names and public authority
 - Nostr for encrypted personal state about those names
 
 For example, a client could store encrypted records such as:
@@ -137,18 +137,18 @@ That data would be:
 
 If this is explored later, it should probably be framed as:
 
-- a higher-layer encrypted relationship graph built on top of GNS
+- a higher-layer encrypted relationship graph built on top of ONT
 - likely using Nostr or something Nostr-like as the sync layer
 
 Not as:
 
-- a reason to make GNS's own public value layer into a general private datastore
+- a reason to make ONT's own public value layer into a general private datastore
 
 ## Design Guardrails
 
 If this direction is ever prototyped, a few guardrails seem wise:
 
-- use a separate app/storage key, not the GNS owner key
+- use a separate app/storage key, not the ONT owner key
 - keep public name resolution separate from private app state
 - treat Nostr sync as convenience and portability, not canonical truth
 - assume relay privacy is imperfect

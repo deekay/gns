@@ -8,14 +8,14 @@ import {
   type ClaimPsbtBundle,
   type ClaimPsbtWalletUtxo,
   type WalletDerivationDescriptor
-} from "@gns/architect";
+} from "@ont/architect";
 import {
   createClaimPackage,
   parseBatchClaimPackage,
   type BatchClaimPackage,
   type ClaimPackage,
   type CreateClaimPackageInput
-} from "@gns/protocol";
+} from "@ont/protocol";
 
 const elements = {
   nameInput: requireElement<HTMLInputElement>("offlineNameInput"),
@@ -171,7 +171,7 @@ elements.downloadClaimPackageButton.addEventListener("click", () => {
     return;
   }
 
-  downloadJsonFile(currentClaimPackage, "gns-claim-" + currentClaimPackage.name + "-offline.json");
+  downloadJsonFile(currentClaimPackage, "ont-claim-" + currentClaimPackage.name + "-offline.json");
 });
 
 elements.downloadRevealReadyButton.addEventListener("click", () => {
@@ -181,7 +181,7 @@ elements.downloadRevealReadyButton.addEventListener("click", () => {
 
   downloadJsonFile(
     currentBundle.revealReadyClaimPackage,
-    "gns-claim-" + currentBundle.revealReadyClaimPackage.name + "-reveal-ready.json"
+    "ont-claim-" + currentBundle.revealReadyClaimPackage.name + "-reveal-ready.json"
   );
 });
 
@@ -192,7 +192,7 @@ elements.downloadCommitPsbtButton.addEventListener("click", () => {
 
   downloadBase64BinaryFile(
     currentBundle.commitArtifacts.psbtBase64,
-    "gns-commit-" + currentBundle.revealReadyClaimPackage.name + "-offline.psbt"
+    "ont-commit-" + currentBundle.revealReadyClaimPackage.name + "-offline.psbt"
   );
 });
 
@@ -203,7 +203,7 @@ elements.downloadRevealPsbtButton.addEventListener("click", () => {
 
   downloadBase64BinaryFile(
     currentBundle.revealArtifacts.psbtBase64,
-    "gns-reveal-" + currentBundle.revealReadyClaimPackage.name + "-offline.psbt"
+    "ont-reveal-" + currentBundle.revealReadyClaimPackage.name + "-offline.psbt"
   );
 });
 
@@ -214,7 +214,7 @@ elements.downloadSignerNotesButton.addEventListener("click", () => {
 
   downloadTextFile(
     buildSignerNotes(currentClaimPackage, currentBundle),
-    "gns-claim-" + currentBundle.revealReadyClaimPackage.name + "-offline-signer-notes.txt"
+    "ont-claim-" + currentBundle.revealReadyClaimPackage.name + "-offline-signer-notes.txt"
   );
 });
 
@@ -225,14 +225,14 @@ elements.downloadBatchBundleButton.addEventListener("click", () => {
 
   downloadJsonFile(
     {
-      kind: "gns-batch-offline-claim-bundle",
+      kind: "ont-batch-offline-claim-bundle",
       exportedAt: new Date().toISOString(),
       network: "signet",
       claimPackages: currentBatchClaimPackages,
       commitArtifacts: currentBatchArtifacts,
       revealReadyClaimPackages: currentBatchArtifacts.updatedClaimPackages
     },
-    "gns-batch-" + String(currentBatchArtifacts.updatedClaimPackages.length) + "-claims-offline.json"
+    "ont-batch-" + String(currentBatchArtifacts.updatedClaimPackages.length) + "-claims-offline.json"
   );
 });
 
@@ -243,7 +243,7 @@ elements.downloadBatchCommitPsbtButton.addEventListener("click", () => {
 
   downloadBase64BinaryFile(
     currentBatchArtifacts.psbtBase64,
-    "gns-batch-commit-" + String(currentBatchArtifacts.updatedClaimPackages.length) + "-claims-offline.psbt"
+    "ont-batch-commit-" + String(currentBatchArtifacts.updatedClaimPackages.length) + "-claims-offline.psbt"
   );
 });
 
@@ -254,7 +254,7 @@ elements.downloadBatchSignerNotesButton.addEventListener("click", () => {
 
   downloadTextFile(
     buildBatchSignerNotes(currentBatchClaimPackages, currentBatchArtifacts),
-    "gns-batch-" + String(currentBatchArtifacts.updatedClaimPackages.length) + "-claims-offline-signer-notes.txt"
+    "ont-batch-" + String(currentBatchArtifacts.updatedClaimPackages.length) + "-claims-offline-signer-notes.txt"
   );
 });
 
@@ -265,7 +265,7 @@ elements.downloadBatchRevealPackageButton.addEventListener("click", () => {
 
   downloadJsonFile(
     currentBatchRevealClaimPackage,
-    "gns-claim-" + currentBatchRevealClaimPackage.name + "-batch-reveal-ready.json"
+    "ont-claim-" + currentBatchRevealClaimPackage.name + "-batch-reveal-ready.json"
   );
 });
 
@@ -276,7 +276,7 @@ elements.downloadBatchRevealPsbtButton.addEventListener("click", () => {
 
   downloadBase64BinaryFile(
     currentBatchRevealArtifacts.psbtBase64,
-    "gns-reveal-" + currentBatchRevealClaimPackage.name + "-batch-offline.psbt"
+    "ont-reveal-" + currentBatchRevealClaimPackage.name + "-batch-offline.psbt"
   );
 });
 
@@ -291,7 +291,7 @@ elements.downloadBatchRevealSignerNotesButton.addEventListener("click", () => {
       currentBatchRevealArtifacts,
       currentBatchRevealFundingInputs
     ),
-    "gns-reveal-" + currentBatchRevealClaimPackage.name + "-batch-offline-signer-notes.txt"
+    "ont-reveal-" + currentBatchRevealClaimPackage.name + "-batch-offline-signer-notes.txt"
   );
 });
 
@@ -320,7 +320,7 @@ elements.batchDownloads.addEventListener("click", (event) => {
     return;
   }
 
-  downloadJsonFile(claimPackage, "gns-claim-" + claimPackage.name + "-batch-reveal-ready.json");
+  downloadJsonFile(claimPackage, "ont-claim-" + claimPackage.name + "-batch-reveal-ready.json");
 });
 
 function readClaimPackageInput(): CreateClaimPackageInput {
@@ -623,7 +623,7 @@ function setBatchRevealDownloadState(enabled: boolean): void {
 
 function buildSignerNotes(claimPackage: ClaimPackage, bundle: ClaimPsbtBundle): string {
   return [
-    "Global Name System Offline Claim Notes",
+    "Open Name Tags Offline Claim Notes",
     "",
     "Name: " + claimPackage.name,
     "Owner Pubkey: " + claimPackage.ownerPubkey,
@@ -655,7 +655,7 @@ function buildBatchSignerNotes(
   artifacts: BatchCommitArtifacts
 ): string {
   return [
-    "Global Name System Offline Batch Claim Notes",
+    "Open Name Tags Offline Batch Claim Notes",
     "",
     "Claim Count: " + String(artifacts.updatedClaimPackages.length),
     "Commit Txid: " + artifacts.commitTxid,
@@ -688,7 +688,7 @@ function buildBatchRevealSignerNotes(
   fundingInputs: readonly ClaimPsbtWalletUtxo[]
 ): string {
   return [
-    "Global Name System Offline Batch Reveal Notes",
+    "Open Name Tags Offline Batch Reveal Notes",
     "",
     "Name: " + claimPackage.name,
     "Owner Pubkey: " + claimPackage.ownerPubkey,

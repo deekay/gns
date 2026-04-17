@@ -41,7 +41,7 @@ This is a better engineering trade than trying to make one payload decoder silen
 
 ## Decision 2: Batch Anchor Uses One Explicit Root Carrier
 
-The batch anchor transaction should contain one explicit GNS batch-anchor payload plus one dedicated bond output per claim.
+The batch anchor transaction should contain one explicit ONT batch-anchor payload plus one dedicated bond output per claim.
 
 Recommended batch-anchor payload shape:
 

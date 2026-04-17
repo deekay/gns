@@ -1,5 +1,5 @@
 {
-  "name": "@gns/architect",
+  "name": "@ont/architect",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -14,7 +14,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@gns/protocol": "file:../protocol",
+    "@ont/protocol": "file:../protocol",
     "bip32": "^5.0.1",
     "bitcoinjs-lib": "^7.0.1",
     "tiny-secp256k1": "^2.2.4"

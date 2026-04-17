@@ -14,8 +14,8 @@ import {
   encodeCommitPayload,
   parseClaimPackage,
   PROTOCOL_NAME
-} from "@gns/protocol";
-import { createBitcoinRpcConfig } from "@gns/bitcoin";
+} from "@ont/protocol";
+import { createBitcoinRpcConfig } from "@ont/bitcoin";
 
 import { loadRevealQueueFile } from "./reveal-queue.js";
 import { submitClaim } from "./submit-claim.js";
@@ -84,7 +84,7 @@ describe("submitClaim", () => {
   let sandboxDir: string;
 
   beforeEach(async () => {
-    sandboxDir = await mkdtemp(join(tmpdir(), "gns-submit-claim-"));
+    sandboxDir = await mkdtemp(join(tmpdir(), "ont-submit-claim-"));
   });
 
   afterEach(async () => {
@@ -124,7 +124,7 @@ describe("submitClaim", () => {
               bestblockhash: "hash100"
             },
             error: null,
-            id: "gns"
+            id: "ont"
           }),
           { status: 200, headers: { "content-type": "application/json" } }
         );
@@ -138,7 +138,7 @@ describe("submitClaim", () => {
           JSON.stringify({
             result: txid,
             error: null,
-            id: "gns"
+            id: "ont"
           }),
           { status: 200, headers: { "content-type": "application/json" } }
         );
@@ -178,7 +178,7 @@ describe("submitClaim", () => {
       outDir
     });
 
-    expect(result.kind).toBe("gns-submit-claim-result");
+    expect(result.kind).toBe("ont-submit-claim-result");
     expect(result.queuePath).toBe(queuePath);
     expect(result.outDir).toBe(outDir);
     expect(result.commitTxid).toHaveLength(64);
@@ -236,7 +236,7 @@ describe("submitClaim", () => {
               bestblockhash: "hash100"
             },
             error: null,
-            id: "gns"
+            id: "ont"
           }),
           { status: 200, headers: { "content-type": "application/json" } }
         );
@@ -250,7 +250,7 @@ describe("submitClaim", () => {
           JSON.stringify({
             result: txid,
             error: null,
-            id: "gns"
+            id: "ont"
           }),
           { status: 200, headers: { "content-type": "application/json" } }
         );

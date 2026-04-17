@@ -1,6 +1,6 @@
 import { writeFile } from "node:fs/promises";
 
-export * from "@gns/architect";
+export * from "@ont/architect";
 
 export async function maybeWriteJsonFile(path: string | undefined, value: unknown): Promise<void> {
   if (!path) {

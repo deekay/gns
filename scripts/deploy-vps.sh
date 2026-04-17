@@ -13,16 +13,16 @@ Examples:
   ./scripts/deploy-vps.sh root@example.com ~/.ssh/your_key
 
 This script:
-  - rsyncs the current repo to /opt/gns/app
+  - rsyncs the current repo to /opt/ont/app
   - installs npm dependencies on the server
   - by default, preserves the current launch height and snapshot
-  - restarts gns-resolver and gns-web
+  - restarts ont-resolver and ont-web
   - prints local health checks from the VPS
 
 Environment:
-  GNS_SSH_TARGET                   Default SSH target when the first argument is omitted.
-  GNS_SSH_KEY                      Optional SSH key path when the second argument is omitted.
-  GNS_DEPLOY_REFRESH_LAUNCH_HEIGHT  Set to 1 to refresh GNS_LAUNCH_HEIGHT from the configured RPC tip and clear the configured snapshot. Default: 0
+  ONT_SSH_TARGET                   Default SSH target when the first argument is omitted.
+  ONT_SSH_KEY                      Optional SSH key path when the second argument is omitted.
+  ONT_DEPLOY_REFRESH_LAUNCH_HEIGHT  Set to 1 to refresh ONT_LAUNCH_HEIGHT from the configured RPC tip and clear the configured snapshot. Default: 0
 EOF
 }
 
@@ -36,11 +36,11 @@ if [[ $# -gt 2 ]]; then
   exit 1
 fi
 
-REMOTE="${1:-${GNS_SSH_TARGET:-}}"
-SSH_KEY_PATH="${2:-${GNS_SSH_KEY:-}}"
+REMOTE="${1:-${ONT_SSH_TARGET:-}}"
+SSH_KEY_PATH="${2:-${ONT_SSH_KEY:-}}"
 
 if [[ -z "$REMOTE" ]]; then
-  echo "Missing SSH target. Pass <user@host> or set GNS_SSH_TARGET." >&2
+  echo "Missing SSH target. Pass <user@host> or set ONT_SSH_TARGET." >&2
   usage
   exit 1
 fi
@@ -61,11 +61,11 @@ if [[ -n "$SSH_KEY_PATH" ]]; then
     "${SSH_ARGS[@]}"
   )
 fi
-REFRESH_LAUNCH_HEIGHT="${GNS_DEPLOY_REFRESH_LAUNCH_HEIGHT:-0}"
+REFRESH_LAUNCH_HEIGHT="${ONT_DEPLOY_REFRESH_LAUNCH_HEIGHT:-0}"
 
 echo "Deploying to $REMOTE"
 
-RELEASE_DIR=$(ssh "${SSH_ARGS[@]}" "$REMOTE" 'install -d /opt/gns/releases && mktemp -d /opt/gns/releases/public-XXXXXX')
+RELEASE_DIR=$(ssh "${SSH_ARGS[@]}" "$REMOTE" 'install -d /opt/ont/releases && mktemp -d /opt/ont/releases/public-XXXXXX')
 
 rsync -az --delete \
   --exclude '.git' \
@@ -116,45 +116,45 @@ cleanup() {
 
 trap cleanup EXIT
 
-LOCK_PATH=/var/lock/gns-app-deploy.lock
+LOCK_PATH=/var/lock/ont-app-deploy.lock
 echo "Waiting for deploy lock: $LOCK_PATH"
 exec 9>"$LOCK_PATH"
 flock 9
 
-if [[ -f /etc/gns/gns.env ]]; then
-  upsert_env /etc/gns/gns.env GNS_WEB_PRIVATE_BATCH_SMOKE_STATUS_PATH /var/lib/gns/private-batch-smoke-summary.json
-  upsert_env /etc/gns/gns.env GNS_WEB_PRIVATE_AUCTION_SMOKE_STATUS_PATH /var/lib/gns/private-auction-smoke-summary.json
+if [[ -f /etc/ont/ont.env ]]; then
+  upsert_env /etc/ont/ont.env ONT_WEB_PRIVATE_BATCH_SMOKE_STATUS_PATH /var/lib/ont/private-batch-smoke-summary.json
+  upsert_env /etc/ont/ont.env ONT_WEB_PRIVATE_AUCTION_SMOKE_STATUS_PATH /var/lib/ont/private-auction-smoke-summary.json
 fi
-if [[ -f /etc/gns/gns-domain.env ]]; then
-  upsert_env /etc/gns/gns-domain.env GNS_WEB_PRIVATE_DEMO_BASE_PATH /gns-private
-  upsert_env /etc/gns/gns-domain.env GNS_WEB_PRIVATE_BATCH_SMOKE_STATUS_PATH /var/lib/gns/private-batch-smoke-summary.json
-  upsert_env /etc/gns/gns-domain.env GNS_WEB_PRIVATE_AUCTION_SMOKE_STATUS_PATH /var/lib/gns/private-auction-smoke-summary.json
+if [[ -f /etc/ont/ont-domain.env ]]; then
+  upsert_env /etc/ont/ont-domain.env ONT_WEB_PRIVATE_DEMO_BASE_PATH /ont-private
+  upsert_env /etc/ont/ont-domain.env ONT_WEB_PRIVATE_BATCH_SMOKE_STATUS_PATH /var/lib/ont/private-batch-smoke-summary.json
+  upsert_env /etc/ont/ont-domain.env ONT_WEB_PRIVATE_AUCTION_SMOKE_STATUS_PATH /var/lib/ont/private-auction-smoke-summary.json
 fi
 
-install -d /opt/gns/app
-rsync -a --delete "${RELEASE_DIR}/" /opt/gns/app/
-chown -R gns:gns /opt/gns/app
-su -s /bin/bash gns -c 'cd /opt/gns/app && npm ci --no-audit --no-fund'
+install -d /opt/ont/app
+rsync -a --delete "${RELEASE_DIR}/" /opt/ont/app/
+chown -R ont:ont /opt/ont/app
+su -s /bin/bash ont -c 'cd /opt/ont/app && npm ci --no-audit --no-fund'
 
 if [[ -f /etc/bitcoin-private-signet.conf ]]; then
-  install -m 755 /opt/gns/app/scripts/private-signet-auto-mine.sh /usr/local/bin/gns-private-signet-auto-mine
-  cat >/etc/default/gns-private-signet-auto-mine <<'ENVFILE'
-GNS_PRIVATE_SIGNET_AUTO_MINE_INTERVAL_SECONDS=30
+  install -m 755 /opt/ont/app/scripts/private-signet-auto-mine.sh /usr/local/bin/ont-private-signet-auto-mine
+  cat >/etc/default/ont-private-signet-auto-mine <<'ENVFILE'
+ONT_PRIVATE_SIGNET_AUTO_MINE_INTERVAL_SECONDS=30
 ENVFILE
-  chown root:root /etc/default/gns-private-signet-auto-mine
-  chmod 644 /etc/default/gns-private-signet-auto-mine
+  chown root:root /etc/default/ont-private-signet-auto-mine
+  chmod 644 /etc/default/ont-private-signet-auto-mine
 
-  cat >/etc/systemd/system/gns-private-signet-auto-mine.service <<'SERVICE'
+  cat >/etc/systemd/system/ont-private-signet-auto-mine.service <<'SERVICE'
 [Unit]
-Description=Global Name System private signet auto-miner
+Description=Open Name Tags private signet auto-miner
 After=bitcoind-private-signet.service
 Requires=bitcoind-private-signet.service
 
 [Service]
 User=bitcoin
 Group=bitcoin
-EnvironmentFile=-/etc/default/gns-private-signet-auto-mine
-ExecStart=/usr/local/bin/gns-private-signet-auto-mine
+EnvironmentFile=-/etc/default/ont-private-signet-auto-mine
+ExecStart=/usr/local/bin/ont-private-signet-auto-mine
 Restart=always
 RestartSec=5
 NoNewPrivileges=true
@@ -166,19 +166,19 @@ WantedBy=multi-user.target
 SERVICE
 
   systemctl daemon-reload
-  systemctl enable --now gns-private-signet-auto-mine.service
-  systemctl restart gns-private-signet-auto-mine.service
+  systemctl enable --now ont-private-signet-auto-mine.service
+  systemctl restart ont-private-signet-auto-mine.service
 fi
 
 if [[ "${REFRESH_LAUNCH_HEIGHT:-0}" != "0" ]]; then
-  SOURCE_MODE=$(env_value GNS_SOURCE_MODE /etc/gns/gns.env)
-  RPC_URL=$(env_value GNS_BITCOIN_RPC_URL /etc/gns/gns.env)
-  RPC_USERNAME=$(env_value GNS_BITCOIN_RPC_USERNAME /etc/gns/gns.env)
-  RPC_PASSWORD=$(env_value GNS_BITCOIN_RPC_PASSWORD /etc/gns/gns.env)
-  SNAPSHOT_PATH=$(env_value GNS_SNAPSHOT_PATH /etc/gns/gns.env)
+  SOURCE_MODE=$(env_value ONT_SOURCE_MODE /etc/ont/ont.env)
+  RPC_URL=$(env_value ONT_BITCOIN_RPC_URL /etc/ont/ont.env)
+  RPC_USERNAME=$(env_value ONT_BITCOIN_RPC_USERNAME /etc/ont/ont.env)
+  RPC_PASSWORD=$(env_value ONT_BITCOIN_RPC_PASSWORD /etc/ont/ont.env)
+  SNAPSHOT_PATH=$(env_value ONT_SNAPSHOT_PATH /etc/ont/ont.env)
 
   if [[ "$SOURCE_MODE" != "rpc" || -z "$RPC_URL" ]]; then
-    echo "Refusing to refresh launch height without rpc mode and GNS_BITCOIN_RPC_URL" >&2
+    echo "Refusing to refresh launch height without rpc mode and ONT_BITCOIN_RPC_URL" >&2
     exit 1
   fi
 
@@ -195,7 +195,7 @@ request = urllib.request.Request(
     url,
     data=json.dumps({
         "jsonrpc": "1.0",
-        "id": "gns-deploy",
+        "id": "ont-deploy",
         "method": "getblockcount",
         "params": []
     }).encode("utf-8"),
@@ -217,30 +217,30 @@ PY
 )
   awk -v h="$CURRENT_BLOCKS" '
   BEGIN {FS=OFS="="}
-  /^GNS_LAUNCH_HEIGHT=/ {$2=h; found=1}
+  /^ONT_LAUNCH_HEIGHT=/ {$2=h; found=1}
   {print}
   END {
     if (!found) {
-      print "GNS_LAUNCH_HEIGHT=" h
+      print "ONT_LAUNCH_HEIGHT=" h
     }
   }
-  ' /etc/gns/gns.env >/etc/gns/gns.env.new
-  mv /etc/gns/gns.env.new /etc/gns/gns.env
-  chown root:gns /etc/gns/gns.env
-  chmod 640 /etc/gns/gns.env
+  ' /etc/ont/ont.env >/etc/ont/ont.env.new
+  mv /etc/ont/ont.env.new /etc/ont/ont.env
+  chown root:ont /etc/ont/ont.env
+  chmod 640 /etc/ont/ont.env
   if [[ -z "$SNAPSHOT_PATH" ]]; then
-    SNAPSHOT_PATH=/var/lib/gns/resolver-snapshot.json
+    SNAPSHOT_PATH=/var/lib/ont/resolver-snapshot.json
   fi
   rm -f "$SNAPSHOT_PATH"
 fi
-systemctl restart gns-resolver.service gns-web.service
-if systemctl list-unit-files gns-domain-web.service >/dev/null 2>&1; then
-  systemctl restart gns-domain-web.service
+systemctl restart ont-resolver.service ont-web.service
+if systemctl list-unit-files ont-domain-web.service >/dev/null 2>&1; then
+  systemctl restart ont-domain-web.service
 fi
 
-RESOLVER_PORT=$(env_value GNS_RESOLVER_PORT /etc/gns/gns.env)
-WEB_PORT=$(env_value GNS_WEB_PORT /etc/gns/gns.env)
-WEB_BASE_PATH=$(env_value GNS_WEB_BASE_PATH /etc/gns/gns.env)
+RESOLVER_PORT=$(env_value ONT_RESOLVER_PORT /etc/ont/ont.env)
+WEB_PORT=$(env_value ONT_WEB_PORT /etc/ont/ont.env)
+WEB_BASE_PATH=$(env_value ONT_WEB_BASE_PATH /etc/ont/ont.env)
 if [[ -z "$WEB_BASE_PATH" || "$WEB_BASE_PATH" == "/" ]]; then
   WEB_BASE_PATH=""
 fi
@@ -275,14 +275,14 @@ wait_for_http "http://127.0.0.1:${WEB_PORT}${WEB_BASE_PATH}/api/health" "web hea
 
 echo
 echo "[resolver service]"
-systemctl --no-pager --full status gns-resolver.service | sed -n '1,40p'
+systemctl --no-pager --full status ont-resolver.service | sed -n '1,40p'
 echo
 echo "[web service]"
-systemctl --no-pager --full status gns-web.service | sed -n '1,40p'
-if systemctl list-unit-files gns-domain-web.service >/dev/null 2>&1; then
+systemctl --no-pager --full status ont-web.service | sed -n '1,40p'
+if systemctl list-unit-files ont-domain-web.service >/dev/null 2>&1; then
   echo
   echo "[domain web service]"
-  systemctl --no-pager --full status gns-domain-web.service | sed -n '1,40p'
+  systemctl --no-pager --full status ont-domain-web.service | sed -n '1,40p'
 fi
 EOF
 

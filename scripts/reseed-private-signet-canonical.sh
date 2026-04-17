@@ -13,12 +13,12 @@ Examples:
   ./scripts/reseed-private-signet-canonical.sh root@example.com ~/.ssh/your_key
 
 Environment:
-  GNS_SSH_TARGET                                  Default SSH target when the first argument is omitted.
-  GNS_SSH_KEY                                     Optional SSH key path when the second argument is omitted.
-  GNS_PRIVATE_SIGNET_RESET_BLOCKS                 Initial blocks to mine after reset. Default: 110
-  GNS_PRIVATE_SIGNET_RESET_DELETE_LOCAL           Delete local demo wallets/artifacts too. Default: 1
-  GNS_PRIVATE_SIGNET_BATCH_SMOKE_ALPHA_NAME       Override canonical alpha batch name. Default: batchalpha
-  GNS_PRIVATE_SIGNET_BATCH_SMOKE_BETA_NAME        Override canonical beta batch name. Default: batchbeta
+  ONT_SSH_TARGET                                  Default SSH target when the first argument is omitted.
+  ONT_SSH_KEY                                     Optional SSH key path when the second argument is omitted.
+  ONT_PRIVATE_SIGNET_RESET_BLOCKS                 Initial blocks to mine after reset. Default: 110
+  ONT_PRIVATE_SIGNET_RESET_DELETE_LOCAL           Delete local demo wallets/artifacts too. Default: 1
+  ONT_PRIVATE_SIGNET_BATCH_SMOKE_ALPHA_NAME       Override canonical alpha batch name. Default: batchalpha
+  ONT_PRIVATE_SIGNET_BATCH_SMOKE_BETA_NAME        Override canonical beta batch name. Default: batchbeta
 EOF
 }
 
@@ -32,13 +32,13 @@ if [[ $# -gt 2 ]]; then
   exit 1
 fi
 
-REMOTE="${1:-${GNS_SSH_TARGET:-}}"
-SSH_KEY_PATH="${2:-${GNS_SSH_KEY:-}}"
-ALPHA_NAME="${GNS_PRIVATE_SIGNET_BATCH_SMOKE_ALPHA_NAME:-batchalpha}"
-BETA_NAME="${GNS_PRIVATE_SIGNET_BATCH_SMOKE_BETA_NAME:-batchbeta}"
+REMOTE="${1:-${ONT_SSH_TARGET:-}}"
+SSH_KEY_PATH="${2:-${ONT_SSH_KEY:-}}"
+ALPHA_NAME="${ONT_PRIVATE_SIGNET_BATCH_SMOKE_ALPHA_NAME:-batchalpha}"
+BETA_NAME="${ONT_PRIVATE_SIGNET_BATCH_SMOKE_BETA_NAME:-batchbeta}"
 
 if [[ -z "$REMOTE" ]]; then
-  echo "Missing SSH target. Pass <user@host> or set GNS_SSH_TARGET." >&2
+  echo "Missing SSH target. Pass <user@host> or set ONT_SSH_TARGET." >&2
   usage
   exit 1
 fi
@@ -48,8 +48,8 @@ if [[ -n "$SSH_KEY_PATH" && ! -f "$SSH_KEY_PATH" ]]; then
   exit 1
 fi
 
-export GNS_PRIVATE_SIGNET_SSH_TARGET="$REMOTE"
-export GNS_PRIVATE_SIGNET_SSH_KEY="${SSH_KEY_PATH:-}"
+export ONT_PRIVATE_SIGNET_SSH_TARGET="$REMOTE"
+export ONT_PRIVATE_SIGNET_SSH_KEY="${SSH_KEY_PATH:-}"
 
 cd "$ROOT_DIR"
 
@@ -63,8 +63,8 @@ node ./scripts/private-signet-reseed-demo.mjs
 
 echo
 echo "[3/5] Seed canonical batched claim proof"
-GNS_PRIVATE_SIGNET_BATCH_SMOKE_ALPHA_NAME="$ALPHA_NAME" \
-GNS_PRIVATE_SIGNET_BATCH_SMOKE_BETA_NAME="$BETA_NAME" \
+ONT_PRIVATE_SIGNET_BATCH_SMOKE_ALPHA_NAME="$ALPHA_NAME" \
+ONT_PRIVATE_SIGNET_BATCH_SMOKE_BETA_NAME="$BETA_NAME" \
 node ./scripts/private-signet-batch-smoke.mjs
 
 echo

@@ -9,7 +9,7 @@ soon, see [TRANSFER_BATCHING_EVALUATION.md](./TRANSFER_BATCHING_EVALUATION.md).
 
 The current transfer payload is:
 
-- `GNS` magic + version + event type: `5` bytes
+- `ONT` magic + version + event type: `5` bytes
 - `prevStateTxid`: `32` bytes
 - `newOwnerPubkey`: `32` bytes
 - `flags`: `1` byte
@@ -59,7 +59,7 @@ Those three properties are what make the transfer independently derivable from c
 
 The current transfer format preserves a clean v1 rule:
 
-> the GNS owner key is the authority for the name, even when that key is distinct from the funding wallet key.
+> the ONT owner key is the authority for the name, even when that key is distinct from the funding wallet key.
 
 That gives us:
 

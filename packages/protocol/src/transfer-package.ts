@@ -1,7 +1,7 @@
 import { PROTOCOL_NAME } from "./constants.js";
 import { normalizeName } from "./names.js";
 
-export const TRANSFER_PACKAGE_FORMAT = "gns-transfer-package";
+export const TRANSFER_PACKAGE_FORMAT = "ont-transfer-package";
 export const TRANSFER_PACKAGE_VERSION = 1;
 
 export type TransferPackageStatus = "immature" | "mature";

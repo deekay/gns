@@ -1,8 +1,8 @@
 # Post-Quantum And Signature Agility
 
-This note captures a practical position on post-quantum risk for GNS, especially in light of long-lived names and premium-name designs that may contemplate `5-10` year lock periods.
+This note captures a practical position on post-quantum risk for ONT, especially in light of long-lived names and premium-name designs that may contemplate `5-10` year lock periods.
 
-It is not a claim that GNS has already solved post-quantum migration. It is a statement of what we should and should not claim, and what properties the protocol should preserve before mainnet launch.
+It is not a claim that ONT has already solved post-quantum migration. It is a statement of what we should and should not claim, and what properties the protocol should preserve before mainnet launch.
 
 ## Why This Matters
 
@@ -14,7 +14,7 @@ The current prototype uses ordinary Bitcoin/secp256k1 assumptions:
 
 That is fine for today's Bitcoin environment.
 
-But if GNS wants to support:
+But if ONT wants to support:
 
 - names that may remain valuable for decades
 - premium-name lock periods of `5-10` years
@@ -24,26 +24,26 @@ then it should have an explicit position on signature-agility and post-quantum m
 
 ## The Current Reality
 
-GNS is not independently post-quantum secure today.
+ONT is not independently post-quantum secure today.
 
-That is not because GNS made a special mistake. It is because the current design inherits the same basic signature assumptions as Bitcoin's current key ecosystem.
+That is not because ONT made a special mistake. It is because the current design inherits the same basic signature assumptions as Bitcoin's current key ecosystem.
 
 Two practical facts follow:
 
-1. If a cryptographically relevant quantum break arrives while GNS names are still controlled by exposed secp256k1 keys, name control could be at risk.
-2. GNS cannot unilaterally promise a post-quantum on-chain future if Bitcoin itself does not yet provide a credible path for such keys or scripts.
+1. If a cryptographically relevant quantum break arrives while ONT names are still controlled by exposed secp256k1 keys, name control could be at risk.
+2. ONT cannot unilaterally promise a post-quantum on-chain future if Bitcoin itself does not yet provide a credible path for such keys or scripts.
 
-## What GNS Can And Cannot Do
+## What ONT Can And Cannot Do
 
-### What GNS cannot do by itself
+### What ONT cannot do by itself
 
-GNS cannot magically become post-quantum secure at the ownership layer if Bitcoin does not support the necessary base-layer primitives.
+ONT cannot magically become post-quantum secure at the ownership layer if Bitcoin does not support the necessary base-layer primitives.
 
-If the chain only understands today's key and script assumptions, GNS cannot fully outrun that.
+If the chain only understands today's key and script assumptions, ONT cannot fully outrun that.
 
-### What GNS can do
+### What ONT can do
 
-GNS can preserve **algorithm agility** and **migration optionality** so that a future upgrade path is possible rather than structurally blocked.
+ONT can preserve **algorithm agility** and **migration optionality** so that a future upgrade path is possible rather than structurally blocked.
 
 That means designing the protocol so it does not unnecessarily hard-code:
 
@@ -53,7 +53,7 @@ That means designing the protocol so it does not unnecessarily hard-code:
 
 ## Recommended Position
 
-The most credible position for GNS today is:
+The most credible position for ONT today is:
 
 1. **Do not claim post-quantum security today.**
 2. **Do treat signature agility as a real pre-launch design concern.**
@@ -80,7 +80,7 @@ Long-duration capital commitments make post-quantum migration more important, no
 
 ## Design Principles To Preserve
 
-If GNS wants a credible long-horizon story, the protocol should preserve these properties:
+If ONT wants a credible long-horizon story, the protocol should preserve these properties:
 
 ### 1. Owner-key migration should be a first-class concept
 
@@ -137,7 +137,7 @@ This is less elegant than built-in agility, but more honest than pretending an i
 
 ### D. Hybrid or staged migration
 
-If Bitcoin eventually supports hybrid or transitional script/key constructions, GNS could use a staged migration:
+If Bitcoin eventually supports hybrid or transitional script/key constructions, ONT could use a staged migration:
 
 - first rotate from legacy owner control into a hybrid control format
 - later rotate again into a post-quantum-native format
@@ -146,15 +146,15 @@ Whether this is practical depends entirely on Bitcoin's future capabilities.
 
 ## Important Constraint: Bitcoin Comes First
 
-GNS should not imply that it can decide the full post-quantum path on its own.
+ONT should not imply that it can decide the full post-quantum path on its own.
 
 The realistic dependency chain is:
 
 1. Bitcoin ecosystem develops a credible view on quantum migration
 2. Bitcoin wallets, scripts, and key tooling gain support
-3. GNS adopts a compatible owner-migration path
+3. ONT adopts a compatible owner-migration path
 
-So the right goal for GNS now is not:
+So the right goal for ONT now is not:
 
 - solve post-quantum signatures in isolation
 
@@ -178,7 +178,7 @@ This is another reason to avoid making decade-long lockups feel trivial from a p
 
 For current design work, the most reasonable working stance is:
 
-- GNS v1 should be treated as **not post-quantum secure**
+- ONT v1 should be treated as **not post-quantum secure**
 - any mainnet design with very long-lived claims should have a documented **signature-agility and migration story**
 - if no credible Bitcoin-level migration path exists by launch time, that should weigh against making premium-name commitments excessively long or claiming durable long-horizon security
 
@@ -188,7 +188,7 @@ That is not defeatist. It is just intellectually honest.
 
 A concise way to say this later might be:
 
-> GNS does not claim post-quantum security today, and it should not pretend to outrun Bitcoin's own signature assumptions. But because GNS is meant to anchor long-lived names, signature-agility and owner-key migration should be treated as real pre-launch design requirements rather than ignored as distant theory.
+> ONT does not claim post-quantum security today, and it should not pretend to outrun Bitcoin's own signature assumptions. But because ONT is meant to anchor long-lived names, signature-agility and owner-key migration should be treated as real pre-launch design requirements rather than ignored as distant theory.
 
 ## Open Questions
 

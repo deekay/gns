@@ -694,7 +694,7 @@ async function callBitcoinRpc<T>(
       headers,
       body: JSON.stringify({
         jsonrpc: "1.0",
-        id: "gns",
+        id: "ont",
         method,
         params
       })

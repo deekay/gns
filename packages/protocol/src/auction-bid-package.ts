@@ -4,7 +4,7 @@ import { assertHexBytes } from "./bytes.js";
 import { PROTOCOL_NAME } from "./constants.js";
 import { normalizeName } from "./names.js";
 
-export const AUCTION_BID_PACKAGE_FORMAT = "gns-auction-bid-package";
+export const AUCTION_BID_PACKAGE_FORMAT = "ont-auction-bid-package";
 export const AUCTION_BID_PACKAGE_VERSION = 2;
 
 export type AuctionBidPackagePhase =
@@ -378,7 +378,7 @@ export function parseAuctionBidPackage(input: unknown): AuctionBidPackage {
 
 export function computeAuctionBidderCommitment(bidderId: string): string {
   return createHash("sha256")
-    .update("gns-auction-bidder-v1", "utf8")
+    .update("ont-auction-bidder-v1", "utf8")
     .update("\u0000", "utf8")
     .update(normalizeRequiredText(bidderId, "bidderId"), "utf8")
     .digest("hex")
@@ -392,7 +392,7 @@ export function computeAuctionLotCommitment(input: {
   readonly unlockBlock: number;
 }): string {
   return createHash("sha256")
-    .update("gns-auction-lot-v1", "utf8")
+    .update("ont-auction-lot-v1", "utf8")
     .update("\u0000", "utf8")
     .update(normalizeRequiredText(input.auctionId, "auctionId"), "utf8")
     .update("\u0000", "utf8")
@@ -421,7 +421,7 @@ export function computeAuctionBidStateCommitment(input: {
 }): string {
   const hasher = createHash("sha256");
   const fields = [
-    "gns-auction-state-v1",
+    "ont-auction-state-v1",
     normalizeRequiredText(input.auctionId, "auctionId"),
     normalizeName(input.name),
     normalizeRequiredText(input.reservedClassId, "reservedClassId"),

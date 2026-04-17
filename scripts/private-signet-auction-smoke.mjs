@@ -3,7 +3,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
-import { createAuctionBidPackage } from "@gns/protocol";
+import { createAuctionBidPackage } from "@ont/protocol";
 
 import {
   cliJson,
@@ -29,10 +29,10 @@ const BID_FEE_SATS = 1_000n;
 const EARLY_SPEND_FEE_SATS = 1_000n;
 const FUNDING_PADDING_SATS = 20_000n;
 const REMOTE_STATUS_PATH =
-  process.env.GNS_PRIVATE_SIGNET_AUCTION_SMOKE_REMOTE_STATUS_PATH
-  ?? "/var/lib/gns/private-auction-smoke-summary.json";
+  process.env.ONT_PRIVATE_SIGNET_AUCTION_SMOKE_REMOTE_STATUS_PATH
+  ?? "/var/lib/ont/private-auction-smoke-summary.json";
 const PUBLISH_REMOTE_STATUS =
-  (process.env.GNS_PRIVATE_SIGNET_AUCTION_SMOKE_PUBLISH_REMOTE_STATUS ?? "1") !== "0";
+  (process.env.ONT_PRIVATE_SIGNET_AUCTION_SMOKE_PUBLISH_REMOTE_STATUS ?? "1") !== "0";
 const BIDDING_SMOKE_AUCTION_ID_PREFIXES = ["10-", "11-", "12-", "14-", "15-", "16-", "18-"];
 const RELEASE_SMOKE_AUCTION_ID_PREFIXES = ["13-", "17-"];
 
@@ -43,7 +43,7 @@ void main().catch((error) => {
 
 async function main() {
   const summary = {
-    kind: "gns-private-signet-auction-smoke-summary",
+    kind: "ont-private-signet-auction-smoke-summary",
     status: "running",
     message: "Starting private signet experimental reserved-auction smoke flow.",
     startedAt: new Date().toISOString()
@@ -170,6 +170,8 @@ async function main() {
         targetAuction.normalizedName,
         "--owner-private-key-hex",
         recipient.ownerPrivateKeyHex,
+        "--resolver-url",
+        resolverUrl(),
         "--sequence",
         "1",
         "--value-type",
@@ -238,8 +240,10 @@ async function main() {
         targetAuction.normalizedName,
         "--owner-private-key-hex",
         pendingOwner.ownerPrivateKeyHex,
+        "--resolver-url",
+        resolverUrl(),
         "--sequence",
-        "2",
+        "1",
         "--value-type",
         "2",
         "--payload-utf8",
@@ -258,8 +262,8 @@ async function main() {
         "--resolver-url",
         resolverUrl()
       ]);
-      if (currentTransferredValue.sequence !== 2) {
-        throw new Error(`expected ${targetAuction.normalizedName} post-transfer value record to publish at sequence 2`);
+      if (currentTransferredValue.sequence !== 1) {
+        throw new Error(`expected ${targetAuction.normalizedName} post-transfer value record to publish at sequence 1`);
       }
 
       logStep(targetAuction.auctionId, "spending the winning bond after allowed release");

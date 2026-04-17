@@ -1,6 +1,6 @@
 # Merkle Batching Protocol Review Memo
 
-This note is meant to be the compact reviewer-facing explanation of what GNS is
+This note is meant to be the compact reviewer-facing explanation of what ONT is
 doing with Merkle batching, where Taproot annex fits into that story, and which
 questions we most want thoughtful Bitcoin protocol engineers to challenge.
 
@@ -22,7 +22,7 @@ Related notes:
 
 ## What We Are Trying To Achieve
 
-GNS uses bonds and time locks to make names costly to warehouse. That is the
+ONT uses bonds and time locks to make names costly to warehouse. That is the
 scarcity mechanism.
 
 Merkle batching is not trying to replace that mechanism. Its job is simpler:
@@ -59,7 +59,7 @@ At a high level:
 4. each reveal includes enough information for an indexer to reconstruct the
    relevant leaf and verify a Merkle proof back to the anchored root
 
-Conceptually, GNS still behaves like:
+Conceptually, ONT still behaves like:
 
 - commit first
 - reveal later
@@ -82,7 +82,7 @@ batch." It is:
 > this exact claim commitment is bound to this exact bond output in this exact
 > anchor transaction.
 
-That keeps the existing GNS economics intact:
+That keeps the existing ONT economics intact:
 
 - one claim still has one dedicated bond UTXO
 - batching does not pool or socialize the bond itself
@@ -147,7 +147,7 @@ The hybrid design we have been researching is:
 
 So the semantics stay recognizable:
 
-- the transaction still has an explicit GNS reveal event
+- the transaction still has an explicit ONT reveal event
 - the header still tells the indexer what claim this is
 - the annex carries only the bulky proof bytes
 
@@ -189,7 +189,7 @@ plausible:
 
 - custom CLI tooling can build, sign, and verify annex-bearing reveal-like
   transactions
-- real GNS batch reveal semantics can be bridged into that envelope
+- real ONT batch reveal semantics can be bridged into that envelope
 - a core/indexer-style parser can recover the annex bytes from raw witness,
   reconstruct the proof, and verify it against the expected Merkle root
 
@@ -283,7 +283,7 @@ that is clean enough or whether a better binding rule exists.
 Annex improves weight, but it also makes historical witness availability more
 important.
 
-We want feedback on whether it is acceptable for GNS to assume:
+We want feedback on whether it is acceptable for ONT to assume:
 
 - archival nodes or indexed witness access for serious verification
 
@@ -295,7 +295,7 @@ view.
 Today annex looks like:
 
 - standard unsigned PSBT as a construction container
-- plus a GNS sidecar
+- plus an ONT sidecar
 - plus custom finalization
 
 We want review on whether that seems like:

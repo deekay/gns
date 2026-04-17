@@ -1,24 +1,24 @@
-# Global Name System / GNS Decision Log
+# Open Name Tags / ONT Decision Log
 
-This file records protocol decisions that have been resolved during design work on Global Name System / GNS. It is intended to keep the evolving draft grounded in explicit decisions rather than conversational context.
+This file records protocol decisions that have been resolved during design work on Open Name Tags / ONT. It is intended to keep the evolving draft grounded in explicit decisions rather than conversational context.
 
 ## Resolved Decisions
 
 1. Ownership model
 
-GNS is pubkey-controlled. A name is owned by a specific public key, and valid claim, update, and transfer operations must be authorized by signatures from the corresponding private key.
+ONT is pubkey-controlled. A name is owned by a specific public key, and valid claim, update, and transfer operations must be authorized by signatures from the corresponding private key.
 
 Implications:
 - No xpub is required.
-- A CLI may derive the GNS owner key from a seed phrase using a standard derivation path, or import a standalone key.
-- GNS ownership is registry-style ownership, not inscription-style bearer ownership.
+- A CLI may derive the ONT owner key from a seed phrase using a standard derivation path, or import a standalone key.
+- ONT ownership is registry-style ownership, not inscription-style bearer ownership.
 
 2. Canonical state model
 
-Bitcoin is the canonical ownership and state log for GNS. External resolution data is optional and protocol-agnostic.
+Bitcoin is the canonical ownership and state log for ONT. External resolution data is optional and protocol-agnostic.
 
 Implications:
-- GNS is not Nostr-dependent.
+- ONT is not Nostr-dependent.
 - Nostr is an optional integration and early use-case, not a required foundation.
 - A name may point to Nostr, Bitcoin, HTTPS, DID, or nothing at all.
 
@@ -188,14 +188,32 @@ Recommended record fields:
 - name
 - owner public key
 - sequence number
+- ownership interval reference
+- previous value-record hash
 - value type
 - value payload
+- owner-issued timestamp
 - signature
 
 Rules:
-- Highest valid sequence number wins for a given owner key.
+- Value records form a signed append-only chain scoped to the current
+  ownership interval.
+- The first record in an ownership interval should have sequence `1` and no
+  previous record hash.
+- Later records should increment sequence exactly by one and point to the
+  canonical hash of the previous value-record statement.
+- Owner-issued timestamps are metadata, not the canonical ordering rule.
 - On ownership transfer, value authority moves to the new owner key.
 - Old owner-signed value records become stale once ownership changes on-chain.
+
+Rationale:
+- Sequence numbers plus predecessor hashes let clients prove update order, not
+  just inspect the latest signed value.
+- Binding the value chain to an ownership interval prevents a stale record from
+  an earlier ownership period from becoming current again if the same key later
+  reacquires the same name.
+- This mirrors the useful part of Keybase-style signature chains without
+  requiring routine mutable value updates to be posted to Bitcoin.
 
 19. Value behavior on transfer
 
@@ -218,26 +236,28 @@ Implications:
 
 21. Resolver strategy
 
-GNS core remains transport-agnostic for off-chain values, but the project should ship a reference implementation of a minimal read-only GNS resolver/indexer profile.
+ONT core remains transport-agnostic for off-chain values, but the project should ship a reference implementation of a minimal read-only ONT resolver/indexer profile.
 
 Implications:
 - The reference resolver is a convenience interface, not the source of ownership truth.
-- Ownership truth remains Bitcoin plus the GNS protocol rules.
+- Ownership truth remains Bitcoin plus the ONT protocol rules.
 - Clients may use a hosted resolver, self-host a resolver, or implement compatible alternatives.
 - The project should prefer a reference implementation over remaining only a protocol hypothesis.
 
 22. Minimal resolver API surface
 
-The first recommended GNS-native resolver profile should be minimal and read-only.
+The first recommended ONT-native resolver profile should be minimal and read-only.
 
 Recommended capabilities:
 - resolve a normalized name to current ownership state
 - return the latest valid off-chain value record for a normalized name, if any
-- return provenance for a GNS event or name state so clients can inspect the underlying chain-derived basis
+- return value-record history for the current ownership interval
+- return provenance for an ONT event or name state so clients can inspect the underlying chain-derived basis
 
 Recommended endpoint shape for the reference profile:
 - `GET /name/{normalized_name}`
 - `GET /name/{normalized_name}/value`
+- `GET /name/{normalized_name}/value/history`
 - `GET /tx/{txid}`
 
 Design constraints:
@@ -266,7 +286,7 @@ The initial standardized value types for v1 are:
 
 Notes:
 - v1 does not standardize a Nostr-specific value type.
-- This is intended to avoid unnecessary social or technical coupling between GNS and Nostr.
+- This is intended to avoid unnecessary social or technical coupling between ONT and Nostr.
 - Future standardized value types, if any, should be introduced conservatively and explicitly.
 
 25. Bond amount parameters
@@ -339,16 +359,16 @@ Implementation principle:
 
 31. Atomic transfer-for-payment model
 
-GNS should distinguish between:
+ONT should distinguish between:
 - ownership validity
 - commercial settlement
 
-The GNS indexer validates ownership transition rules and, for immature names, bond continuity. It should not need to interpret sale price terms or payment semantics to determine who owns a name.
+The ONT indexer validates ownership transition rules and, for immature names, bond continuity. It should not need to interpret sale price terms or payment semantics to determine who owns a name.
 
 When a transfer is a sale rather than a gift, the recommended protocol and wallet flow is atomic delivery-versus-payment in a single Bitcoin transaction.
 
 Rules:
-- Pre-maturity sale transfers should occur in one transaction that spends the current bond outpoint, pays the seller, creates the successor bond output for the buyer, and carries the GNS transfer event.
+- Pre-maturity sale transfers should occur in one transaction that spends the current bond outpoint, pays the seller, creates the successor bond output for the buyer, and carries the ONT transfer event.
 - Post-maturity sale transfers should not rely on a free-floating transfer authorization signature by itself.
 - For post-maturity sales, seller authorization must be bound to the exact Bitcoin transaction that pays the seller and transfers the name.
 - The v1 reference implementation should achieve that binding with a cooperative PSBT flow and at least one seller-controlled input in the mature-sale transaction.
@@ -357,11 +377,11 @@ Rules:
 Rationale:
 - prevents replay or underpayment of mature-name sale authorizations
 - preserves clear indexer responsibilities
-- uses ordinary Bitcoin transaction atomicity rather than adding commerce parsing to GNS validity rules
+- uses ordinary Bitcoin transaction atomicity rather than adding commerce parsing to ONT validity rules
 
 32. Sale-intent listings are off-chain
 
-Owners may want to advertise that a name is for sale and at what price. That should be documented as an optional off-chain layer, not part of canonical GNS ownership state.
+Owners may want to advertise that a name is for sale and at what price. That should be documented as an optional off-chain layer, not part of canonical ONT ownership state.
 
 Rules:
 - sale-intent or ask listings should not be on-chain
@@ -416,7 +436,7 @@ Need to define:
 - whether there is a recommended default transport profile
 - how clients discover and fetch current value records
 
-3. GNS-native resolver profile
+3. ONT-native resolver profile
 
 Need to define:
 - how clients discover resolver endpoints, if at all

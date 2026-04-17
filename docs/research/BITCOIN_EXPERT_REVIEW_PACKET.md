@@ -1,12 +1,12 @@
 # Bitcoin Expert Review Packet
 
 This note is the intended entry point for technically sophisticated Bitcoin
-reviewers who do not already know GNS well.
+reviewers who do not already know ONT well.
 
 The goal is not to make them reconstruct the project from scattered design
 notes. The goal is to give them one compact packet that says:
 
-- what GNS is trying to do
+- what ONT is trying to do
 - what is implemented today
 - what is still provisional
 - which questions are actually worth their time
@@ -18,8 +18,8 @@ Related notes:
 - [BITCOIN_EXPERT_ONE_PAGER.md](/Users/davidking/dev/gns/docs/research/BITCOIN_EXPERT_ONE_PAGER.md)
 - [BITCOIN_PROTOCOL_REVIEW_QUESTIONS.md](/Users/davidking/dev/gns/docs/research/BITCOIN_PROTOCOL_REVIEW_QUESTIONS.md)
 - [BITCOIN_REVIEW_PREP.md](/Users/davidking/dev/gns/docs/research/BITCOIN_REVIEW_PREP.md)
-- [GNS_FROM_ZERO.md](/Users/davidking/dev/gns/docs/core/GNS_FROM_ZERO.md)
-- [GNS_IMPLEMENTATION_AND_VALIDATION.md](/Users/davidking/dev/gns/docs/research/GNS_IMPLEMENTATION_AND_VALIDATION.md)
+- [ONT_FROM_ZERO.md](/Users/davidking/dev/gns/docs/core/ONT_FROM_ZERO.md)
+- [ONT_IMPLEMENTATION_AND_VALIDATION.md](/Users/davidking/dev/gns/docs/research/ONT_IMPLEMENTATION_AND_VALIDATION.md)
 - [MERKLE_BATCHING_STATUS.md](/Users/davidking/dev/gns/docs/research/MERKLE_BATCHING_STATUS.md)
 - [LAUNCH_SPEC_V0.md](/Users/davidking/dev/gns/docs/research/LAUNCH_SPEC_V0.md)
 - [RESERVED_LIST_GENERATION_METHOD.md](/Users/davidking/dev/gns/docs/research/RESERVED_LIST_GENERATION_METHOD.md)
@@ -28,9 +28,9 @@ Related notes:
 - [VALUE_RECORD_HISTORY_AND_KEYBASE_NOTES.md](/Users/davidking/dev/gns/docs/research/VALUE_RECORD_HISTORY_AND_KEYBASE_NOTES.md)
 - [BITCOIN_REVIEW_CLOSURE_MATRIX.md](/Users/davidking/dev/gns/docs/research/BITCOIN_REVIEW_CLOSURE_MATRIX.md)
 
-## 1. What GNS Is
+## 1. What ONT Is
 
-GNS is a Bitcoin-anchored payment-handle system.
+ONT is a Bitcoin-anchored payment-handle system.
 
 The narrowest useful framing is:
 
@@ -44,7 +44,7 @@ The project is best understood as:
 
 ## 2. Core System Shape
 
-GNS separates:
+ONT separates:
 
 - on-chain ownership
 - off-chain mutable value records
@@ -73,7 +73,8 @@ Implemented today:
 
 - ordinary claim commit / reveal flow
 - resolver and website
-- owner-signed value records
+- owner-signed value records with history-aware chains and basic CLI
+  multi-resolver publish/read
 - transfer prototype
 - explicit Merkle batching for ordinary claims
 - experimental reserved-auction stack with real bid transactions, chain-derived
@@ -84,6 +85,7 @@ Validated today:
 
 - package tests across protocol, core, CLI, and web
 - fixture smoke for the ordinary stack and batch path
+- fixture browser E2E smoke for the website
 - SSH-backed regtest lifecycle suite
 - hosted private-signet batch smoke
 - hosted private-signet auction smoke
@@ -146,7 +148,7 @@ This means batching is currently:
 
 - batch anchors work
 - batch reveals verify
-- bad proofs are rejected by GNS even when the Bitcoin transaction itself
+- bad proofs are rejected by ONT even when the Bitcoin transaction itself
   confirms
 - batch-claimed names still work with later transfer behavior
 
@@ -249,7 +251,7 @@ The best questions for this round are:
   serious resolver profile, or deferred until after multi-resolver publish/read
   exists?
 - would Bitcoin-anchored resolver transparency roots ever be worth the
-  recurring blockspace cost, or should GNS avoid that path unless a concrete
+  recurring blockspace cost, or should ONT avoid that path unless a concrete
   threat model demands it?
 
 ## 8. What We Are Not Primarily Asking Them To Decide
@@ -312,8 +314,8 @@ This packet and the closure matrix are meant to be that spine.
 If someone is willing to read a short packet, this is the order that should
 give them the best signal with the least confusion:
 
-1. [GNS_FROM_ZERO.md](/Users/davidking/dev/gns/docs/core/GNS_FROM_ZERO.md)
-2. [GNS_IMPLEMENTATION_AND_VALIDATION.md](/Users/davidking/dev/gns/docs/research/GNS_IMPLEMENTATION_AND_VALIDATION.md)
+1. [ONT_FROM_ZERO.md](/Users/davidking/dev/gns/docs/core/ONT_FROM_ZERO.md)
+2. [ONT_IMPLEMENTATION_AND_VALIDATION.md](/Users/davidking/dev/gns/docs/research/ONT_IMPLEMENTATION_AND_VALIDATION.md)
 3. [MERKLE_BATCHING_STATUS.md](/Users/davidking/dev/gns/docs/research/MERKLE_BATCHING_STATUS.md)
 4. [LAUNCH_SPEC_V0.md](/Users/davidking/dev/gns/docs/research/LAUNCH_SPEC_V0.md)
 5. [BITCOIN_REVIEW_CLOSURE_MATRIX.md](/Users/davidking/dev/gns/docs/research/BITCOIN_REVIEW_CLOSURE_MATRIX.md)
@@ -329,7 +331,7 @@ Optional deeper appendices after that:
 
 If we want one honest paragraph for technically serious reviewers, it is this:
 
-> GNS is a Bitcoin-anchored payment-handle system aimed first at
+> ONT is a Bitcoin-anchored payment-handle system aimed first at
 > human-readable payment resolution. The ordinary claim path is real, explicit
 > ordinary-lane Merkle batching is implemented and strongly validated, and the
 > reserved-auction slice is now implemented enough to inspect as a real system

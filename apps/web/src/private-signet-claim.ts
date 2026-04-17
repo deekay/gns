@@ -6,13 +6,13 @@ import {
   type ClaimPsbtBundle,
   type ClaimPsbtWalletUtxo,
   deriveWalletAccountAddress,
-  type GnsCliNetwork,
+  type OntCliNetwork,
   type WalletAccountAddress,
   type WalletDerivationDescriptor
-} from "@gns/architect";
+} from "@ont/architect";
 
 const execFile = promisify(execFileCallback);
-const PRIVATE_SIGNET_NETWORK: GnsCliNetwork = "signet";
+const PRIVATE_SIGNET_NETWORK: OntCliNetwork = "signet";
 const DEFAULT_SCAN_LIMIT = 50;
 
 export interface BuildPrivateSignetClaimPsbtBundleInput {

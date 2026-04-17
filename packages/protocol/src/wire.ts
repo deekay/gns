@@ -1,5 +1,5 @@
 import { bytesToHex, hexToBytes } from "./bytes.js";
-import { GnsEventType, PROTOCOL_MAGIC, PROTOCOL_VERSION } from "./constants.js";
+import { OntEventType, PROTOCOL_MAGIC, PROTOCOL_VERSION } from "./constants.js";
 import {
   createAuctionBidPayload,
   createBatchAnchorPayload,
@@ -27,28 +27,28 @@ export const BATCH_REVEAL_MIN_PAYLOAD_LENGTH = 3 + 1 + 1 + 32 + 32 + 8 + 1 + 2 +
 export const REVEAL_PROOF_CHUNK_MIN_PAYLOAD_LENGTH = 3 + 1 + 1 + 1;
 export const AUCTION_BID_PAYLOAD_LENGTH = 3 + 1 + 1 + 1 + 1 + 4 + 8 + 32 + 16 + 32 + 16;
 
-export type DecodedGnsPayload =
-  | { readonly type: GnsEventType.Commit; readonly payload: CommitEventPayload }
-  | { readonly type: GnsEventType.Reveal; readonly payload: RevealEventPayload }
-  | { readonly type: GnsEventType.Transfer; readonly payload: TransferEventPayload }
-  | { readonly type: GnsEventType.BatchAnchor; readonly payload: BatchAnchorEventPayload }
-  | { readonly type: GnsEventType.BatchReveal; readonly payload: BatchRevealEventPayload }
-  | { readonly type: GnsEventType.RevealProofChunk; readonly payload: RevealProofChunkEventPayload }
-  | { readonly type: GnsEventType.AuctionBid; readonly payload: AuctionBidEventPayload };
+export type DecodedOntPayload =
+  | { readonly type: OntEventType.Commit; readonly payload: CommitEventPayload }
+  | { readonly type: OntEventType.Reveal; readonly payload: RevealEventPayload }
+  | { readonly type: OntEventType.Transfer; readonly payload: TransferEventPayload }
+  | { readonly type: OntEventType.BatchAnchor; readonly payload: BatchAnchorEventPayload }
+  | { readonly type: OntEventType.BatchReveal; readonly payload: BatchRevealEventPayload }
+  | { readonly type: OntEventType.RevealProofChunk; readonly payload: RevealProofChunkEventPayload }
+  | { readonly type: OntEventType.AuctionBid; readonly payload: AuctionBidEventPayload };
 
 export function encodeCommitPayload(payload: CommitEventPayload): Uint8Array {
   const normalized = createCommitPayload(payload);
 
   return joinBytes(
     MAGIC_BYTES,
-    Uint8Array.of(PROTOCOL_VERSION, GnsEventType.Commit, normalized.bondVout),
+    Uint8Array.of(PROTOCOL_VERSION, OntEventType.Commit, normalized.bondVout),
     hexToBytes(normalized.ownerPubkey),
     hexToBytes(normalized.commitHash)
   );
 }
 
 export function decodeCommitPayload(payload: Uint8Array): CommitEventPayload {
-  assertHeader(payload, GnsEventType.Commit, COMMIT_PAYLOAD_LENGTH);
+  assertHeader(payload, OntEventType.Commit, COMMIT_PAYLOAD_LENGTH);
 
   return createCommitPayload({
     bondVout: payload[5] ?? 0,
@@ -67,7 +67,7 @@ export function encodeRevealPayload(payload: RevealEventPayload): Uint8Array {
 
   return joinBytes(
     MAGIC_BYTES,
-    Uint8Array.of(PROTOCOL_VERSION, GnsEventType.Reveal),
+    Uint8Array.of(PROTOCOL_VERSION, OntEventType.Reveal),
     hexToBytes(normalized.commitTxid),
     bigIntToUint64Bytes(normalized.nonce),
     Uint8Array.of(nameBytes.length),
@@ -76,7 +76,7 @@ export function encodeRevealPayload(payload: RevealEventPayload): Uint8Array {
 }
 
 export function decodeRevealPayload(payload: Uint8Array): RevealEventPayload {
-  assertHeader(payload, GnsEventType.Reveal);
+  assertHeader(payload, OntEventType.Reveal);
 
   const nameLength = payload[45];
 
@@ -106,7 +106,7 @@ export function encodeBatchAnchorPayload(payload: BatchAnchorEventPayload): Uint
     MAGIC_BYTES,
     Uint8Array.of(
       PROTOCOL_VERSION,
-      GnsEventType.BatchAnchor,
+      OntEventType.BatchAnchor,
       normalized.flags,
       normalized.leafCount
     ),
@@ -115,7 +115,7 @@ export function encodeBatchAnchorPayload(payload: BatchAnchorEventPayload): Uint
 }
 
 export function decodeBatchAnchorPayload(payload: Uint8Array): BatchAnchorEventPayload {
-  assertHeader(payload, GnsEventType.BatchAnchor, BATCH_ANCHOR_PAYLOAD_LENGTH);
+  assertHeader(payload, OntEventType.BatchAnchor, BATCH_ANCHOR_PAYLOAD_LENGTH);
 
   return createBatchAnchorPayload({
     flags: payload[5] ?? 0,
@@ -134,7 +134,7 @@ export function encodeBatchRevealPayload(payload: BatchRevealEventPayload): Uint
 
   return joinBytes(
     MAGIC_BYTES,
-    Uint8Array.of(PROTOCOL_VERSION, GnsEventType.BatchReveal),
+    Uint8Array.of(PROTOCOL_VERSION, OntEventType.BatchReveal),
     hexToBytes(normalized.anchorTxid),
     hexToBytes(normalized.ownerPubkey),
     bigIntToUint64Bytes(normalized.nonce),
@@ -146,7 +146,7 @@ export function encodeBatchRevealPayload(payload: BatchRevealEventPayload): Uint
 }
 
 export function decodeBatchRevealPayload(payload: Uint8Array): BatchRevealEventPayload {
-  assertHeader(payload, GnsEventType.BatchReveal);
+  assertHeader(payload, OntEventType.BatchReveal);
 
   if (payload.length < BATCH_REVEAL_MIN_PAYLOAD_LENGTH) {
     throw new Error(
@@ -184,13 +184,13 @@ export function encodeRevealProofChunkPayload(payload: RevealProofChunkEventPayl
 
   return joinBytes(
     MAGIC_BYTES,
-    Uint8Array.of(PROTOCOL_VERSION, GnsEventType.RevealProofChunk, normalized.chunkIndex),
+    Uint8Array.of(PROTOCOL_VERSION, OntEventType.RevealProofChunk, normalized.chunkIndex),
     hexToBytes(normalized.proofBytesHex)
   );
 }
 
 export function decodeRevealProofChunkPayload(payload: Uint8Array): RevealProofChunkEventPayload {
-  assertHeader(payload, GnsEventType.RevealProofChunk);
+  assertHeader(payload, OntEventType.RevealProofChunk);
 
   if (payload.length < REVEAL_PROOF_CHUNK_MIN_PAYLOAD_LENGTH) {
     throw new Error(
@@ -211,7 +211,7 @@ export function encodeAuctionBidPayload(payload: AuctionBidEventPayload): Uint8A
     MAGIC_BYTES,
     Uint8Array.of(
       PROTOCOL_VERSION,
-      GnsEventType.AuctionBid,
+      OntEventType.AuctionBid,
       normalized.flags,
       normalized.bondVout
     ),
@@ -225,7 +225,7 @@ export function encodeAuctionBidPayload(payload: AuctionBidEventPayload): Uint8A
 }
 
 export function decodeAuctionBidPayload(payload: Uint8Array): AuctionBidEventPayload {
-  assertHeader(payload, GnsEventType.AuctionBid, AUCTION_BID_PAYLOAD_LENGTH);
+  assertHeader(payload, OntEventType.AuctionBid, AUCTION_BID_PAYLOAD_LENGTH);
 
   return createAuctionBidPayload({
     flags: payload[5] ?? 0,
@@ -264,40 +264,40 @@ export function decodeTransferBody(payload: Uint8Array): TransferEventPayload {
   });
 }
 
-export function decodeGnsPayload(payload: Uint8Array): DecodedGnsPayload {
+export function decodeOntPayload(payload: Uint8Array): DecodedOntPayload {
   const type = peekEventType(payload);
 
   switch (type) {
-    case GnsEventType.Commit:
+    case OntEventType.Commit:
       return { type, payload: decodeCommitPayload(payload) };
-    case GnsEventType.Reveal:
+    case OntEventType.Reveal:
       return { type, payload: decodeRevealPayload(payload) };
-    case GnsEventType.Transfer:
+    case OntEventType.Transfer:
       return { type, payload: decodeTransferBody(payload.slice(5)) };
-    case GnsEventType.BatchAnchor:
+    case OntEventType.BatchAnchor:
       return { type, payload: decodeBatchAnchorPayload(payload) };
-    case GnsEventType.BatchReveal:
+    case OntEventType.BatchReveal:
       return { type, payload: decodeBatchRevealPayload(payload) };
-    case GnsEventType.RevealProofChunk:
+    case OntEventType.RevealProofChunk:
       return { type, payload: decodeRevealProofChunkPayload(payload) };
-    case GnsEventType.AuctionBid:
+    case OntEventType.AuctionBid:
       return { type, payload: decodeAuctionBidPayload(payload) };
   }
 }
 
-export function peekEventType(payload: Uint8Array): GnsEventType {
-  assertGnsPrefix(payload);
+export function peekEventType(payload: Uint8Array): OntEventType {
+  assertOntPrefix(payload);
 
   const type = payload[4];
 
   if (
-    type !== GnsEventType.Commit &&
-    type !== GnsEventType.Reveal &&
-    type !== GnsEventType.Transfer &&
-    type !== GnsEventType.BatchAnchor &&
-    type !== GnsEventType.BatchReveal &&
-    type !== GnsEventType.RevealProofChunk &&
-    type !== GnsEventType.AuctionBid
+    type !== OntEventType.Commit &&
+    type !== OntEventType.Reveal &&
+    type !== OntEventType.Transfer &&
+    type !== OntEventType.BatchAnchor &&
+    type !== OntEventType.BatchReveal &&
+    type !== OntEventType.RevealProofChunk &&
+    type !== OntEventType.AuctionBid
   ) {
     throw new Error(`unsupported event type ${type}`);
   }
@@ -308,17 +308,17 @@ export function peekEventType(payload: Uint8Array): GnsEventType {
 export function encodeTransferPayload(payload: TransferEventPayload): Uint8Array {
   return joinBytes(
     MAGIC_BYTES,
-    Uint8Array.of(PROTOCOL_VERSION, GnsEventType.Transfer),
+    Uint8Array.of(PROTOCOL_VERSION, OntEventType.Transfer),
     encodeTransferBody(payload)
   );
 }
 
-function assertHeader(payload: Uint8Array, eventType: GnsEventType, exactLength?: number): void {
+function assertHeader(payload: Uint8Array, eventType: OntEventType, exactLength?: number): void {
   if (exactLength !== undefined && payload.length !== exactLength) {
     throw new Error(`payload must be ${exactLength} bytes`);
   }
 
-  assertGnsPrefix(payload);
+  assertOntPrefix(payload);
 
   const type = payload[4];
   if (type !== eventType) {
@@ -326,14 +326,14 @@ function assertHeader(payload: Uint8Array, eventType: GnsEventType, exactLength?
   }
 }
 
-function assertGnsPrefix(payload: Uint8Array): void {
+function assertOntPrefix(payload: Uint8Array): void {
   if (payload.length < 5) {
     throw new Error("payload is too short");
   }
 
   const magic = Buffer.from(payload.slice(0, 3)).toString("utf8");
   if (magic !== PROTOCOL_MAGIC) {
-    throw new Error("payload does not start with the GNS magic bytes");
+    throw new Error("payload does not start with the ONT magic bytes");
   }
 
   const version = payload[3];

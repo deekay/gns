@@ -6,8 +6,8 @@ This repository has four documentation buckets:
 
 These are the best places to start if you want to understand the current prototype.
 
-- [GNS_ONE_PAGER.md](./core/GNS_ONE_PAGER.md): short overview of the design, economics, and blockspace footprint
-- [SELF_HOSTING.md](./core/SELF_HOSTING.md): easiest path for running your own GNS website + resolver stack
+- [ONT_ONE_PAGER.md](./core/ONT_ONE_PAGER.md): short overview of the design, economics, and blockspace footprint
+- [SELF_HOSTING.md](./core/SELF_HOSTING.md): easiest path for running your own ONT website + resolver stack
 - [ARCHITECTURE.md](./core/ARCHITECTURE.md): system structure, trust boundaries, and runtime modes
 - [DECISIONS.md](./core/DECISIONS.md): protocol decisions and tradeoffs that are already explicit
 - [TESTING.md](./core/TESTING.md): fixture, regtest, public signet, and private signet testing paths
@@ -26,19 +26,27 @@ These documents are specifically about the current hosted and private-signet dem
 These are mainly useful if you are self-hosting or running the prototype infrastructure.
 
 - [VPS_SETUP.md](./operators/VPS_SETUP.md)
-- [GNS_DOMAIN_DEPLOY.md](./operators/GNS_DOMAIN_DEPLOY.md)
+- [ONT_DOMAIN_DEPLOY.md](./operators/ONT_DOMAIN_DEPLOY.md)
 - [SUPABASE_SETUP.md](./operators/SUPABASE_SETUP.md)
 
 ## Research And Drafts
 
 These documents are useful, but they are more speculative, essay-like, or draft-oriented than the core docs above.
 
+- [ONT_VS_PUBKY_PKARR.md](./research/ONT_VS_PUBKY_PKARR.md)
+- [ONT_AND_PRIVATE_MESSAGING_BOOTSTRAP.md](./research/ONT_AND_PRIVATE_MESSAGING_BOOTSTRAP.md)
+- [VALUE_RECORD_HISTORY_AND_KEYBASE_NOTES.md](./research/VALUE_RECORD_HISTORY_AND_KEYBASE_NOTES.md)
+- [NARRATIVE_FRAMEWORK.md](./research/NARRATIVE_FRAMEWORK.md)
+- [PAYMENT_NAMES_AND_TRUST_SIGNALS.md](./research/PAYMENT_NAMES_AND_TRUST_SIGNALS.md)
+- [PRIVATE_RELATIONSHIP_GRAPH_AND_NOSTR.md](./research/PRIVATE_RELATIONSHIP_GRAPH_AND_NOSTR.md)
+- [USE_CASE_SCENES.md](./research/USE_CASE_SCENES.md)
 - [REVIEW_FEEDBACK_BACKLOG.md](./research/REVIEW_FEEDBACK_BACKLOG.md)
 - [CLAIM_ALLOCATION_AND_BATCHING_OPTIONS.md](./research/CLAIM_ALLOCATION_AND_BATCHING_OPTIONS.md)
 - [MERKLE_BATCHING_V0.md](./research/MERKLE_BATCHING_V0.md)
 - [MERKLE_BATCHING_FOOTPRINT.md](./research/MERKLE_BATCHING_FOOTPRINT.md)
 - [MERKLE_BATCHING_REVEAL_CARRIER_OPTIONS.md](./research/MERKLE_BATCHING_REVEAL_CARRIER_OPTIONS.md)
 - [MERKLE_BATCHING_TAPROOT_ANNEX_SKETCH.md](./research/MERKLE_BATCHING_TAPROOT_ANNEX_SKETCH.md)
+- [MERKLE_BATCHING_WALLET_COMPATIBILITY.md](./research/MERKLE_BATCHING_WALLET_COMPATIBILITY.md)
 - [MERKLE_BATCHING_V0_DECISIONS.md](./research/MERKLE_BATCHING_V0_DECISIONS.md)
 - [MERKLE_BATCHING_WORK_BREAKDOWN.md](./research/MERKLE_BATCHING_WORK_BREAKDOWN.md)
 - [RESERVED_NAME_AUCTION_LANE.md](./research/RESERVED_NAME_AUCTION_LANE.md)
@@ -57,8 +65,8 @@ These documents are useful, but they are more speculative, essay-like, or draft-
 - [POST_QUANTUM_AND_SIGNATURE_AGILITY.md](./research/POST_QUANTUM_AND_SIGNATURE_AGILITY.md)
 - [HYPE_VIDEO_SCRIPT.md](./research/HYPE_VIDEO_SCRIPT.md)
 - [HANDSOFF_DEMO_WALLET_PLAN.md](./research/HANDSOFF_DEMO_WALLET_PLAN.md)
-- [GNS_EXPLAINER.md](./research/GNS_EXPLAINER.md)
-- [GNS-v2-draft.md](./research/GNS-v2-draft.md)
+- [ONT_EXPLAINER.md](./research/ONT_EXPLAINER.md)
+- [ONT-v2-draft.md](./research/ONT-v2-draft.md)
 - [IMPLEMENTATION_PLAN.md](./research/IMPLEMENTATION_PLAN.md)
 - [TRANSFER_RELAY_OPTIONS.md](./research/TRANSFER_RELAY_OPTIONS.md)
 - [FUTURE_EXPLORATIONS.md](./research/FUTURE_EXPLORATIONS.md)

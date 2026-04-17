@@ -15,10 +15,11 @@ import {
   encodeCommitPayload,
   getBondSats,
   normalizeName,
+  parseSignedValueRecord,
   PRODUCT_NAME,
   PROTOCOL_NAME,
   REVEAL_WINDOW_BLOCKS
-} from "@gns/protocol";
+} from "@ont/protocol";
 import {
   createExperimentalAuctionFeedBidPackage,
   createReservedAuctionLabBidPackage,
@@ -29,68 +30,78 @@ import { getOfflineClaimClientBundle } from "./offline-claim-bundle.js";
 import { renderOfflineClaimPageHtml } from "./offline-claim-page.js";
 import { renderPageHtml } from "./page-shell.js";
 import { buildPrivateSignetClaimPsbtBundle } from "./private-signet-claim.js";
+import {
+  fetchNameValueHistoryFromResolvers,
+  publishValueRecordToResolvers,
+  resolveConfiguredResolverUrls
+} from "./resolver-fanout.js";
 import { STYLESHEET } from "./styles.js";
 import { getValuePublishClientBundle } from "./value-publish-bundle.js";
 
 const execFile = promisify(execFileCallback);
 
 const resolverPort = parsePort(
-  process.env.GNS_RESOLVER_PORT ?? "8787",
-  "GNS_RESOLVER_PORT"
+  process.env.ONT_RESOLVER_PORT ?? "8787",
+  "ONT_RESOLVER_PORT"
 );
 const port = parsePort(
-  process.env.GNS_WEB_PORT ?? process.env.PORT ?? "3000",
-  "GNS_WEB_PORT"
+  process.env.ONT_WEB_PORT ?? process.env.PORT ?? "3000",
+  "ONT_WEB_PORT"
 );
 const resolverUrl =
-  process.env.GNS_WEB_RESOLVER_URL
+  process.env.ONT_WEB_RESOLVER_URL
   ?? `http://127.0.0.1:${resolverPort}`;
-const basePath = normalizeBasePath(process.env.GNS_WEB_BASE_PATH ?? "");
+const resolverCandidateUrls = resolveConfiguredResolverUrls(
+  resolverUrl,
+  normalizeOptionalText(process.env.ONT_WEB_RESOLVER_URLS)
+  ?? normalizeOptionalText(process.env.ONT_RESOLVER_URLS)
+);
+const basePath = normalizeBasePath(process.env.ONT_WEB_BASE_PATH ?? "");
 const networkLabel =
-  normalizeOptionalText(process.env.GNS_WEB_NETWORK_LABEL)
+  normalizeOptionalText(process.env.ONT_WEB_NETWORK_LABEL)
   ?? "Private Signet Demo";
 const showPrivateBatchSmoke = parseBoolean(
-  process.env.GNS_WEB_SHOW_PRIVATE_BATCH_SMOKE,
+  process.env.ONT_WEB_SHOW_PRIVATE_BATCH_SMOKE,
   networkLabel.toLowerCase().includes("private signet")
 );
 const showPrivateAuctionSmoke = parseBoolean(
-  process.env.GNS_WEB_SHOW_PRIVATE_AUCTION_SMOKE,
+  process.env.ONT_WEB_SHOW_PRIVATE_AUCTION_SMOKE,
   networkLabel.toLowerCase().includes("private signet")
 );
 const privateSignetFundingCommand =
-  normalizeOptionalText(process.env.GNS_WEB_PRIVATE_SIGNET_FUNDING_COMMAND) ??
-  "/usr/local/bin/gns-private-signet-fund";
+  normalizeOptionalText(process.env.ONT_WEB_PRIVATE_SIGNET_FUNDING_COMMAND) ??
+  "/usr/local/bin/ont-private-signet-fund";
 const privateSignetBitcoinCliPath =
-  normalizeOptionalText(process.env.GNS_WEB_PRIVATE_SIGNET_BITCOIN_CLI) ??
+  normalizeOptionalText(process.env.ONT_WEB_PRIVATE_SIGNET_BITCOIN_CLI) ??
   "/usr/local/bin/bitcoin-cli";
 const privateSignetBitcoinConfPath =
-  normalizeOptionalText(process.env.GNS_WEB_PRIVATE_SIGNET_BITCOIN_CONF) ??
+  normalizeOptionalText(process.env.ONT_WEB_PRIVATE_SIGNET_BITCOIN_CONF) ??
   "/etc/bitcoin-private-signet.conf";
 const privateSignetBitcoinDataDir =
-  normalizeOptionalText(process.env.GNS_WEB_PRIVATE_SIGNET_BITCOIN_DATADIR) ??
+  normalizeOptionalText(process.env.ONT_WEB_PRIVATE_SIGNET_BITCOIN_DATADIR) ??
   "/var/lib/bitcoind-private-signet";
 const privateSignetFundingAmountSats = parseSatsValue(
-  process.env.GNS_WEB_PRIVATE_SIGNET_FUNDING_AMOUNT_SATS
+  process.env.ONT_WEB_PRIVATE_SIGNET_FUNDING_AMOUNT_SATS
     ?? "1000000",
-  "GNS_WEB_PRIVATE_SIGNET_FUNDING_AMOUNT_SATS"
+  "ONT_WEB_PRIVATE_SIGNET_FUNDING_AMOUNT_SATS"
 );
 const privateSignetFundingAmountBtc = satsToBitcoinString(privateSignetFundingAmountSats);
 const privateSignetFundingCooldownMs = parseNonNegativeInteger(
-  process.env.GNS_WEB_PRIVATE_SIGNET_FUNDING_COOLDOWN_MS
+  process.env.ONT_WEB_PRIVATE_SIGNET_FUNDING_COOLDOWN_MS
     ?? "30000",
-  "GNS_WEB_PRIVATE_SIGNET_FUNDING_COOLDOWN_MS"
+  "ONT_WEB_PRIVATE_SIGNET_FUNDING_COOLDOWN_MS"
 );
 const privateSignetFundingEnabled =
   parseBoolean(
-    process.env.GNS_WEB_PRIVATE_SIGNET_FUNDING_ENABLED,
+    process.env.ONT_WEB_PRIVATE_SIGNET_FUNDING_ENABLED,
     networkLabel.toLowerCase().includes("private signet")
   ) && existsSync(privateSignetFundingCommand);
 const privateSignetElectrumEndpoint =
-  normalizeOptionalText(process.env.GNS_WEB_PRIVATE_SIGNET_ELECTRUM_ENDPOINT)
-  ?? (networkLabel.toLowerCase().includes("private signet") ? "globalnamesystem.org:50001:t" : null);
+  normalizeOptionalText(process.env.ONT_WEB_PRIVATE_SIGNET_ELECTRUM_ENDPOINT)
+  ?? (networkLabel.toLowerCase().includes("private signet") ? "opennametags.org:50001:t" : null);
 const privateDemoBasePath = normalizeBasePath(
-  process.env.GNS_WEB_PRIVATE_DEMO_BASE_PATH
-    ?? (networkLabel.toLowerCase().includes("private signet") ? basePath : "/gns-private")
+  process.env.ONT_WEB_PRIVATE_DEMO_BASE_PATH
+    ?? (networkLabel.toLowerCase().includes("private signet") ? basePath : "/ont-private")
 );
 const privateSignetClaimPsbtBuilderEnabled =
   networkLabel.toLowerCase().includes("private signet") && existsSync(privateSignetBitcoinCliPath);
@@ -107,10 +118,10 @@ const faviconDataUrl =
       .trim()
   );
 const privateBatchSmokeStatusPath =
-  normalizeOptionalText(process.env.GNS_WEB_PRIVATE_BATCH_SMOKE_STATUS_PATH) ??
+  normalizeOptionalText(process.env.ONT_WEB_PRIVATE_BATCH_SMOKE_STATUS_PATH) ??
   fileURLToPath(new URL("../../../.data/private-signet-demo/batch-smoke-summary.json", import.meta.url));
 const privateAuctionSmokeStatusPath =
-  normalizeOptionalText(process.env.GNS_WEB_PRIVATE_AUCTION_SMOKE_STATUS_PATH) ??
+  normalizeOptionalText(process.env.ONT_WEB_PRIVATE_AUCTION_SMOKE_STATUS_PATH) ??
   fileURLToPath(new URL("../../../.data/private-signet-demo/auction-smoke-summary.json", import.meta.url));
 
 const server = createServer(async (request, response) => {
@@ -270,6 +281,34 @@ const server = createServer(async (request, response) => {
     }
   }
 
+  if (pathname === "/api/values/fanout") {
+    if (method !== "POST") {
+      return writeJson(response, 405, {
+        error: "method_not_allowed",
+        message: "Use POST for signed value-record fanout publishing."
+      });
+    }
+
+    try {
+      const body = await readJsonBody(request);
+      const valueRecord = parseSignedValueRecord(body);
+      return writeJson(
+        response,
+        200,
+        await publishValueRecordToResolvers({
+          resolverUrls: resolverCandidateUrls,
+          valueRecord
+        })
+      );
+    } catch (error) {
+      return writeJson(response, 400, {
+        error: "invalid_value_record",
+        message:
+          error instanceof Error ? error.message : "Unable to publish the signed value record to the configured resolver set."
+      });
+    }
+  }
+
   if (pathname === "/api/auction-bid-package") {
     if (method !== "POST") {
       return writeJson(response, 405, {
@@ -411,7 +450,7 @@ const server = createServer(async (request, response) => {
         return writeHtmlAttachment(
           response,
           offlineHtml,
-          "gns-offline-claim-architect.html"
+          "ont-offline-claim-architect.html"
         );
       }
 
@@ -501,6 +540,8 @@ const server = createServer(async (request, response) => {
       product: PRODUCT_NAME,
       protocol: PROTOCOL_NAME,
       resolverUrl,
+      resolverCandidates: resolverCandidateUrls,
+      resolverFanoutAvailable: resolverCandidateUrls.length > 1,
       basePath,
       networkLabel,
       showPrivateBatchSmoke,
@@ -625,6 +666,35 @@ const server = createServer(async (request, response) => {
       return proxyJson(response, `${resolverUrl}/name/${name}/activity${query === "" ? "" : `?${query}`}`);
     }
 
+    const valueComparePathMatch = pathname.match(/^\/api\/name\/(.+)\/value\/compare$/);
+
+    if (valueComparePathMatch) {
+      const name = decodeURIComponent(valueComparePathMatch[1] ?? "");
+
+      try {
+        return writeJson(
+          response,
+          200,
+          await fetchNameValueHistoryFromResolvers({
+            name,
+            resolverUrls: resolverCandidateUrls
+          })
+        );
+      } catch (error) {
+        return writeJson(response, 502, {
+          error: "resolver_compare_failed",
+          message: error instanceof Error ? error.message : "Unable to compare value history across the configured resolvers."
+        });
+      }
+    }
+
+    const valueHistoryPathMatch = pathname.match(/^\/api\/name\/(.+)\/value\/history$/);
+
+    if (valueHistoryPathMatch) {
+      const name = valueHistoryPathMatch[1] ?? "";
+      return proxyJson(response, `${resolverUrl}/name/${name}/value/history`);
+    }
+
     const valuePathMatch = pathname.match(/^\/api\/name\/(.+)\/value$/);
 
     if (valuePathMatch) {
@@ -639,8 +709,8 @@ const server = createServer(async (request, response) => {
   return writeJson(response, 404, {
     error: "not_found",
     message:
-      "Supported paths: /, /explore, /auctions, /claim, /values, /transfer, /setup, /explainer, /api/config, /api/health, /api/names, /api/pending-commits, /api/activity, /api/tx/{txid}, /api/dev-owner-key, /api/private-signet-fund, /api/claim-draft/{name}, /api/claim-plan/{name}, /api/name/{name}, /api/name/{name}/activity, /api/name/{name}/value, /api/private-batch-smoke-status, /api/auctions"
-      + ", /api/private-auction-smoke-status, /api/experimental-auctions, /api/auction-bid-package, /api/experimental-auction-bid-package, /api/private-signet-claim-psbts, /api/values, /claim/offline, /claim/offline/download"
+      "Supported paths: /, /explore, /auctions, /claim, /values, /transfer, /setup, /explainer, /api/config, /api/health, /api/names, /api/pending-commits, /api/activity, /api/tx/{txid}, /api/dev-owner-key, /api/private-signet-fund, /api/claim-draft/{name}, /api/claim-plan/{name}, /api/name/{name}, /api/name/{name}/activity, /api/name/{name}/value, /api/name/{name}/value/history, /api/name/{name}/value/compare, /api/private-batch-smoke-status, /api/auctions"
+      + ", /api/private-auction-smoke-status, /api/experimental-auctions, /api/auction-bid-package, /api/experimental-auction-bid-package, /api/private-signet-claim-psbts, /api/values, /api/values/fanout, /claim/offline, /claim/offline/download"
   });
 });
 
@@ -649,8 +719,8 @@ server.on("error", (error: NodeJS.ErrnoException) => {
     console.error(
       [
         `${PRODUCT_NAME} web could not start because port ${port} is already in use.`,
-        `Try: GNS_WEB_PORT=3001 npm run dev:web`,
-        `Or run both together with: GNS_WEB_PORT=3001 GNS_RESOLVER_PORT=${resolverPort} npm run dev:all`
+        `Try: ONT_WEB_PORT=3001 npm run dev:web`,
+        `Or run both together with: ONT_WEB_PORT=3001 ONT_RESOLVER_PORT=${resolverPort} npm run dev:all`
       ].join("\n")
     );
     process.exit(1);
@@ -1249,7 +1319,7 @@ function buildClaimDraft(input: {
         },
         {
           vout: suggestedOpReturnVout,
-          role: "gns_commit",
+          role: "ont_commit",
           scriptType: "op_return",
           valueSats: "0",
           dataHex: bytesToHex(commitPayload)
@@ -1278,7 +1348,7 @@ function buildClaimDraft(input: {
               dataHex: null
             },
             {
-              role: "gns_commit",
+              role: "ont_commit",
               required: true,
               fixedVout: suggestedOpReturnVout,
               scriptType: "op_return",
@@ -1312,7 +1382,7 @@ function buildClaimDraft(input: {
           fundingInputs: "Wallet-selected funding input for the reveal fee.",
           outputs: [
             {
-              role: "gns_reveal",
+              role: "ont_reveal",
               required: true,
               fixedVout: 0,
               scriptType: "op_return",
@@ -1364,7 +1434,7 @@ function buildClaimDraft(input: {
           unsignedTransactionSkeleton: {
             ...result.walletHandoff.reveal.unsignedTransactionSkeleton,
             outputs: result.walletHandoff.reveal.unsignedTransactionSkeleton.outputs.map((output) =>
-              output.role === "gns_reveal"
+              output.role === "ont_reveal"
                 ? {
                     ...output,
                     dataHex: claimPackage.revealPayloadHex

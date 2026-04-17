@@ -11,12 +11,12 @@ import {
   BATCH_REVEAL_MIN_PAYLOAD_LENGTH,
   computeCommitHash,
   decodeAuctionBidPayload,
-  decodeGnsPayload,
+  decodeOntPayload,
   encodeCommitPayload,
-  GnsEventType,
+  OntEventType,
   parseClaimPackage,
   PROTOCOL_NAME
-} from "@gns/protocol";
+} from "@ont/protocol";
 
 import {
   buildAuctionBidArtifacts,
@@ -191,7 +191,7 @@ describe("buildCommitArtifacts", () => {
       network: "signet"
     });
 
-    expect(artifacts.kind).toBe("gns-commit-artifacts");
+    expect(artifacts.kind).toBe("ont-commit-artifacts");
     expect(artifacts.commitTxid).toHaveLength(64);
     expect(artifacts.updatedClaimPackage.revealReady).toBe(true);
     expect(artifacts.updatedClaimPackage.commitTxid).toBe(artifacts.commitTxid);
@@ -280,7 +280,7 @@ describe("buildRevealArtifacts", () => {
       network: "signet"
     });
 
-    expect(revealArtifacts.kind).toBe("gns-reveal-artifacts");
+    expect(revealArtifacts.kind).toBe("ont-reveal-artifacts");
     expect(revealArtifacts.revealTxid).toHaveLength(64);
 
     const transaction = Transaction.fromHex(revealArtifacts.unsignedTransactionHex);
@@ -307,12 +307,12 @@ describe("buildAuctionBidArtifacts", () => {
       changeAddress: createTestAddress(15)
     });
 
-    expect(artifacts.kind).toBe("gns-auction-bid-artifacts");
+    expect(artifacts.kind).toBe("ont-auction-bid-artifacts");
     expect(artifacts.bidTxid).toHaveLength(64);
     expect(artifacts.payloadBytes).toBeGreaterThan(0);
     expect(artifacts.outputs[0]?.role).toBe("auction_bid_bond");
     expect(artifacts.outputs[0]?.valueSats).toBe("1340000000");
-    expect(artifacts.outputs[1]?.role).toBe("gns_auction_bid");
+    expect(artifacts.outputs[1]?.role).toBe("ont_auction_bid");
 
     const transaction = Transaction.fromHex(artifacts.unsignedTransactionHex);
     expect(transaction.outs[0]?.value).toBe(1_340_000_000n);
@@ -320,8 +320,8 @@ describe("buildAuctionBidArtifacts", () => {
     expect(payload.bidAmountSats).toBe(1_340_000_000n);
     expect(payload.reservedLockBlocks).toBe(525_600);
     expect(payload.bondVout).toBe(0);
-    expect(decodeGnsPayload(Buffer.from(artifacts.payloadHex, "hex"))).toEqual({
-      type: GnsEventType.AuctionBid,
+    expect(decodeOntPayload(Buffer.from(artifacts.payloadHex, "hex"))).toEqual({
+      type: OntEventType.AuctionBid,
       payload
     });
   });
@@ -374,13 +374,13 @@ describe("buildBatchCommitArtifacts", () => {
       network: "signet"
     });
 
-    expect(artifacts.kind).toBe("gns-batch-commit-artifacts");
+    expect(artifacts.kind).toBe("ont-batch-commit-artifacts");
     expect(artifacts.leafCount).toBe(2);
     expect(artifacts.updatedClaimPackages).toHaveLength(2);
 
     const transaction = Transaction.fromHex(artifacts.unsignedTransactionHex);
     expect(transaction.outs).toHaveLength(4);
-    expect(artifacts.outputs[0]?.role).toBe("gns_batch_anchor");
+    expect(artifacts.outputs[0]?.role).toBe("ont_batch_anchor");
     expect(artifacts.outputs[1]).toMatchObject({ role: "bond", claimName: "bob" });
     expect(artifacts.outputs[2]).toMatchObject({ role: "bond", claimName: "alice" });
     expect(artifacts.updatedClaimPackages[0]?.bondVout).toBe(1);
@@ -418,11 +418,11 @@ describe("buildBatchRevealArtifacts", () => {
       network: "signet"
     });
 
-    expect(revealArtifacts.kind).toBe("gns-batch-reveal-artifacts");
+    expect(revealArtifacts.kind).toBe("ont-batch-reveal-artifacts");
     const transaction = Transaction.fromHex(revealArtifacts.unsignedTransactionHex);
     expect(transaction.outs[0]?.value).toBe(0n);
-    expect(revealArtifacts.outputs[0]?.role).toBe("gns_batch_reveal");
-    expect(revealArtifacts.outputs[1]?.role).toBe("gns_reveal_proof_chunk");
+    expect(revealArtifacts.outputs[0]?.role).toBe("ont_batch_reveal");
+    expect(revealArtifacts.outputs[1]?.role).toBe("ont_reveal_proof_chunk");
     expect(commitArtifacts.updatedClaimPackages[0]?.revealPayloadBytes).toBeGreaterThanOrEqual(
       BATCH_REVEAL_MIN_PAYLOAD_LENGTH
     );
@@ -470,7 +470,7 @@ describe("buildTransferArtifacts", () => {
       changeAddress: createTestAddress(10)
     });
 
-    expect(artifacts.kind).toBe("gns-transfer-artifacts");
+    expect(artifacts.kind).toBe("ont-transfer-artifacts");
     expect(artifacts.transferTxid).toHaveLength(64);
 
     const transaction = Transaction.fromHex(artifacts.unsignedTransactionHex);
@@ -531,7 +531,7 @@ describe("buildSaleTransferArtifacts", () => {
       buyerChangeAddress: buyerAddress
     });
 
-    expect(artifacts.kind).toBe("gns-transfer-artifacts");
+    expect(artifacts.kind).toBe("ont-transfer-artifacts");
     expect(artifacts.mode).toBe("sale");
     expect(artifacts.transferTxid).toHaveLength(64);
 
@@ -603,7 +603,7 @@ describe("buildImmatureSaleTransferArtifacts", () => {
       buyerChangeAddress: buyerAddress
     });
 
-    expect(artifacts.kind).toBe("gns-transfer-artifacts");
+    expect(artifacts.kind).toBe("ont-transfer-artifacts");
     expect(artifacts.mode).toBe("immature-sale");
     expect(artifacts.transferTxid).toHaveLength(64);
 

@@ -106,7 +106,7 @@ Primary file:
 
 Responsibilities:
 
-- mostly inherits behavior from `@gns/core`
+- mostly inherits behavior from `@ont/core`
 - ensure snapshot boot / replay still works after new state fields are added
 - provide a simple validation surface for one-shot indexing of batched claims
 
@@ -185,7 +185,7 @@ Packages:
 
 Tasks:
 
-- extend `extractGnsEvents` and event application paths
+- extend `extractOntEvents` and event application paths
 - represent batched pending commits in state
 - verify batched reveals against anchored roots
 - preserve same-block and precedence behavior

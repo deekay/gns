@@ -1,4 +1,4 @@
-import { getBondSats, normalizeName } from "@gns/protocol";
+import { getBondSats, normalizeName } from "@ont/protocol";
 
 export const RESERVED_AUCTION_CLASS_IDS = [
   "top_collision",

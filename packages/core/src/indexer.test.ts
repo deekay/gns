@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { type BitcoinBlock, type BitcoinTransactionInput } from "@gns/bitcoin";
+import { type BitcoinBlock, type BitcoinTransactionInput } from "@ont/bitcoin";
 import {
   computeAuctionBidStateCommitment,
   computeAuctionBidderCommitment,
@@ -12,11 +12,11 @@ import {
   encodeBatchRevealPayload,
   encodeCommitPayload,
   encodeRevealPayload
-} from "@gns/protocol";
+} from "@ont/protocol";
 
 import { createDefaultReservedAuctionPolicy } from "./auction-policy.js";
 import { createExperimentalReservedAuctionCatalogEntry } from "./experimental-auction.js";
-import { InMemoryGnsIndexer } from "./indexer.js";
+import { InMemoryOntIndexer } from "./indexer.js";
 
 function encodeAuctionBidPayload(
   input: Omit<Parameters<typeof encodeAuctionBidPayloadWithOwner>[0], "ownerPubkey"> & {
@@ -30,10 +30,10 @@ function encodeAuctionBidPayload(
   });
 }
 
-describe("InMemoryGnsIndexer", () => {
+describe("InMemoryOntIndexer", () => {
   it("indexes a name from commit/reveal flow", () => {
     const ownerPubkey = "11".repeat(32);
-    const indexer = new InMemoryGnsIndexer({ launchHeight: 100 });
+    const indexer = new InMemoryOntIndexer({ launchHeight: 100 });
 
     indexer.ingestBlocks([
       makeBlock(100, [
@@ -81,7 +81,7 @@ describe("InMemoryGnsIndexer", () => {
 
   it("advances an indexed name to mature once enough blocks have passed", () => {
     const ownerPubkey = "11".repeat(32);
-    const indexer = new InMemoryGnsIndexer({ launchHeight: 100 });
+    const indexer = new InMemoryOntIndexer({ launchHeight: 100 });
 
     indexer.ingestBlocks([
       makeBlock(100, [
@@ -125,7 +125,7 @@ describe("InMemoryGnsIndexer", () => {
   });
 
   it("keeps earlier commits authoritative when later commits reveal first", () => {
-    const indexer = new InMemoryGnsIndexer({ launchHeight: 100 });
+    const indexer = new InMemoryOntIndexer({ launchHeight: 100 });
 
     indexer.ingestBlocks([
       makeBlock(100, [
@@ -194,7 +194,7 @@ describe("InMemoryGnsIndexer", () => {
 
   it("indexes a same-block commit/reveal pair even when reveal is earlier in transaction order", () => {
     const ownerPubkey = "11".repeat(32);
-    const indexer = new InMemoryGnsIndexer({ launchHeight: 100 });
+    const indexer = new InMemoryOntIndexer({ launchHeight: 100 });
 
     indexer.ingestBlocks([
       makeBlock(100, [
@@ -244,7 +244,7 @@ describe("InMemoryGnsIndexer", () => {
       ownerPubkey,
       commitHash
     });
-    const indexer = new InMemoryGnsIndexer({ launchHeight: 100 });
+    const indexer = new InMemoryOntIndexer({ launchHeight: 100 });
 
     indexer.ingestBlocks([
       makeBlock(100, [
@@ -285,9 +285,9 @@ describe("InMemoryGnsIndexer", () => {
     expect(indexer.getStats().pendingCommits).toBe(0);
   });
 
-  it("stores transaction provenance for applied GNS events", () => {
+  it("stores transaction provenance for applied ONT events", () => {
     const ownerPubkey = "11".repeat(32);
-    const indexer = new InMemoryGnsIndexer({ launchHeight: 100 });
+    const indexer = new InMemoryOntIndexer({ launchHeight: 100 });
 
     indexer.ingestBlocks([
       makeBlock(100, [
@@ -364,7 +364,7 @@ describe("InMemoryGnsIndexer", () => {
       ownerPubkey,
       commitHash
     });
-    const indexer = new InMemoryGnsIndexer({ launchHeight: 100 });
+    const indexer = new InMemoryOntIndexer({ launchHeight: 100 });
 
     indexer.ingestBlocks([
       makeBlock(100, [
@@ -447,7 +447,7 @@ describe("InMemoryGnsIndexer", () => {
       },
       policy
     );
-    const indexer = new InMemoryGnsIndexer({
+    const indexer = new InMemoryOntIndexer({
       launchHeight: 100,
       experimentalReservedAuctionPolicy: policy,
       experimentalReservedAuctionCatalog: [catalogEntry]
@@ -569,7 +569,7 @@ describe("InMemoryGnsIndexer", () => {
     const winnerOwnerPubkey = "22".repeat(32);
     const extendedCloseBlock = 844_210 + policy.auction.softCloseExtensionBlocks;
     const settlementHeight = extendedCloseBlock + 1;
-    const indexer = new InMemoryGnsIndexer({
+    const indexer = new InMemoryOntIndexer({
       launchHeight: 100,
       experimentalReservedAuctionPolicy: policy,
       experimentalReservedAuctionCatalog: [catalogEntry]
@@ -679,7 +679,7 @@ describe("InMemoryGnsIndexer", () => {
       },
       policy
     );
-    const indexer = new InMemoryGnsIndexer({
+    const indexer = new InMemoryOntIndexer({
       launchHeight: 100,
       experimentalReservedAuctionPolicy: policy,
       experimentalReservedAuctionCatalog: [catalogEntry]
@@ -787,7 +787,7 @@ describe("InMemoryGnsIndexer", () => {
       },
       policy
     );
-    const indexer = new InMemoryGnsIndexer({
+    const indexer = new InMemoryOntIndexer({
       launchHeight: 100,
       experimentalReservedAuctionCatalog: [catalogEntry]
     });
@@ -828,7 +828,7 @@ describe("InMemoryGnsIndexer", () => {
       },
       policy
     );
-    const indexer = new InMemoryGnsIndexer({
+    const indexer = new InMemoryOntIndexer({
       launchHeight: 100,
       experimentalReservedAuctionPolicy: policy,
       experimentalReservedAuctionCatalog: [catalogEntry]
@@ -928,7 +928,7 @@ describe("InMemoryGnsIndexer", () => {
     ]);
   });
 
-  it("flags non-GNS auction bond spends before release using observed outpoints", () => {
+  it("flags non-ONT auction bond spends before release using observed outpoints", () => {
     const policy = createDefaultReservedAuctionPolicy();
     const catalogEntry = createExperimentalReservedAuctionCatalogEntry(
       {
@@ -941,7 +941,7 @@ describe("InMemoryGnsIndexer", () => {
       },
       policy
     );
-    const indexer = new InMemoryGnsIndexer({
+    const indexer = new InMemoryOntIndexer({
       launchHeight: 100,
       experimentalReservedAuctionPolicy: policy,
       experimentalReservedAuctionCatalog: [catalogEntry]
@@ -1051,7 +1051,7 @@ describe("InMemoryGnsIndexer", () => {
     ]);
   });
 
-  it("marks non-GNS auction bond spends after release as allowed", () => {
+  it("marks non-ONT auction bond spends after release as allowed", () => {
     const policy = createDefaultReservedAuctionPolicy();
     const catalogEntry = createExperimentalReservedAuctionCatalogEntry(
       {
@@ -1066,7 +1066,7 @@ describe("InMemoryGnsIndexer", () => {
     );
     const winnerReleaseBlock = 844_210 + catalogEntry.reservedLockBlocks;
     const losingReleaseBlock = 844_355;
-    const indexer = new InMemoryGnsIndexer({
+    const indexer = new InMemoryOntIndexer({
       launchHeight: 100,
       experimentalReservedAuctionPolicy: policy,
       experimentalReservedAuctionCatalog: [catalogEntry]
@@ -1187,7 +1187,7 @@ describe("InMemoryGnsIndexer", () => {
 
   it("lists recent activity newest first", () => {
     const ownerPubkey = "11".repeat(32);
-    const indexer = new InMemoryGnsIndexer({ launchHeight: 100 });
+    const indexer = new InMemoryOntIndexer({ launchHeight: 100 });
 
     indexer.ingestBlocks([
       makeBlock(100, [
@@ -1237,7 +1237,7 @@ describe("InMemoryGnsIndexer", () => {
 
   it("lists recent activity for one name", () => {
     const ownerPubkey = "11".repeat(32);
-    const indexer = new InMemoryGnsIndexer({ launchHeight: 100 });
+    const indexer = new InMemoryOntIndexer({ launchHeight: 100 });
 
     indexer.ingestBlocks([
       makeBlock(100, [
@@ -1311,7 +1311,7 @@ describe("InMemoryGnsIndexer", () => {
 
   it("exports recent checkpoints and restores a prior checkpoint state", () => {
     const ownerPubkey = "11".repeat(32);
-    const indexer = new InMemoryGnsIndexer({ launchHeight: 100, recentCheckpointLimit: 4 });
+    const indexer = new InMemoryOntIndexer({ launchHeight: 100, recentCheckpointLimit: 4 });
 
     indexer.ingestBlocks([
       makeBlock(100, [

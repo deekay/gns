@@ -1,4 +1,4 @@
-# GNS vs Pubky / PKARR
+# ONT vs Pubky / PKARR
 
 This note is a short adjacent-work comparison for internal positioning and documentation.
 
@@ -8,7 +8,7 @@ It is not meant as a hostile comparison, and it is not a claim that one system r
 
 The old Slashtags project now points to Pubky Core, and the closest live comparison is really:
 
-- GNS
+- ONT
 - Pubky / PKARR
 
 These systems share some instincts:
@@ -23,15 +23,15 @@ But they diverge on a central question:
 
 Pubky / PKARR mostly says no.
 
-GNS says yes.
+ONT says yes.
 
 ## Pubky / PKARR In One Sentence
 
 Pubky / PKARR uses public keys as the durable identity layer and signed DNS-like records over the Mainline DHT, while avoiding a scarce global human-readable namespace in the base layer.
 
-## GNS In One Sentence
+## ONT In One Sentence
 
-GNS uses Bitcoin to anchor ownership of scarce flat human-readable payment handles, then lets the current owner sign off-chain records for what those names point to.
+ONT uses Bitcoin to anchor ownership of scarce flat human-readable payment handles, then lets the current owner sign off-chain records for what those names point to.
 
 ## Main Similarities
 
@@ -45,7 +45,7 @@ GNS uses Bitcoin to anchor ownership of scarce flat human-readable payment handl
 
 Pubky / PKARR does not try to solve globally shared human-readable names in the base layer. Public keys are the stable identity.
 
-GNS is specifically trying to solve that missing human layer:
+ONT is specifically trying to solve that missing human layer:
 
 - shared words
 - shared expectations
@@ -55,7 +55,7 @@ GNS is specifically trying to solve that missing human layer:
 
 Pubky / PKARR avoids the scarcity problem by avoiding global shared names.
 
-GNS leans into the scarcity problem directly:
+ONT leans into the scarcity problem directly:
 
 - commit / reveal claims
 - bitcoin bond economics
@@ -66,13 +66,13 @@ GNS leans into the scarcity problem directly:
 
 Pubky / PKARR anchors to key ownership and DHT-published signed records.
 
-GNS anchors ownership transitions to Bitcoin transactions, with Bitcoin acting as the notary for canonical name ownership.
+ONT anchors ownership transitions to Bitcoin transactions, with Bitcoin acting as the notary for canonical name ownership.
 
 ### 4. Durability of ownership state
 
 Pubky / PKARR is centered on current signed state and DHT distribution.
 
-GNS is centered on chain-derived ownership history:
+ONT is centered on chain-derived ownership history:
 
 - who claimed the name
 - who transferred it
@@ -80,22 +80,22 @@ GNS is centered on chain-derived ownership history:
 
 That history can be reconstructed from chain data even if resolvers disappear.
 
-## What GNS Can Learn
+## What ONT Can Learn
 
 - Be explicit about the narrow first use case.
 - Treat browser and client bridge layers as first-class product work.
 - Keep the base layer honest about what it does not solve.
 - Make key-management and client UX feel as important as protocol elegance.
 
-## What Seems Truly Additive About GNS
+## What Seems Truly Additive About ONT
 
-GNS looks genuinely additive if it is framed as:
+ONT looks genuinely additive if it is framed as:
 
 - Bitcoin-anchored ownership for shared human-readable payment handles
 - a way to help humans say who gets paid
 - a sovereignty-preserving base for owner-signed payment records
 
-GNS looks much less differentiated if it is framed only as:
+ONT looks much less differentiated if it is framed only as:
 
 - signed off-chain records
 - self-sovereign identity
@@ -108,6 +108,6 @@ Those are areas where adjacent systems already have credible answers.
 A fair way to describe the relationship is:
 
 - Pubky / PKARR is strong at sovereign routing around public keys.
-- GNS is trying to add sovereign routing around human words.
+- ONT is trying to add sovereign routing around human words.
 
-That is the layer GNS should continue to justify clearly.
+That is the layer ONT should continue to justify clearly.
