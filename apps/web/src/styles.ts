@@ -1472,6 +1472,115 @@ button:disabled {
   margin-top: 4px;
 }
 
+.destination-architecture {
+  display: grid;
+  gap: 16px;
+}
+
+.destination-stage {
+  display: grid;
+  gap: 12px;
+  border: 1px solid rgba(31, 29, 26, 0.08);
+  border-radius: 28px;
+  padding: 18px 20px 20px;
+  box-shadow: var(--shadow-card);
+}
+
+.destination-stage-onchain {
+  width: min(100%, 420px);
+  justify-self: center;
+  background:
+    linear-gradient(180deg, rgba(255, 249, 243, 0.98), rgba(255, 245, 238, 0.84));
+  border-color: rgba(176, 90, 43, 0.18);
+}
+
+.destination-stage-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.destination-stage-kicker,
+.destination-service-label {
+  margin: 0;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.destination-stage-meta {
+  margin: 0;
+  color: var(--accent-strong);
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.destination-stage-card {
+  gap: 10px;
+}
+
+.destination-stage-card h3 {
+  margin: 0;
+  font-size: 1.22rem;
+}
+
+.destination-stage-card p {
+  margin: 0;
+}
+
+.destination-example-name {
+  margin: 0;
+  font-size: clamp(2.15rem, 4vw, 2.7rem);
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+  color: var(--accent-strong);
+}
+
+.destination-stage-card-onchain {
+  border-color: rgba(176, 90, 43, 0.26);
+  background:
+    linear-gradient(180deg, rgba(255, 249, 243, 0.98), rgba(255, 245, 238, 0.84));
+}
+
+.destination-stage-connector {
+  width: 2px;
+  height: 28px;
+  margin: 0 auto;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(176, 90, 43, 0.18), rgba(176, 90, 43, 0.52));
+}
+
+.destination-stage-offchain {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(252, 249, 245, 0.76));
+}
+
+.destination-stage-card-offchain {
+  background:
+    linear-gradient(180deg, rgba(247, 243, 237, 0.82), rgba(255, 255, 255, 0.74));
+  border-style: dashed;
+  border-color: rgba(176, 90, 43, 0.16);
+}
+
+.destination-branch-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.destination-branch-card {
+  min-height: 108px;
+}
+
+.destination-service-value {
+  margin: 0;
+  font-size: 0.98rem;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
 .path-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
@@ -2222,8 +2331,14 @@ button:disabled {
   .field-grid,
   .timeline-entry-grid,
   .name-activity-grid,
-  .path-grid {
+  .path-grid,
+  .destination-branch-grid {
     grid-template-columns: 1fr;
+  }
+
+  .destination-stage-header {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   .name-card-main,

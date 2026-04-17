@@ -25,8 +25,30 @@ describe("renderPageHtml", () => {
     expect(html).toContain("human-readable name with verifiable ownership");
     expect(html).toContain("Ownership is anchored to Bitcoin and publicly auditable.");
     expect(html).toContain("It is bonded, not rented.");
-    expect(html).toContain("cashapp -&gt; $alice1234");
-    expect(html).toContain("website -&gt; https://alice.example");
+    expect(html).toContain("Maps To Destinations");
+    expect(html).toContain("payment, web, professional, messaging, and other owner-signed destinations");
+    expect(html).toContain("$alice1234");
+    expect(html).toContain("alice.example");
+    expect(html).toContain("One Name, Many Destinations");
+    expect(html).toContain("On-chain");
+    expect(html).toContain("Small Bitcoin footprint");
+    expect(html).toContain("destination-example-name mono");
+    expect(html).toContain(">alice<");
+    expect(html).toContain("Claim establishes owner");
+    expect(html).toContain("Resolvers");
+    expect(html).toContain("Store current off-chain data");
+    expect(html).toContain("Resolvers store the current owner-signed bundle for <span class=\"mono\">alice</span>");
+    expect(html).toContain("Clients");
+    expect(html).toContain("Clients combine Bitcoin ownership with resolver data");
+    expect(html).toContain("Cash App");
+    expect(html).toContain("Lightning (BOLT12)");
+    expect(html).toContain("lno1q...9sa");
+    expect(html).toContain("alice@example.com");
+    expect(html).toContain("+1 415 555 0123");
+    expect(html).toContain("LinkedIn");
+    expect(html).toContain("linkedin.com/in/alice");
+    expect(html).toContain("alice_12");
+    expect(html).toContain("alice.example");
     expect(html).toContain("Choose A Path");
     expect(html).toContain("Understand ONT");
     expect(html).toContain("Try The Prototype");
@@ -36,6 +58,8 @@ describe("renderPageHtml", () => {
     expect(html).not.toContain("Current Status");
     expect(html).not.toContain("Private Signet Batch Smoke");
     expect(html).not.toContain("claimdemo");
+    expect(html.indexOf(">Bitcoin<")).toBeLessThan(html.indexOf(">Cash App<"));
+    expect(html.indexOf("bc1qxy...0wlh")).toBeLessThan(html.indexOf("$alice1234"));
   });
 
   it("keeps explore focused on the current private-signet demo surfaces", () => {
@@ -69,6 +93,10 @@ describe("renderPageHtml", () => {
     expect(html).toContain(">Overview<");
     expect(html).toContain(">Auctions<");
     expect(html).toContain("How It Works");
+    expect(html).toContain("One Name, Many Destinations");
+    expect(html).toContain("bc1qxy...0wlh");
+    expect(html).toContain("Store current off-chain data");
+    expect(html).toContain("Resolve and act");
     expect(html).toContain("Use The Current Prototype");
     expect(html).toContain("Current Status");
     expect(html).toContain("Works Today");

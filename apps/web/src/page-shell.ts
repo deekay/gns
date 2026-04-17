@@ -262,9 +262,9 @@ function renderHeroSection(
           <article class="hero-home-principle">
             <div class="hero-home-principle-head">
               <p class="hero-home-principle-kicker">04</p>
-              <h3>Maps To Payments</h3>
+              <h3>Maps To Destinations</h3>
             </div>
-            <p>You can map it to destinations like <span class="mono">cashapp -&gt; $alice1234</span>, <span class="mono">btc -&gt; bc1qxy...0wlh</span>, or <span class="mono">website -&gt; https://alice.example</span>.</p>
+            <p>It can point to payment, web, professional, messaging, and other owner-signed destinations.</p>
           </article>
         </div>
       </article>
@@ -322,7 +322,8 @@ function renderPanelHead(title: string, summary: string, infoBody?: string): str
 
 function renderHomePageSections(configuredBasePath: string): string {
   return `${renderSearchSection()}
-    ${renderHomeActionsSection(configuredBasePath)}`;
+    ${renderHomeActionsSection(configuredBasePath)}
+    ${renderHomeDestinationDiagramSection()}`;
 }
 
 function renderExplorePageSections(
@@ -381,6 +382,7 @@ function renderSetupPageSections(
 
 function renderExplainerPageSections(configuredBasePath: string): string {
   return `${renderHomeModelSection()}
+    ${renderHomeDestinationDiagramSection()}
     ${renderUsingOntSection(configuredBasePath)}
     ${renderHomeDocsSection()}`;
 }
@@ -514,7 +516,7 @@ function renderHomeModelSection(): string {
       </article>
       <article class="guide-card">
         <h3>Publish A Destination</h3>
-        <p>After a claim succeeds, the owner can publish the current destination for the name. One owner-signed bundle can carry entries like <span class="mono">cashapp -&gt; $alice1234</span>, <span class="mono">btc -&gt; bc1qxy...0wlh</span>, or <span class="mono">website -&gt; https://alice.example</span>.</p>
+        <p>After a claim succeeds, the owner can publish the current destination for the name. One owner-signed bundle can carry entries like <span class="mono">btc -&gt; bc1qxy...0wlh</span>, <span class="mono">lightning -&gt; lno1q...9sa</span>, <span class="mono">email -&gt; alice@example.com</span>, <span class="mono">website -&gt; alice.example</span>, or <span class="mono">cashapp -&gt; $alice1234</span>.</p>
       </article>
       <article class="guide-card">
         <h3>Resolve And Verify</h3>
@@ -522,6 +524,68 @@ function renderHomeModelSection(): string {
       </article>
     </div>
   </section>`;
+}
+
+function renderHomeDestinationDiagramSection(): string {
+  return `<section id="one-name-many-destinations" class="panel panel-guide">
+    ${renderPanelHead(
+      "One Name, Many Destinations",
+      "A single ONT name can point to several owner-signed destinations at once."
+    )}
+    <div class="destination-architecture">
+      <div class="destination-stage destination-stage-onchain">
+        <div class="destination-stage-header">
+          <p class="destination-stage-kicker">On-chain</p>
+          <p class="destination-stage-meta">Small Bitcoin footprint</p>
+        </div>
+        <article class="guide-card destination-stage-card destination-stage-card-onchain">
+          <p class="destination-example-name mono">alice</p>
+          <h3>Claim establishes owner</h3>
+          <p>Bitcoin anchors ownership and transfers, so control of the name stays public and auditable.</p>
+        </article>
+      </div>
+      <div class="destination-stage-connector" aria-hidden="true"></div>
+      <div class="destination-stage destination-stage-offchain">
+        <div class="destination-stage-header">
+          <p class="destination-stage-kicker">Resolvers</p>
+          <p class="destination-stage-meta">Store current off-chain data</p>
+        </div>
+        <article class="guide-card destination-stage-card destination-stage-card-offchain">
+          <h3>Resolvers store the current owner-signed bundle for <span class="mono">alice</span></h3>
+          <p>The current owner can update this off-chain bundle over time, while resolvers keep the latest owner-authorized destinations lightweight and easy to query.</p>
+        </article>
+        <div class="destination-branch-grid" aria-label="Example destinations for alice">
+          ${renderDestinationServiceCard("Bitcoin", "bc1qxy...0wlh")}
+          ${renderDestinationServiceCard("Lightning (BOLT12)", "lno1q...9sa")}
+          ${renderDestinationServiceCard("Email", "alice@example.com")}
+          ${renderDestinationServiceCard("Phone", "+1 415 555 0123")}
+          ${renderDestinationServiceCard("Website", "alice.example")}
+          ${renderDestinationServiceCard("LinkedIn", "linkedin.com/in/alice")}
+          ${renderDestinationServiceCard("Signal", "alice_12")}
+          ${renderDestinationServiceCard("Cash App", "$alice1234")}
+        </div>
+      </div>
+      <div class="destination-stage-connector" aria-hidden="true"></div>
+      <div class="destination-stage destination-stage-client">
+        <div class="destination-stage-header">
+          <p class="destination-stage-kicker">Clients</p>
+          <p class="destination-stage-meta">Resolve and act</p>
+        </div>
+        <article class="guide-card destination-stage-card destination-stage-card-client">
+          <h3>Clients combine Bitcoin ownership with resolver data</h3>
+          <p>Wallets and apps check who controls <span class="mono">alice</span>, fetch the latest resolver record, and then use the destinations they understand.</p>
+        </article>
+      </div>
+    </div>
+    <p class="tool-handoff-note">Bitcoin anchors ownership. Resolvers serve the mutable destination layer off-chain. Clients combine both when they decide what <span class="mono">alice</span> means right now.</p>
+  </section>`;
+}
+
+function renderDestinationServiceCard(serviceName: string, serviceValue: string): string {
+  return `<article class="guide-card destination-branch-card">
+    <p class="destination-service-label">${escapeHtml(serviceName)}</p>
+    <p class="mono destination-service-value">${escapeHtml(serviceValue)}</p>
+  </article>`;
 }
 
 function renderHomeDocsSection(): string {
@@ -1351,7 +1415,7 @@ function renderValuesToolSection(): string {
                 <div class="draft-actions">
                   <button id="addValueBundleEntryButton" type="button" class="secondary-button">Add pair</button>
                 </div>
-                <span class="field-hint">List as many ordered key/value pairs as you want. For example: <span class="mono">cashapp -&gt; $alice1234</span>, <span class="mono">btc -&gt; bc1qxy...0wlh</span>, <span class="mono">website -&gt; https://alice.example</span>. Keys are app-defined and repeatable.</span>
+                <span class="field-hint">List as many ordered key/value pairs as you want. For example: <span class="mono">btc -&gt; bc1qxy...0wlh</span>, <span class="mono">lightning -&gt; lno1q...9sa</span>, <span class="mono">email -&gt; alice@example.com</span>, <span class="mono">website -&gt; alice.example</span>, <span class="mono">cashapp -&gt; $alice1234</span>. Keys are app-defined and repeatable.</span>
               </div>
             </div>
             <div class="draft-actions claim-step-actions">
@@ -1421,7 +1485,7 @@ function renderValuesGuideSection(configuredBasePath: string): string {
         <ul class="guide-list">
           <li>A single HTTPS target</li>
           <li>A single Bitcoin payment target</li>
-          <li>A bundled list of repeatable key/value entries like <span class="mono">cashapp -&gt; $alice1234</span>, <span class="mono">btc -&gt; bc1qxy...0wlh</span>, and <span class="mono">website -&gt; https://alice.example</span></li>
+          <li>A bundled list of repeatable key/value entries like <span class="mono">btc -&gt; bc1qxy...0wlh</span>, <span class="mono">lightning -&gt; lno1q...9sa</span>, <span class="mono">website -&gt; alice.example</span>, and <span class="mono">cashapp -&gt; $alice1234</span></li>
         </ul>
         <div class="guide-card-actions">
           <a class="action-link secondary" href="${withBasePath("/values", configuredBasePath)}">Open values tool</a>
