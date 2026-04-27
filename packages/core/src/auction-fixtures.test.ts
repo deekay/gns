@@ -1,4 +1,4 @@
-import { readFile } from "node:fs/promises";
+import { readdir, readFile } from "node:fs/promises";
 
 import { describe, expect, it } from "vitest";
 
@@ -48,10 +48,76 @@ describe("auction fixture coverage", () => {
       expect(result.bidOutcomes.map((outcome) => outcome.reason)).toEqual(fixture.expected.reasons);
     });
   }
+
+  it("does not use short names in launch-name auction fixtures", async () => {
+    const fixtureRoot = new URL("../../../fixtures/auction/", import.meta.url);
+    const invalidFixtureNames: string[] = [];
+
+    for (const fixtureUrl of await listJsonFiles(fixtureRoot)) {
+      const raw = await readFile(fixtureUrl, "utf8");
+      const fixture = JSON.parse(raw) as unknown;
+
+      for (const name of collectLaunchFixtureNames(fixture)) {
+        if (name.length < 5) {
+          invalidFixtureNames.push(`${fixtureUrl.pathname}: ${name}`);
+        }
+      }
+    }
+
+    expect(invalidFixtureNames).toEqual([]);
+  });
 });
 
 async function loadAuctionFixture(fileName: string): Promise<AuctionFixtureFile> {
   const fixtureUrl = new URL(`../../../fixtures/auction/${fileName}`, import.meta.url);
   const raw = await readFile(fixtureUrl, "utf8");
   return JSON.parse(raw) as AuctionFixtureFile;
+}
+
+async function listJsonFiles(directoryUrl: URL): Promise<URL[]> {
+  const entries = await readdir(directoryUrl, { withFileTypes: true });
+  const files = await Promise.all(
+    entries.map((entry) => {
+      const entryUrl = new URL(entry.name + (entry.isDirectory() ? "/" : ""), directoryUrl);
+
+      if (entry.isDirectory()) {
+        return listJsonFiles(entryUrl);
+      }
+
+      return Promise.resolve(entry.name.endsWith(".json") ? [entryUrl] : []);
+    })
+  );
+
+  return files.flat();
+}
+
+function collectLaunchFixtureNames(fixture: unknown): string[] {
+  if (!isObject(fixture)) {
+    return [];
+  }
+
+  const names: string[] = [];
+  collectLaunchScenarioName(fixture.scenario, names);
+
+  if (Array.isArray(fixture.auctions)) {
+    for (const auction of fixture.auctions) {
+      collectLaunchScenarioName(auction, names);
+    }
+  }
+
+  return names;
+}
+
+function collectLaunchScenarioName(input: unknown, names: string[]): void {
+  if (
+    isObject(input)
+    && input.auctionClassId === "launch_name"
+    && typeof input.name === "string"
+  ) {
+    names.push(input.name);
+  }
+}
+
+function isObject(input: unknown): input is Record<string, unknown> {
+  return typeof input === "object" && input !== null;
 }

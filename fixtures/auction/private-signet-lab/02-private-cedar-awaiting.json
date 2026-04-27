@@ -1,9 +1,9 @@
 {
-  "title": "Private demo auction · luna (awaiting)",
+  "title": "Private demo auction · cedar (awaiting)",
   "description": "Private signet prototype entry with below-floor attempts after the configured eligibility height so the hosted lab still shows the eligible-to-open state.",
   "currentBlockHeight": 128,
   "scenario": {
-    "name": "luna",
+    "name": "cedar",
     "auctionClassId": "launch_name",
     "unlockBlock": 118,
     "bidAttempts": [

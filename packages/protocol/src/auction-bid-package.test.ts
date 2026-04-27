@@ -117,7 +117,7 @@ describe("auction bid packages", () => {
   it("rejects packages whose preview fields no longer match the observed state", () => {
     const pkg = createAuctionBidPackage({
       auctionId: "02-awaiting-opening",
-      name: "luna",
+      name: "cedar",
       auctionClassId: "launch_name",
       classLabel: "Launch auction",
       currentBlockHeight: 99_000,

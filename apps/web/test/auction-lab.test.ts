@@ -18,7 +18,7 @@ describe("loadLaunchAuctionLab", () => {
       "soft_close",
       "settled"
     ]);
-    expect(payload.cases[0]?.state.currentRequiredMinimumBidSats).toBe("12500000");
+    expect(payload.cases[0]?.state.currentRequiredMinimumBidSats).toBe("6250000");
     expect(payload.cases[3]?.state.currentLeaderBidderId).toBe("speculator_d");
     expect(payload.cases.map((entry) => entry.state.phase)).not.toContain("pending_unlock");
   });

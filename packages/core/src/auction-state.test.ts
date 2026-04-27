@@ -31,13 +31,13 @@ describe("simulateLaunchAuctionStateAtBlock", () => {
       policy,
       currentBlockHeight: 880_030,
       scenario: parseLaunchAuctionScenario({
-        name: "luna",
+        name: "cedar",
         auctionClassId: "launch_name",
         unlockBlock: 880_000,
         bidAttempts: [
-          { bidderId: "speculator_a", blockHeight: 880_015, amountSats: "10000000" },
-          { bidderId: "speculator_b", blockHeight: 880_020, amountSats: "11000000" },
-          { bidderId: "speculator_c", blockHeight: 880_030, amountSats: "12499999" }
+          { bidderId: "speculator_a", blockHeight: 880_015, amountSats: "5000000" },
+          { bidderId: "speculator_b", blockHeight: 880_020, amountSats: "5500000" },
+          { bidderId: "speculator_c", blockHeight: 880_030, amountSats: "6249999" }
         ]
       })
     });
@@ -45,7 +45,7 @@ describe("simulateLaunchAuctionStateAtBlock", () => {
     expect(state.phase).toBe("awaiting_opening_bid");
     expect(state.acceptedBidCount).toBe(0);
     expect(state.rejectedBidCount).toBe(3);
-    expect(state.currentRequiredMinimumBidSats?.toString()).toBe("12500000");
+    expect(state.currentRequiredMinimumBidSats?.toString()).toBe("6250000");
   });
 
   it("keeps unopened eligible names available for an opening bid", () => {
@@ -53,20 +53,20 @@ describe("simulateLaunchAuctionStateAtBlock", () => {
       policy,
       currentBlockHeight: 884_321,
       scenario: parseLaunchAuctionScenario({
-        name: "luna",
+        name: "cedar",
         auctionClassId: "launch_name",
         unlockBlock: 880_000,
         bidAttempts: [
-          { bidderId: "speculator_a", blockHeight: 880_015, amountSats: "10000000" },
-          { bidderId: "speculator_b", blockHeight: 880_020, amountSats: "11000000" },
-          { bidderId: "speculator_c", blockHeight: 880_030, amountSats: "12499999" }
+          { bidderId: "speculator_a", blockHeight: 880_015, amountSats: "5000000" },
+          { bidderId: "speculator_b", blockHeight: 880_020, amountSats: "5500000" },
+          { bidderId: "speculator_c", blockHeight: 880_030, amountSats: "6249999" }
         ]
       })
     });
 
     expect(state.phase).toBe("awaiting_opening_bid");
-    expect(state.baseMinimumBidSats).toBe(12_500_000n);
-    expect(state.currentRequiredMinimumBidSats?.toString()).toBe("12500000");
+    expect(state.baseMinimumBidSats).toBe(6_250_000n);
+    expect(state.currentRequiredMinimumBidSats?.toString()).toBe("6250000");
     expect(state.acceptedBidCount).toBe(0);
     expect(state.rejectedBidCount).toBe(3);
   });
