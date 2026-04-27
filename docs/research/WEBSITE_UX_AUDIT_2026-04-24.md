@@ -144,7 +144,7 @@ Needs improvement:
 
 - Auction pages should continue to look visually aligned with the rest of the site.
 - The page should separate "what is live-chain observed" from "what is fixture/reference state".
-- A small phase legend would help: pending unlock, awaiting bid, live bidding, soft close, settled, released.
+- A small phase legend would help: pending opening, awaiting bid, live bidding, soft close, settled, released.
 
 ## Recommended Next UX Work
 

@@ -70,7 +70,7 @@ describe("simulateLaunchAuction", () => {
     expect(result.settlementLockBlocks).toBe(policy.auctionClasses.launch_name.lockBlocks);
   });
 
-  it("rejects bids before unlock, rejects low increments, and extends on soft close", () => {
+  it("rejects bids before opening, rejects low increments, and extends on soft close", () => {
     const policy = createDefaultLaunchAuctionPolicy();
     const result = simulateLaunchAuction({
       policy,

@@ -488,18 +488,18 @@ async function ensureAuctionReadyForOpeningBid(auctionState) {
   }
 
   if (auctionState.phase !== "pending_unlock") {
-    throw new Error(`expected ${auctionState.auctionId} to be pending unlock or awaiting opening bid`);
+    throw new Error(`expected ${auctionState.auctionId} to be pending opening or awaiting opening bid`);
   }
 
   const blocksToMine = Math.max(1, auctionState.unlockBlock - auctionState.currentBlockHeight);
-  logStep(auctionState.auctionId, `mining ${blocksToMine} block${blocksToMine === 1 ? "" : "s"} until unlock`);
+  logStep(auctionState.auctionId, `mining ${blocksToMine} block${blocksToMine === 1 ? "" : "s"} until auction opening`);
   const currentHeight = await getBlockCount();
   await mineBlocks(blocksToMine);
   await waitForResolverHeight(currentHeight + blocksToMine);
 
   const refreshed = await fetchExperimentalAuctionById(auctionState.auctionId);
   if (!refreshed || refreshed.phase !== "awaiting_opening_bid") {
-    throw new Error(`expected ${auctionState.auctionId} to reach awaiting_opening_bid after unlock`);
+    throw new Error(`expected ${auctionState.auctionId} to reach awaiting_opening_bid after auction opening`);
   }
 
   return refreshed;

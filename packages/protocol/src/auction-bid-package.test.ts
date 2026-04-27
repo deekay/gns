@@ -11,7 +11,7 @@ import {
 } from "./index.js";
 
 describe("auction bid packages", () => {
-  it("builds a preview for pending unlock states", () => {
+  it("builds a preview for pending-opening states", () => {
     const pkg = createAuctionBidPackage({
       auctionId: "01-pending-unlock-nvidia",
       name: "nvidia",
@@ -38,7 +38,7 @@ describe("auction bid packages", () => {
     expect(pkg.previewStatus).toBe("too_early");
     expect(pkg.previewRequiredMinimumBidSats).toBe("1000000000");
     expect(pkg.wouldBecomeLeader).toBe(false);
-    expect(pkg.previewSummary).toContain("pending unlock");
+    expect(pkg.previewSummary).toContain("not opened yet");
     expect(pkg.bidderCommitment).toBe(computeAuctionBidderCommitment("operator_a"));
     expect(pkg.currentLeaderBidderCommitment).toBeNull();
     expect(pkg.auctionLotCommitment).toBe(

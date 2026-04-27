@@ -1,6 +1,6 @@
 {
   "title": "Private phase lot · awaiting opening bid",
-  "description": "Dedicated private signet lot left without bids shortly after unlock so the live experimental feed can show a real awaiting_opening_bid state.",
+  "description": "Dedicated private signet lot left without bids shortly after opening so the live experimental feed can show a real awaiting-opening-bid state.",
   "currentBlockHeight": 176,
   "scenario": {
     "name": "phaseawaiting",

@@ -463,7 +463,7 @@ function deriveAuctionBidPreview(input: {
     return {
       previewStatus: "too_early",
       previewSummary:
-        `Auction is still pending unlock. Wait ${input.blocksUntilUnlock} more block${input.blocksUntilUnlock === 1 ? "" : "s"} before bidding.`,
+        `Auction has not opened yet. Wait ${input.blocksUntilUnlock} more block${input.blocksUntilUnlock === 1 ? "" : "s"} before bidding.`,
       previewRequiredMinimumBidSats: input.openingMinimumBidSats,
       wouldBecomeLeader: false,
       wouldExtendSoftClose: false

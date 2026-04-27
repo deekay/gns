@@ -218,7 +218,7 @@ describe("experimental auction derivation", () => {
       {
         auctionId: "02-awaiting-opening-nike",
         title: "Awaiting opening bid · nike",
-        description: "Launch auction after unlock but before a valid opening bid.",
+        description: "Launch auction after the configured opening height but before a valid opening bid.",
         name: "nike",
         auctionClassId: "launch_name",
         unlockBlock: 880_000

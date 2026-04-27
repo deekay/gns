@@ -185,7 +185,7 @@ async function inspectAuctionBidPackage(filePath: string | undefined): Promise<v
   console.log(`Class: ${parsed.classLabel} (${parsed.auctionClassId})`);
   console.log(`Observed phase: ${parsed.phase}`);
   console.log(`Observed block: ${parsed.currentBlockHeight}`);
-  console.log(`Unlock block: ${parsed.unlockBlock}`);
+  console.log(`Auction opens: ${parsed.unlockBlock}`);
   console.log(`Close after: ${parsed.auctionCloseBlockAfter ?? "(not started yet)"}`);
   console.log(`Settlement lock: ${parsed.settlementLockBlocks.toLocaleString("en-US")} blocks`);
   console.log("");

@@ -1,6 +1,6 @@
 {
-  "title": "Pending unlock · nvidia",
-  "description": "Launch auction before its unlock block. This is the state before any valid opening bid can be accepted.",
+  "title": "Before auction opens · nvidia",
+  "description": "Launch auction before its configured opening height. This is the state before any valid opening bid can be accepted.",
   "currentBlockHeight": 839990,
   "scenario": {
     "name": "nvidia",

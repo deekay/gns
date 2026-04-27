@@ -1,6 +1,6 @@
 {
   "title": "Private demo lot · nike (awaiting)",
-  "description": "Private signet lot with below-floor attempts after unlock so the hosted lab still shows the awaiting-opening-bid state.",
+  "description": "Private signet lot with below-floor attempts after the configured opening height so the hosted lab still shows the awaiting-opening-bid state.",
   "currentBlockHeight": 128,
   "scenario": {
     "name": "nike",

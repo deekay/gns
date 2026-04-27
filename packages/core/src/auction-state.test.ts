@@ -7,7 +7,7 @@ import { parseLaunchAuctionScenario } from "./auction-sim.js";
 const policy = createDefaultLaunchAuctionPolicy();
 
 describe("simulateLaunchAuctionStateAtBlock", () => {
-  it("reports pending unlock before the auction opens", () => {
+  it("reports pending opening before the auction opens", () => {
     const state = simulateLaunchAuctionStateAtBlock({
       policy,
       currentBlockHeight: 839_990,
