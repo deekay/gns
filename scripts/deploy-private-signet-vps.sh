@@ -87,7 +87,11 @@ fi
 echo "Deploying private signet services to $REMOTE"
 
 RELEASE_DIR=$(ssh "${SSH_ARGS[@]}" "$REMOTE" '
-  release_base=/opt/ont/releases
+  if id ont >/dev/null 2>&1 || [[ -d /etc/ont ]]; then
+    release_base=/opt/ont/releases
+  else
+    release_base=/opt/gns/releases
+  fi
   install -d "$release_base"
   mktemp -d "$release_base/private-XXXXXX"
 ')
@@ -146,11 +150,22 @@ echo "Waiting for deploy lock: $LOCK_PATH"
 exec 9>"$LOCK_PATH"
 flock 9
 
-APP_PREFIX=ont
-APP_USER=ont
-APP_ROOT=/opt/ont/app
-DATA_DIR=/var/lib/ont
-PRIVATE_ENV=/etc/ont/ont-private.env
+if id ont >/dev/null 2>&1 && [[ -d /etc/ont ]]; then
+  APP_PREFIX=ont
+  APP_USER=ont
+  APP_ROOT=/opt/ont/app
+  DATA_DIR=/var/lib/ont
+  PRIVATE_ENV=/etc/ont/ont-private.env
+elif id gns >/dev/null 2>&1 && [[ -d /etc/gns ]]; then
+  APP_PREFIX=gns
+  APP_USER=gns
+  APP_ROOT=/opt/gns/app
+  DATA_DIR=/var/lib/gns
+  PRIVATE_ENV=/etc/gns/gns-private.env
+else
+  echo "Unable to find an ont or gns private-signet service layout on the VPS." >&2
+  exit 1
+fi
 
 PRIVATE_RESOLVER_SERVICE="${APP_PREFIX}-private-resolver.service"
 PRIVATE_WEB_SERVICE="${APP_PREFIX}-private-web.service"
@@ -216,9 +231,9 @@ fi
 
 systemctl restart "$PRIVATE_RESOLVER_SERVICE" "$PRIVATE_WEB_SERVICE"
 
-WEB_PORT=$(env_value ONT_WEB_PORT "$PRIVATE_ENV")
-RESOLVER_PORT=$(env_value ONT_RESOLVER_PORT "$PRIVATE_ENV")
-WEB_BASE_PATH=$(env_value ONT_WEB_BASE_PATH "$PRIVATE_ENV")
+WEB_PORT=$(env_value ONT_WEB_PORT GNS_WEB_PORT "$PRIVATE_ENV")
+RESOLVER_PORT=$(env_value ONT_RESOLVER_PORT GNS_RESOLVER_PORT "$PRIVATE_ENV")
+WEB_BASE_PATH=$(env_value ONT_WEB_BASE_PATH GNS_WEB_BASE_PATH "$PRIVATE_ENV")
 
 wait_for_http() {
   local url="$1"

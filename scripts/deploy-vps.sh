@@ -13,7 +13,7 @@ Examples:
   ./scripts/deploy-vps.sh root@example.com ~/.ssh/your_key
 
 This script:
-  - rsyncs the current repo to the active app root (/opt/ont/app)
+  - rsyncs the current repo to the active app root
   - installs npm dependencies on the server
   - by default, preserves the current launch height and snapshot
   - restarts the active resolver and web services
@@ -94,7 +94,11 @@ REFRESH_LAUNCH_HEIGHT="${ONT_DEPLOY_REFRESH_LAUNCH_HEIGHT:-0}"
 echo "Deploying to $REMOTE"
 
 RELEASE_DIR=$(ssh "${SSH_ARGS[@]}" "$REMOTE" '
-  release_base=/opt/ont/releases
+  if id ont >/dev/null 2>&1 || [[ -d /etc/ont ]]; then
+    release_base=/opt/ont/releases
+  else
+    release_base=/opt/gns/releases
+  fi
   install -d "$release_base"
   mktemp -d "$release_base/public-XXXXXX"
 ')
@@ -153,12 +157,29 @@ echo "Waiting for deploy lock: $LOCK_PATH"
 exec 9>"$LOCK_PATH"
 flock 9
 
-APP_PREFIX=ont
-APP_USER=ont
-APP_ROOT=/opt/ont/app
-DATA_DIR=/var/lib/ont
-MAIN_ENV=/etc/ont/ont.env
-DOMAIN_ENV=/etc/ont/ont-domain.env
+if id ont >/dev/null 2>&1 && [[ -d /etc/ont ]]; then
+  APP_PREFIX=ont
+  APP_USER=ont
+  APP_ROOT=/opt/ont/app
+  DATA_DIR=/var/lib/ont
+  MAIN_ENV=/etc/ont/ont.env
+  DOMAIN_ENV=/etc/ont/ont-domain.env
+  PRIVATE_DEMO_BASE_PATH=/ont-private
+elif id gns >/dev/null 2>&1 && [[ -d /etc/gns ]]; then
+  APP_PREFIX=gns
+  APP_USER=gns
+  APP_ROOT=/opt/gns/app
+  DATA_DIR=/var/lib/gns
+  MAIN_ENV=/etc/gns/gns.env
+  DOMAIN_ENV=/etc/gns/gns-domain.env
+  PRIVATE_DEMO_BASE_PATH=$(env_value GNS_WEB_PRIVATE_DEMO_BASE_PATH ONT_WEB_PRIVATE_DEMO_BASE_PATH "$DOMAIN_ENV")
+  if [[ -z "$PRIVATE_DEMO_BASE_PATH" ]]; then
+    PRIVATE_DEMO_BASE_PATH=/gns-private
+  fi
+else
+  echo "Unable to find an ont or gns service layout on the VPS." >&2
+  exit 1
+fi
 
 RESOLVER_SERVICE="${APP_PREFIX}-resolver.service"
 WEB_SERVICE="${APP_PREFIX}-web.service"
@@ -173,7 +194,7 @@ if [[ -f "$MAIN_ENV" ]]; then
   upsert_env "$MAIN_ENV" ONT_WEB_PRIVATE_AUCTION_SMOKE_STATUS_PATH "${DATA_DIR}/private-auction-smoke-summary.json"
 fi
 if [[ -f "$DOMAIN_ENV" ]]; then
-  upsert_env "$DOMAIN_ENV" ONT_WEB_PRIVATE_DEMO_BASE_PATH /ont-private
+  upsert_env "$DOMAIN_ENV" ONT_WEB_PRIVATE_DEMO_BASE_PATH "$PRIVATE_DEMO_BASE_PATH"
   upsert_env "$DOMAIN_ENV" ONT_WEB_PRIVATE_AUCTION_SMOKE_STATUS_PATH "${DATA_DIR}/private-auction-smoke-summary.json"
 fi
 
@@ -218,11 +239,11 @@ SERVICE
 fi
 
 if [[ "${REFRESH_LAUNCH_HEIGHT:-0}" != "0" ]]; then
-  SOURCE_MODE=$(env_value ONT_SOURCE_MODE "$MAIN_ENV")
-  RPC_URL=$(env_value ONT_BITCOIN_RPC_URL "$MAIN_ENV")
-  RPC_USERNAME=$(env_value ONT_BITCOIN_RPC_USERNAME "$MAIN_ENV")
-  RPC_PASSWORD=$(env_value ONT_BITCOIN_RPC_PASSWORD "$MAIN_ENV")
-  SNAPSHOT_PATH=$(env_value ONT_SNAPSHOT_PATH "$MAIN_ENV")
+  SOURCE_MODE=$(env_value ONT_SOURCE_MODE GNS_SOURCE_MODE "$MAIN_ENV")
+  RPC_URL=$(env_value ONT_BITCOIN_RPC_URL GNS_BITCOIN_RPC_URL "$MAIN_ENV")
+  RPC_USERNAME=$(env_value ONT_BITCOIN_RPC_USERNAME GNS_BITCOIN_RPC_USERNAME "$MAIN_ENV")
+  RPC_PASSWORD=$(env_value ONT_BITCOIN_RPC_PASSWORD GNS_BITCOIN_RPC_PASSWORD "$MAIN_ENV")
+  SNAPSHOT_PATH=$(env_value ONT_SNAPSHOT_PATH GNS_SNAPSHOT_PATH "$MAIN_ENV")
 
   if [[ "$SOURCE_MODE" != "rpc" || -z "$RPC_URL" ]]; then
     echo "Refusing to refresh launch height without rpc mode and ONT_BITCOIN_RPC_URL" >&2
@@ -285,9 +306,9 @@ if systemctl list-unit-files "$DOMAIN_WEB_SERVICE" >/dev/null 2>&1; then
   systemctl restart "$DOMAIN_WEB_SERVICE"
 fi
 
-RESOLVER_PORT=$(env_value ONT_RESOLVER_PORT "$MAIN_ENV")
-WEB_PORT=$(env_value ONT_WEB_PORT "$MAIN_ENV")
-WEB_BASE_PATH=$(env_value ONT_WEB_BASE_PATH "$MAIN_ENV")
+RESOLVER_PORT=$(env_value ONT_RESOLVER_PORT GNS_RESOLVER_PORT "$MAIN_ENV")
+WEB_PORT=$(env_value ONT_WEB_PORT GNS_WEB_PORT "$MAIN_ENV")
+WEB_BASE_PATH=$(env_value ONT_WEB_BASE_PATH GNS_WEB_BASE_PATH "$MAIN_ENV")
 if [[ -z "$WEB_BASE_PATH" || "$WEB_BASE_PATH" == "/" ]]; then
   WEB_BASE_PATH=""
 fi
