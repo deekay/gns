@@ -173,9 +173,9 @@ If names become part of how humans tell software which service they trust, then 
 
 That strengthens the universal-auction case:
 
-- launch-eligible names should face the same allocation rule
+- valid names should face the same allocation rule
 - the market should discover which names draw real demand
-- `1-4` character names can wait for a later objective wave
+- shorter names can use higher objective opening floors
 
 The fairness argument is not mainly about prestige. It is about coordination pressure, market discovery, and the cost of misallocation.
 

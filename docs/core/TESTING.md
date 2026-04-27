@@ -1,7 +1,7 @@
 # Testing
 
 This guide reflects the current ONT launch direction: one auction lane for
-launch-eligible names, with `1-4` character names saved for a later wave.
+valid names, with objective length-based opening floors.
 
 ## Core Test Commands
 

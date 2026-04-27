@@ -216,10 +216,10 @@ describe("experimental auction derivation", () => {
     const policy = createDefaultLaunchAuctionPolicy();
     const catalogEntry = createExperimentalLaunchAuctionCatalogEntry(
       {
-        auctionId: "02-eligible-to-open-cedar",
-        title: "Eligible to open · cedar",
+        auctionId: "02-eligible-to-open-cove",
+        title: "Ready to open · cove",
         description: "Prototype entry after the configured eligibility height but before a valid opening bid.",
-        name: "cedar",
+        name: "cove",
         auctionClassId: "launch_name",
         unlockBlock: 880_000
       },
@@ -238,7 +238,7 @@ describe("experimental auction derivation", () => {
           vout: 1,
           bondVout: 0,
           bidderCommitment: computeAuctionBidderCommitment("speculator_a"),
-          bidAmountSats: 5_000_000n,
+          bidAmountSats: 10_000_000n,
           settlementLockBlocks: catalogEntry.settlementLockBlocks,
           auctionLotCommitment: catalogEntry.auctionLotCommitment,
           spentOutpoints: [],
@@ -264,7 +264,7 @@ describe("experimental auction derivation", () => {
           vout: 1,
           bondVout: 0,
           bidderCommitment: computeAuctionBidderCommitment("speculator_b"),
-          bidAmountSats: 6_500_000n,
+          bidAmountSats: 13_000_000n,
           settlementLockBlocks: catalogEntry.settlementLockBlocks,
           auctionLotCommitment: catalogEntry.auctionLotCommitment,
           spentOutpoints: [],
@@ -274,8 +274,8 @@ describe("experimental auction derivation", () => {
     });
 
     expect(state.phase).toBe("awaiting_opening_bid");
-    expect(state.currentRequiredMinimumBidSats?.toString()).toBe("6250000");
-    expect(state.baseMinimumBidSats).toBe(6_250_000n);
+    expect(state.currentRequiredMinimumBidSats?.toString()).toBe("12500000");
+    expect(state.baseMinimumBidSats).toBe(12_500_000n);
     expect(state.acceptedBidCount).toBe(0);
     expect(state.rejectedBidCount).toBe(2);
     expect(state.visibleBidOutcomes[1]).toMatchObject({

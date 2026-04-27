@@ -215,7 +215,7 @@ export function formatLaunchAuctionPhaseLabel(phase: LaunchAuctionPhase): string
     case "pending_unlock":
       return "Pre-eligibility";
     case "awaiting_opening_bid":
-      return "Eligible to open";
+      return "Ready to open";
     case "live_bidding":
       return "Live bidding";
     case "soft_close":

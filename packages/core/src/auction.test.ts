@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   calculateLaunchAuctionMinimumIncrementBidSats,
   createDefaultLaunchAuctionPolicy,
+  getDefaultLaunchAuctionClassIdForName,
   parseLaunchAuctionPolicy,
   parseLaunchAuctionScenario,
   serializeLaunchAuctionPolicy,
@@ -46,7 +47,7 @@ describe("auction policy", () => {
 });
 
 describe("simulateLaunchAuction", () => {
-  it("uses the neutral length floor when it exceeds the launch auction floor", () => {
+  it("uses the length-based opening floor when it exceeds the global auction floor", () => {
     const policy = createDefaultLaunchAuctionPolicy();
     const result = simulateLaunchAuction({
       policy,
@@ -68,6 +69,39 @@ describe("simulateLaunchAuction", () => {
     expect(result.openingMinimumBidSats).toBe(195_312n);
     expect(result.winner?.amountSats).toBe(25_000_000n);
     expect(result.settlementLockBlocks).toBe(policy.auctionClasses.launch_name.lockBlocks);
+  });
+
+  it("puts short names in the same auction lane with a higher length floor", () => {
+    const policy = createDefaultLaunchAuctionPolicy();
+    const result = simulateLaunchAuction({
+      policy,
+      scenario: {
+        name: "cove",
+        auctionClassId: getDefaultLaunchAuctionClassIdForName("cove"),
+        unlockBlock: 880_000,
+        bidAttempts: [
+          {
+            bidderId: "underfloor",
+            blockHeight: 880_010,
+            amountSats: 12_499_999n
+          },
+          {
+            bidderId: "opener",
+            blockHeight: 880_020,
+            amountSats: 12_500_000n
+          }
+        ]
+      }
+    });
+
+    expect(result.auctionClassId).toBe("launch_name");
+    expect(result.classLabel).toBe("Name auction");
+    expect(result.openingMinimumBidSats).toBe(12_500_000n);
+    expect(result.bidOutcomes.map((outcome) => outcome.reason)).toEqual([
+      "below_opening_minimum",
+      "opening_bid"
+    ]);
+    expect(result.winner?.bidderId).toBe("opener");
   });
 
   it("rejects bids before opening, rejects low increments, and extends on soft close", () => {

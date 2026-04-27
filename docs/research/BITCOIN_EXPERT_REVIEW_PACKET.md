@@ -111,12 +111,12 @@ The main current working assumption is a universal-auction launch model.
 
 The launch rule is:
 
-> every launch-eligible name is allocated by auction.
+> every valid name is allocated by auction.
 
 Current launch shape:
 
-- `5-32` character names are eligible at launch
-- `1-4` character names are held for a later short-name auction wave
+- all valid names are eligible at launch
+- shorter names stay in the same auction lane with higher length-based opening floors
 - no semantic reserved-word list
 - no pre-launch reservation system
 - no separate ordinary lane
@@ -259,7 +259,7 @@ These are the current house recommendations for the next review revision.
 ### Treat as current working assumptions
 
 - universal-auction lead architecture
-- `1-4` character names deferred to a later short-name auction wave
+- shorter names stay in the same auction lane with higher length-based opening floors
 - current auction family: open ascending, soft close, meaningful minimum
   increments, stronger extension increments
 - opening-bid starts the auction clock
@@ -310,6 +310,6 @@ If we want one honest paragraph for technically serious reviewers, it is this:
 > bid packages, resolver-derived auction state, and settlement/continuity checks
 > are implemented enough to inspect as a real system rather than only a design
 > sketch. The current lead launch model
-> is universal auctions: eligible names auction at launch, `1-4` character
-> names wait for a later short-name wave, and no semantic reserved list decides
-> who gets special treatment.
+> is universal auctions: valid names auction at launch, shorter names use
+> higher objective opening floors, and no semantic reserved list decides who
+> gets special treatment.

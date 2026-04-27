@@ -97,9 +97,9 @@ This is currently the most serious challenge to the fairness story.
 
 The current working direction is now simpler:
 
-- use one auction allocation rule for every launch-eligible name
-- keep `1-4` character names out of launch and send them to a later objective
-  short-name wave
+- use one auction allocation rule for every valid name
+- keep shorter names in the same auction lane with higher objective opening
+  floors
 - remove semantic reserved lists and pre-launch reservation systems from the
   launch design
 - let markets reveal which names have real demand instead of asking ONT to
@@ -257,13 +257,13 @@ Open. The current launch direction no longer depends on the retired direct-alloc
 
 ### Concern
 
-The current launch direction uses auctions for every launch-eligible name.
+The current launch direction uses auctions for every valid name.
 Reviewers are now explicitly asking whether:
 
 - auction windows are long enough
 - opening floors are high enough
 - settlement locks are too long given quantum concerns
-- the later short-name wave should be `1-4` characters or broader
+- the length-based floor curve puts enough pressure on scarce short strings
 
 ### Why It Matters
 

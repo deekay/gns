@@ -39,9 +39,9 @@ The signet prototype should demonstrate:
 These assumptions are strong enough to build against:
 
 - names are `[a-z0-9]{1,32}` and canonicalized to lowercase
-- `5-32` character names are eligible at launch
-- `1-4` character names are held for a later short-name auction wave
-- all launch-eligible names use the same auction lane
+- all valid names are eligible at launch
+- shorter names stay in the same auction lane with higher length-based opening floors
+- all valid names use the same auction lane
 - there is no reserved-word list, no pre-launch reservation system, and no
   ordinary-vs-reserved split
 - values are off-chain by default

@@ -3622,23 +3622,22 @@ body[data-page-kind="auctions"] .panel-head-copy p {
   }
 
   .jump-bar-overview {
-    flex-wrap: nowrap;
-    align-items: center;
-    overflow-x: auto;
+    flex-wrap: wrap;
+    align-items: stretch;
+    overflow: visible;
     padding: 10px;
-    border-radius: 999px;
-    scroll-padding-inline: 10px;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
+    border-radius: 24px;
   }
 
   .jump-bar-overview .jump-bar-label {
-    flex: 0 0 auto;
-    padding: 0 8px 0 4px;
+    flex: 1 0 100%;
+    padding: 0 4px 2px;
   }
 
   .jump-bar-overview a {
-    flex: 0 0 auto;
+    flex: 1 1 100%;
+    justify-content: center;
+    white-space: normal;
   }
 
   .summary-chip,

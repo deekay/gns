@@ -9,7 +9,7 @@ It replaces the earlier two-lane model of:
 
 with one allocation rule:
 
-> every eligible ONT name is allocated by auction.
+> every valid ONT name is allocated by auction.
 
 This is a working launch model, not a final protocol freeze. It is now the
 source-of-truth framing for launch docs and website copy.
@@ -25,7 +25,7 @@ The launch model should be:
 - no reserved-name lane
 - no pre-launch reservation system
 - no editorial list of brands, public figures, companies, or generic words
-- short names held for a later objective wave
+- length-based opening floors for shorter names
 
 The ordinary-long-tail problem is handled by the fact that most names will not
 attract serious competing bids.
@@ -52,7 +52,7 @@ pre-compute global salience.
 
 ## Basic Flow
 
-For launch-eligible names:
+For valid names:
 
 1. a participant opens an auction with a bonded bid
 2. the auction remains open for the public window
@@ -69,39 +69,27 @@ The user-facing version can still feel simple:
 > Start an auction. If nobody else bids during the window, you win at your opening
 > bid. If others care, the auction discovers the price.
 
-## Short-Name Second Wave
+## Length-Based Opening Floors
 
-Names of length `1-4` should not open at initial launch.
+Every valid name should use the same auction lane at launch.
 
-They should be held for a later short-name auction wave.
+Shorter names can still start higher through the objective bond curve.
 
-This is not a reserved list. It is an objective structural rule:
+This is not a reserved list and not a separate lane. It is an objective
+structural rule:
 
-- `1-4` characters: later short-name wave
-- `5-32` characters: eligible at launch
+- shorter strings: higher opening floors
+- longer strings: quickly fall toward the global floor
 
 Why:
 
 - very short names are structurally scarce
-- the boundary is easy to verify
-- no private party gets early access
-- ONT can launch normal names without letting the scarcest namespace layer
-  clear before the system has attention
+- the floor is easy to verify
+- no private party gets delayed or preferred access
+- ONT does not need to explain why `pepsi` opens before `coke`
 
-`1-4` is preferred over `1-5` because `5` starts capturing too many ordinary
-names, brand-like words, and first names.
-
-The short-name wave should not unlock on calendar time alone. The current
-working shape is a combined objective gate:
-
-- minimum block-height delay after initial launch
-- minimum time-weighted bonded value across live ONT auctions / settlement
-- possibly a minimum count of settled names or distinct bidders, to reduce the
-  chance that one large capital source unlocks the wave by itself
-
-Exact thresholds are open. The principle is that the `1-4` namespace should
-open only after the system has enough visible usage and bonded commitment for
-the auction to be meaningfully public.
+The exact floor curve remains tunable. The principle is that length can set an
+auditable opening floor without creating a launch boundary or second wave.
 
 ## Auction Timing Defaults
 
@@ -111,8 +99,7 @@ The current preferred timing shape is:
 - soft-close extension: about `24 hours`
 - max extension cap: still to be implemented / decided
 - initial launch period: may use longer windows if awareness is uneven
-- short-name wave: later, widely announced, gated by block height plus bonded
-  activity, same auction mechanics unless announced otherwise
+- all valid names use the same auction mechanics unless announced otherwise
 
 The prototype currently has older simulator defaults in some places. Those
 should be migrated toward this model rather than treated as final.
@@ -156,8 +143,7 @@ The remaining launch-design questions are now narrower:
 - exact auction window
 - exact soft-close increment
 - whether to cap total extension time
-- opening-bond floor for `5+` launch names
-- opening-bond floor for the later `1-4` short-name wave
+- length-based opening-bond floor curve
 - settlement duration after winning an auction
 - how auction-opening and bid packages replace the retired direct-claim tooling
 - how batching should work for auction openings and bids
@@ -168,6 +154,6 @@ This is a much better open-question set than:
 
 ## Canonical One-Sentence Summary
 
-ONT uses one market rule for names: eligible names are auctioned, short names
-launch later in an objective second wave, and no semantic reserved list decides
-who deserves special treatment.
+ONT uses one market rule for names: valid names are auctioned, shorter names
+can start with higher objective opening floors, and no semantic reserved list
+decides who deserves special treatment.

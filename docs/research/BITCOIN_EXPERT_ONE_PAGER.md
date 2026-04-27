@@ -47,12 +47,12 @@ The current lead launch direction is **universal auctions**.
 
 The rule is:
 
-> every launch-eligible name is allocated by auction.
+> every valid name is allocated by auction.
 
 Launch shape:
 
-- `5-32` character names are eligible at launch
-- `1-4` character names are held for a later short-name auction wave
+- all valid names are eligible at launch
+- shorter names stay in the same auction lane with higher length-based opening floors
 - there is no semantic reserved-word list
 - there is no pre-launch reservation system
 - there is no separate ordinary lane
@@ -117,8 +117,8 @@ The best current questions are:
 
 1. Is the current auction transaction / settlement shape coherent?
 2. Are the bond and lock-duration assumptions disciplined enough for launch?
-3. Does the later `1-4` character short-name wave feel like the right scarcity
-   boundary?
+3. Does the length-based opening floor curve put enough scarcity pressure on
+   very short names?
 4. Are there obvious Bitcoin-native concerns around policy, relay, footprint,
    or state-machine complexity that we are missing?
 

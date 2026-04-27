@@ -16,8 +16,8 @@ Related notes:
 These are the things we currently mean as real design choices, even if they are
 still technically provisional:
 
-- launch-eligible names should be allocated by auction
-- `1-4` character names should wait for a later short-name auction wave
+- valid names should be allocated by auction
+- shorter names should use higher length-based opening floors
 - ONT should not use a semantic reserved-word list
 - ONT should not use a pre-launch reservation system
 - auctions should have soft close rather than hard-end sniping
@@ -46,7 +46,7 @@ These are still temporary and should not be treated as frozen:
 - exact percentage increment floor
 - exact soft-close increment strength
 - exact soft-close extension cap
-- exact date or block height for the later short-name wave
+- final length-based floor curve
 
 These numbers are currently there so we can:
 

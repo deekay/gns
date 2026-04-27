@@ -915,9 +915,6 @@ function resolveExperimentalLaunchAuctionPolicy(): LaunchAuctionPolicy {
   const launchNameLockBlocks = readOptionalExperimentalAuctionInteger(
     "ONT_EXPERIMENTAL_AUCTION_LAUNCH_NAME_LOCK_BLOCKS"
   );
-  const shortNameWaveLockBlocks = readOptionalExperimentalAuctionInteger(
-    "ONT_EXPERIMENTAL_AUCTION_SHORT_NAME_WAVE_LOCK_BLOCKS"
-  );
 
   return {
     ...basePolicy,
@@ -939,10 +936,6 @@ function resolveExperimentalLaunchAuctionPolicy(): LaunchAuctionPolicy {
       launch_name: {
         ...basePolicy.auctionClasses.launch_name,
         ...(launchNameLockBlocks === undefined ? {} : { lockBlocks: launchNameLockBlocks })
-      },
-      short_name_wave: {
-        ...basePolicy.auctionClasses.short_name_wave,
-        ...(shortNameWaveLockBlocks === undefined ? {} : { lockBlocks: shortNameWaveLockBlocks })
       }
     }
   };

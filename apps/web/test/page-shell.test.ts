@@ -20,17 +20,17 @@ describe("renderPageHtml", () => {
     });
 
     expect(html).toContain("Human-readable names you can actually own");
-    expect(html).toContain("Open an auction when a name is eligible.");
+    expect(html).toContain("Open an auction for a valid name.");
     expect(html).toContain("Single auction flow");
     expect(html).toContain("Self-custodied bond");
     expect(html).toContain("Owner-signed destinations");
     expect(html).toContain("Check a name");
     expect(html).toContain("Resolve ownership or see whether the next step is the auction flow.");
     expect(html).toContain("Before a bid");
-    expect(html).toContain("Eligible or not eligible");
+    expect(html).toContain("Valid, owned, or unavailable");
     expect(html).toContain("After a bonded opening bid");
     expect(html).toContain("Auction clock starts");
-    expect(html).toContain("1-4 character names wait for the later short-name wave.");
+    expect(html).toContain("Shorter names start with higher bonded opening floors.");
     expect(html).toContain("Choose A Path");
     expect(html).toContain("Understand ONT");
     expect(html).toContain("Try The Prototype");

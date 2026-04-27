@@ -72,9 +72,9 @@ ONT separates two concerns:
 
 At launch, the current direction is a single auction lane:
 
-- every launch-eligible name is allocated by auction
-- `5-32` character names are eligible at launch
-- `1-4` character names are held for a later short-name auction wave
+- every valid name is allocated by auction
+- all valid names are eligible at launch
+- shorter names stay in the same auction lane with higher length-based opening floors
 - there is no semantic reserved-name list
 - there is no pre-launch reservation system
 

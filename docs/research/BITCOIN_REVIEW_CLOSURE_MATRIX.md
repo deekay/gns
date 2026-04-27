@@ -30,8 +30,8 @@ Status labels:
 | Core framing | Payment handles first, owner-signed payment records second, broader key/value uses later | closed for this review rev | yes, as context | keep intro docs aligned |
 | Public vs private signet | Private signet is the live demo path; public signet is retired | closed for this review rev | no, only mention for clarity | keep docs and site consistent |
 | Retired claim prototype | The old two-step claim prototype was validated historically, but is not the launch allocation UX | closed for this review rev | no, only as context | keep status language explicit |
-| Universal auction launch | One auction lane for all launch-eligible names | provisional but shareable | yes, at mechanism level | keep launch spec aligned |
-| Short-name wave | `1-4` character names are deferred to a later auction wave | provisional but shareable | maybe, mostly launch policy | document objective boundary |
+| Universal auction launch | One auction lane for all valid names | provisional but shareable | yes, at mechanism level | keep launch spec aligned |
+| Length floors | Shorter names use higher objective opening floors in the same auction lane | provisional but shareable | maybe, mostly launch policy | document objective curve |
 | Reserved-word lists | Drop them from the launch model | closed for this review rev | not as a Bitcoin-native ask | remove from current docs and tools |
 | Pre-launch reservations | Drop them from the launch model | closed for this review rev | no | keep out of implementation and docs |
 | Auction family | Open ascending, soft close, meaningful increments, stronger late-extension increments | provisional but shareable | yes | present current rule family and why |

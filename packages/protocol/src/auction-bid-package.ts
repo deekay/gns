@@ -463,7 +463,7 @@ function deriveAuctionBidPreview(input: {
     return {
       previewStatus: "too_early",
       previewSummary:
-        `This name is not eligible to open yet. Wait ${input.blocksUntilUnlock} more block${input.blocksUntilUnlock === 1 ? "" : "s"} before bidding.`,
+        `This name is not openable yet. Wait ${input.blocksUntilUnlock} more block${input.blocksUntilUnlock === 1 ? "" : "s"} before bidding.`,
       previewRequiredMinimumBidSats: input.openingMinimumBidSats,
       wouldBecomeLeader: false,
       wouldExtendSoftClose: false

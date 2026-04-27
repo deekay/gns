@@ -206,7 +206,7 @@ function renderHeroSection(
       <div class="hero-copy">
         <h1>Auctions</h1>
         <p class="lede">
-          Auction bid prep and flow examples for the single-lane launch model. Eligible names can be opened by a valid bonded bid; 1-4 character names wait for the later short-name wave.
+          Auction bid prep and flow examples for the single-lane launch model. Any valid name can be opened by a valid bonded bid; shorter names start with higher length-based floors.
         </p>
         <p class="hero-status">
           Auction flow surface · bid packages, examples, and observed AUCTION_BID activity.
@@ -220,7 +220,7 @@ function renderHeroSection(
       <p class="hero-home-kicker">Bitcoin-bonded names</p>
       <h1 id="homeHeroTitle">Human-readable names you can actually own</h1>
       <p class="hero-home-lede">
-        Open an auction when a name is eligible. Bitcoin anchors ownership; owner-signed records keep destinations flexible off-chain.
+        Open an auction for a valid name. Bitcoin anchors ownership; owner-signed records keep destinations flexible off-chain.
       </p>
       <div class="hero-home-proof-row" aria-label="Core ONT model">
         <span>Single auction flow</span>
@@ -245,7 +245,7 @@ function renderHeroSection(
       <div class="hero-lookup-status-grid" aria-label="Auction opening rule">
         <article>
           <span>Before a bid</span>
-          <strong>Eligible or not eligible</strong>
+          <strong>Valid, owned, or unavailable</strong>
         </article>
         <article>
           <span>After a bonded opening bid</span>
@@ -260,11 +260,11 @@ function renderHeroSection(
     <section class="hero-home-launch-strip" aria-label="Launch rules">
       <article>
         <span>At launch</span>
-        <strong>Eligible names use the same auction mechanics.</strong>
+        <strong>Valid names use the same auction mechanics.</strong>
       </article>
       <article>
-        <span>Short names</span>
-        <strong>1-4 character names wait for the later short-name wave.</strong>
+        <span>Length floors</span>
+        <strong>Shorter names start with higher bonded opening floors.</strong>
       </article>
       <article>
         <span>Records</span>
@@ -493,12 +493,12 @@ function renderAuctionLabSection(): string {
   return `<section id="auction-lab" class="panel panel-list">
     ${renderPanelHead(
       "Auction Flow Examples",
-      "Reference view for eligible names and active auction states.",
-      `<p>This page shows how the current auction model behaves once a name is eligible and a bidder opens the auction.</p>
+      "Reference view for valid names and active auction states.",
+      `<p>This page shows how the current auction model behaves before and after a bidder opens the auction.</p>
       <ul>
         <li>The website shows the current read-only defaults for the examples below.</li>
         <li>The cards underneath are simulator-backed examples, not live protocol changes.</li>
-        <li>A real auction starts with a valid bonded opening bid; before that, a name is only eligible or not eligible.</li>
+        <li>A real auction starts with a valid bonded opening bid; before that, a name is only valid, owned, or unavailable.</li>
       </ul>`
     )}
     <details class="detail-technical">
@@ -538,7 +538,7 @@ function renderAuctionLabNotesSection(collapsible = false): string {
       <article class="guide-card">
         <h3>Implemented</h3>
         <ul class="guide-list">
-          <li>The current auction classes, opening floors, soft close, and minimum increments are modeled here.</li>
+          <li>The current opening floors, soft close, and minimum increments are modeled here.</li>
           <li>Opening-bid packages that bind the name, bidder, owner key, bonded amount, and observed state.</li>
           <li>A stronger soft-close increment rule so bids that extend the clock must escalate more than normal mid-auction bids.</li>
           <li>Single-auction and market-level simulators with bidder budget pressure.</li>

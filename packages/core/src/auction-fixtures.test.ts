@@ -49,22 +49,22 @@ describe("auction fixture coverage", () => {
     });
   }
 
-  it("does not use short names in launch-name auction fixtures", async () => {
+  it("does not keep any retired delayed-lane auction class in fixtures", async () => {
     const fixtureRoot = new URL("../../../fixtures/auction/", import.meta.url);
-    const invalidFixtureNames: string[] = [];
+    const retiredClassUsages: string[] = [];
 
     for (const fixtureUrl of await listJsonFiles(fixtureRoot)) {
       const raw = await readFile(fixtureUrl, "utf8");
       const fixture = JSON.parse(raw) as unknown;
 
-      for (const name of collectLaunchFixtureNames(fixture)) {
-        if (name.length < 5) {
-          invalidFixtureNames.push(`${fixtureUrl.pathname}: ${name}`);
+      for (const auctionClassId of collectAuctionClassIds(fixture)) {
+        if (auctionClassId === "short_name_wave") {
+          retiredClassUsages.push(`${fixtureUrl.pathname}: ${auctionClassId}`);
         }
       }
     }
 
-    expect(invalidFixtureNames).toEqual([]);
+    expect(retiredClassUsages).toEqual([]);
   });
 });
 
@@ -91,30 +91,30 @@ async function listJsonFiles(directoryUrl: URL): Promise<URL[]> {
   return files.flat();
 }
 
-function collectLaunchFixtureNames(fixture: unknown): string[] {
-  if (!isObject(fixture)) {
-    return [];
-  }
-
-  const names: string[] = [];
-  collectLaunchScenarioName(fixture.scenario, names);
-
-  if (Array.isArray(fixture.auctions)) {
-    for (const auction of fixture.auctions) {
-      collectLaunchScenarioName(auction, names);
-    }
-  }
-
-  return names;
+function collectAuctionClassIds(fixture: unknown): string[] {
+  const auctionClassIds: string[] = [];
+  collectAuctionClassId(fixture, auctionClassIds);
+  return auctionClassIds;
 }
 
-function collectLaunchScenarioName(input: unknown, names: string[]): void {
-  if (
-    isObject(input)
-    && input.auctionClassId === "launch_name"
-    && typeof input.name === "string"
-  ) {
-    names.push(input.name);
+function collectAuctionClassId(input: unknown, auctionClassIds: string[]): void {
+  if (Array.isArray(input)) {
+    for (const item of input) {
+      collectAuctionClassId(item, auctionClassIds);
+    }
+    return;
+  }
+
+  if (!isObject(input)) {
+    return;
+  }
+
+  if (typeof input.auctionClassId === "string") {
+    auctionClassIds.push(input.auctionClassId);
+  }
+
+  for (const value of Object.values(input)) {
+    collectAuctionClassId(value, auctionClassIds);
   }
 }
 

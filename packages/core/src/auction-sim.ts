@@ -399,11 +399,11 @@ function parseLaunchAuctionBidAttempt(
 }
 
 function parseLaunchAuctionClassId(value: unknown, label: string): LaunchAuctionClassId {
-  if (value === "launch_name" || value === "short_name_wave") {
+  if (value === "launch_name") {
     return value;
   }
 
-  throw new Error(`${label} must be one of launch_name, short_name_wave`);
+  throw new Error(`${label} must be launch_name`);
 }
 
 function parseString(value: unknown, label: string): string {

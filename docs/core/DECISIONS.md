@@ -100,9 +100,10 @@ Purpose:
 - Avoid maintaining a subjective reserved-name list.
 - Keep ordinary long-tail names reachable without special editorial decisions.
 
-8. Short-name wave
+8. Length-based opening floors
 
-Names of length `1-4` are held for a later auction wave.
+All valid names use the same auction lane. Shorter names can still require
+higher opening floors through the objective length-based bond curve.
 
 9. Maturity anchor
 
@@ -435,11 +436,11 @@ transfers, and value-publication flows.
 The current lead launch architecture is a **single auction lane**.
 
 Current shape:
-- every launch-eligible name is allocated by auction
+- every valid name is allocated by auction
 - there is no semantic reserved-name list
 - there is no ordinary direct-allocation lane in the launch model
-- names of length `1-4` are held for a later short-name auction wave
-- names of length `5-32` are eligible at launch
+- shorter names start with higher length-based opening floors
+- there is no delayed short-string lane or second auction wave
 - old direct-claim tooling should be removed from public surfaces rather than
   treated as a parallel launch path
 
@@ -460,7 +461,7 @@ The current auction family is:
   ownership changes
 
 Implications:
-- the project can explain one coherent allocation rule for all eligible names
+- the project can explain one coherent allocation rule for all valid names
 - old reserved-list generation work is no longer launch-critical
 - placeholder floors, windows, and lock durations should not be presented as
   frozen constants just because the auction family itself is now the working
@@ -487,7 +488,7 @@ The rewritten launch draft should explicitly state:
 - No identity-based quotas
 - Every immature auction-acquired name requires dedicated bonded BTC
 - Bond and maturity rules are fixed at launch
-- Short-name wave timing must be pre-announced and auditable
+- Length-based opening floors must be pre-announced and auditable
 - Auction rules and release conditions must be objective enough that outcomes
   are auditable from chain data plus the pre-announced launch artifacts
 
@@ -498,8 +499,9 @@ That means:
   protocol.
 - Scarcity and anti-hoarding pressure come from auction-discovered bonded BTC
   and time, not from subjective pricing rules.
-- If launch treatment differs for short names, that difference comes from an
-  objective length boundary rather than discretionary per-user judgment.
+- If opening treatment differs for very short names, that difference comes from an
+  objective length-based floor rather than a delayed lane or discretionary
+  per-user judgment.
 
 ## Open Questions
 

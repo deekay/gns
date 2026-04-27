@@ -8,7 +8,7 @@ The hosted website is mainly a tool surface:
 
 - browse names
 - check ownership and auction state
-- inspect eligible names and active auctions
+- inspect valid names and active auctions
 - prepare prototype auction bid packages
 - prepare transfers
 - fund the private signet demo
@@ -33,7 +33,7 @@ If you want the fastest first walkthrough, use the hosted private demo:
 
 1. Open [setup](https://opennametags.org/setup) and point Sparrow at the hosted demo wallet endpoint shown there.
 2. Request demo coins into the same Sparrow wallet you plan to spend from.
-3. Open [auctions](https://opennametags.org/auctions), inspect eligible names or active auctions, and prepare a bid package with an owner key.
+3. Open [auctions](https://opennametags.org/auctions), inspect valid names or active auctions, and prepare a bid package with an owner key.
 4. Build and sign the auction bid transaction in Sparrow, then watch the name appear in [explore](https://opennametags.org/explore) after settlement.
 
 If you want the tightest possible product demo instead of the full docs path, use:
@@ -50,7 +50,7 @@ Keep these distinctions in mind:
 One important testing/status distinction:
 
 - the hosted private demo is a **private signet** walkthrough and the active live environment we maintain
-- the leading launch model is one auction lane for launch-eligible names, with 1-4 character names saved for a later wave
+- the leading launch model is one auction lane for every valid name, with length-based opening floors instead of a delayed short-string lane
 - the old shared **public signet** path has been retired from the active demo and validation story because faucet funding never became reliable
 
 ## Quick Map
@@ -131,7 +131,7 @@ Use the setup page to point Sparrow at the hosted private signet wallet endpoint
 
 ### 3. Prepare an auction bid
 
-On auctions, inspect the eligible name or active auction, generate or paste the owner key, and build the bid-package signer handoff.
+On auctions, inspect the valid name or active auction, generate or paste the owner key, and build the bid-package signer handoff.
 
 ### 4. Publish what the name points to
 
@@ -185,7 +185,7 @@ Adjacent work is worth keeping in mind here too. Systems like Pubky / PKARR (whi
 
 ### Auctions
 
-Launch-eligible names use one auction lane.
+Valid names use one auction lane.
 
 1. a valid bonded opening bid names the auction, bidder, owner key, and bonded amount
 2. market rules determine the leading bid, soft close, and settlement
@@ -232,8 +232,8 @@ It does that by using locked bitcoin bonds instead of:
 
 The current lead launch direction is intentionally simple:
 
-- names of length `5-32` use one auction lane at launch
-- names of length `1-4` are held for a later short-name auction wave
+- all valid names use the same auction lane at launch
+- shorter names start with higher objective opening floors
 - there is no semantic reserved-name list
 - there is no separate ordinary lane
 

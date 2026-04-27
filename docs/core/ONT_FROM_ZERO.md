@@ -90,24 +90,24 @@ The intended moral intuition is:
 
 The current launch direction is a **single auction lane**:
 
-- every launch-eligible name is allocated by auction
+- every valid name is allocated by auction
 - there is no semantic reserved-name list
 - there is no ordinary-vs-reserved split
-- `1-4` character names are held for a later short-name auction wave
-- `5-32` character names are eligible at launch
+- shorter names start with higher length-based opening floors
+- there is no delayed short-string lane or second auction wave
 
 That direction is motivated by launch fairness and simplicity:
 
 - avoid asking ONT to decide which brands, people, companies, and words are
   special
 - let markets discover BTC amounts whenever more than one party cares
-- keep the short-name scarcity layer for a later, widely announced wave
+- keep scarcity pressure for shorter strings in the objective opening floor
 - make uncontested names feel simple even though the allocation rule is still an
   auction
 
-The later `1-4` wave should be gated by objective signals, not by discretion.
-The current working shape is a minimum block-height delay plus time-weighted
-bonded value across the live ONT system, with exact thresholds still open.
+The length floor should be objective, auditable, and announced in advance.
+The current working shape keeps every valid name in the same auction flow while
+letting scarce short strings start at a higher bonded amount.
 
 ## Lifecycle
 
@@ -144,7 +144,7 @@ Some important questions are still intentionally open:
 
 - final universal-auction settlement semantics and rule strictness
 - final auction windows, increments, and extension cap
-- final opening-bond floors for launch names and the short-name wave
+- final length-based opening-bond floors
 - how conservative the system should be about long-duration locks given quantum
   concerns
 

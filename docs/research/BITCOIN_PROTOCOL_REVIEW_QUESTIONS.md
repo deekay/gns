@@ -107,7 +107,7 @@ and system-design judgment than Bitcoin-native protocol review.
 These are the positions we should present as our current working answers:
 
 - universal auctions are the lead launch model
-- `1-4` character names are deferred to a later short-name auction wave
+- shorter names stay in the same auction lane with higher length-based opening floors
 - no reserved-word list or pre-launch reservation system is part of the launch
   plan
 - auction numbers are still placeholders, but the mechanism family is the real

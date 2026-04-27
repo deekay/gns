@@ -3056,7 +3056,7 @@ function renderPrivateFundingResult(result) {
       <ol>
         <li>Refresh Sparrow so the new confirmed UTXO appears.</li>
         <li>Keep using that same wallet when you prepare auction bid transactions.</li>
-        <li>Use Auctions to inspect eligible names and active auctions, create an owner key, and build bid-package handoffs.</li>
+        <li>Use Auctions to inspect valid names and active auctions, create an owner key, and build bid-package handoffs.</li>
         <li>Use the CLI for custom bid construction until the website auction flow is fully settled.</li>
       </ol>
     </div>
@@ -4572,8 +4572,11 @@ function renderAuctionPolicySummary(policy) {
     return "";
   }
 
-  const auctionClasses = policy.auctionClasses && typeof policy.auctionClasses === "object"
-    ? Object.entries(policy.auctionClasses)
+  const nameAuction = policy.auctionClasses && typeof policy.auctionClasses === "object"
+    ? policy.auctionClasses.launch_name
+    : null;
+  const lengthFloorExamples = Array.isArray(policy.lengthFloorExamples)
+    ? policy.lengthFloorExamples
     : [];
   const topRow = [
     {
@@ -4620,30 +4623,48 @@ function renderAuctionPolicySummary(policy) {
       .join(""),
     "  </div>",
     "</article>",
-    ...auctionClasses.map(([classId, entry]) => {
-      return [
-        '<article class="guide-card">',
-        "  <h3>" + escapeHtml(String(entry.label ?? classId)) + "</h3>",
-        '  <p class="result-meta">' + escapeHtml(describeLaunchAuctionClass(classId)) + "</p>",
-        '  <div class="result-grid">',
-        '    <div class="result-item"><label>Starting bid</label><p class="field-value">' + escapeHtml(formatSats(entry.floorSats ?? "0")) + "</p></div>",
-        '    <div class="result-item"><label>Winner lock</label><p class="field-value">' + escapeHtml(formatBlockWindow(entry.lockBlocks)) + "</p></div>",
-        "  </div>",
-        "</article>"
-      ].join("");
-    })
+    renderNameAuctionPolicyCard(nameAuction, lengthFloorExamples)
   ].join("");
 }
 
-function describeLaunchAuctionClass(classId) {
-  switch (String(classId)) {
-    case "launch_name":
-      return "Launch-eligible names use the standard auction rule.";
-    case "short_name_wave":
-      return "Names with 1-4 characters are held for the later short-name wave.";
-    default:
-      return "This class sets the starting bid and winner lock for this auction group.";
-  }
+function renderNameAuctionPolicyCard(nameAuction, lengthFloorExamples) {
+  const label = nameAuction && typeof nameAuction === "object"
+    ? String(nameAuction.label ?? "Name auction")
+    : "Name auction";
+  const policyRows = [
+    {
+      title: "Global minimum",
+      value: formatSats(nameAuction?.floorSats ?? "0")
+    },
+    {
+      title: "Winner lock",
+      value: formatBlockWindow(nameAuction?.lockBlocks)
+    },
+    ...lengthFloorExamples.map((entry) => ({
+      title: String(entry.label ?? String(entry.nameLength ?? "Length")),
+      value: formatSats(entry.floorSats ?? "0")
+    }))
+  ];
+
+  return [
+    '<article class="guide-card guide-card-wide">',
+    "  <h3>" + escapeHtml(label) + "</h3>",
+    '  <p class="result-meta">Every valid name uses the same auction mechanics. The opening floor is length-based, so shorter strings start higher.</p>',
+    '  <div class="result-grid">',
+    policyRows
+      .map((row) => {
+        return (
+          '<div class="result-item"><label>' +
+          escapeHtml(row.title) +
+          '</label><p class="field-value">' +
+          escapeHtml(row.value) +
+          "</p></div>"
+        );
+      })
+      .join(""),
+    "  </div>",
+    "</article>"
+  ].join("");
 }
 
 function renderAuctionCaseCard(auctionCase) {
@@ -4684,7 +4705,7 @@ function renderAuctionCaseCard(auctionCase) {
         : "Auction settled";
   const secondaryTimingLabel =
     phase === "pending_unlock"
-      ? "Blocks until eligible"
+      ? "Blocks until openable"
       : phase === "awaiting_opening_bid"
         ? "Auction clock"
         : "Blocks to close";
@@ -4704,7 +4725,7 @@ function renderAuctionCaseCard(auctionCase) {
     '  <p class="field-value">' + escapeHtml(String(auctionCase.description ?? "")) + "</p>",
     '  <div class="result-grid">',
     '    <div class="result-item"><label>Name</label><p class="field-value">' + escapeHtml(String(stateView.normalizedName ?? "-")) + "</p></div>",
-    '    <div class="result-item"><label>Class</label><p class="field-value">' + escapeHtml(String(stateView.classLabel ?? "-")) + "</p></div>",
+    '    <div class="result-item"><label>Auction rule</label><p class="field-value">' + escapeHtml(String(stateView.classLabel ?? "-")) + "</p></div>",
     '    <div class="result-item"><label>Observed block</label><p class="field-value">' + escapeHtml(String(stateView.currentBlockHeight ?? "-")) + "</p></div>",
     '    <div class="result-item"><label>' + escapeHtml(closeLabel) + '</label><p class="field-value">' + escapeHtml(closeValue) + "</p></div>",
     '    <div class="result-item"><label>Base floor</label><p class="field-value">' + escapeHtml(formatSats(stateView.baseMinimumBidSats ?? "0")) + "</p></div>",
@@ -4763,7 +4784,7 @@ function renderExperimentalAuctionCard(auction) {
       : "Not settled";
   const closeLabel =
     phase === "pending_unlock"
-        ? "Blocks until eligible"
+        ? "Blocks until openable"
         : phase === "awaiting_opening_bid"
           ? "Auction clock"
           : "Blocks to close";
@@ -4787,7 +4808,7 @@ function renderExperimentalAuctionCard(auction) {
     '  <p class="field-value">' + escapeHtml(String(auction.description ?? "")) + "</p>",
     '  <div class="result-grid">',
     '    <div class="result-item"><label>Name</label><p class="field-value">' + escapeHtml(String(auction.normalizedName ?? "-")) + "</p></div>",
-    '    <div class="result-item"><label>Class</label><p class="field-value">' + escapeHtml(String(auction.classLabel ?? "-")) + "</p></div>",
+    '    <div class="result-item"><label>Auction rule</label><p class="field-value">' + escapeHtml(String(auction.classLabel ?? "-")) + "</p></div>",
     '    <div class="result-item"><label>Name commitment</label><p class="field-value">' + escapeHtml(formatAuctionCommitment(auction.auctionLotCommitment)) + "</p></div>",
     '    <div class="result-item"><label>Current block</label><p class="field-value">' + escapeHtml(String(auction.currentBlockHeight ?? "-")) + "</p></div>",
     '    <div class="result-item"><label>Base floor</label><p class="field-value">' + escapeHtml(formatSats(auction.baseMinimumBidSats ?? "0")) + "</p></div>",

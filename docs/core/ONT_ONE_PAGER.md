@@ -50,21 +50,21 @@ That makes name allocation costly enough to discourage careless hoarding, while 
 
 Example opening-bond floors, not final launch parameters:
 
-| Name length | Launch treatment | Example opening floor |
+| Name length | Auction treatment | Example opening floor |
 | --- | --- | --- |
-| `1` | opens later | `₿1` |
-| `2` | opens later | `₿0.5` |
-| `3` | opens later | `₿0.25` |
-| `4` | opens later | `₿0.125` |
-| `5` | launch auction | `₿0.0625` |
-| `6` | launch auction | `₿0.03125` |
-| `12+` | launch auction | `₿0.0005 floor` |
+| `1` | same auction lane | `₿1` |
+| `2` | same auction lane | `₿0.5` |
+| `3` | same auction lane | `₿0.25` |
+| `4` | same auction lane | `₿0.125` |
+| `5` | same auction lane | `₿0.0625` |
+| `6` | same auction lane | `₿0.03125` |
+| `12+` | same auction lane | `₿0.0005 floor` |
 
 The floor starts the auction. The auction can clear higher when multiple bidders care about the same name.
 
 ## Launch Auctions
 
-At launch, names with `5-32` characters open by auction.
+At launch, valid names open by auction.
 
 - A participant opens a public auction for a name.
 - If nobody else bids, the opener can win at the opening floor.
@@ -73,25 +73,17 @@ At launch, names with `5-32` characters open by auction.
 
 The rule is simple:
 
-> If a `5-32` character name matters to more than one participant, the auction discovers that.
+> If a valid name matters to more than one participant, the auction discovers that.
 
 For most long-tail names, the experience can still be simple. Start an auction. If nobody else bids during the public window, you win at your opening bid. If others care, the price is discovered in the open.
 
-## Short Names
+## Length Floors
 
-Names with `1-4` characters open later.
+Every valid name can enter the same auction flow.
 
-Names of length `5-32` are eligible at launch.
+Very short names are structurally scarce, so they start with higher objective opening floors. The floor comes from length, not from deciding whether a person, brand, company, or word deserves special treatment.
 
-Very short names are structurally scarce, so they should not clear before ONT has enough public attention. The boundary is easy to verify and does not require judging whether a person, brand, company, or word is important enough for special treatment.
-
-Short names should open only after objective gates are met. The current working shape is:
-
-- a minimum block-height delay after initial launch
-- a minimum amount of time-weighted bonded value across the live ONT system
-- usage and bidder thresholds, so one large capital source cannot trivially open short names alone
-
-The exact thresholds are open. The principle is that `1-4` character names should not open just because time passed; they should open once ONT has enough visible usage and bonded commitment for the auction to be meaningfully public.
+The exact floor curve can still be tuned, but the launch rule stays simple: no reserved list, no delayed short-string lane, and no separate lane.
 
 ## What Ownership Lets You Do
 
@@ -127,4 +119,4 @@ The product surface is [opennametags.org](https://opennametags.org). The public 
 
 ## One-Sentence Summary
 
-ONT uses Bitcoin to anchor ownership of human-readable names, owner-signed off-chain records to keep destinations updateable, bonded bitcoin to create cost without rent, and public launch auctions to allocate scarce names.
+ONT uses Bitcoin to anchor ownership of human-readable names, owner-signed off-chain records to keep destinations updateable, bonded bitcoin to create cost without rent, and public auctions to allocate scarce names.

@@ -20,7 +20,7 @@ The leading launch candidate is now a **single auction lane**.
 
 The intended rule is:
 
-> every launch-eligible name is allocated by auction.
+> every valid name is allocated by auction.
 
 That means:
 
@@ -30,7 +30,7 @@ That means:
 - no pre-launch reservation system
 - no editorial distinction between brands, public figures, generic words, and
   ordinary names
-- `1-4` character names held for a later short-name wave
+- shorter names stay in the same auction lane with higher length-based opening floors
 
 ## Primary Objectives
 
@@ -45,21 +45,22 @@ The launch design should try to satisfy all of these at once:
 
 ## Eligibility At Launch
 
-The launch split is objective:
+The launch rule is intentionally simple:
 
-| Name length | Launch treatment |
+| Name length | Auction treatment |
 | --- | --- |
-| `1-4` characters | held for a later short-name auction wave |
-| `5-32` characters | eligible for the launch auction lane |
+| shorter strings | same auction lane, higher opening floor |
+| longer strings | same auction lane, lower opening floor |
 
-This is not a reserved list.
+This is not a reserved list and not a delayed wave.
 
 It is a structural scarcity rule. Very short names are uniquely scarce, so they
-should not clear before ONT has enough public attention.
+can require higher objective opening floors without asking ONT to pick which
+brands, people, companies, or words matter.
 
 ## Auction Flow
 
-For names eligible at launch:
+For valid names:
 
 1. a participant opens an auction with a bonded bid
 2. that opening bid sets the initial leader
@@ -89,7 +90,7 @@ Current preferred defaults:
 | soft-close increment | stronger than normal mid-auction increment |
 | max extension cap | open, likely needed |
 | initial launch period | may use longer windows if awareness is uneven |
-| short-name wave | later, widely announced, gated by block height plus bonded activity |
+| name eligibility | all valid names use the same auction lane |
 
 These are launch parameters, not final protocol constants yet.
 
@@ -125,35 +126,21 @@ The current bias is to avoid decade-scale Bitcoin-native locks at launch. The
 universal auction model gets much of its fairness from public price discovery,
 so it does not need to rely as heavily on very long lock durations.
 
-## Short-Name Second Wave
+## Length-Based Opening Floors
 
-Names of length `1-4` are held out of the initial launch.
+Every valid name can be opened at launch by a valid bonded bid.
 
-The later wave should be:
+The opening floor should be:
 
-- public
 - pre-announced
 - objective
-- open to all bidders
-- gated by minimum block height after initial launch
-- gated by time-weighted bonded value across live ONT activity
-- using the same auction mechanics as the launch lane unless a specific
-  objective short-name parameter is announced in advance
+- easy to verify from name length
+- higher for shorter strings
+- part of the same auction mechanics
 
-The current preferred boundary is `1-4`, not `1-5`.
-
-Reason:
-
-- `1-4` captures structural scarcity
-- `5` starts including many normal names, first names, brands, and handles
-
-The threshold should probably not use raw point-in-time TVL alone. A better
-candidate is time-weighted bonded value, possibly paired with a minimum count
-of settled names or distinct bidders. That makes it harder for one source of
-capital to briefly lock a large amount and immediately unlock the most scarce
-names.
-
-Exact thresholds remain open launch parameters.
+The floor curve can still be tuned. The important simplification is that the
+auction system handles all valid names, while the length floor supplies
+objective scarcity pressure.
 
 ## What The Spec Drops
 
@@ -175,7 +162,7 @@ The main implementation work now is:
 
 - keep retiring old direct-claim code paths in favor of auction-opening-first flows
 - update auction policy defaults toward the launch timing above
-- enforce the `1-4` short-name wave gate
+- enforce the length-based opening floors
 - add or decide a max soft-close extension cap
 - decide final settlement duration after winning auction
 - update batch/footprint analysis for auction openings and bids
@@ -192,6 +179,6 @@ points back to this launch spec.
 
 The current lead launch sentence is:
 
-> ONT uses one market rule for names: eligible names are auctioned, short names
-> launch later in an objective second wave, and no semantic reserved list
+> ONT uses one market rule for names: valid names are auctioned, shorter names
+> can start with higher objective opening floors, and no semantic reserved list
 > decides who deserves special treatment.

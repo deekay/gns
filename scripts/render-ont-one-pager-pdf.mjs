@@ -235,7 +235,7 @@ function renderHeader() {
     x: 48,
     y: 481,
     width: 500,
-    value: "Bitcoin anchors ownership. Owner-signed off-chain records keep destinations updateable. Bonds create cost without rent; public launch auctions price scarce names.",
+    value: "Bitcoin anchors ownership. Owner-signed off-chain records keep destinations updateable. Bonds create cost without rent; public auctions price scarce names.",
     size: 8.6,
     lineHeight: 10.5,
     color: colors.muted
@@ -354,20 +354,20 @@ function renderBondCard() {
   const tableWidth = 140;
   const rowH = 17.2;
   const rows = [
-    ["1", "later", "1"],
-    ["2", "later", "0.5"],
-    ["3", "later", "0.25"],
-    ["4", "later", "0.125"],
-    ["5", "launch", "0.0625"],
-    ["6", "launch", "0.03125"],
-    ["12+", "launch", "0.0005 floor"]
+    ["1", "same", "1"],
+    ["2", "same", "0.5"],
+    ["3", "same", "0.25"],
+    ["4", "same", "0.125"],
+    ["5", "same", "0.0625"],
+    ["6", "same", "0.03125"],
+    ["12+", "same", "0.0005 floor"]
   ];
 
   ops += text(tableX, y + height - 29, "Example opening floors", "F2", 7.6, colors.clay);
   ops += text(tableX, y + height - 43, "Illustrative; not final.", "F1", 6.7, colors.muted);
   ops += rect(tableX, tableY + 121, tableWidth, 18, [0.965, 0.90, 0.80]);
   ops += text(tableX + 8, tableY + 128, "Len", "F2", 6.5, colors.clay);
-  ops += text(tableX + 39, tableY + 128, "Opens", "F2", 6.5, colors.clay);
+  ops += text(tableX + 39, tableY + 128, "Lane", "F2", 6.5, colors.clay);
   ops += text(tableX + 84, tableY + 128, "Floor", "F2", 6.5, colors.clay);
 
   let rowY = tableY + 111;
@@ -388,13 +388,13 @@ function renderLaunchCards() {
   const height = 88;
   let ops = "";
   ops += card(x, y, width, height, colors.sheet, [0.88, 0.80, 0.70]);
-  ops += text(x + 16, y + height - 24, "Launch Auctions", "F3", 16.0, colors.ink);
-  ops += text(x + 16, y + height - 40, "5-32 CHARACTERS AT LAUNCH", "F2", 6.5, colors.clay);
+  ops += text(x + 16, y + height - 24, "Name Auctions", "F3", 16.0, colors.ink);
+  ops += text(x + 16, y + height - 40, "ONE LANE FOR VALID NAMES", "F2", 6.5, colors.clay);
   ops += textBlock({
     x: x + 16,
     y: y + height - 59,
     width: 162,
-    value: "Names with 5-32 characters open by auction at launch. One bidder can win at the floor; competing bidders discover the final bond.",
+    value: "Valid names open by auction at launch. One bidder can win at the floor; competing bidders discover the final bond.",
     size: 7.35,
     lineHeight: 9.2,
     color: colors.muted
@@ -417,23 +417,23 @@ function renderLaunchCards() {
   return ops;
 }
 
-function renderShortNameCard() {
+function renderLengthFloorCard() {
   const x = 400;
   const y = 50;
   const width = 344;
   const height = 94;
   let ops = "";
   ops += card(x, y, width, height, [0.995, 0.958, 0.895], [0.86, 0.72, 0.60]);
-  ops += text(x + 16, y + height - 24, "Short Names", "F3", 16.0, colors.ink);
-  ops += text(x + 16, y + height - 40, "1-4 CHARACTERS LATER", "F2", 6.5, colors.clay);
+  ops += text(x + 16, y + height - 24, "Length Floors", "F3", 16.0, colors.ink);
+  ops += text(x + 16, y + height - 40, "SHORTER NAMES START HIGHER", "F2", 6.5, colors.clay);
   ops += bulletList({
     x: x + 16,
     y: y + height - 61,
     width: 152,
     items: [
-      "minimum block-height delay",
-      "time-weighted bonded value",
-      "usage or bidder thresholds"
+      "same auction mechanics",
+      "objective length curve",
+      "no reserved-name judgment"
     ],
     size: 6.9,
     lineHeight: 8.6,
@@ -444,7 +444,7 @@ function renderShortNameCard() {
     x: x + 204,
     y: y + height - 32,
     width: 120,
-    value: "Short names open once objective gates show enough usage and bonded commitment for public auctions.",
+    value: "Length can raise the opening floor without delaying a name or creating a second auction lane.",
     size: 6.75,
     lineHeight: 8.2,
     color: colors.muted
@@ -464,7 +464,7 @@ stream += renderHeader();
 stream += renderAliceFlow();
 stream += renderBondCard();
 stream += renderLaunchCards();
-stream += renderShortNameCard();
+stream += renderLengthFloorCard();
 stream += renderFooter();
 
 const pdf = new PdfDocument();

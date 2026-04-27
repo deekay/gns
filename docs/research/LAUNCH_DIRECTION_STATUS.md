@@ -22,12 +22,12 @@ The current lead launch direction is:
 - no reserved lane
 - no semantic reserved-name list
 - no pre-launch reservation system
-- `1-4` character names held for a later short-name auction wave
-- `5-32` character names eligible at launch
+- all valid names eligible at launch
+- shorter names start with higher objective opening floors
 
 The core rule is:
 
-> every launch-eligible name is allocated by auction.
+> every valid name is allocated by auction.
 
 This is now cleaner than trying to generate an exhaustive list of brands,
 companies, people, generics, and boundary cases.
@@ -76,19 +76,18 @@ That is much easier to explain than:
 > some names are ordinary, some names are reserved, and ONT decides which is
 > which.
 
-### 3. Short Names Are A Special Objective Wave
+### 3. Short Names Use Objective Floors
 
-Holding `1-4` character names for a later wave is not semantic favoritism.
+Keeping shorter names in the same auction lane avoids arbitrary launch
+boundaries.
 
-It is an objective rule based on structural scarcity.
+The scarcity pressure should come from an objective length-based opening floor.
 
 Current lean:
 
-- hold `1-4` for a later auction wave
-- open `5+` at launch
-
-`1-5` currently feels too broad because it captures normal names like `alice`,
-short personal-looking names, brand-like words, and scarce common terms.
+- every valid name can be opened by a valid bonded bid
+- shorter strings start with higher opening floors
+- no second wave and no semantic reserved list
 
 ### 4. Griefing Looks Less Central Than Before
 
@@ -99,7 +98,7 @@ If ONT works, rational speculators have better opportunities:
 
 - obvious brands
 - obvious generics
-- short names when the short-name wave opens
+- scarce short names with higher opening floors
 - names with visible demand
 
 That makes the old ordinary-lane protection less important than the neutrality
@@ -109,9 +108,9 @@ and trust gained from using markets everywhere.
 
 | Surface | Current lean |
 | --- | --- |
-| launch-eligible names | `5-32` characters |
-| short-name wave | `1-4` characters, later and pre-announced |
-| allocation | open auction for every eligible name |
+| valid names | one auction lane |
+| shorter strings | higher length-based opening floors |
+| allocation | open auction for every valid name |
 | opening experience | user opens with bonded bid; uncontested names should feel like simple auctions |
 | pricing | auction-discovered BTC amount |
 | minimum floor | objective opening-bond floor, still to finalize |
@@ -141,8 +140,7 @@ The new model leaves a better set of open questions:
 - exact auction window
 - exact increment rules
 - max soft-close extension cap
-- opening-bond floor for `5+` names
-- opening-bond floor for the later short-name wave
+- length-based opening-bond floor curve
 - settlement duration for auction winners
 - how to replace retired direct-claim tooling with auction-opening tooling
 - how auction openings and bids should be batched for blockspace efficiency
@@ -153,5 +151,6 @@ The new model leaves a better set of open questions:
 
 ONT should use one market rule for names.
 
-Eligible names are auctioned. Short names launch later in an objective second
-wave. No semantic reserved list decides who deserves special treatment.
+Valid names are auctioned. Shorter names can start with higher objective
+opening floors. No semantic reserved list decides who deserves special
+treatment.

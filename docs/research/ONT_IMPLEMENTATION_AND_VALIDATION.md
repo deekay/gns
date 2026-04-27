@@ -45,7 +45,7 @@ For external technically sophisticated review, the best current entry point is:
 | Auction flow | Implemented prototype | Moderate | Configurable policy, CLI simulation, fixture coverage, website state rendering, bid packages, signable bid artifacts, chain-derived `AUCTION_BID` state, and settled-winner-to-owned-name materialization exist; final launch parameters are still open |
 | Off-chain signed value records | Implemented history-aware prototype | Moderate to high | Current records prove owner authorization, exact sequence, predecessor linkage, ownership-interval binding, CLI multi-resolver publish/read comparison, website-side fanout/compare against a configured resolver set, and browser-level local proof of consistent-versus-lagging resolver views; resolver transparency remains future work |
 | Transfers | Implemented prototype | Moderate to high | Gift and cooperative sale flows exist; browser UX is not the full end-user story yet |
-| Universal auction launch policy | Working launch direction | Moderate | Single lane, no reserved list, no pre-launch reservations, and a later `1-4` character short-name wave |
+| Universal auction launch policy | Working launch direction | Moderate | Single lane, no reserved list, no pre-launch reservations, and length-based opening floors |
 
 ## What Is Implemented Today
 
@@ -146,8 +146,8 @@ The strongest implementation claims we can make today are:
 2. The auction stack is implemented enough to inspect policy, generate bid
    packages, build signer artifacts, derive chain state, and materialize winners
    into owned names.
-3. The lead launch direction is now universal auctions: eligible names auction
-   at launch, `1-4` character names wait for a later short-name wave, and no
+3. The lead launch direction is now universal auctions: valid names auction
+   at launch, shorter names use higher length-based opening floors, and no
    semantic reserved list decides who gets special treatment.
 
 ## What Is Still Experimental
@@ -177,9 +177,9 @@ If we want a reviewer-friendly summary right now, the strongest version is:
 
 > ONT has a real resolver, website, transfer prototype, value-record prototype,
 > and increasingly concrete auction stack. The current launch direction is
-> universal auctions: eligible names auction at launch, `1-4` character names
-> wait for a later short-name wave, and no semantic reserved list decides who
-> gets special treatment. The next big questions are final auction parameters,
+> universal auctions: valid names auction at launch, shorter names use higher
+> objective opening floors, and no semantic reserved list decides who gets
+> special treatment. The next big questions are final auction parameters,
 > settlement duration, and long-lock/quantum posture.
 
 ## Suggested Next Review Order

@@ -1,10 +1,8 @@
 import { getBondSats, normalizeName } from "@ont/protocol";
 
 export const LAUNCH_AUCTION_CLASS_IDS = [
-  "launch_name",
-  "short_name_wave"
+  "launch_name"
 ] as const;
-export const SHORT_NAME_SECOND_WAVE_MAX_LENGTH = 4;
 
 export type LaunchAuctionClassId = (typeof LAUNCH_AUCTION_CLASS_IDS)[number];
 
@@ -47,6 +45,11 @@ export interface SerializedLaunchAuctionPolicy {
     readonly softCloseMinimumIncrementBasisPoints: number;
   };
   readonly auctionClasses: Readonly<Record<LaunchAuctionClassId, SerializedLaunchAuctionClassPolicy>>;
+  readonly lengthFloorExamples: ReadonlyArray<{
+    readonly label: string;
+    readonly nameLength: number;
+    readonly floorSats: string;
+  }>;
 }
 
 export interface LaunchAuctionOpeningRequirements {
@@ -72,13 +75,7 @@ export function createDefaultLaunchAuctionPolicy(): LaunchAuctionPolicy {
     auctionClasses: {
       launch_name: {
         id: "launch_name",
-        label: "Launch auction",
-        floorSats: 50_000n,
-        lockBlocks: 52_560
-      },
-      short_name_wave: {
-        id: "short_name_wave",
-        label: "Short-name second wave",
+        label: "Name auction",
         floorSats: 50_000n,
         lockBlocks: 52_560
       }
@@ -87,8 +84,8 @@ export function createDefaultLaunchAuctionPolicy(): LaunchAuctionPolicy {
 }
 
 export function getDefaultLaunchAuctionClassIdForName(name: string): LaunchAuctionClassId {
-  const normalizedName = normalizeName(name);
-  return normalizedName.length <= SHORT_NAME_SECOND_WAVE_MAX_LENGTH ? "short_name_wave" : "launch_name";
+  normalizeName(name);
+  return "launch_name";
 }
 
 export function getLaunchAuctionClass(
@@ -167,9 +164,9 @@ export function serializeLaunchAuctionPolicy(
       softCloseMinimumIncrementBasisPoints: policy.auction.softCloseMinimumIncrementBasisPoints
     },
     auctionClasses: {
-      launch_name: serializeLaunchAuctionClass(policy.auctionClasses.launch_name),
-      short_name_wave: serializeLaunchAuctionClass(policy.auctionClasses.short_name_wave)
-    }
+      launch_name: serializeLaunchAuctionClass(policy.auctionClasses.launch_name)
+    },
+    lengthFloorExamples: serializeLengthFloorExamples()
   };
 }
 
@@ -207,13 +204,24 @@ export function parseLaunchAuctionPolicy(input: unknown): LaunchAuctionPolicy {
       launch_name: parseLaunchAuctionClassPolicy(
         "launch_name",
         auctionClasses.launch_name
-      ),
-      short_name_wave: parseLaunchAuctionClassPolicy(
-        "short_name_wave",
-        auctionClasses.short_name_wave
       )
     }
   };
+}
+
+function serializeLengthFloorExamples(): SerializedLaunchAuctionPolicy["lengthFloorExamples"] {
+  return [
+    { label: "1 char", nameLength: 1 },
+    { label: "2 chars", nameLength: 2 },
+    { label: "3 chars", nameLength: 3 },
+    { label: "4 chars", nameLength: 4 },
+    { label: "5 chars", nameLength: 5 },
+    { label: "6 chars", nameLength: 6 },
+    { label: "12+ chars", nameLength: 12 }
+  ].map((entry) => ({
+    ...entry,
+    floorSats: getBondSats(entry.nameLength).toString()
+  }));
 }
 
 function serializeLaunchAuctionClass(

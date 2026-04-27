@@ -4,10 +4,10 @@ This note describes the current auction simulator and CLI surface.
 
 The simulator now follows the current launch direction:
 
-- one auction mechanism for launch-eligible names
+- one auction mechanism for valid names
 - no semantic reserved-word list
 - no brand/person/generic classes
-- `1-4` character names represented as a later short-name wave
+- length-based opening floors for shorter names
 - a valid bonded opening bid starts the auction clock
 
 The TypeScript identifiers still contain some older `reserved` names in a few
@@ -66,20 +66,21 @@ It is still a simulator, not the final launch engine.
 
 ## Current Policy Shape
 
-The default policy has two objective auction groups:
+The default policy has one auction group:
 
-- `launch_name`: the current `5-32` character launch group
-- `short_name_wave`: the later `1-4` character wave
+- `launch_name`: the implementation id for the single name-auction lane
 
-The default timing and floors are placeholders. They are intentionally useful
-for tests and demos, not final launch constants.
+The serialized policy also publishes length-floor examples so demos can show
+how shorter names start higher without moving into a second lane. The default
+timing and floors are placeholders, intentionally useful for tests and demos,
+not final launch constants.
 
 ## What Still Needs Work
 
 Before launch, the simulator direction still needs to be connected to:
 
 - auction-opening UX
-- final short-name wave enforcement
+- final length-floor policy enforcement
 - final auction windows and extension caps
 - final settlement duration
 - batching / footprint analysis for auction openings and bids

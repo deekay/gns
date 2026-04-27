@@ -56,7 +56,7 @@ What we do **not** yet have:
   rule
 - a full website/operator flow that carries bidders from live auction state all
   the way through broadcast and post-win management
-- enforcement of the `1-4` short-name second wave in the final launch path
+- enforcement of length-based opening floors in the final launch path
 
 ## Gap Categories
 
@@ -73,7 +73,7 @@ We now have:
 
 What is still missing is the second half:
 
-- final chain rules that give that transaction meaning in the launch auction
+- final chain rules that give that transaction meaning in the name-auction
   engine
 - final rebid and replacement semantics against prior auction state
 - final settlement consequences once those bid transactions land on chain
@@ -166,7 +166,7 @@ The next implementation order that still feels sane is:
 2. keep the experimental bid artifact / transaction builder stable long enough
    to learn from it
 3. deepen auction state transitions from those bid transactions
-4. enforce the `1-4` short-name wave gate
+4. enforce the length-based opening floors
 5. only then wire the website past "download package" into a more active bidder
    flow
 
