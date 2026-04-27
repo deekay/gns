@@ -41,7 +41,7 @@ describe("loadLaunchAuctionLab", () => {
     expect(pkg.previewRequiredMinimumBidSats).toBe("1331000000");
   });
 
-  it("can derive a bid package from resolver-derived experimental auction state", () => {
+  it("can derive a bid package from resolver-derived observed auction state", () => {
     const pkg = createExperimentalAuctionFeedBidPackage({
       auction: {
         auctionId: "private-meadow",

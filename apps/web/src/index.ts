@@ -256,7 +256,7 @@ const server = createServer(async (request, response) => {
     if (method !== "POST") {
       return writeJson(response, 405, {
         error: "method_not_allowed",
-        message: "Use POST for experimental auction bid package generation."
+        message: "Use POST for observed auction bid package generation."
       });
     }
 
@@ -266,7 +266,7 @@ const server = createServer(async (request, response) => {
       if (!body || typeof body !== "object") {
         return writeJson(response, 400, {
           error: "invalid_body",
-          message: "Experimental auction bid package generation requires a JSON body."
+          message: "Observed auction bid package generation requires a JSON body."
         });
       }
 
@@ -280,7 +280,7 @@ const server = createServer(async (request, response) => {
       if (!upstream.ok) {
         return writeJson(response, 502, {
           error: "resolver_unavailable",
-          message: `Resolver returned ${upstream.status} while loading experimental auctions.`
+          message: `Resolver returned ${upstream.status} while loading observed auctions.`
         });
       }
 
@@ -298,7 +298,7 @@ const server = createServer(async (request, response) => {
       if (!auction) {
         return writeJson(response, 404, {
           error: "auction_not_found",
-          message: `No experimental auction with id ${auctionId} is currently visible.`
+          message: `No observed auction with id ${auctionId} is currently visible.`
         });
       }
 
@@ -316,7 +316,7 @@ const server = createServer(async (request, response) => {
         message:
           error instanceof Error
             ? error.message
-            : "Unable to build the experimental auction bid package."
+            : "Unable to build the observed auction bid package."
       });
     }
   }

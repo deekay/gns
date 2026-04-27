@@ -144,7 +144,7 @@ Use the explore page to inspect recent names, provenance, and the current smoke 
 Use the auction page to inspect the prototype auction mechanics:
 
 - simulator states for eligibility, bidding, soft close, and settlement
-- the chain-derived experimental `AUCTION_BID` feed, including stale-bid
+- the chain-derived observed `AUCTION_BID` feed, including stale-bid
   rejection, same-bidder replacement, and derived bond spend / release summaries
 - the hosted private signet auction-smoke summary showing a real opening bid,
   higher bid, settlement into a live owned name, winner value publishing,

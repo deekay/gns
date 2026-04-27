@@ -52,7 +52,7 @@ export function renderPageHtml(options: PageShellOptions): string {
     pageKind === "home"
       ? "Search a name, inspect ownership, and choose whether to bid, explore, or review the current Open Name Tags prototype."
       : pageKind === "advanced"
-      ? "Advanced Open Name Tags surfaces for CLI-heavy workflows and review docs."
+      ? "Open Name Tags reference material for CLI-heavy workflows and protocol review."
     : pageKind === "auctions"
       ? "Auction bid prep, flow examples, and chain-derived bid activity."
       : pageKind === "values"
@@ -401,9 +401,9 @@ function renderAdvancedGuideSection(configuredBasePath: string): string {
       <article class="guide-card">
         <h3>What Belongs Here</h3>
         <ul class="guide-list">
-          <li>Auction implementation notes and review links</li>
           <li>CLI-heavy workflows and custom protocol experiments</li>
           <li>Reviewer-facing docs and implementation notes</li>
+          <li>Testing notes, launch assumptions, and protocol tradeoffs</li>
         </ul>
       </article>
       <article class="guide-card guide-card-wide">
@@ -417,25 +417,25 @@ function renderAdvancedGuideSection(configuredBasePath: string): string {
       </article>
     </div>
     <div class="hero-cta-row section-cta-row">
-      <a class="action-link secondary" href="${withBasePath("/auctions", configuredBasePath)}">Open auctions</a>
+      <a class="action-link secondary" href="${DOC_URLS.implementation}" target="_blank" rel="noreferrer noopener">Implementation notes</a>
       <a class="action-link secondary" href="${withBasePath("/explainer", configuredBasePath)}">Open overview</a>
       <a class="action-link secondary" href="${withBasePath("/setup", configuredBasePath)}">Back to setup</a>
     </div>
   </section>`;
 }
 
-function renderAdvancedReferencesSection(configuredBasePath: string): string {
+function renderAdvancedReferencesSection(_configuredBasePath: string): string {
   return `<section id="advanced-references" class="panel panel-guide">
     ${renderPanelHead(
-      "Advanced Surfaces",
-      "Use these when you want deeper auction context, implementation detail, or protocol-review material."
+      "Reference Material",
+      "Use these when you want implementation detail, validation notes, or protocol-review material."
     )}
     <div class="guide-grid guide-grid-balanced">
       <article class="guide-card">
-        <h3>Auction Implementation</h3>
-        <p>Auction flow examples plus observed bid activity. The public auction page is now a primary acquisition surface; this area keeps deeper implementation and review context nearby.</p>
+        <h3>Implementation Notes</h3>
+        <p>Review how the prototype pieces fit together: resolver state, bid-package handoffs, value records, transfers, and the remaining validation work.</p>
         <div class="guide-card-actions">
-          <a class="action-link secondary" href="${withBasePath("/auctions", configuredBasePath)}">Open auctions</a>
+          <a class="action-link secondary" href="${DOC_URLS.implementation}" target="_blank" rel="noreferrer noopener">Implementation</a>
         </div>
       </article>
       <article class="guide-card">
@@ -797,7 +797,7 @@ function renderUsingOntSection(configuredBasePath: string): string {
       </article>
       <article class="guide-card">
         <h3>Advanced Tools</h3>
-        <p>If you want custom outputs, custom value formats, or deeper auction experimentation, use the Advanced area, CLI, and docs. Most new users can ignore those paths at first.</p>
+        <p>If you want custom outputs, custom value formats, deeper transfer flows, or protocol experiments, use the Advanced area, CLI, and docs. Most new users can ignore those paths at first.</p>
       </article>
     </div>
     <div class="hero-cta-row section-cta-row">

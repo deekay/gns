@@ -4523,10 +4523,10 @@ function renderExperimentalAuctionFeed() {
   const payload = state.experimentalAuctions;
   if (!payload || !Array.isArray(payload.auctions)) {
     elements.experimentalAuctionList.classList.add("empty");
-    elements.experimentalAuctionList.innerHTML = '<div class="result-card empty">No chain-derived experimental auction state is available yet.</div>';
+    elements.experimentalAuctionList.innerHTML = '<div class="result-card empty">No observed auction state is available yet.</div>';
     setText(
       elements.experimentalAuctionMeta,
-      "Waiting for resolver-backed experimental auction state."
+      "Waiting for resolver-backed observed auction state."
     );
     return;
   }
@@ -4536,7 +4536,7 @@ function renderExperimentalAuctionFeed() {
   setText(
     elements.experimentalAuctionMeta,
     [
-      String(visibleAuctions.length) + " prototype auction state" + (visibleAuctions.length === 1 ? "" : "s"),
+      String(visibleAuctions.length) + " observed auction state" + (visibleAuctions.length === 1 ? "" : "s"),
       payload.currentBlockHeight == null ? "resolver has not reached a current block yet" : "derived at block " + String(payload.currentBlockHeight),
       "leaders, stale bid rejection, and settlement summaries come from observed AUCTION_BID transactions"
     ].join(" · ")
@@ -4781,7 +4781,7 @@ function renderExperimentalAuctionCard(auction) {
   return [
     '<article class="activity-card">',
     '  <div class="result-title">',
-    '    <h3>' + escapeHtml(String(auction.title ?? auction.normalizedName ?? "Experimental auction")) + "</h3>",
+    '    <h3>' + escapeHtml(String(auction.title ?? auction.normalizedName ?? "Observed auction")) + "</h3>",
     '    <span class="status-pill ' + escapeHtml(phasePill) + '">' + escapeHtml(String(auction.phaseLabel ?? phase)) + "</span>",
     "  </div>",
     '  <p class="field-value">' + escapeHtml(String(auction.description ?? "")) + "</p>",
@@ -4830,7 +4830,7 @@ function renderExperimentalAuctionCard(auction) {
           ? "This pre-eligibility prototype entry is filtered out of public auction views."
           : phase === "soft_close"
           ? "Built from current resolver-derived state. A soft-close extension bid must clear the stronger late increment and may go stale if another bid lands first."
-          : "Build a bid package from the current resolver-derived experimental auction state.",
+          : "Build a bid package from the current resolver-derived auction state.",
       fallbackPath: buildAuctionsPath(auction.normalizedName ?? "")
     }),
     renderExperimentalAuctionBidHistory(auction.visibleBidOutcomes),
@@ -5236,7 +5236,7 @@ function renderPrivateAuctionSmokeStatus() {
     elements.privateAuctionSmokeResult.textContent = "No private signet auction smoke status is available yet.";
     setText(
       elements.privateAuctionSmokeMeta,
-      "Waiting for the first published private signet experimental auction smoke summary."
+      "Waiting for the first published private signet auction smoke summary."
     );
     return;
   }

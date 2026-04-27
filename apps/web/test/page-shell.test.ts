@@ -117,9 +117,12 @@ describe("renderPageHtml", () => {
     expect(html).toContain("Advanced Tools");
     expect(html).toContain("When To Use This Area");
     expect(html).toContain("Most People Can Ignore This");
-    expect(html).toContain("Open auctions");
+    expect(html).toContain("Reference Material");
     expect(html).toContain("Testing guide");
     expect(html).toContain("Launch spec");
+    expect(html).not.toContain("Open auctions");
+    expect(html).not.toContain("Auction Implementation");
+    expect(html).not.toContain("Advanced Surfaces");
     expect(html).toContain(">Advanced<");
     expect(html).not.toContain("policy controls");
   });

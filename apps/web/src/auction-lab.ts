@@ -145,7 +145,7 @@ export function createExperimentalAuctionFeedBidPackage(input: {
     bidderId: input.bidderId,
     ownerPubkey: input.ownerPubkey,
     bidAmountSats: input.bidAmountSats,
-    sourceLabel: `experimental auction ${input.auction.auctionId}`
+    sourceLabel: `observed auction ${input.auction.auctionId}`
   });
 }
 
