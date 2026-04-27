@@ -28,7 +28,7 @@ jobs:
         run: npm run typecheck
 
       - name: Unit and package tests
-        run: npm run test:workspaces
+        run: npm test
 
       - name: Private signet auto-miner script smoke
         run: npm run test:private-signet-auto-mine-script
