@@ -161,6 +161,7 @@ async function waitForVisibleText(page, text, timeout = 15_000) {
 function startProcess(name, args, extraEnv) {
   const child = spawn(npmExecutable, args, {
     cwd: process.cwd(),
+    detached: process.platform !== "win32",
     env: {
       ...process.env,
       ...extraEnv
@@ -201,12 +202,39 @@ async function stopProcess(handle) {
     return;
   }
 
-  handle.child.kill("SIGTERM");
-  await sleep(300);
+  signalProcess(handle.child, "SIGTERM");
+  await waitForExit(handle.child, 1_000);
 
   if (handle.child.exitCode === null) {
-    handle.child.kill("SIGKILL");
+    signalProcess(handle.child, "SIGKILL");
+    await waitForExit(handle.child, 1_000);
   }
+}
+
+function signalProcess(child, signal) {
+  if (process.platform !== "win32" && child.pid !== undefined) {
+    try {
+      process.kill(-child.pid, signal);
+      return;
+    } catch {
+      // Fall back to signaling the direct child below.
+    }
+  }
+
+  child.kill(signal);
+}
+
+async function waitForExit(child, timeoutMs) {
+  if (child.exitCode !== null) {
+    return;
+  }
+
+  await Promise.race([
+    new Promise((resolve) => {
+      child.once("exit", resolve);
+    }),
+    sleep(timeoutMs)
+  ]);
 }
 
 async function waitForJson(url, isReady, timeoutMs = 30_000) {
