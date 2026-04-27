@@ -1,11 +1,11 @@
 {
-  "title": "Private smoke auction · figma D",
+  "title": "Private smoke auction · canyon E",
   "description": "Private signet experimental auction fixture dedicated to hosted smoke runs with real AUCTION_BID transactions.",
   "currentBlockHeight": 128,
   "scenario": {
-    "name": "figma",
+    "name": "canyon",
     "auctionClassId": "launch_name",
-    "unlockBlock": 200,
+    "unlockBlock": 260,
     "bidAttempts": []
   }
 }

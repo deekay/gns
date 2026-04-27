@@ -74,14 +74,14 @@ describe("auction and transfer wire payloads", () => {
       bidAmountSats: 200_000_000n,
       ownerPubkey: "ab".repeat(32),
       auctionLotCommitment: computeAuctionLotCommitment({
-        auctionId: "openai-soft-close",
-        name: "openai",
+        auctionId: "meadow-soft-close",
+        name: "meadow",
         auctionClassId: "launch_name",
         unlockBlock: 840_000
       }),
       auctionCommitment: computeAuctionBidStateCommitment({
-        auctionId: "openai-soft-close",
-        name: "openai",
+        auctionId: "meadow-soft-close",
+        name: "meadow",
         auctionClassId: "launch_name",
         currentBlockHeight: 844_360,
         phase: "soft_close",

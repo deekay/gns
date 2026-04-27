@@ -131,7 +131,7 @@ Open. Existing spreadsheets and reasoning are helpful but do not yet answer the 
 
 ### Concern
 
-A permissionless, identity-free namespace may allow names like `nike` or `starbucks` to be won at auction by someone other than the real-world brand holder.
+A permissionless, identity-free namespace may allow names that resemble short words or real-world brands to be won at auction by someone other than the real-world brand holder.
 
 That creates a challenge:
 

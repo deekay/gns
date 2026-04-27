@@ -89,8 +89,19 @@ Why:
   clear before the system has attention
 
 `1-4` is preferred over `1-5` because `5` starts capturing too many ordinary
-names, brands, and first names such as `alice`, `david`, `apple`, `tesla`, and
-`naval`.
+names, brand-like words, and first names.
+
+The short-name wave should not unlock on calendar time alone. The current
+working shape is a combined objective gate:
+
+- minimum block-height delay after initial launch
+- minimum time-weighted bonded value across live ONT auctions / settlement
+- possibly a minimum count of settled names or distinct bidders, to reduce the
+  chance that one large capital source unlocks the wave by itself
+
+Exact thresholds are open. The principle is that the `1-4` namespace should
+open only after the system has enough visible usage and bonded commitment for
+the auction to be meaningfully public.
 
 ## Auction Timing Defaults
 
@@ -100,7 +111,8 @@ The current preferred timing shape is:
 - soft-close extension: about `24 hours`
 - max extension cap: still to be implemented / decided
 - initial launch period: may use longer windows if awareness is uneven
-- short-name wave: later, widely announced, same auction mechanics
+- short-name wave: later, widely announced, gated by block height plus bonded
+  activity, same auction mechanics unless announced otherwise
 
 The prototype currently has older simulator defaults in some places. Those
 should be migrated toward this model rather than treated as final.

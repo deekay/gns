@@ -13,8 +13,8 @@ import {
 describe("auction bid packages", () => {
   it("builds a preview for pending-opening states", () => {
     const pkg = createAuctionBidPackage({
-      auctionId: "01-pending-unlock-nvidia",
-      name: "nvidia",
+      auctionId: "01-pre-eligibility-marble",
+      name: "marble",
       auctionClassId: "launch_name",
       classLabel: "Launch auction",
       currentBlockHeight: 95_000,
@@ -43,8 +43,8 @@ describe("auction bid packages", () => {
     expect(pkg.currentLeaderBidderCommitment).toBeNull();
     expect(pkg.auctionLotCommitment).toBe(
       computeAuctionLotCommitment({
-        auctionId: "01-pending-unlock-nvidia",
-        name: "nvidia",
+        auctionId: "01-pre-eligibility-marble",
+        name: "marble",
         auctionClassId: "launch_name",
         unlockBlock: 95_144
       })
@@ -54,8 +54,8 @@ describe("auction bid packages", () => {
 
   it("builds a valid soft-close preview when the amount clears the next minimum", () => {
     const pkg = createAuctionBidPackage({
-      auctionId: "04-soft-close-nvidia",
-      name: "nvidia",
+      auctionId: "04-soft-close-marble",
+      name: "marble",
       auctionClassId: "launch_name",
       classLabel: "Launch auction",
       currentBlockHeight: 100_288,
@@ -86,8 +86,8 @@ describe("auction bid packages", () => {
 
   it("allows live-state packages that know only the current leader commitment", () => {
     const pkg = createAuctionBidPackage({
-      auctionId: "03-live-openai",
-      name: "openai",
+      auctionId: "03-live-meadow",
+      name: "meadow",
       auctionClassId: "launch_name",
       classLabel: "Launch auction",
       currentBlockHeight: 128,
@@ -117,7 +117,7 @@ describe("auction bid packages", () => {
   it("rejects packages whose preview fields no longer match the observed state", () => {
     const pkg = createAuctionBidPackage({
       auctionId: "02-awaiting-opening",
-      name: "nike",
+      name: "luna",
       auctionClassId: "launch_name",
       classLabel: "Launch auction",
       currentBlockHeight: 99_000,

@@ -54,7 +54,7 @@ echo "[1/3] Reset private signet chain and demo state"
 bash ./scripts/reset-private-signet-demo.sh "$REMOTE" "${SSH_KEY_PATH:-}"
 
 echo
-echo "[2/3] Seed canonical auction smoke lot"
+echo "[2/3] Seed canonical auction smoke fixture"
 node ./scripts/private-signet-auction-smoke.mjs
 
 echo
@@ -64,5 +64,5 @@ node ./scripts/private-signet-auction-phase-gallery.mjs
 echo
 echo "Canonical private signet reseed complete."
 echo "Examples:"
-echo "  private auction smoke lots (see /auctions)"
-echo "  dedicated phase lots: phasepending, phaseawaiting, phaselive, phasesoftclose"
+echo "  private auction smoke fixtures (see /auctions)"
+echo "  dedicated phase fixtures: phasepending, phaseawaiting, phaselive, phasesoftclose"

@@ -1,11 +1,11 @@
 {
-  "title": "Private smoke auction · stripe E",
+  "title": "Private smoke auction · marble A",
   "description": "Private signet experimental auction fixture dedicated to hosted smoke runs with real AUCTION_BID transactions.",
   "currentBlockHeight": 128,
   "scenario": {
-    "name": "stripe",
+    "name": "marble",
     "auctionClassId": "launch_name",
-    "unlockBlock": 260,
+    "unlockBlock": 115,
     "bidAttempts": []
   }
 }

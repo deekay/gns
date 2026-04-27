@@ -102,7 +102,7 @@ export interface LaunchAuctionSimulationResult {
   readonly softCloseExtensionBlocks: number;
   readonly minimumIncrementAbsoluteSats: bigint;
   readonly minimumIncrementBasisPoints: number;
-  readonly status: "no_valid_bids" | "settled";
+  readonly status: "unopened" | "settled";
   readonly auctionStartBlock: number | null;
   readonly initialAuctionCloseBlock: number | null;
   readonly finalAuctionCloseBlock: number | null;
@@ -124,7 +124,7 @@ export interface SerializedLaunchAuctionSimulationResult {
   readonly softCloseExtensionBlocks: number;
   readonly minimumIncrementAbsoluteSats: string;
   readonly minimumIncrementBasisPoints: number;
-  readonly status: "no_valid_bids" | "settled";
+  readonly status: "unopened" | "settled";
   readonly auctionStartBlock: number | null;
   readonly initialAuctionCloseBlock: number | null;
   readonly finalAuctionCloseBlock: number | null;
@@ -286,7 +286,7 @@ export function simulateLaunchAuction(input: {
     softCloseExtensionBlocks: input.policy.auction.softCloseExtensionBlocks,
     minimumIncrementAbsoluteSats: input.policy.auction.minimumIncrementAbsoluteSats,
     minimumIncrementBasisPoints: input.policy.auction.minimumIncrementBasisPoints,
-    status: winningBid === null ? "no_valid_bids" : "settled",
+    status: winningBid === null ? "unopened" : "settled",
     auctionStartBlock,
     initialAuctionCloseBlock,
     finalAuctionCloseBlock,
@@ -401,10 +401,6 @@ function parseLaunchAuctionBidAttempt(
 function parseLaunchAuctionClassId(value: unknown, label: string): LaunchAuctionClassId {
   if (value === "launch_name" || value === "short_name_wave") {
     return value;
-  }
-
-  if (value === "top_collision" || value === "major_existing_name" || value === "public_identity") {
-    return "launch_name";
   }
 
   throw new Error(`${label} must be one of launch_name, short_name_wave`);

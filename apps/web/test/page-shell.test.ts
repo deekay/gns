@@ -30,7 +30,7 @@ describe("renderPageHtml", () => {
     expect(html).toContain("Eligible or not eligible");
     expect(html).toContain("After a bonded opening bid");
     expect(html).toContain("Auction clock starts");
-    expect(html).toContain("1-4 character names are not eligible until the later short-name wave.");
+    expect(html).toContain("1-4 character names wait for the later short-name wave.");
     expect(html).toContain("Choose A Path");
     expect(html).toContain("Understand ONT");
     expect(html).toContain("Try The Prototype");
@@ -132,10 +132,9 @@ describe("renderPageHtml", () => {
     expect(html).toContain("Auctions");
     expect(html).toContain(">Auctions<");
     expect(html).toContain(">Advanced<");
-    expect(html).toContain("Auction Reference Cases");
+    expect(html).toContain("Auction Flow Examples");
     expect(html).toContain("auctionLabList");
-    expect(html).not.toContain("auctionPolicyControls");
-    expect(html).toContain("Auction bid prep and reference states");
+    expect(html).toContain("Auction bid prep and flow examples");
     expect(html).toContain("Auction flow surface");
     expect(html).toContain("Current website defaults");
     expect(html).toContain("read-only on purpose");

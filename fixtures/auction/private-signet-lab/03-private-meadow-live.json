@@ -1,9 +1,9 @@
 {
-  "title": "Private demo lot · openai (live)",
-  "description": "Private signet lot with a valid opening bid and a higher follow-up bid while still well before the soft-close window.",
+  "title": "Private demo auction · meadow (live)",
+  "description": "Private signet auction fixture with a valid opening bid and a higher follow-up bid while still well before the soft-close window.",
   "currentBlockHeight": 128,
   "scenario": {
-    "name": "openai",
+    "name": "meadow",
     "auctionClassId": "launch_name",
     "unlockBlock": 110,
     "bidAttempts": [

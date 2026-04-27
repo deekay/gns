@@ -71,7 +71,7 @@ For ordinary short-lived prototype activity, quantum risk is easy to postpone co
 
 For a premium-name design that says:
 
-- `google` may require a `10-year` lock
+- a high-value-looking name may require a longer lock
 - or a winner's bond may remain timelocked for many years even after an early sale
 
 the time horizon becomes long enough that "we'll think about it later" is no longer a satisfying stance.

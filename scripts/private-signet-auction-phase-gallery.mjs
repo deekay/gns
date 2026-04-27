@@ -43,17 +43,17 @@ async function main() {
     await preparePhaseFixtureOpenings(initialHeight);
 
     const beforeFeed = await fetchExperimentalAuctionFeed();
-    const pendingLot = requireAuction(beforeFeed.auctions, PHASE_GALLERY_IDS.pending);
-    const awaitingLot = requireAuction(beforeFeed.auctions, PHASE_GALLERY_IDS.awaiting);
-    const liveLot = requireAuction(beforeFeed.auctions, PHASE_GALLERY_IDS.live);
-    const softCloseLot = requireAuction(beforeFeed.auctions, PHASE_GALLERY_IDS.softClose);
+    const pendingState = requireAuction(beforeFeed.auctions, PHASE_GALLERY_IDS.pending);
+    const awaitingState = requireAuction(beforeFeed.auctions, PHASE_GALLERY_IDS.awaiting);
+    const liveState = requireAuction(beforeFeed.auctions, PHASE_GALLERY_IDS.live);
+    const softCloseState = requireAuction(beforeFeed.auctions, PHASE_GALLERY_IDS.softClose);
 
-    await ensurePendingPhase(pendingLot);
-    await ensureAwaitingPhase(awaitingLot);
+    await ensurePendingPhase(pendingState);
+    await ensureAwaitingPhase(awaitingState);
     const preparedSoftClose = await ensureSoftClosePhase({
       outDir,
-      auctionState: softCloseLot,
-      bidderId: `${softCloseLot.normalizedName}-gallery-alpha`,
+      auctionState: softCloseState,
+      bidderId: `${softCloseState.normalizedName}-gallery-alpha`,
       ownerPubkey: owner.ownerPubkey,
       fundingAddress: owner.fundingAddress,
       fundingWif: owner.fundingWif,
@@ -61,8 +61,8 @@ async function main() {
     });
     const preparedLive = await ensureLivePhase({
       outDir,
-      auctionState: liveLot,
-      bidderId: `${liveLot.normalizedName}-gallery-alpha`,
+      auctionState: liveState,
+      bidderId: `${liveState.normalizedName}-gallery-alpha`,
       ownerPubkey: owner.ownerPubkey,
       fundingAddress: owner.fundingAddress,
       fundingWif: owner.fundingWif,
@@ -148,7 +148,7 @@ function requireAuction(auctions, auctionId) {
 
   const auction = auctions.find((entry) => entry?.auctionId === auctionId);
   if (!auction) {
-    throw new Error(`missing dedicated private phase lot ${auctionId}`);
+    throw new Error(`missing dedicated private phase fixture ${auctionId}`);
   }
 
   return auction;
@@ -163,15 +163,14 @@ function summarizeAuction(auction) {
     unlockBlock: auction.unlockBlock,
     acceptedBidCount: auction.acceptedBidCount,
     currentHighestBidSats: auction.currentHighestBidSats,
-    auctionCloseBlockAfter: auction.auctionCloseBlockAfter,
-    noBidReleaseBlock: auction.noBidReleaseBlock
+    auctionCloseBlockAfter: auction.auctionCloseBlockAfter
   };
 }
 
 async function ensurePendingPhase(auctionState) {
   if (auctionState.phase !== "pending_unlock") {
     throw new Error(
-      `expected ${auctionState.auctionId} to remain not eligible yet; current phase is ${auctionState.phase}`
+      `expected ${auctionState.auctionId} to remain in pre-eligibility; current phase is ${auctionState.phase}`
     );
   }
 }
@@ -287,7 +286,7 @@ async function ensureAuctionReadyForOpeningBid(auctionState) {
   }
 
   throw new Error(
-    `expected ${auctionState.auctionId} to be not eligible yet or eligible to open; current phase is ${auctionState.phase}`
+    `expected ${auctionState.auctionId} to be pre-eligibility or eligible to open; current phase is ${auctionState.phase}`
   );
 }
 

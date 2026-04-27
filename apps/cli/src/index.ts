@@ -325,11 +325,6 @@ async function createAuctionBidPackageCommand(args: readonly string[]): Promise<
     scenario,
     currentBlockHeight
   });
-  if (state.phase === "closed_without_winner") {
-    throw new Error(
-      "this legacy scheduled compatibility state no longer accepts auction bid packages; a launch auction only exists after a valid bonded opening bid"
-    );
-  }
   const auctionBidPackage = createAuctionBidPackage({
     auctionId:
       parsed.options.get("auction-id")

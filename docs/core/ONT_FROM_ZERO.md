@@ -105,6 +105,10 @@ That direction is motivated by launch fairness and simplicity:
 - make uncontested names feel simple even though the allocation rule is still an
   auction
 
+The later `1-4` wave should be gated by objective signals, not by discretion.
+The current working shape is a minimum block-height delay plus time-weighted
+bonded value across the live ONT system, with exact thresholds still open.
+
 ## Lifecycle
 
 At a high level, ONT now treats the auction bid as the acquisition event:

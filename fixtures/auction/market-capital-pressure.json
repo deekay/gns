@@ -7,8 +7,8 @@
     },
     "auctions": [
       {
-        "auctionId": "openai-main",
-        "name": "openai",
+        "auctionId": "meadow-main",
+        "name": "meadow",
         "auctionClassId": "launch_name",
         "unlockBlock": 900000,
         "bidAttempts": [
@@ -26,7 +26,7 @@
       },
       {
         "auctionId": "tyler-side",
-        "name": "tylercowen",
+        "name": "silverpine",
         "auctionClassId": "launch_name",
         "unlockBlock": 900050,
         "bidAttempts": [
@@ -44,7 +44,7 @@
       },
       {
         "auctionId": "garry-followup",
-        "name": "garrytan",
+        "name": "wildrose",
         "auctionClassId": "launch_name",
         "unlockBlock": 904500,
         "bidAttempts": [
@@ -59,7 +59,7 @@
   },
   "expected": {
     "auctionWinners": {
-      "openai-main": "beta",
+      "meadow-main": "beta",
       "tyler-side": "gamma",
       "garry-followup": "alpha"
     },

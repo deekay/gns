@@ -1,9 +1,9 @@
 {
-  "title": "Live bidding · openai",
+  "title": "Live bidding · meadow",
   "description": "Launch auction with a valid opening bid and a higher follow-up bid, but still well before the soft-close window.",
   "currentBlockHeight": 851600,
   "scenario": {
-    "name": "openai",
+    "name": "meadow",
     "auctionClassId": "launch_name",
     "unlockBlock": 850000,
     "bidAttempts": [

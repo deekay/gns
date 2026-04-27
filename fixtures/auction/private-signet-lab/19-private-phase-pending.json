@@ -1,6 +1,6 @@
 {
-  "title": "Private phase fixture · not eligible yet",
-  "description": "Dedicated private signet fixture kept before eligibility so the live experimental feed can show the pre-opening prototype state without implying a real auction already exists.",
+  "title": "Private phase fixture · pre-eligibility",
+  "description": "Dedicated private signet fixture kept before eligibility for internal phase coverage. Public auction surfaces filter this state because no auction exists until a valid bonded opening bid confirms.",
   "currentBlockHeight": 181,
   "scenario": {
     "name": "phasepending",

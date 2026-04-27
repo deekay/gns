@@ -1,6 +1,6 @@
 {
   "scenario": {
-    "name": "nvidia",
+    "name": "marble",
     "auctionClassId": "launch_name",
     "unlockBlock": 840000,
     "bidAttempts": [

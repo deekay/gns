@@ -124,7 +124,7 @@ async function assertRetiredDirectClaimRedirect(page) {
     new URL(page.url()).pathname === "/auctions",
     "retired direct-acquisition page should redirect to auctions"
   );
-  await waitForVisibleText(page, "Auction Reference Cases");
+  await waitForVisibleText(page, "Auction Flow Examples");
 }
 
 async function assertAuctionsPage(page) {
@@ -138,7 +138,7 @@ async function assertAuctionsPage(page) {
   });
   const bodyText = await page.locator("body").textContent();
   assert(
-    (bodyText ?? "").includes("Auction bid prep and reference states"),
+    (bodyText ?? "").includes("Auction bid prep and flow examples"),
     "auction page should expose the current auction framing"
   );
   assert(
@@ -146,7 +146,7 @@ async function assertAuctionsPage(page) {
     "auction page should expose the chain-derived experimental bid feed"
   );
   assert(
-    (bodyText ?? "").includes("Auction Reference Cases"),
+    (bodyText ?? "").includes("Auction Flow Examples"),
     "auction page should render the simulator-backed state surface"
   );
 }

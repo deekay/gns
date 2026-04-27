@@ -99,7 +99,7 @@ Success looks like:
 
 If they want to inspect the product before bidding, point them at:
 
-- [auctions](https://opennametags.org/auctions): reference cases and observed bid activity
+- [auctions](https://opennametags.org/auctions): flow examples and observed bid activity
 - [explore](https://opennametags.org/explore): currently owned names and recent chain-derived events
 - [destinations](https://opennametags.org/values): owner-signed records for live names
 

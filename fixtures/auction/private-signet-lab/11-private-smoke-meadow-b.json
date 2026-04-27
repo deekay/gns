@@ -1,11 +1,11 @@
 {
-  "title": "Private smoke auction · nvidia A",
+  "title": "Private smoke auction · meadow B",
   "description": "Private signet experimental auction fixture dedicated to hosted smoke runs with real AUCTION_BID transactions.",
   "currentBlockHeight": 128,
   "scenario": {
-    "name": "nvidia",
+    "name": "meadow",
     "auctionClassId": "launch_name",
-    "unlockBlock": 115,
+    "unlockBlock": 116,
     "bidAttempts": []
   }
 }

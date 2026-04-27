@@ -1,6 +1,5 @@
 import {
   calculateLaunchAuctionMinimumIncrementBidSats,
-  getLaunchAuctionNoBidReleaseBlock,
   isLaunchAuctionSoftCloseWindow,
   type LaunchAuctionPolicy
 } from "./auction-policy.js";
@@ -13,7 +12,6 @@ import {
 export type LaunchAuctionPhase =
   | "pending_unlock"
   | "awaiting_opening_bid"
-  | "closed_without_winner"
   | "live_bidding"
   | "soft_close"
   | "settled";
@@ -29,11 +27,9 @@ export interface LaunchAuctionStateAtBlock {
   readonly baseMinimumBidSats: bigint;
   readonly openingMinimumBidSats: bigint;
   readonly settlementLockBlocks: number;
-  readonly noBidReleaseBlock: number | null;
   readonly auctionStartBlock: number | null;
   readonly auctionCloseBlockAfter: number | null;
   readonly blocksUntilUnlock: number;
-  readonly blocksUntilNoBidRelease: number | null;
   readonly blocksUntilClose: number | null;
   readonly currentLeaderBidderId: string | null;
   readonly currentHighestBidSats: bigint | null;
@@ -54,11 +50,9 @@ export interface SerializedLaunchAuctionStateAtBlock {
   readonly baseMinimumBidSats: string;
   readonly openingMinimumBidSats: string;
   readonly settlementLockBlocks: number;
-  readonly noBidReleaseBlock: number | null;
   readonly auctionStartBlock: number | null;
   readonly auctionCloseBlockAfter: number | null;
   readonly blocksUntilUnlock: number;
-  readonly blocksUntilNoBidRelease: number | null;
   readonly blocksUntilClose: number | null;
   readonly currentLeaderBidderId: string | null;
   readonly currentHighestBidSats: string | null;
@@ -93,18 +87,9 @@ export function simulateLaunchAuctionStateAtBlock(input: {
   });
   const acceptedBidCount = partialResult.bidOutcomes.filter((outcome) => outcome.status === "accepted").length;
   const rejectedBidCount = partialResult.bidOutcomes.length - acceptedBidCount;
-  const noBidReleaseBlock =
-    partialResult.winner === null
-      ? getLaunchAuctionNoBidReleaseBlock({
-          unlockBlock: partialResult.unlockBlock,
-          policy: input.policy
-        })
-      : null;
-
   const phase = deriveLaunchAuctionPhase({
     currentBlockHeight: input.currentBlockHeight,
     unlockBlock: input.scenario.unlockBlock,
-    noBidReleaseBlock,
     auctionCloseBlockAfter: partialResult.finalAuctionCloseBlock,
     softCloseExtensionBlocks: partialResult.softCloseExtensionBlocks,
     winnerPresent: partialResult.winner !== null
@@ -114,7 +99,7 @@ export function simulateLaunchAuctionStateAtBlock(input: {
       ? partialResult.finalAuctionCloseBlock
       : null;
   const currentRequiredMinimumBidSats =
-    phase === "settled" || phase === "closed_without_winner"
+    phase === "settled"
       ? null
       : partialResult.winner === null
         ? partialResult.openingMinimumBidSats
@@ -139,12 +124,9 @@ export function simulateLaunchAuctionStateAtBlock(input: {
     baseMinimumBidSats: partialResult.baseMinimumBidSats,
     openingMinimumBidSats: partialResult.openingMinimumBidSats,
     settlementLockBlocks: partialResult.settlementLockBlocks,
-    noBidReleaseBlock,
     auctionStartBlock: partialResult.auctionStartBlock,
     auctionCloseBlockAfter,
     blocksUntilUnlock: Math.max(0, input.scenario.unlockBlock - input.currentBlockHeight),
-    blocksUntilNoBidRelease:
-      noBidReleaseBlock === null ? null : Math.max(0, noBidReleaseBlock - input.currentBlockHeight),
     blocksUntilClose:
       auctionCloseBlockAfter === null ? null : Math.max(0, auctionCloseBlockAfter - input.currentBlockHeight),
     currentLeaderBidderId: partialResult.winner?.bidderId ?? null,
@@ -170,11 +152,9 @@ export function serializeLaunchAuctionStateAtBlock(
     baseMinimumBidSats: state.baseMinimumBidSats.toString(),
     openingMinimumBidSats: state.openingMinimumBidSats.toString(),
     settlementLockBlocks: state.settlementLockBlocks,
-    noBidReleaseBlock: state.noBidReleaseBlock,
     auctionStartBlock: state.auctionStartBlock,
     auctionCloseBlockAfter: state.auctionCloseBlockAfter,
     blocksUntilUnlock: state.blocksUntilUnlock,
-    blocksUntilNoBidRelease: state.blocksUntilNoBidRelease,
     blocksUntilClose: state.blocksUntilClose,
     currentLeaderBidderId: state.currentLeaderBidderId,
     currentHighestBidSats: state.currentHighestBidSats?.toString() ?? null,
@@ -198,7 +178,6 @@ export function serializeLaunchAuctionStateAtBlock(
 function deriveLaunchAuctionPhase(input: {
   readonly currentBlockHeight: number;
   readonly unlockBlock: number;
-  readonly noBidReleaseBlock: number | null;
   readonly auctionCloseBlockAfter: number | null;
   readonly softCloseExtensionBlocks: number;
   readonly winnerPresent: boolean;
@@ -208,10 +187,6 @@ function deriveLaunchAuctionPhase(input: {
   }
 
   if (!input.winnerPresent) {
-    if (input.noBidReleaseBlock !== null && input.currentBlockHeight > input.noBidReleaseBlock) {
-      return "closed_without_winner";
-    }
-
     return "awaiting_opening_bid";
   }
 
@@ -238,11 +213,9 @@ function deriveLaunchAuctionPhase(input: {
 export function formatLaunchAuctionPhaseLabel(phase: LaunchAuctionPhase): string {
   switch (phase) {
     case "pending_unlock":
-      return "Not eligible yet";
+      return "Pre-eligibility";
     case "awaiting_opening_bid":
       return "Eligible to open";
-    case "closed_without_winner":
-      return "Legacy compatibility state";
     case "live_bidding":
       return "Live bidding";
     case "soft_close":

@@ -89,7 +89,7 @@ Current preferred defaults:
 | soft-close increment | stronger than normal mid-auction increment |
 | max extension cap | open, likely needed |
 | initial launch period | may use longer windows if awareness is uneven |
-| short-name wave | later, widely announced, same auction mechanics |
+| short-name wave | later, widely announced, gated by block height plus bonded activity |
 
 These are launch parameters, not final protocol constants yet.
 
@@ -135,6 +135,8 @@ The later wave should be:
 - pre-announced
 - objective
 - open to all bidders
+- gated by minimum block height after initial launch
+- gated by time-weighted bonded value across live ONT activity
 - using the same auction mechanics as the launch lane unless a specific
   objective short-name parameter is announced in advance
 
@@ -145,6 +147,14 @@ Reason:
 - `1-4` captures structural scarcity
 - `5` starts including many normal names, first names, brands, and handles
 
+The threshold should probably not use raw point-in-time TVL alone. A better
+candidate is time-weighted bonded value, possibly paired with a minimum count
+of settled names or distinct bidders. That makes it harder for one source of
+capital to briefly lock a large amount and immediately unlock the most scarce
+names.
+
+Exact thresholds remain open launch parameters.
+
 ## What The Spec Drops
 
 This launch model drops:
@@ -153,7 +163,7 @@ This launch model drops:
 - source-generated auction lists as protocol-critical artifacts
 - pre-launch proof/reservation systems
 - ordinary-vs-reserved allocation treatment
-- no-bid fallback from auction into a separate ordinary direct-allocation lane
+- unopened-name fallback from auction into a separate ordinary direct-allocation lane
 - bespoke reserved classes for brands, identities, and generics
 
 The previous source-list work can remain useful for research and examples, but

@@ -84,7 +84,7 @@ Needs improvement:
 
 What works:
 
-- The bid-prep structure should be clear: inspect lot, set owner key, build Sparrow files.
+- The bid-prep structure should be clear: inspect an auction state, set owner key, build Sparrow files.
 - Local key generation should stay recommended over hosted helper.
 - Advanced/custom options are hidden behind a details section.
 
@@ -145,7 +145,7 @@ Needs improvement:
 
 - Auction pages should continue to look visually aligned with the rest of the site.
 - The page should separate "what is live-chain observed" from "what is fixture/reference state".
-- A small phase legend would help: not eligible yet, eligible to open, live
+- A small phase legend would help: pre-eligibility, eligible to open, live
   bidding, soft close, settled, released.
 
 ## Recommended Next UX Work

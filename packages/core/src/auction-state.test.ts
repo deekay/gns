@@ -7,12 +7,12 @@ import { parseLaunchAuctionScenario } from "./auction-sim.js";
 const policy = createDefaultLaunchAuctionPolicy();
 
 describe("simulateLaunchAuctionStateAtBlock", () => {
-  it("reports not eligible yet before the opening-bid window", () => {
+  it("reports pre-eligibility before the opening-bid window", () => {
     const state = simulateLaunchAuctionStateAtBlock({
       policy,
       currentBlockHeight: 839_990,
       scenario: parseLaunchAuctionScenario({
-        name: "nvidia",
+        name: "marble",
         auctionClassId: "launch_name",
         unlockBlock: 840_000,
         bidAttempts: [
@@ -31,7 +31,7 @@ describe("simulateLaunchAuctionStateAtBlock", () => {
       policy,
       currentBlockHeight: 880_030,
       scenario: parseLaunchAuctionScenario({
-        name: "nike",
+        name: "luna",
         auctionClassId: "launch_name",
         unlockBlock: 880_000,
         bidAttempts: [
@@ -48,12 +48,12 @@ describe("simulateLaunchAuctionStateAtBlock", () => {
     expect(state.currentRequiredMinimumBidSats?.toString()).toBe("12500000");
   });
 
-  it("keeps legacy scheduled-catalog compatibility behavior covered", () => {
+  it("keeps unopened eligible names available for an opening bid", () => {
     const state = simulateLaunchAuctionStateAtBlock({
       policy,
       currentBlockHeight: 884_321,
       scenario: parseLaunchAuctionScenario({
-        name: "nike",
+        name: "luna",
         auctionClassId: "launch_name",
         unlockBlock: 880_000,
         bidAttempts: [
@@ -64,11 +64,9 @@ describe("simulateLaunchAuctionStateAtBlock", () => {
       })
     });
 
-    expect(state.phase).toBe("closed_without_winner");
-    expect(state.noBidReleaseBlock).toBe(884_320);
-    expect(state.blocksUntilNoBidRelease).toBe(0);
+    expect(state.phase).toBe("awaiting_opening_bid");
     expect(state.baseMinimumBidSats).toBe(12_500_000n);
-    expect(state.currentRequiredMinimumBidSats).toBeNull();
+    expect(state.currentRequiredMinimumBidSats?.toString()).toBe("12500000");
     expect(state.acceptedBidCount).toBe(0);
     expect(state.rejectedBidCount).toBe(3);
   });
@@ -78,7 +76,7 @@ describe("simulateLaunchAuctionStateAtBlock", () => {
       policy,
       currentBlockHeight: 851_600,
       scenario: parseLaunchAuctionScenario({
-        name: "openai",
+        name: "meadow",
         auctionClassId: "launch_name",
         unlockBlock: 850_000,
         bidAttempts: [
@@ -99,7 +97,7 @@ describe("simulateLaunchAuctionStateAtBlock", () => {
       policy,
       currentBlockHeight: 844_360,
       scenario: parseLaunchAuctionScenario({
-        name: "nvidia",
+        name: "marble",
         auctionClassId: "launch_name",
         unlockBlock: 840_000,
         bidAttempts: [
@@ -122,7 +120,7 @@ describe("simulateLaunchAuctionStateAtBlock", () => {
       policy,
       currentBlockHeight: 854_700,
       scenario: parseLaunchAuctionScenario({
-        name: "openai",
+        name: "meadow",
         auctionClassId: "launch_name",
         unlockBlock: 850_000,
         bidAttempts: [

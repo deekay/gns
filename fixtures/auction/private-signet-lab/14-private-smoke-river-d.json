@@ -1,11 +1,11 @@
 {
-  "title": "Private smoke auction · perplexity F",
+  "title": "Private smoke auction · river D",
   "description": "Private signet experimental auction fixture dedicated to hosted smoke runs with real AUCTION_BID transactions.",
   "currentBlockHeight": 128,
   "scenario": {
-    "name": "perplexity",
+    "name": "river",
     "auctionClassId": "launch_name",
-    "unlockBlock": 280,
+    "unlockBlock": 200,
     "bidAttempts": []
   }
 }

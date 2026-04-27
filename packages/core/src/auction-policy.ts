@@ -18,7 +18,6 @@ export interface LaunchAuctionClassPolicy {
 export interface LaunchAuctionSettings {
   readonly baseWindowBlocks: number;
   readonly softCloseExtensionBlocks: number;
-  readonly noBidReleaseBlocks: number;
   readonly minimumIncrementAbsoluteSats: bigint;
   readonly minimumIncrementBasisPoints: number;
   readonly softCloseMinimumIncrementAbsoluteSats: bigint;
@@ -42,7 +41,6 @@ export interface SerializedLaunchAuctionPolicy {
   readonly auction: {
     readonly baseWindowBlocks: number;
     readonly softCloseExtensionBlocks: number;
-    readonly noBidReleaseBlocks: number;
     readonly minimumIncrementAbsoluteSats: string;
     readonly minimumIncrementBasisPoints: number;
     readonly softCloseMinimumIncrementAbsoluteSats: string;
@@ -66,7 +64,6 @@ export function createDefaultLaunchAuctionPolicy(): LaunchAuctionPolicy {
     auction: {
       baseWindowBlocks: 4_320,
       softCloseExtensionBlocks: 144,
-      noBidReleaseBlocks: 4_320,
       minimumIncrementAbsoluteSats: 1_000_000n,
       minimumIncrementBasisPoints: 500,
       softCloseMinimumIncrementAbsoluteSats: 1_000_000n,
@@ -156,13 +153,6 @@ export function isLaunchAuctionSoftCloseWindow(input: {
   );
 }
 
-export function getLaunchAuctionNoBidReleaseBlock(input: {
-  readonly unlockBlock: number;
-  readonly policy: LaunchAuctionPolicy;
-}): number {
-  return input.unlockBlock + input.policy.auction.noBidReleaseBlocks;
-}
-
 export function serializeLaunchAuctionPolicy(
   policy: LaunchAuctionPolicy
 ): SerializedLaunchAuctionPolicy {
@@ -171,7 +161,6 @@ export function serializeLaunchAuctionPolicy(
     auction: {
       baseWindowBlocks: policy.auction.baseWindowBlocks,
       softCloseExtensionBlocks: policy.auction.softCloseExtensionBlocks,
-      noBidReleaseBlocks: policy.auction.noBidReleaseBlocks,
       minimumIncrementAbsoluteSats: policy.auction.minimumIncrementAbsoluteSats.toString(),
       minimumIncrementBasisPoints: policy.auction.minimumIncrementBasisPoints,
       softCloseMinimumIncrementAbsoluteSats: policy.auction.softCloseMinimumIncrementAbsoluteSats.toString(),
@@ -196,10 +185,6 @@ export function parseLaunchAuctionPolicy(input: unknown): LaunchAuctionPolicy {
       softCloseExtensionBlocks: parseNonNegativeSafeInteger(
         auction.softCloseExtensionBlocks,
         "auction.softCloseExtensionBlocks"
-      ),
-      noBidReleaseBlocks: parseNonNegativeSafeInteger(
-        auction.noBidReleaseBlocks,
-        "auction.noBidReleaseBlocks"
       ),
       minimumIncrementAbsoluteSats: parseBigIntLike(
         auction.minimumIncrementAbsoluteSats,

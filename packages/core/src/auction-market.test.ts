@@ -45,8 +45,8 @@ describe("auction market simulator", () => {
       },
       auctions: [
         {
-          auctionId: "openai-main",
-          name: "openai",
+          auctionId: "meadow-main",
+          name: "meadow",
           auctionClassId: "launch_name",
           unlockBlock: 920000,
           bidAttempts: [

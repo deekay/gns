@@ -1,6 +1,9 @@
 {
+  "title": "Eligible to open · luna",
+  "description": "Prototype fixture after the configured eligibility height. Below-floor attempts do not open the auction; only a valid bonded opening bid starts the clock.",
+  "currentBlockHeight": 880030,
   "scenario": {
-    "name": "nike",
+    "name": "luna",
     "auctionClassId": "launch_name",
     "unlockBlock": 880000,
     "bidAttempts": [
@@ -19,18 +22,6 @@
         "blockHeight": 880030,
         "amountSats": "12499999"
       }
-    ]
-  },
-  "expected": {
-    "status": "no_valid_bids",
-    "winnerBidderId": null,
-    "winnerAmountSats": null,
-    "initialAuctionCloseBlock": null,
-    "finalAuctionCloseBlock": null,
-    "reasons": [
-      "below_opening_minimum",
-      "below_opening_minimum",
-      "below_opening_minimum"
     ]
   }
 }

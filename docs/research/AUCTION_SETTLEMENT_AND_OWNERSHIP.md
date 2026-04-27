@@ -94,7 +94,7 @@ This split-lock shape is not fully implemented yet.
 The older scheduled-catalog prototype allowed a catalog entry to reach a
 configured expiry window without a valid opening bid:
 
-- it moves to `closed_without_winner`
+- it moves to `unopened`
 - no auction-owned name is materialized
 - the name remains without an owner until a future objective path reopens it
 

@@ -1,9 +1,9 @@
 {
-  "title": "Soft close · nvidia",
+  "title": "Soft close · marble",
   "description": "Launch auction after a late higher bid extended the auction. The auction is still live, but continuation now requires a meaningful late response.",
   "currentBlockHeight": 844360,
   "scenario": {
-    "name": "nvidia",
+    "name": "marble",
     "auctionClassId": "launch_name",
     "unlockBlock": 840000,
     "bidAttempts": [

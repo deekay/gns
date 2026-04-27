@@ -1,9 +1,9 @@
 {
-  "title": "Private smoke auction · canva H",
+  "title": "Private smoke auction · cedar H",
   "description": "Additional private signet experimental auction fixture dedicated to repeatable hosted smoke runs with real AUCTION_BID transactions.",
   "currentBlockHeight": 128,
   "scenario": {
-    "name": "canva",
+    "name": "cedar",
     "auctionClassId": "launch_name",
     "unlockBlock": 288,
     "bidAttempts": []

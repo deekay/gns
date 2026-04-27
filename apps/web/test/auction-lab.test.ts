@@ -11,29 +11,28 @@ describe("loadLaunchAuctionLab", () => {
     const payload = await loadLaunchAuctionLab();
 
     expect(payload.kind).toBe("auction_lab");
-    expect(payload.cases.length).toBeGreaterThanOrEqual(5);
+    expect(payload.cases.length).toBeGreaterThanOrEqual(4);
     expect(payload.cases.map((entry) => entry.state.phase)).toEqual([
-      "pending_unlock",
       "awaiting_opening_bid",
       "live_bidding",
       "soft_close",
       "settled"
     ]);
-    expect(payload.cases[0]?.state.currentRequiredMinimumBidSats).toBe("3125000");
-    expect(payload.cases[4]?.state.currentLeaderBidderId).toBe("speculator_d");
-    expect(payload.cases.map((entry) => entry.state.phase)).not.toContain("closed_without_winner");
+    expect(payload.cases[0]?.state.currentRequiredMinimumBidSats).toBe("12500000");
+    expect(payload.cases[3]?.state.currentLeaderBidderId).toBe("speculator_d");
+    expect(payload.cases.map((entry) => entry.state.phase)).not.toContain("pending_unlock");
   });
 
   it("can derive a shared auction bid package from a website-facing case", async () => {
     const pkg = await createLaunchAuctionLabBidPackage({
-      caseId: "04-soft-close-nvidia",
+      caseId: "04-soft-close-marble",
       bidderId: "operator_alpha",
       ownerPubkey: "11".repeat(32),
       bidAmountSats: "1340000000"
     });
 
-    expect(pkg.auctionId).toBe("04-soft-close-nvidia");
-    expect(pkg.name).toBe("nvidia");
+    expect(pkg.auctionId).toBe("04-soft-close-marble");
+    expect(pkg.name).toBe("marble");
     expect(pkg.previewStatus).toBe("currently_valid");
     expect(pkg.wouldExtendSoftClose).toBe(true);
     expect(pkg.previewRequiredMinimumBidSats).toBe("1331000000");
@@ -42,10 +41,10 @@ describe("loadLaunchAuctionLab", () => {
   it("can derive a bid package from resolver-derived experimental auction state", () => {
     const pkg = createExperimentalAuctionFeedBidPackage({
       auction: {
-        auctionId: "private-openai",
-        normalizedName: "openai",
+        auctionId: "private-meadow",
+        normalizedName: "meadow",
         auctionClassId: "launch_name",
-        classLabel: "Major Existing Name",
+        classLabel: "Launch auction",
         currentBlockHeight: 123456,
         phase: "soft_close",
         unlockBlock: 123440,
@@ -63,7 +62,7 @@ describe("loadLaunchAuctionLab", () => {
       bidAmountSats: "330000000"
     });
 
-    expect(pkg.auctionId).toBe("private-openai");
+    expect(pkg.auctionId).toBe("private-meadow");
     expect(pkg.previewStatus).toBe("currently_valid");
     expect(pkg.wouldExtendSoftClose).toBe(true);
     expect(pkg.previewRequiredMinimumBidSats).toBe("330000000");
@@ -73,10 +72,10 @@ describe("loadLaunchAuctionLab", () => {
     expect(() =>
       createExperimentalAuctionFeedBidPackage({
         auction: {
-          auctionId: "private-openai",
-          normalizedName: "openai",
+          auctionId: "private-meadow",
+          normalizedName: "meadow",
           auctionClassId: "launch_name",
-          classLabel: "Major Existing Name",
+          classLabel: "Launch auction",
           currentBlockHeight: 123470,
           phase: "settled",
           unlockBlock: 123440,
@@ -95,15 +94,10 @@ describe("loadLaunchAuctionLab", () => {
     ).toThrow(/already settled/i);
   });
 
-  it("keeps legacy scheduled compatibility states out of the public lab payload", async () => {
-    const payload = await loadLaunchAuctionLab({
-      policyOverrides: {
-        noBidReleaseBlocks: 10_000
-      }
-    });
+  it("keeps pre-eligibility states out of the public lab payload", async () => {
+    const payload = await loadLaunchAuctionLab();
 
-    expect(payload.policy.auction.noBidReleaseBlocks).toBe(10_000);
-    expect(payload.cases.map((entry) => entry.id)).not.toContain("06-released-nike");
-    expect(payload.cases.map((entry) => entry.state.phase)).not.toContain("closed_without_winner");
+    expect(payload.cases.map((entry) => entry.id)).not.toContain("01-pre-eligibility-marble");
+    expect(payload.cases.map((entry) => entry.state.phase)).not.toContain("pending_unlock");
   });
 });

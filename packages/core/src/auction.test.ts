@@ -51,7 +51,7 @@ describe("simulateLaunchAuction", () => {
     const result = simulateLaunchAuction({
       policy,
       scenario: {
-        name: "tylercowen",
+        name: "silverpine",
         auctionClassId: "launch_name",
         unlockBlock: 840_000,
         bidAttempts: [
@@ -75,7 +75,7 @@ describe("simulateLaunchAuction", () => {
     const result = simulateLaunchAuction({
       policy,
       scenario: {
-        name: "nvidia",
+        name: "marble",
         auctionClassId: "launch_name",
         unlockBlock: 840_000,
         bidAttempts: [
@@ -130,12 +130,12 @@ describe("simulateLaunchAuction", () => {
     });
   });
 
-  it("returns no_valid_bids when every attempt stays below the opening minimum", () => {
+  it("returns unopened when no accepted opening bid exists", () => {
     const policy = createDefaultLaunchAuctionPolicy();
     const result = simulateLaunchAuction({
       policy,
       scenario: {
-        name: "openai",
+        name: "meadow",
         auctionClassId: "launch_name",
         unlockBlock: 900_000,
         bidAttempts: [
@@ -148,7 +148,7 @@ describe("simulateLaunchAuction", () => {
       }
     });
 
-    expect(result.status).toBe("no_valid_bids");
+    expect(result.status).toBe("unopened");
     expect(result.winner).toBeNull();
     expect(result.bidOutcomes[0]?.reason).toBe("below_opening_minimum");
   });

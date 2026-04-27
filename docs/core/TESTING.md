@@ -61,7 +61,7 @@ npm run dev:cli -- print-auction-policy
 Run a single auction fixture:
 
 ```sh
-npm run dev:cli -- simulate-auction fixtures/auction/lab/04-soft-close-nvidia.json
+npm run dev:cli -- simulate-auction fixtures/auction/lab/04-soft-close-marble.json
 ```
 
 Run a market-pressure scenario:
@@ -73,7 +73,7 @@ npm run dev:cli -- simulate-auction-market fixtures/auction/market-capital-press
 Create and inspect a bid package:
 
 ```sh
-npm run dev:cli -- create-auction-bid-package fixtures/auction/lab/04-soft-close-nvidia.json \
+npm run dev:cli -- create-auction-bid-package fixtures/auction/lab/04-soft-close-marble.json \
   --bidder-id operator_alpha \
   --amount-sats 1800000000 \
   --write /tmp/ont-auction-bid.json

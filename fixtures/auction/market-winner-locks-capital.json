@@ -7,7 +7,7 @@
     "auctions": [
       {
         "auctionId": "tyler-first",
-        "name": "tylercowen",
+        "name": "silverpine",
         "auctionClassId": "launch_name",
         "unlockBlock": 910000,
         "bidAttempts": [
@@ -19,8 +19,8 @@
         ]
       },
       {
-        "auctionId": "openai-late",
-        "name": "openai",
+        "auctionId": "meadow-late",
+        "name": "meadow",
         "auctionClassId": "launch_name",
         "unlockBlock": 914500,
         "bidAttempts": [
@@ -41,7 +41,7 @@
   "expected": {
     "auctionWinners": {
       "tyler-first": "delta",
-      "openai-late": "epsilon"
+      "meadow-late": "epsilon"
     },
     "bidderSummaries": {
       "delta": {

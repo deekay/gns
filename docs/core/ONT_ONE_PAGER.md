@@ -15,7 +15,30 @@ ONT separates ownership from records.
 - Off-chain records are signed by the current owner key.
 - Resolvers can help distribute records, but they cannot invent ownership.
 
-That split is the heart of ONT. Bitcoin is used for scarce ownership and state transitions, not as a general-purpose data store. Records stay lightweight, updateable, and portable across resolvers.
+That split is the heart of ONT. Bitcoin is used for scarce ownership and state transitions, not as a general-purpose data store. Off-chain records stay lightweight, updateable, and portable across resolvers.
+
+## Alice Example
+
+The overview flow is:
+
+```text
+alice
+  -> Bitcoin anchor
+     owner key: 8f3c...12ab
+     bond: self-custodied bitcoin
+
+  -> signed off-chain bundle
+     btc: bc1qxy...0wlh
+     lightning: lno1q...9sa
+     email: alice@example.com
+     website: alice.example
+
+  -> client
+     verifies the owner signature
+     uses the destination type it understands
+```
+
+Bitcoin answers: who owns `alice`? The signed bundle answers: where does `alice` point right now?
 
 ## Bonds, Not Rent
 
@@ -25,31 +48,50 @@ A winning bidder does not pay ONT, burn bitcoin, or rent the name annually. The 
 
 That makes name allocation costly enough to discourage careless hoarding, while avoiding the usual model where a registry sells or rents names as a central issuer.
 
-## Launch Allocation
+Example opening-bond floors, not final launch parameters:
 
-The current launch model is a single auction lane.
+| Name length | Launch treatment | Example opening floor |
+| --- | --- | --- |
+| `1` | opens later | `₿1` |
+| `2` | opens later | `₿0.5` |
+| `3` | opens later | `₿0.25` |
+| `4` | opens later | `₿0.125` |
+| `5` | launch auction | `₿0.0625` |
+| `6` | launch auction | `₿0.03125` |
+| `12+` | launch auction | `₿0.0005 floor` |
 
-- Every launch-eligible name is allocated by auction.
-- There is no ordinary direct-allocation lane.
-- There is no reserved-name lane.
-- There is no pre-launch reservation system.
-- There is no hand-built list of brands, public figures, companies, or generic words.
+The floor starts the auction. The auction can clear higher when multiple bidders care about the same name.
 
-This is the biggest recent simplification. Earlier designs explored special handling for famous people, brands, generic words, and other high-salience names. That created hard governance questions: who decides what belongs on the list, how boundary cases are defended, and how to avoid insider favoritism.
+## Launch Auctions
 
-The current rule is cleaner:
+At launch, names with `5-32` characters open by auction.
 
-> If a launch-eligible name matters to more than one participant, the auction discovers that.
+- A participant opens a public auction for a name.
+- If nobody else bids, the opener can win at the opening floor.
+- If others bid, open bidding discovers the final bond.
+- The winner controls the owner key after settlement.
+
+The rule is simple:
+
+> If a `5-32` character name matters to more than one participant, the auction discovers that.
 
 For most long-tail names, the experience can still be simple. Start an auction. If nobody else bids during the public window, you win at your opening bid. If others care, the price is discovered in the open.
 
 ## Short Names
 
-Names of length `1-4` are held for a later short-name auction wave.
+Names with `1-4` characters open later.
 
 Names of length `5-32` are eligible at launch.
 
-This is not a reserved list. It is an objective scarcity rule. Very short names are structurally scarce, so they should not clear before ONT has enough public attention. The boundary is easy to verify and does not require judging whether a person, brand, company, or word is important enough for special treatment.
+Very short names are structurally scarce, so they should not clear before ONT has enough public attention. The boundary is easy to verify and does not require judging whether a person, brand, company, or word is important enough for special treatment.
+
+Short names should open only after objective gates are met. The current working shape is:
+
+- a minimum block-height delay after initial launch
+- a minimum amount of time-weighted bonded value across the live ONT system
+- usage and bidder thresholds, so one large capital source cannot trivially open short names alone
+
+The exact thresholds are open. The principle is that `1-4` character names should not open just because time passed; they should open once ONT has enough visible usage and bonded commitment for the auction to be meaningfully public.
 
 ## What Ownership Lets You Do
 
@@ -67,39 +109,22 @@ Two key roles matter:
 
 In the current prototype model, losing the owner key means losing update and transfer authority for that name.
 
-## What ONT Is Not
+## Base-Layer Discipline
 
-ONT is not a protocol sale, rent system, or editorial naming authority.
+ONT is intentionally narrow at the base layer: Bitcoin anchors ownership, and owner-signed off-chain records make names useful.
 
-- ONT does not sell names to users.
-- ONT does not collect annual rent.
-- ONT does not maintain a special-case reserved list.
-- ONT does not rely on one resolver to define who owns a name.
-- ONT does not put routine destination updates on-chain.
-
-The system is intentionally narrow at the base layer: Bitcoin anchors ownership, and owner-signed off-chain records make names useful.
-
-## Current Launch Shape
-
-The current working launch direction is:
-
-- one auction rule for all launch-eligible names
-- `5-32` character names eligible at launch
-- `1-4` character names delayed to a later short-name wave
-- auction windows measured in days, with a soft close for late bidding
-- winning bids treated as bonded bitcoin, not payments to ONT
-- settlement duration and exact auction parameters still to be finalized
-
-The current bias is to avoid decade-scale Bitcoin-native locks at launch. Long timelocks raise bootstrapping and quantum-risk concerns, and the single-lane auction model gets much of its fairness from public price discovery rather than relying on extremely long lock duration.
+- Ownership is public and auditable.
+- Routine destination updates stay off-chain.
+- Resolvers distribute signed records, but ownership comes from Bitcoin.
 
 ## Status
 
 ONT is an active prototype, not a mainnet-ready production system.
 
-Working pieces include private signet demos, auction state, bid packages, value publishing, resolver tooling, and transfer prototypes. Remaining work includes finalizing launch parameters, cleaning up older direct-claim assumptions, hardening the auction flow, improving wallet UX, and validating the system with more outside review.
+Working pieces include private signet demos, auction state, bid packages, value publishing, resolver tooling, and transfer prototypes. Remaining work includes finalizing auction parameters, settlement duration, wallet UX, and outside review.
 
 The product surface is [opennametags.org](https://opennametags.org). The public repository is [github.com/deekay/ont](https://github.com/deekay/ont).
 
 ## One-Sentence Summary
 
-ONT uses Bitcoin to anchor ownership of human-readable names, owner-signed off-chain records to keep destinations updateable, and one auction rule to allocate scarce names without reserved lists, rent, or issuer-controlled sales.
+ONT uses Bitcoin to anchor ownership of human-readable names, owner-signed off-chain records to keep destinations updateable, bonded bitcoin to create cost without rent, and public launch auctions to allocate scarce names.

@@ -1,11 +1,11 @@
 {
-  "title": "Private smoke auction · anthropic C",
+  "title": "Private smoke auction · crosswinds F",
   "description": "Private signet experimental auction fixture dedicated to hosted smoke runs with real AUCTION_BID transactions.",
   "currentBlockHeight": 128,
   "scenario": {
-    "name": "anthropic",
+    "name": "crosswinds",
     "auctionClassId": "launch_name",
-    "unlockBlock": 117,
+    "unlockBlock": 280,
     "bidAttempts": []
   }
 }

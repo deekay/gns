@@ -1,9 +1,9 @@
 {
-  "title": "Private demo lot · nvidia (soft close)",
-  "description": "Private signet lot kept around specifically so the curated auction lab still shows a soft-close phase even though the live chain is much shorter.",
+  "title": "Private demo auction · marble (soft close)",
+  "description": "Private signet auction fixture kept around specifically so the curated auction lab still shows a soft-close phase even though the live chain is much shorter.",
   "currentBlockHeight": 4450,
   "scenario": {
-    "name": "nvidia",
+    "name": "marble",
     "auctionClassId": "launch_name",
     "unlockBlock": 110,
     "bidAttempts": [

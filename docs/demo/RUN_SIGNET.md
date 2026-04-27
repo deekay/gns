@@ -20,7 +20,7 @@ For live testing, the cleanest prototype loop is now:
 
 ```bash
 npm run dev:cli -- generate-live-account --network signet --write /path/to/live-account.json
-npm run dev:cli -- create-auction-bid-package /path/to/auction-lot.json \
+npm run dev:cli -- create-auction-bid-package /path/to/auction-scenario.json \
   --bidder-id <local-bidder-id> \
   --owner-pubkey <owner-pubkey-hex> \
   --bid-amount-sats <amount-sats> \

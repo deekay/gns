@@ -88,7 +88,7 @@ Current lean:
 - open `5+` at launch
 
 `1-5` currently feels too broad because it captures normal names like `alice`,
-`david`, `apple`, `tesla`, and `naval`.
+short personal-looking names, brand-like words, and scarce common terms.
 
 ### 4. Griefing Looks Less Central Than Before
 
@@ -128,7 +128,7 @@ The following are no longer the current lead launch direction:
 - a source-generated reserved list
 - source-generated auction list as protocol-critical launch input
 - reserved classes for brands, public identities, and generics
-- no-bid fallback into an ordinary direct-allocation lane
+- unopened-name fallback into an ordinary direct-allocation lane
 - pre-launch reservations by domain, handle, or social proof
 
 Older docs may still mention those ideas. Treat them as historical research

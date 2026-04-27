@@ -75,10 +75,6 @@ const elements = {
   chainSummary: document.getElementById("chainSummary"),
   privateAuctionSmokeMeta: document.getElementById("privateAuctionSmokeMeta"),
   privateAuctionSmokeResult: document.getElementById("privateAuctionSmokeResult"),
-  auctionPolicyControls: document.getElementById("auctionPolicyControls"),
-  auctionNoBidReleaseBlocksInput: document.getElementById("auctionNoBidReleaseBlocksInput"),
-  auctionPolicyResetButton: document.getElementById("auctionPolicyResetButton"),
-  auctionPolicyControlsResult: document.getElementById("auctionPolicyControlsResult"),
   auctionLabMeta: document.getElementById("auctionLabMeta"),
   auctionPolicySummary: document.getElementById("auctionPolicySummary"),
   auctionLabList: document.getElementById("auctionLabList"),
@@ -371,40 +367,6 @@ async function bootstrap() {
     await resolveNameLookup(rawName, {
       updateHistory: true
     });
-  });
-
-  elements.auctionPolicyControls?.addEventListener("submit", async (event) => {
-    event.preventDefault();
-
-    try {
-      const overrides = readAuctionLabPolicyOverridesFromControls();
-      applyAuctionLabPolicyOverridesToHistory(overrides);
-      await reloadAuctionLab();
-      setAuctionPolicyControlsMessage(
-        overrides.noBidReleaseBlocks == null
-          ? "Using the current prototype timing defaults."
-          : "Preview updated. Legacy catalog compatibility timing is set to " + String(overrides.noBidReleaseBlocks) + " blocks for compatibility fixtures."
-      );
-    } catch (error) {
-      setAuctionPolicyControlsMessage(describeError(error));
-    }
-  });
-
-  elements.auctionPolicyResetButton?.addEventListener("click", async () => {
-    if (elements.auctionNoBidReleaseBlocksInput instanceof HTMLInputElement) {
-      elements.auctionNoBidReleaseBlocksInput.value = "";
-    }
-
-    applyAuctionLabPolicyOverridesToHistory({
-      noBidReleaseBlocks: null
-    });
-
-    try {
-      await reloadAuctionLab();
-      setAuctionPolicyControlsMessage("Preview reset to the current prototype timing defaults.");
-    } catch (error) {
-      setAuctionPolicyControlsMessage(describeError(error));
-    }
   });
 
   document.addEventListener("input", (event) => {
@@ -1820,97 +1782,8 @@ function withBasePath(path) {
   return BASE_PATH + path;
 }
 
-function getAuctionLabPolicyOverridesFromLocation() {
-  const currentUrl = new URL(window.location.href);
-  const rawNoBidReleaseBlocks = currentUrl.searchParams.get("auctionNoBidReleaseBlocks");
-
-  if (rawNoBidReleaseBlocks === null || rawNoBidReleaseBlocks.trim() === "") {
-    return {
-      noBidReleaseBlocks: null
-    };
-  }
-
-  const parsed = Number.parseInt(rawNoBidReleaseBlocks, 10);
-  if (!Number.isSafeInteger(parsed) || parsed < 0) {
-    return {
-      noBidReleaseBlocks: null
-    };
-  }
-
-  return {
-    noBidReleaseBlocks: parsed
-  };
-}
-
-function readAuctionLabPolicyOverridesFromControls() {
-  if (!(elements.auctionNoBidReleaseBlocksInput instanceof HTMLInputElement)) {
-    return {
-      noBidReleaseBlocks: null
-    };
-  }
-
-  const rawValue = elements.auctionNoBidReleaseBlocksInput.value.trim();
-  if (rawValue === "") {
-    return {
-      noBidReleaseBlocks: null
-    };
-  }
-
-  const parsed = Number.parseInt(rawValue, 10);
-  if (!Number.isSafeInteger(parsed) || parsed < 0) {
-    throw new Error("Release window must be a non-negative whole number of blocks.");
-  }
-
-  return {
-    noBidReleaseBlocks: parsed
-  };
-}
-
-function syncAuctionPolicyControlsFromState() {
-  if (!(elements.auctionNoBidReleaseBlocksInput instanceof HTMLInputElement)) {
-    return;
-  }
-
-  const activeOverrides = getAuctionLabPolicyOverridesFromLocation();
-  const fallbackValue =
-    state.auctionLab?.policy?.auction?.noBidReleaseBlocks == null
-      ? ""
-      : String(state.auctionLab.policy.auction.noBidReleaseBlocks);
-
-  elements.auctionNoBidReleaseBlocksInput.value =
-    activeOverrides.noBidReleaseBlocks == null ? fallbackValue : String(activeOverrides.noBidReleaseBlocks);
-}
-
-function setAuctionPolicyControlsMessage(message) {
-  setText(elements.auctionPolicyControlsResult, message);
-}
-
 function getAuctionLabApiPath() {
-  const query = new URLSearchParams();
-  const activeOverrides = getAuctionLabPolicyOverridesFromLocation();
-
-  if (activeOverrides.noBidReleaseBlocks != null) {
-    query.set("noBidReleaseBlocks", String(activeOverrides.noBidReleaseBlocks));
-  }
-
-  const queryString = query.toString();
-  return withBasePath("/api/auctions" + (queryString ? "?" + queryString : ""));
-}
-
-function applyAuctionLabPolicyOverridesToHistory(overrides) {
-  const currentUrl = new URL(window.location.href);
-
-  if (overrides.noBidReleaseBlocks == null) {
-    currentUrl.searchParams.delete("auctionNoBidReleaseBlocks");
-  } else {
-    currentUrl.searchParams.set("auctionNoBidReleaseBlocks", String(overrides.noBidReleaseBlocks));
-  }
-
-  const nextPath =
-    currentUrl.pathname
-    + (currentUrl.searchParams.toString() ? "?" + currentUrl.searchParams.toString() : "")
-    + currentUrl.hash;
-  window.history.replaceState({}, "", nextPath);
+  return withBasePath("/api/auctions");
 }
 
 async function reloadAuctionLab() {
@@ -4627,18 +4500,14 @@ function renderAuctionLab() {
   }
 
   elements.auctionLabList.classList.remove("empty");
-  syncAuctionPolicyControlsFromState();
   if (elements.auctionPolicySummary) {
     elements.auctionPolicySummary.innerHTML = renderAuctionPolicySummary(auctionLab.policy ?? null);
   }
-  const activeOverrides = getAuctionLabPolicyOverridesFromLocation();
   setText(
     elements.auctionLabMeta,
     [
-      String(auctionLab.cases.length) + " sample auction state" + (auctionLab.cases.length === 1 ? "" : "s"),
-      activeOverrides.noBidReleaseBlocks == null
-        ? "showing current simulator defaults"
-        : "legacy catalog compatibility timing override active"
+      String(auctionLab.cases.length) + " auction flow example" + (auctionLab.cases.length === 1 ? "" : "s"),
+      "showing current simulator defaults"
     ].join(" · ")
   );
   elements.auctionLabList.innerHTML = auctionLab.cases
@@ -4663,7 +4532,7 @@ function renderExperimentalAuctionFeed() {
   }
 
   elements.experimentalAuctionList.classList.remove("empty");
-  const visibleAuctions = payload.auctions.filter((auction) => !isLegacyScheduledAuctionEntry(auction));
+  const visibleAuctions = payload.auctions.filter((auction) => !shouldHidePublicAuctionEntry(auction));
   setText(
     elements.experimentalAuctionMeta,
     [
@@ -4677,12 +4546,12 @@ function renderExperimentalAuctionFeed() {
     .join("");
 }
 
-function isLegacyScheduledAuctionEntry(entry) {
+function shouldHidePublicAuctionEntry(entry) {
   if (!entry || typeof entry !== "object") {
     return false;
   }
 
-  if (entry.phase === "closed_without_winner") {
+  if (entry.phase === "pending_unlock") {
     return true;
   }
 
@@ -4693,9 +4562,8 @@ function isLegacyScheduledAuctionEntry(entry) {
 
   return text.includes("06-released")
     || text.includes("private-smoke-release")
+    || text.includes("pending")
     || text.includes("legacy compatibility")
-    || text.includes("legacy no-bid")
-    || text.includes("no-bid close")
     || text.includes("no-winner");
 }
 
@@ -4769,12 +4637,6 @@ function renderAuctionPolicySummary(policy) {
 
 function describeLaunchAuctionClass(classId) {
   switch (String(classId)) {
-    case "top_collision":
-      return "Legacy top-collision bucket retained for prototype fixtures; not a semantic launch class.";
-    case "major_existing_name":
-      return "Legacy major-name bucket retained for prototype fixtures; not a semantic launch class.";
-    case "public_identity":
-      return "Legacy public-identity bucket retained for prototype fixtures; not a semantic launch class.";
     case "launch_name":
       return "Launch-eligible names use the standard auction rule.";
     case "short_name_wave":
@@ -4798,34 +4660,26 @@ function renderAuctionCaseCard(auctionCase) {
   const phasePill = mapAuctionPhasePill(phase);
   const leaderLabel = phase === "settled" ? "Winner" : "Current leader";
   const nextBidLabel =
-    phase === "closed_without_winner"
-      ? "Legacy opening floor"
-      : phase === "pending_unlock" || phase === "awaiting_opening_bid"
+    phase === "pending_unlock" || phase === "awaiting_opening_bid"
         ? "Opening bid minimum"
       : phase === "soft_close"
         ? "Next valid bid (extends close)"
         : "Next valid bid";
   const closeLabel = phase === "pending_unlock"
     ? "Eligible at block"
-    : phase === "closed_without_winner"
-      ? "Legacy close block"
     : phase === "awaiting_opening_bid"
       ? "Auction status"
       : "Auction close";
   const closeValue =
     phase === "pending_unlock"
       ? String(stateView.unlockBlock ?? "-")
-      : phase === "closed_without_winner"
-        ? String(stateView.noBidReleaseBlock ?? "-")
       : phase === "awaiting_opening_bid"
         ? "Not opened yet"
         : stateView.auctionCloseBlockAfter == null
           ? "-"
           : String(stateView.auctionCloseBlockAfter);
   const nextBidValue =
-    phase === "closed_without_winner"
-      ? formatSats(stateView.openingMinimumBidSats ?? stateView.baseMinimumBidSats ?? "0")
-      : stateView.currentRequiredMinimumBidSats
+    stateView.currentRequiredMinimumBidSats
         ? formatSats(stateView.currentRequiredMinimumBidSats)
         : "Auction settled";
   const secondaryTimingLabel =
@@ -4833,17 +4687,13 @@ function renderAuctionCaseCard(auctionCase) {
       ? "Blocks until eligible"
       : phase === "awaiting_opening_bid"
         ? "Auction clock"
-        : phase === "closed_without_winner"
-          ? "Legacy state"
-          : "Blocks to close";
+        : "Blocks to close";
   const secondaryTimingValue =
     phase === "pending_unlock"
       ? String(stateView.blocksUntilUnlock ?? 0)
       : phase === "awaiting_opening_bid"
         ? "Starts with a valid opening bid"
-        : phase === "closed_without_winner"
-          ? "Legacy compatibility state"
-          : (stateView.blocksUntilClose == null ? "-" : String(stateView.blocksUntilClose));
+        : (stateView.blocksUntilClose == null ? "-" : String(stateView.blocksUntilClose));
 
   return [
     '<article class="activity-card">',
@@ -4878,7 +4728,7 @@ function renderAuctionCaseCard(auctionCase) {
         stateView.phase === "awaiting_opening_bid"
           ? "This package is an opening bid. If signed and confirmed, it starts the auction clock."
           : stateView.phase === "pending_unlock"
-          ? "This package previews an opening bid, but this fixture is not eligible yet."
+          ? "This pre-eligibility fixture is internal and should not appear in the public auction examples."
           : stateView.phase === "soft_close"
           ? "Soft close is active. A bid from this state must clear the stronger late-extension increment."
           : "Build a bid package from the simulator state shown on this card.",
@@ -4894,43 +4744,31 @@ function renderExperimentalAuctionCard(auction) {
   const phasePill = mapAuctionPhasePill(phase);
   const leaderLabel = phase === "settled" ? "Winner commitment" : "Leader commitment";
   const nextBidLabel =
-    phase === "closed_without_winner"
-      ? "Legacy opening floor"
-      : phase === "pending_unlock" || phase === "awaiting_opening_bid"
+    phase === "pending_unlock" || phase === "awaiting_opening_bid"
         ? "Opening bid minimum"
       : phase === "soft_close"
         ? "Next valid bid (extends close)"
         : "Next valid bid";
   const nextBidValue =
-    phase === "closed_without_winner"
-      ? formatSats(auction.openingMinimumBidSats ?? auction.baseMinimumBidSats ?? "0")
-      : auction.currentRequiredMinimumBidSats
+    auction.currentRequiredMinimumBidSats
         ? formatSats(auction.currentRequiredMinimumBidSats)
         : "Auction settled";
   const settlementLabel =
-    phase === "closed_without_winner"
-      ? "Legacy state"
-      : phase === "settled"
+    phase === "settled"
         ? "Winner release"
         : "Settlement";
   const settlementValue =
-    phase === "closed_without_winner"
-      ? (auction.noBidReleaseBlock == null ? "Legacy compatibility state" : "legacy compatibility block " + String(auction.noBidReleaseBlock))
-      : phase === "settled"
+    phase === "settled"
       ? (auction.winnerBondReleaseBlock == null ? "-" : "block " + String(auction.winnerBondReleaseBlock))
       : "Not settled";
   const closeLabel =
-    phase === "closed_without_winner"
-      ? "Legacy close block"
-      : phase === "pending_unlock"
+    phase === "pending_unlock"
         ? "Blocks until eligible"
         : phase === "awaiting_opening_bid"
           ? "Auction clock"
           : "Blocks to close";
   const closeValue =
-    phase === "closed_without_winner"
-      ? String(auction.noBidReleaseBlock ?? "-")
-      : phase === "pending_unlock"
+    phase === "pending_unlock"
         ? String(auction.blocksUntilUnlock ?? 0)
       : phase === "awaiting_opening_bid"
         ? "Starts with a valid opening bid"
@@ -4989,7 +4827,7 @@ function renderExperimentalAuctionCard(auction) {
         phase === "awaiting_opening_bid"
           ? "This package is an opening bid. If signed and confirmed, it starts the auction clock."
           : phase === "pending_unlock"
-          ? "This package previews an opening bid, but this prototype entry is not eligible yet."
+          ? "This pre-eligibility prototype entry is filtered out of public auction views."
           : phase === "soft_close"
           ? "Built from current resolver-derived state. A soft-close extension bid must clear the stronger late increment and may go stale if another bid lands first."
           : "Build a bid package from the current resolver-derived experimental auction state.",
@@ -5060,17 +4898,6 @@ function caseIdFromAuctionState(id, fallbackName) {
 function renderAuctionBidPackageComposer(input) {
   const domKey = buildAuctionPackageDomKey(input.source, input.id);
   const defaultOwnerPubkey = String(input.defaultOwnerPubkey ?? "");
-
-  if (input.phase === "closed_without_winner") {
-    return [
-      '<details class="detail-technical">',
-      "  <summary>Auction bid packages unavailable</summary>",
-      '  <div class="detail-technical-body">',
-      '    <p class="tx-panel-note">This is a legacy catalog compatibility state, not the current user-started auction model. No bid package is available here.</p>',
-      "  </div>",
-      "</details>"
-    ].join("");
-  }
 
   if (input.phase === "settled") {
     return [
@@ -5167,7 +4994,6 @@ function renderAuctionOwnerKeyHelper(domKey, source, id, name, generated) {
 }
 
 async function buildAuctionBidPackageForUi(input) {
-  const policyOverrides = getAuctionLabPolicyOverridesFromLocation();
   const body = {
     bidderId: input.bidderId,
     ownerPubkey: input.ownerPubkey,
@@ -5183,12 +5009,7 @@ async function buildAuctionBidPackageForUi(input) {
 
   return await postJson(withBasePath("/api/auction-bid-package"), {
     ...body,
-    caseId: input.id,
-    ...(policyOverrides.noBidReleaseBlocks == null
-      ? {}
-      : {
-          noBidReleaseBlocks: policyOverrides.noBidReleaseBlocks
-        })
+    caseId: input.id
   });
 }
 
@@ -5367,8 +5188,6 @@ function mapAuctionPhasePill(phase) {
       return "pending";
     case "awaiting_opening_bid":
       return "available";
-    case "closed_without_winner":
-      return "invalid";
     case "live_bidding":
       return "immature";
     case "soft_close":

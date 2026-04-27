@@ -233,19 +233,11 @@ const server = createServer(async (request, response) => {
       const bidderId = getRequiredWebBodyString(record, "bidderId");
       const ownerPubkey = getRequiredWebBodyString(record, "ownerPubkey");
       const bidAmountSats = getRequiredWebBodySats(record, "bidAmountSats");
-      const noBidReleaseBlocks = getOptionalWebBodyInteger(record, "noBidReleaseBlocks");
       const pkg = await createLaunchAuctionLabBidPackage({
         caseId,
         bidderId,
         ownerPubkey,
-        bidAmountSats,
-        ...(noBidReleaseBlocks === undefined
-          ? {}
-          : {
-              policyOverrides: {
-                noBidReleaseBlocks
-              }
-            })
+        bidAmountSats
       });
 
       return writeJson(response, 200, pkg);
@@ -464,21 +456,7 @@ const server = createServer(async (request, response) => {
 
   if (pathname === "/api/auctions") {
     try {
-      const noBidReleaseBlocks = getOptionalQueryInteger(url.searchParams, "noBidReleaseBlocks");
-
-      return writeJson(
-        response,
-        200,
-        await loadLaunchAuctionLab({
-          ...(noBidReleaseBlocks === undefined
-            ? {}
-            : {
-                policyOverrides: {
-                  noBidReleaseBlocks
-                }
-              })
-        })
-      );
+      return writeJson(response, 200, await loadLaunchAuctionLab());
     } catch (error) {
       return writeJson(response, 400, {
         error: "invalid_auction_policy_override",
@@ -656,7 +634,7 @@ async function proxyExperimentalAuctionsJson(
       const record = payload as { auctions: unknown[] };
       writeJson(response, upstream.status, {
         ...record,
-        auctions: record.auctions.filter((entry) => !isLegacyScheduledAuctionEntry(entry))
+        auctions: record.auctions.filter((entry) => !shouldHidePublicAuctionEntry(entry))
       });
       return;
     }
@@ -670,7 +648,7 @@ async function proxyExperimentalAuctionsJson(
   }
 }
 
-function isLegacyScheduledAuctionEntry(entry: unknown): boolean {
+function shouldHidePublicAuctionEntry(entry: unknown): boolean {
   if (!entry || typeof entry !== "object") {
     return false;
   }
@@ -682,7 +660,7 @@ function isLegacyScheduledAuctionEntry(entry: unknown): boolean {
     phase?: unknown;
   };
 
-  if (record.phase === "closed_without_winner") {
+  if (record.phase === "pending_unlock") {
     return true;
   }
 
@@ -693,9 +671,8 @@ function isLegacyScheduledAuctionEntry(entry: unknown): boolean {
 
   return text.includes("06-released")
     || text.includes("private-smoke-release")
+    || text.includes("pending")
     || text.includes("legacy compatibility")
-    || text.includes("legacy no-bid")
-    || text.includes("no-bid close")
     || text.includes("no-winner");
 }
 
@@ -747,11 +724,7 @@ function sanitizePrivateAuctionSmokeStatusValue(value: unknown): unknown {
 
   const sanitized: Record<string, unknown> = {};
   for (const [key, entry] of Object.entries(value as Record<string, unknown>)) {
-    if (
-      key === "releaseCheck"
-      || key === "noBidReleaseBlock"
-      || key === "blocksUntilNoBidRelease"
-    ) {
+    if (key === "releaseCheck") {
       continue;
     }
     sanitized[key] = sanitizePrivateAuctionSmokeStatusValue(entry);
@@ -764,13 +737,7 @@ function sanitizePrivateAuctionSmokeStatusText(value: unknown): unknown {
     return value;
   }
 
-  return value
-    .replaceAll("Private smoke lot", "Private smoke auction")
-    .replaceAll("auction lot", "auction fixture")
-    .replaceAll("scheduled-lot", "scheduled-catalog")
-    .replaceAll("no-bid close", "legacy scheduled expiry")
-    .replaceAll("no-winner close", "legacy scheduled expiry")
-    .replaceAll("closed without winner", "legacy scheduled state expired");
+  return value;
 }
 
 function writeHtml(response: import("node:http").ServerResponse, html: string): void {
@@ -846,39 +813,6 @@ function getRequiredWebBodyString(record: Record<string, unknown>, key: string):
   }
 
   return value.trim();
-}
-
-function getOptionalWebBodyInteger(
-  record: Record<string, unknown>,
-  key: string
-): number | undefined {
-  const value = record[key];
-  if (value === undefined || value === null || value === "") {
-    return undefined;
-  }
-
-  if (typeof value !== "number" || !Number.isSafeInteger(value) || value < 0) {
-    throw new Error(`${key} must be a non-negative integer`);
-  }
-
-  return value;
-}
-
-function getOptionalQueryInteger(
-  searchParams: URLSearchParams,
-  key: string
-): number | undefined {
-  const raw = searchParams.get(key);
-  if (raw === null || raw.trim() === "") {
-    return undefined;
-  }
-
-  const parsed = Number.parseInt(raw, 10);
-  if (!Number.isSafeInteger(parsed) || parsed < 0) {
-    throw new Error(`${key} must be a non-negative integer`);
-  }
-
-  return parsed;
 }
 
 function getOptionalWebBodySats(

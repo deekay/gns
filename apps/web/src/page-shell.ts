@@ -53,8 +53,8 @@ export function renderPageHtml(options: PageShellOptions): string {
       ? "Search a name, inspect ownership, and choose whether to bid, explore, or review the current Open Name Tags prototype."
       : pageKind === "advanced"
       ? "Advanced Open Name Tags surfaces for CLI-heavy workflows and review docs."
-      : pageKind === "auctions"
-      ? "Auction bid prep, reference cases, and chain-derived bid activity."
+    : pageKind === "auctions"
+      ? "Auction bid prep, flow examples, and chain-derived bid activity."
       : pageKind === "values"
         ? "Update the destinations for an owned Open Name Tags name by signing locally and publishing the signed update."
       : pageKind === "transfer"
@@ -206,10 +206,10 @@ function renderHeroSection(
       <div class="hero-copy">
         <h1>Auctions</h1>
         <p class="lede">
-          Auction bid prep and reference states for the single-lane launch model. Eligible names can be opened by a valid bonded bid; 1-4 character names are not eligible until the later short-name wave.
+          Auction bid prep and flow examples for the single-lane launch model. Eligible names can be opened by a valid bonded bid; 1-4 character names wait for the later short-name wave.
         </p>
         <p class="hero-status">
-          Auction flow surface · bid packages, reference cases, and observed AUCTION_BID activity.
+          Auction flow surface · bid packages, examples, and observed AUCTION_BID activity.
         </p>
       </div>
     </header>`;
@@ -264,7 +264,7 @@ function renderHeroSection(
       </article>
       <article>
         <span>Short names</span>
-        <strong>1-4 character names are not eligible until the later short-name wave.</strong>
+        <strong>1-4 character names wait for the later short-name wave.</strong>
       </article>
       <article>
         <span>Records</span>
@@ -433,7 +433,7 @@ function renderAdvancedReferencesSection(configuredBasePath: string): string {
     <div class="guide-grid guide-grid-balanced">
       <article class="guide-card">
         <h3>Auction Implementation</h3>
-        <p>Auction reference cases plus observed bid activity. The public auction page is now a primary acquisition surface; this area keeps deeper implementation and review context nearby.</p>
+        <p>Auction flow examples plus observed bid activity. The public auction page is now a primary acquisition surface; this area keeps deeper implementation and review context nearby.</p>
         <div class="guide-card-actions">
           <a class="action-link secondary" href="${withBasePath("/auctions", configuredBasePath)}">Open auctions</a>
         </div>
@@ -492,11 +492,11 @@ function renderExplainerPageSections(configuredBasePath: string): string {
 function renderAuctionLabSection(): string {
   return `<section id="auction-lab" class="panel panel-list">
     ${renderPanelHead(
-      "Auction Reference Cases",
+      "Auction Flow Examples",
       "Reference view for eligible names and active auction states.",
       `<p>This page shows how the current auction model behaves once a name is eligible and a bidder opens the auction.</p>
       <ul>
-        <li>The website shows the current read-only defaults for the reference cases below.</li>
+        <li>The website shows the current read-only defaults for the examples below.</li>
         <li>The cards underneath are simulator-backed examples, not live protocol changes.</li>
         <li>A real auction starts with a valid bonded opening bid; before that, a name is only eligible or not eligible.</li>
       </ul>`
@@ -505,7 +505,7 @@ function renderAuctionLabSection(): string {
       <summary>Current website defaults</summary>
       <div class="detail-technical-body">
         <p class="field-note">The website keeps this read-only on purpose. If you want to model different release windows or other policy parameters, use the CLI instead of the website.</p>
-        <p id="auctionLabMeta" class="helper-text">Loading current auction defaults and reference states.</p>
+        <p id="auctionLabMeta" class="helper-text">Loading current auction defaults and flow examples.</p>
         <div id="auctionPolicySummary" class="guide-grid"></div>
       </div>
     </details>
@@ -520,7 +520,7 @@ function renderExperimentalAuctionFeedSection(): string {
       "Resolver-backed view derived from observed AUCTION_BID transactions.",
       `<p>This sits closer to observed chain behavior than the reference states above.</p>
       <ul>
-        <li>The feed still uses prototype catalog entries while fully on-demand auction-opening tooling is being built.</li>
+        <li>The feed still uses prototype entries while fully on-demand auction-opening tooling is being built.</li>
         <li>Leaders, minimum next bids, stale-state rejection, and bond spend/release summaries are derived from observed AUCTION_BID transactions.</li>
         <li>A real auction begins when a valid bonded opening bid confirms; names with no opening bid should not be described as failed auctions.</li>
         <li>Bids that merely clear the normal increment are not enough during soft close if they would extend the auction. Late extension bids use the stronger soft-close increment rule.</li>
@@ -925,7 +925,7 @@ function renderPrivateAuctionSmokeSection(collapsible = false): string {
       "Latest status from the hosted private-signet auction walkthrough.",
       `<p>This is the current live-chain proof for the auction slice.</p>
       <ul>
-        <li>It starts from a dedicated prototype catalog entry, then opens the auction with a real bonded bid.</li>
+        <li>It starts from a dedicated prototype entry, then opens the auction with a real bonded bid.</li>
         <li>It submits an opening bid, then a higher bid, settles the auction into a live owned name, publishes winner destinations, and later transfers that name after the winner lock clears.</li>
         <li>It still spends the losing bond early to prove the chain-derived feed flags that violation.</li>
         <li>The resulting website feed shows accepted bid history, settlement state, post-settlement handoff, and bond spend / release consequences.</li>

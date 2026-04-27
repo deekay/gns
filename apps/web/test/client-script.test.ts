@@ -19,7 +19,6 @@ describe("renderClientScript", () => {
     expect(script).toContain("renderPrivateAuctionSmokeStatus");
     expect(script).toContain("Opening Bid Txid");
     expect(script).toContain("Higher Bid Txid");
-    expect(script).not.toContain("Release Lot");
     expect(script).not.toContain("Late Bid Txid");
     expect(script).not.toContain("Late Bid Outcome");
     expect(script).toContain("Winner handoff");
@@ -95,10 +94,8 @@ describe("renderClientScript", () => {
     expect(script).toContain('/api/experimental-auctions');
     expect(script).toContain('/api/auction-bid-package');
     expect(script).toContain('/api/experimental-auction-bid-package');
-    expect(script).toContain("auctionNoBidReleaseBlocks");
-    expect(script).toContain("auctionPolicyControls");
     expect(script).toContain("reloadAuctionLab");
-    expect(script).toContain("getAuctionLabPolicyOverridesFromLocation");
+    expect(script).not.toContain("getAuctionLabPolicyOverridesFromLocation");
     expect(script).toContain("renderAuctionLab");
     expect(script).toContain("renderExperimentalAuctionFeed");
     expect(script).toContain("renderAuctionPolicySummary");

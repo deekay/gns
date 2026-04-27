@@ -23,7 +23,7 @@ still technically provisional:
 - auctions should have soft close rather than hard-end sniping
 - bids that extend an auction during soft close should face a stronger minimum
   increment than ordinary mid-auction bids
-- the current user-started launch story should not describe no-bid names as
+- the current user-started launch story should not describe unopened names as
   failed auctions; a valid bonded opening bid is what creates the auction
 - same-bidder rebids should replace earlier bids by spending the earlier bond
   outpoint

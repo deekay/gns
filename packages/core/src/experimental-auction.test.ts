@@ -16,10 +16,10 @@ describe("experimental auction derivation", () => {
     const policy = createDefaultLaunchAuctionPolicy();
     const catalogEntry = createExperimentalLaunchAuctionCatalogEntry(
       {
-        auctionId: "04-soft-close-nvidia",
-        title: "Soft close · nvidia",
-        description: "Experimental live test lot.",
-        name: "nvidia",
+        auctionId: "04-soft-close-marble",
+        title: "Soft close · marble",
+        description: "Experimental live auction fixture.",
+        name: "marble",
         auctionClassId: "launch_name",
         unlockBlock: 840_000
       },
@@ -131,10 +131,10 @@ describe("experimental auction derivation", () => {
     const policy = createDefaultLaunchAuctionPolicy();
     const catalogEntry = createExperimentalLaunchAuctionCatalogEntry(
       {
-        auctionId: "04-soft-close-nvidia",
-        title: "Soft close · nvidia",
-        description: "Experimental live test lot.",
-        name: "nvidia",
+        auctionId: "04-soft-close-marble",
+        title: "Soft close · marble",
+        description: "Experimental live auction fixture.",
+        name: "marble",
         auctionClassId: "launch_name",
         unlockBlock: 840_000
       },
@@ -212,14 +212,14 @@ describe("experimental auction derivation", () => {
     });
   });
 
-  it("keeps legacy scheduled-catalog compatibility behavior covered", () => {
+  it("keeps unopened eligible entries available for an opening bid", () => {
     const policy = createDefaultLaunchAuctionPolicy();
     const catalogEntry = createExperimentalLaunchAuctionCatalogEntry(
       {
-        auctionId: "02-awaiting-opening-nike",
-        title: "Eligible to open · nike",
+        auctionId: "02-eligible-to-open-luna",
+        title: "Eligible to open · luna",
         description: "Prototype entry after the configured eligibility height but before a valid opening bid.",
-        name: "nike",
+        name: "luna",
         auctionClassId: "launch_name",
         unlockBlock: 880_000
       },
@@ -273,16 +273,14 @@ describe("experimental auction derivation", () => {
       ]
     });
 
-    expect(state.phase).toBe("closed_without_winner");
-    expect(state.currentRequiredMinimumBidSats).toBeNull();
+    expect(state.phase).toBe("awaiting_opening_bid");
+    expect(state.currentRequiredMinimumBidSats?.toString()).toBe("12500000");
     expect(state.baseMinimumBidSats).toBe(12_500_000n);
-    expect(state.noBidReleaseBlock).toBe(884_320);
-    expect(state.blocksUntilNoBidRelease).toBe(0);
     expect(state.acceptedBidCount).toBe(0);
     expect(state.rejectedBidCount).toBe(2);
     expect(state.visibleBidOutcomes[1]).toMatchObject({
       status: "rejected",
-      reason: "closed_without_winner",
+      reason: "stale_state_commitment",
       stateCommitmentMatched: false,
       bondStatus: "rejected_not_tracked"
     });
@@ -292,10 +290,10 @@ describe("experimental auction derivation", () => {
     const policy = createDefaultLaunchAuctionPolicy();
     const catalogEntry = createExperimentalLaunchAuctionCatalogEntry(
       {
-        auctionId: "04-soft-close-nvidia",
-        title: "Soft close · nvidia",
-        description: "Experimental live test lot.",
-        name: "nvidia",
+        auctionId: "04-soft-close-marble",
+        title: "Soft close · marble",
+        description: "Experimental live auction fixture.",
+        name: "marble",
         auctionClassId: "launch_name",
         unlockBlock: 840_000
       },
@@ -381,10 +379,10 @@ describe("experimental auction derivation", () => {
     const policy = createDefaultLaunchAuctionPolicy();
     const catalogEntry = createExperimentalLaunchAuctionCatalogEntry(
       {
-        auctionId: "04-soft-close-nvidia",
-        title: "Soft close · nvidia",
-        description: "Experimental live test lot.",
-        name: "nvidia",
+        auctionId: "04-soft-close-marble",
+        title: "Soft close · marble",
+        description: "Experimental live auction fixture.",
+        name: "marble",
         auctionClassId: "launch_name",
         unlockBlock: 840_000
       },
@@ -489,10 +487,10 @@ describe("experimental auction derivation", () => {
     const policy = createDefaultLaunchAuctionPolicy();
     const catalogEntry = createExperimentalLaunchAuctionCatalogEntry(
       {
-        auctionId: "04-soft-close-nvidia",
-        title: "Soft close · nvidia",
-        description: "Experimental live test lot.",
-        name: "nvidia",
+        auctionId: "04-soft-close-marble",
+        title: "Soft close · marble",
+        description: "Experimental live auction fixture.",
+        name: "marble",
         auctionClassId: "launch_name",
         unlockBlock: 840_000
       },
@@ -599,10 +597,10 @@ describe("experimental auction derivation", () => {
     const policy = createDefaultLaunchAuctionPolicy();
     const catalogEntry = createExperimentalLaunchAuctionCatalogEntry(
       {
-        auctionId: "04-soft-close-nvidia",
-        title: "Soft close · nvidia",
-        description: "Experimental live test lot.",
-        name: "nvidia",
+        auctionId: "04-soft-close-marble",
+        title: "Soft close · marble",
+        description: "Experimental live auction fixture.",
+        name: "marble",
         auctionClassId: "launch_name",
         unlockBlock: 840_000
       },

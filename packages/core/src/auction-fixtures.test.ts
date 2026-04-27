@@ -9,7 +9,7 @@ import {
 } from "./index.js";
 
 interface AuctionFixtureExpectation {
-  readonly status: "no_valid_bids" | "settled";
+  readonly status: "unopened" | "settled";
   readonly winnerBidderId: string | null;
   readonly winnerAmountSats: string | null;
   readonly initialAuctionCloseBlock: number | null;
@@ -23,11 +23,11 @@ interface AuctionFixtureFile {
 }
 
 const FIXTURE_FILES = [
-  "nvidia-competitive.json",
-  "openai-moderate.json",
-  "tylercowen-thin-market.json",
-  "no-bids.json",
-  "underfloor-major-name.json",
+  "marble-competitive.json",
+  "meadow-moderate.json",
+  "silverpine-thin-market.json",
+  "unopened-eligible.json",
+  "underfloor-opening-bid.json",
   "soft-close-tail.json"
 ] as const;
 

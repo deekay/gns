@@ -34,7 +34,6 @@ const REMOTE_STATUS_PATH =
 const PUBLISH_REMOTE_STATUS =
   (process.env.ONT_PRIVATE_SIGNET_AUCTION_SMOKE_PUBLISH_REMOTE_STATUS ?? "1") !== "0";
 const BIDDING_SMOKE_AUCTION_ID_PREFIXES = ["10-", "11-", "12-", "14-", "15-", "16-", "18-"];
-const RELEASE_SMOKE_AUCTION_ID_PREFIXES = ["13-", "17-"];
 
 void main().catch((error) => {
   console.error(error instanceof Error ? error.stack ?? error.message : String(error));
@@ -289,56 +288,9 @@ async function main() {
         throw new Error(`expected ${targetAuction.normalizedName} to remain owned by the post-transfer recipient after winning bond release`);
       }
 
-      const releaseTargetBefore = await ensureAuctionReadyForRelease(
-        selectReleaseSmokeAuction(beforeFeed.auctions)
-      );
-
-      logStep(releaseTargetBefore.auctionId, "building a late bid for legacy scheduled-catalog close coverage");
-      const releaseBidderId = `${releaseTargetBefore.normalizedName}-late`;
-      const releaseBidAmountSats = BigInt(
-        releaseTargetBefore.currentRequiredMinimumBidSats ?? releaseTargetBefore.openingMinimumBidSats
-      );
-      const lateBid = await buildAndMaybeBroadcastAuctionBid({
-        outDir,
-        fileStem: "release-late",
-        auctionState: releaseTargetBefore,
-        bidderId: releaseBidderId,
-        ownerPubkey: owner.ownerPubkey,
-        bidAmountSats: releaseBidAmountSats,
-        fundingAddress: owner.fundingAddress,
-        fundingWif: owner.fundingWif,
-        rpcPassword,
-        broadcastNow: false
-      });
-
-      const releasedState = await ensureAuctionClosedWithoutWinner(releaseTargetBefore);
-
-      logStep(releasedState.auctionId, "broadcasting the prebuilt late bid after the legacy close state");
-      const lateBidTxid = await broadcastSignedAuctionBid({
-        signedPath: lateBid.signedPath,
-        rpcPassword,
-        expectedTxid: lateBid.bidTxid
-      });
-
-      const afterLateBidBlock = await getBlockCount();
-      await mineBlocks(1);
-      await waitForResolverHeight(afterLateBidBlock + 1);
-
-      const releaseFinalState = await fetchExperimentalAuctionById(releasedState.auctionId);
-      if (!releaseFinalState) {
-        throw new Error(`missing released final state for ${releasedState.auctionId}`);
-      }
-
-      const lateBidOutcome =
-        releaseFinalState.visibleBidOutcomes.find((outcome) => outcome.txid === lateBidTxid) ?? null;
-
-      if (!lateBidOutcome || lateBidOutcome.reason !== "closed_without_winner") {
-        throw new Error(`expected ${releasedState.auctionId} to reject the late bid after release`);
-      }
-
       summary.status = "complete";
       summary.message =
-        "Private signet experimental auction smoke succeeded with live bidding, settlement, winner value publication, post-release transfer, and legacy scheduled-catalog close compatibility.";
+        "Private signet experimental auction smoke succeeded with opening bid, higher bid, settlement, winner value publication, post-release transfer, and losing-bond violation checks.";
       summary.completedAt = new Date().toISOString();
       summary.resolverUrl = privateResolverUrl;
       summary.rpcUrl = rpcUrl;
@@ -375,22 +327,6 @@ async function main() {
         winnerBondSpentTxid: winnerSpendTxid,
         settledOwnerPubkey: settledNameRecord.currentOwnerPubkey,
         transferredOwnerPubkey: finalTransferredRecord.currentOwnerPubkey
-      };
-      summary.releaseCheck = {
-        auctionId: releaseTargetBefore.auctionId,
-        title: releaseTargetBefore.title,
-        normalizedName: releaseTargetBefore.normalizedName,
-        unlockBlock: releaseTargetBefore.unlockBlock,
-        noBidReleaseBlock: releaseTargetBefore.noBidReleaseBlock,
-        preparedAtPhase: releaseTargetBefore.phase,
-        lateBidAmountSats: releaseBidAmountSats.toString(),
-        lateBidTxid,
-        finalState: releaseFinalState,
-        highlight: {
-          releasePhase: releasedState.phase,
-          lateBidReason: lateBidOutcome.reason,
-          lateBidStatus: lateBidOutcome.status
-        }
       };
     } catch (error) {
       summary.status = "error";
@@ -447,36 +383,8 @@ function selectAvailableBiddingSmokeAuction(auctions) {
 
   if (!candidate) {
     throw new Error(
-      "no empty private auction smoke lot is available; rerun the canonical private signet reseed to free dedicated smoke lots"
+      "no empty private auction smoke fixture is available; rerun the canonical private signet reseed to free dedicated smoke fixtures"
     );
-  }
-
-  return candidate;
-}
-
-function selectReleaseSmokeAuction(auctions) {
-  if (!Array.isArray(auctions)) {
-    throw new Error("experimental auction feed is missing auctions");
-  }
-
-  const candidate = auctions.find((entry) => {
-    if (!entry || typeof entry !== "object") {
-      return false;
-    }
-
-    if (!RELEASE_SMOKE_AUCTION_ID_PREFIXES.some((prefix) => String(entry.auctionId ?? "").startsWith(prefix))) {
-      return false;
-    }
-
-    if (entry.phase !== "awaiting_opening_bid" && entry.phase !== "pending_unlock") {
-      return false;
-    }
-
-    return Number(entry.totalObservedBidCount ?? 0) === 0;
-  });
-
-  if (!candidate) {
-    throw new Error("no dedicated private release smoke lot is available; rerun the canonical private signet reseed");
   }
 
   return candidate;
@@ -488,7 +396,7 @@ async function ensureAuctionReadyForOpeningBid(auctionState) {
   }
 
   if (auctionState.phase !== "pending_unlock") {
-    throw new Error(`expected ${auctionState.auctionId} to be not eligible yet or eligible to open`);
+    throw new Error(`expected ${auctionState.auctionId} to be pre-eligibility or eligible to open`);
   }
 
   const blocksToMine = Math.max(1, auctionState.unlockBlock - auctionState.currentBlockHeight);
@@ -500,40 +408,6 @@ async function ensureAuctionReadyForOpeningBid(auctionState) {
   const refreshed = await fetchExperimentalAuctionById(auctionState.auctionId);
   if (!refreshed || refreshed.phase !== "awaiting_opening_bid") {
     throw new Error(`expected ${auctionState.auctionId} to reach awaiting_opening_bid after auction opening`);
-  }
-
-  return refreshed;
-}
-
-async function ensureAuctionReadyForRelease(auctionState) {
-  if (auctionState.phase === "closed_without_winner") {
-    return auctionState;
-  }
-
-  return await ensureAuctionReadyForOpeningBid(auctionState);
-}
-
-async function ensureAuctionClosedWithoutWinner(auctionState) {
-  if (auctionState.phase === "closed_without_winner") {
-    return auctionState;
-  }
-
-  if (auctionState.noBidReleaseBlock === null) {
-    throw new Error(`expected ${auctionState.auctionId} to expose a legacy scheduled-catalog close block`);
-  }
-
-  const blocksToMine = Math.max(1, auctionState.noBidReleaseBlock - auctionState.currentBlockHeight + 1);
-  logStep(
-    auctionState.auctionId,
-    `mining ${blocksToMine} block${blocksToMine === 1 ? "" : "s"} to cross the legacy scheduled-catalog close window`
-  );
-  const currentHeight = await getBlockCount();
-  await mineBlocks(blocksToMine);
-  await waitForResolverHeight(currentHeight + blocksToMine);
-
-  const refreshed = await fetchExperimentalAuctionById(auctionState.auctionId);
-  if (!refreshed || refreshed.phase !== "closed_without_winner") {
-    throw new Error(`expected ${auctionState.auctionId} to close without a winner`);
   }
 
   return refreshed;

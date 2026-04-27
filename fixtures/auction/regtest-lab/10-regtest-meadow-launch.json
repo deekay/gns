@@ -1,8 +1,8 @@
 {
-  "title": "Regtest auction · openai",
+  "title": "Regtest auction · meadow",
   "description": "Controlled-chain experimental auction fixture for settlement and release coverage.",
   "scenario": {
-    "name": "openai",
+    "name": "meadow",
     "auctionClassId": "launch_name",
     "unlockBlock": 111,
     "bidAttempts": []

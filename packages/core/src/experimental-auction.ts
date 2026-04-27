@@ -5,7 +5,6 @@ import {
 
 import {
   calculateLaunchAuctionMinimumIncrementBidSats,
-  getLaunchAuctionNoBidReleaseBlock,
   getLaunchAuctionOpeningRequirements,
   isLaunchAuctionSoftCloseWindow,
   type LaunchAuctionClassId,
@@ -14,7 +13,6 @@ import {
 
 export type ExperimentalLaunchAuctionBidRejectionReason =
   | "before_unlock"
-  | "closed_without_winner"
   | "below_opening_minimum"
   | "auction_closed"
   | "below_minimum_increment"
@@ -52,15 +50,11 @@ export type ExperimentalLaunchAuctionBidSpendStatus =
 export type ExperimentalLaunchAuctionPhase =
   | "pending_unlock"
   | "awaiting_opening_bid"
-  | "closed_without_winner"
   | "live_bidding"
   | "soft_close"
   | "settled";
 
-type ExperimentalAuctionCommitmentPhase = Exclude<
-  ExperimentalLaunchAuctionPhase,
-  "closed_without_winner"
->;
+type ExperimentalAuctionCommitmentPhase = ExperimentalLaunchAuctionPhase;
 
 export interface ExperimentalLaunchAuctionCatalogEntryInput {
   readonly auctionId: string;
@@ -150,11 +144,9 @@ export interface ExperimentalLaunchAuctionState {
   readonly baseMinimumBidSats: bigint;
   readonly openingMinimumBidSats: bigint;
   readonly settlementLockBlocks: number;
-  readonly noBidReleaseBlock: number | null;
   readonly auctionStartBlock: number | null;
   readonly auctionCloseBlockAfter: number | null;
   readonly blocksUntilUnlock: number;
-  readonly blocksUntilNoBidRelease: number | null;
   readonly blocksUntilClose: number | null;
   readonly currentLeaderBidderCommitment: string | null;
   readonly currentHighestBidSats: bigint | null;
@@ -213,11 +205,9 @@ export interface SerializedExperimentalLaunchAuctionState {
   readonly baseMinimumBidSats: string;
   readonly openingMinimumBidSats: string;
   readonly settlementLockBlocks: number;
-  readonly noBidReleaseBlock: number | null;
   readonly auctionStartBlock: number | null;
   readonly auctionCloseBlockAfter: number | null;
   readonly blocksUntilUnlock: number;
-  readonly blocksUntilNoBidRelease: number | null;
   readonly blocksUntilClose: number | null;
   readonly currentLeaderBidderCommitment: string | null;
   readonly currentHighestBidSats: string | null;
@@ -296,11 +286,6 @@ export function deriveExperimentalLaunchAuctionState(input: {
   const observations = input.bidObservations
     .filter((observation) => observation.auctionLotCommitment === input.catalogEntry.auctionLotCommitment)
     .sort(compareBidObservations);
-  const noBidReleaseBlock =
-    getLaunchAuctionNoBidReleaseBlock({
-      unlockBlock: input.catalogEntry.unlockBlock,
-      policy: input.policy
-    });
   const spentOutpointMap = new Map(
     (input.spentOutpoints ?? []).map((observation) => [toOutpointKey(observation.outpointTxid, observation.outpointVout), observation])
   );
@@ -378,32 +363,6 @@ export function deriveExperimentalLaunchAuctionState(input: {
         auctionCloseBlockAfter: finalAuctionCloseBlock,
         highestBidSatsAfter: currentLeader?.amountSats ?? null,
         stateCommitmentMatched: preBidState.stateCommitmentMatched,
-        bondStatus: "rejected_not_tracked" as const,
-        bondReleaseBlock: null,
-        bondSpendStatus: "not_applicable" as const,
-        bondSpentTxid: null,
-        bondSpentBlockHeight: null
-      });
-      continue;
-    }
-
-    if (preBidState.phase === "closed_without_winner") {
-      visibleBidOutcomes.push({
-        index,
-        txid: observation.txid,
-        blockHeight: observation.blockHeight,
-        txIndex: observation.txIndex,
-        vout: observation.vout,
-        bondVout: observation.bondVout,
-        bidderCommitment: observation.bidderCommitment,
-        ownerPubkey: observation.ownerPubkey ?? null,
-        amountSats: observation.bidAmountSats,
-        status: "rejected" as const,
-        reason: "closed_without_winner" as const,
-        requiredMinimumBidSats: input.catalogEntry.baseMinimumBidSats,
-        auctionCloseBlockAfter: finalAuctionCloseBlock,
-        highestBidSatsAfter: currentLeader?.amountSats ?? null,
-        stateCommitmentMatched: false,
         bondStatus: "rejected_not_tracked" as const,
         bondReleaseBlock: null,
         bondSpendStatus: "not_applicable" as const,
@@ -650,7 +609,6 @@ export function deriveExperimentalLaunchAuctionState(input: {
   const phase = deriveExperimentalLaunchAuctionPhase({
     currentBlockHeight: input.currentBlockHeight,
     unlockBlock: input.catalogEntry.unlockBlock,
-    noBidReleaseBlock,
     auctionCloseBlockAfter: finalAuctionCloseBlock,
     softCloseExtensionBlocks: input.policy.auction.softCloseExtensionBlocks,
     winnerPresent: currentLeader !== null
@@ -666,7 +624,7 @@ export function deriveExperimentalLaunchAuctionState(input: {
   const currentLeaderBidderCommitment = lastAcceptedOutcome?.bidderCommitment ?? null;
   const currentHighestBidSats = lastAcceptedOutcome?.highestBidSatsAfter ?? null;
   const currentRequiredMinimumBidSats =
-    phase === "settled" || phase === "closed_without_winner"
+    phase === "settled"
       ? null
       : currentHighestBidSats === null
         ? input.catalogEntry.openingMinimumBidSats
@@ -787,12 +745,9 @@ export function deriveExperimentalLaunchAuctionState(input: {
     baseMinimumBidSats: input.catalogEntry.baseMinimumBidSats,
     openingMinimumBidSats: input.catalogEntry.openingMinimumBidSats,
     settlementLockBlocks: input.catalogEntry.settlementLockBlocks,
-    noBidReleaseBlock: currentLeader === null ? noBidReleaseBlock : null,
     auctionStartBlock,
     auctionCloseBlockAfter,
     blocksUntilUnlock: Math.max(0, input.catalogEntry.unlockBlock - input.currentBlockHeight),
-    blocksUntilNoBidRelease:
-      currentLeader === null ? Math.max(0, noBidReleaseBlock - input.currentBlockHeight) : null,
     blocksUntilClose:
       auctionCloseBlockAfter === null ? null : Math.max(0, auctionCloseBlockAfter - input.currentBlockHeight),
     currentLeaderBidderCommitment,
@@ -833,11 +788,9 @@ export function serializeExperimentalLaunchAuctionState(
     baseMinimumBidSats: state.baseMinimumBidSats.toString(),
     openingMinimumBidSats: state.openingMinimumBidSats.toString(),
     settlementLockBlocks: state.settlementLockBlocks,
-    noBidReleaseBlock: state.noBidReleaseBlock,
     auctionStartBlock: state.auctionStartBlock,
     auctionCloseBlockAfter: state.auctionCloseBlockAfter,
     blocksUntilUnlock: state.blocksUntilUnlock,
-    blocksUntilNoBidRelease: state.blocksUntilNoBidRelease,
     blocksUntilClose: state.blocksUntilClose,
     currentLeaderBidderCommitment: state.currentLeaderBidderCommitment,
     currentHighestBidSats: state.currentHighestBidSats?.toString() ?? null,
@@ -885,11 +838,9 @@ export function formatExperimentalLaunchAuctionPhaseLabel(
 ): string {
   switch (phase) {
     case "pending_unlock":
-      return "Not eligible yet";
+      return "Pre-eligibility";
     case "awaiting_opening_bid":
       return "Eligible to open";
-    case "closed_without_winner":
-      return "Legacy compatibility state";
     case "live_bidding":
       return "Live bidding";
     case "soft_close":
@@ -946,20 +897,6 @@ function createPreBidAuctionState(input: {
   }
 
   if (input.currentLeader === null) {
-    if (
-      input.observationBlockHeight
-      > getLaunchAuctionNoBidReleaseBlock({
-        unlockBlock: input.catalogEntry.unlockBlock,
-        policy: input.policy
-      })
-    ) {
-      return {
-        phase: "closed_without_winner",
-        requiredMinimumBidSats: input.catalogEntry.baseMinimumBidSats,
-        stateCommitmentMatched: false
-      };
-    }
-
     return {
       phase: "awaiting_opening_bid",
       requiredMinimumBidSats: input.catalogEntry.openingMinimumBidSats,
@@ -1109,7 +1046,6 @@ function toOutpointKey(txid: string, vout: number): string {
 function deriveExperimentalLaunchAuctionPhase(input: {
   readonly currentBlockHeight: number;
   readonly unlockBlock: number;
-  readonly noBidReleaseBlock: number | null;
   readonly auctionCloseBlockAfter: number | null;
   readonly softCloseExtensionBlocks: number;
   readonly winnerPresent: boolean;
@@ -1119,10 +1055,6 @@ function deriveExperimentalLaunchAuctionPhase(input: {
   }
 
   if (!input.winnerPresent) {
-    if (input.noBidReleaseBlock !== null && input.currentBlockHeight > input.noBidReleaseBlock) {
-      return "closed_without_winner";
-    }
-
     return "awaiting_opening_bid";
   }
 

@@ -900,9 +900,6 @@ function resolveExperimentalLaunchAuctionPolicy(): LaunchAuctionPolicy {
   const softCloseExtensionBlocks = readOptionalExperimentalAuctionInteger(
     "ONT_EXPERIMENTAL_AUCTION_SOFT_CLOSE_EXTENSION_BLOCKS"
   );
-  const noBidReleaseBlocks = readOptionalExperimentalAuctionInteger(
-    "ONT_EXPERIMENTAL_AUCTION_NO_BID_RELEASE_BLOCKS"
-  );
   const minimumIncrementAbsoluteSats = readOptionalExperimentalAuctionBigInt(
     "ONT_EXPERIMENTAL_AUCTION_MINIMUM_INCREMENT_ABSOLUTE_SATS"
   );
@@ -928,7 +925,6 @@ function resolveExperimentalLaunchAuctionPolicy(): LaunchAuctionPolicy {
       ...basePolicy.auction,
       ...(baseWindowBlocks === undefined ? {} : { baseWindowBlocks }),
       ...(softCloseExtensionBlocks === undefined ? {} : { softCloseExtensionBlocks }),
-      ...(noBidReleaseBlocks === undefined ? {} : { noBidReleaseBlocks }),
       ...(minimumIncrementAbsoluteSats === undefined ? {} : { minimumIncrementAbsoluteSats }),
       ...(minimumIncrementBasisPoints === undefined ? {} : { minimumIncrementBasisPoints }),
       ...(softCloseMinimumIncrementAbsoluteSats === undefined

@@ -34,8 +34,8 @@ function createTestAddress(seed: number): string {
 
 function createAuctionBidPackageFixture() {
   return createAuctionBidPackage({
-    auctionId: "04-soft-close-nvidia",
-    name: "nvidia",
+    auctionId: "04-soft-close-marble",
+    name: "marble",
     auctionClassId: "launch_name",
     classLabel: "Launch auction",
     currentBlockHeight: 844_360,

@@ -52,7 +52,7 @@ export interface LaunchAuctionMarketAuctionResult {
   readonly auctionStartBlock: number | null;
   readonly initialAuctionCloseBlock: number | null;
   readonly finalAuctionCloseBlock: number | null;
-  readonly status: "no_valid_bids" | "settled";
+  readonly status: "unopened" | "settled";
   readonly winner: LaunchAuctionWinningBid | null;
   readonly bidOutcomes: ReadonlyArray<LaunchAuctionBidOutcome>;
 }
@@ -68,7 +68,7 @@ export interface SerializedLaunchAuctionMarketAuctionResult {
   readonly auctionStartBlock: number | null;
   readonly initialAuctionCloseBlock: number | null;
   readonly finalAuctionCloseBlock: number | null;
-  readonly status: "no_valid_bids" | "settled";
+  readonly status: "unopened" | "settled";
   readonly winner:
     | {
         readonly bidderId: string;
@@ -300,7 +300,7 @@ export function simulateLaunchAuctionMarket(input: {
     auctionStartBlock: runtime.auctionStartBlock,
     initialAuctionCloseBlock: runtime.initialAuctionCloseBlock,
     finalAuctionCloseBlock: runtime.finalAuctionCloseBlock,
-    status: runtime.winner === null ? "no_valid_bids" : "settled",
+    status: runtime.winner === null ? "unopened" : "settled",
     winner: runtime.winner,
     bidOutcomes: runtime.bidOutcomes
   }));

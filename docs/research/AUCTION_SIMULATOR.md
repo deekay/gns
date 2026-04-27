@@ -35,13 +35,13 @@ npm run dev:cli -- print-auction-policy --write /tmp/ont-auction-policy.json
 Run a single auction fixture:
 
 ```bash
-npm run dev:cli -- simulate-auction fixtures/auction/nvidia-competitive.json
+npm run dev:cli -- simulate-auction fixtures/auction/marble-competitive.json
 ```
 
 Run a single auction fixture with an edited policy:
 
 ```bash
-npm run dev:cli -- simulate-auction fixtures/auction/tylercowen-thin-market.json --policy /tmp/ont-auction-policy.json
+npm run dev:cli -- simulate-auction fixtures/auction/silverpine-thin-market.json --policy /tmp/ont-auction-policy.json
 ```
 
 Run a market-level scenario with bidder budget pressure:

@@ -1,9 +1,6 @@
 {
-  "title": "Settled · openai",
-  "description": "Launch auction after the full auction window and soft-close extension have passed. This is the final winner state the protocol would carry forward.",
-  "currentBlockHeight": 854700,
   "scenario": {
-    "name": "openai",
+    "name": "meadow",
     "auctionClassId": "launch_name",
     "unlockBlock": 850000,
     "bidAttempts": [
@@ -27,6 +24,19 @@
         "blockHeight": 854450,
         "amountSats": "267000000"
       }
+    ]
+  },
+  "expected": {
+    "status": "settled",
+    "winnerBidderId": "speculator_d",
+    "winnerAmountSats": "267000000",
+    "initialAuctionCloseBlock": 854330,
+    "finalAuctionCloseBlock": 854594,
+    "reasons": [
+      "opening_bid",
+      "higher_bid",
+      "higher_bid_soft_close_extended",
+      "higher_bid_soft_close_extended"
     ]
   }
 }

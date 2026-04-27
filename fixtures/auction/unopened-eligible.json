@@ -6,7 +6,7 @@
     "bidAttempts": []
   },
   "expected": {
-    "status": "no_valid_bids",
+    "status": "unopened",
     "winnerBidderId": null,
     "winnerAmountSats": null,
     "initialAuctionCloseBlock": null,

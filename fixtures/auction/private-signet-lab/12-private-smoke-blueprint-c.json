@@ -1,11 +1,11 @@
 {
-  "title": "Private smoke auction · openai B",
+  "title": "Private smoke auction · blueprint C",
   "description": "Private signet experimental auction fixture dedicated to hosted smoke runs with real AUCTION_BID transactions.",
   "currentBlockHeight": 128,
   "scenario": {
-    "name": "openai",
+    "name": "blueprint",
     "auctionClassId": "launch_name",
-    "unlockBlock": 116,
+    "unlockBlock": 117,
     "bidAttempts": []
   }
 }

@@ -8,7 +8,6 @@ import {
   serializeLaunchAuctionPolicy,
   serializeLaunchAuctionStateAtBlock,
   simulateLaunchAuctionStateAtBlock,
-  type LaunchAuctionPolicy,
   type SerializedLaunchAuctionPolicy
 } from "@ont/core";
 
@@ -30,10 +29,6 @@ export interface LaunchAuctionLabPayload {
   readonly kind: "auction_lab";
   readonly policy: SerializedLaunchAuctionPolicy;
   readonly cases: ReadonlyArray<AuctionLabCase>;
-}
-
-export interface LaunchAuctionLabPolicyOverrides {
-  readonly noBidReleaseBlocks?: number;
 }
 
 interface WebsiteAuctionBidPackageStateInput {
@@ -60,13 +55,8 @@ const AUCTION_LAB_FIXTURE_DIR =
   process.env.ONT_EXPERIMENTAL_AUCTION_FIXTURE_DIR?.trim()
   || fileURLToPath(new URL("../../../fixtures/auction/lab", import.meta.url));
 
-export async function loadLaunchAuctionLab(input?: {
-  readonly policyOverrides?: LaunchAuctionLabPolicyOverrides;
-}): Promise<LaunchAuctionLabPayload> {
-  const policy = applyLaunchAuctionLabPolicyOverrides(
-    createDefaultLaunchAuctionPolicy(),
-    input?.policyOverrides
-  );
+export async function loadLaunchAuctionLab(): Promise<LaunchAuctionLabPayload> {
+  const policy = createDefaultLaunchAuctionPolicy();
   const policyPayload = serializeLaunchAuctionPolicy(policy);
   const fixtureFileNames = (await readdir(AUCTION_LAB_FIXTURE_DIR))
     .filter((name) => name.endsWith(".json"))
@@ -92,7 +82,10 @@ export async function loadLaunchAuctionLab(input?: {
     })
   );
   const cases = casesWithLegacy.filter(
-    (entry) => entry.id !== "06-released-nike" && entry.state.phase !== "closed_without_winner"
+    (entry) =>
+      entry.state.phase !== "pending_unlock"
+      && !entry.id.includes("legacy")
+      && !entry.id.includes("released")
   );
 
   return {
@@ -107,15 +100,8 @@ export async function createLaunchAuctionLabBidPackage(input: {
   readonly bidderId: string;
   readonly ownerPubkey: string;
   readonly bidAmountSats: bigint | number | string;
-  readonly policyOverrides?: LaunchAuctionLabPolicyOverrides;
 }): Promise<AuctionBidPackage> {
-  const payload = await loadLaunchAuctionLab(
-    input.policyOverrides === undefined
-      ? undefined
-      : {
-          policyOverrides: input.policyOverrides
-        }
-  );
+  const payload = await loadLaunchAuctionLab();
   const auctionCase = payload.cases.find((entry) => entry.id === input.caseId);
 
   if (!auctionCase) {
@@ -163,23 +149,6 @@ export function createExperimentalAuctionFeedBidPackage(input: {
   });
 }
 
-function applyLaunchAuctionLabPolicyOverrides(
-  policy: LaunchAuctionPolicy,
-  overrides: LaunchAuctionLabPolicyOverrides | undefined
-): LaunchAuctionPolicy {
-  if (!overrides || overrides.noBidReleaseBlocks === undefined) {
-    return policy;
-  }
-
-  return {
-    ...policy,
-    auction: {
-      ...policy.auction,
-      noBidReleaseBlocks: overrides.noBidReleaseBlocks
-    }
-  };
-}
-
 function createWebsiteAuctionBidPackage(input: {
   readonly auctionState: WebsiteAuctionBidPackageStateInput;
   readonly bidderId: string;
@@ -224,12 +193,6 @@ function assertAuctionStateAllowsWebsiteBidPackage(
   auctionState: WebsiteAuctionBidPackageStateInput,
   sourceLabel: string
 ): void {
-  if (auctionState.phase === "closed_without_winner") {
-    throw new Error(
-      `Prototype scheduled compatibility state ${auctionState.normalizedName} from ${sourceLabel} is outside the current user-started auction model and no longer accepts auction bid packages.`
-    );
-  }
-
   if (auctionState.phase === "settled") {
     throw new Error(
       `Auction for ${auctionState.normalizedName} from ${sourceLabel} is already settled and no longer accepts new bids.`
