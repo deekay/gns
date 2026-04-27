@@ -606,6 +606,7 @@ h2 {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+  min-width: 0;
   margin: 0 0 24px;
 }
 
@@ -629,25 +630,21 @@ h2 {
 }
 
 .jump-bar-overview {
-  max-width: 1080px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.jump-bar-overview {
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: flex-start;
   gap: 8px;
-  overflow-x: auto;
-  padding: 10px;
+  max-width: min(100%, 1080px);
+  overflow: visible;
+  padding: 12px;
+  margin-left: auto;
+  margin-right: auto;
   margin-bottom: 8px;
   border: 1px solid rgba(31, 29, 26, 0.08);
-  border-radius: 999px;
+  border-radius: 28px;
   background: rgba(255, 255, 255, 0.66);
   box-shadow: var(--shadow-soft);
-  scrollbar-width: none;
 }
 
 .jump-bar-overview::-webkit-scrollbar {
@@ -655,16 +652,18 @@ h2 {
 }
 
 .jump-bar-overview a {
-  flex: 0 0 auto;
+  flex: 0 1 auto;
+  max-width: 100%;
   white-space: nowrap;
   padding: 8px 12px;
+  text-align: center;
   box-shadow: none;
   background: rgba(255, 255, 255, 0.72);
 }
 
 .jump-bar-label {
-  flex: 0 0 auto;
-  padding: 0 8px 0 4px;
+  flex: 1 0 100%;
+  padding: 0 4px 2px;
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.12em;
@@ -3620,6 +3619,26 @@ body[data-page-kind="auctions"] .panel-head-copy p {
     white-space: nowrap;
     justify-content: center;
     box-shadow: none;
+  }
+
+  .jump-bar-overview {
+    flex-wrap: nowrap;
+    align-items: center;
+    overflow-x: auto;
+    padding: 10px;
+    border-radius: 999px;
+    scroll-padding-inline: 10px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .jump-bar-overview .jump-bar-label {
+    flex: 0 0 auto;
+    padding: 0 8px 0 4px;
+  }
+
+  .jump-bar-overview a {
+    flex: 0 0 auto;
   }
 
   .summary-chip,
