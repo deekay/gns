@@ -119,7 +119,7 @@ export function renderPageHtml(options: PageShellOptions): string {
 }
 
 function renderHeroSection(
-  _configuredBasePath: string,
+  configuredBasePath: string,
   configuredNetworkLabel: string,
   pageKind: PageKind
 ): string {
@@ -206,7 +206,7 @@ function renderHeroSection(
       <div class="hero-copy">
         <h1>Auctions</h1>
         <p class="lede">
-          Auction bid prep and reference states for the single-lane launch model. Eligible names auction at launch; 1-4 character names wait for a later short-name wave.
+          Auction bid prep and reference states for the single-lane launch model. Eligible names can be opened by a valid bonded bid; 1-4 character names are not eligible until the later short-name wave.
         </p>
         <p class="hero-status">
           Auction flow surface · bid packages, reference cases, and observed AUCTION_BID activity.
@@ -215,43 +215,62 @@ function renderHeroSection(
     </header>`;
   }
 
-  return `<header class="hero hero-home">
-    <div class="hero-copy hero-home-banner">
-      <h1>Human-Readable Names You Can Actually Own</h1>
-    </div>
-    <div class="hero-home-grid">
-      <article class="hero-copy hero-home-intro">
-        <div class="hero-home-intro-top">
-          <div class="hero-home-intro-copy">
-            <p class="hero-home-section-kicker">Why it works</p>
-            <h2 class="hero-home-section-title">Two ideas shape ONT.</h2>
-            <p class="hero-home-section-summary">
-              Names are scarce because bitcoin is bonded and market-priced, but flexible because records live off-chain.
-            </p>
-          </div>
-          <article class="hero-home-launch-note" aria-label="Launch note">
-            <p class="hero-home-launch-note-label">At launch</p>
-            <p>Eligible names use one auction lane. Names with 1-4 characters wait for a later short-name wave.</p>
-          </article>
+  return `<header class="hero hero-home hero-home-product">
+    <section class="hero-home-copy" aria-labelledby="homeHeroTitle">
+      <p class="hero-home-kicker">Bitcoin-bonded names</p>
+      <h1 id="homeHeroTitle">Human-readable names you can actually own</h1>
+      <p class="hero-home-lede">
+        Open an auction when a name is eligible. Bitcoin anchors ownership; owner-signed records keep destinations flexible off-chain.
+      </p>
+      <div class="hero-home-proof-row" aria-label="Core ONT model">
+        <span>Single auction flow</span>
+        <span>Self-custodied bond</span>
+        <span>Owner-signed destinations</span>
+      </div>
+    </section>
+    <section id="lookup" class="hero-home-lookup" aria-labelledby="homeLookupTitle">
+      <div class="hero-home-lookup-head">
+        <p class="hero-home-kicker">Auction status</p>
+        <h2 id="homeLookupTitle">Check a name</h2>
+        <p>Resolve ownership or see whether the next step is the auction flow.</p>
+      </div>
+      <form id="searchForm" class="search-form hero-search-form">
+        <label class="field-label" for="nameInput">Name</label>
+        <div class="search-row">
+          <input id="nameInput" name="name" type="text" maxlength="32" placeholder="alice" autocomplete="off" />
+          <button type="submit">Check</button>
         </div>
-        <div class="hero-home-insights" aria-label="ONT summary">
-          <article class="hero-home-insight">
-            <p class="hero-home-insight-number">01</p>
-            <div class="hero-home-insight-copy">
-              <h3>Scarcity Without Rent</h3>
-              <p>Bonded bitcoin creates real cost without paying a platform or registry operator.</p>
-            </div>
-          </article>
-          <article class="hero-home-insight">
-            <p class="hero-home-insight-number">02</p>
-            <div class="hero-home-insight-copy">
-              <h3>Ownership On-Chain, Records Off-Chain</h3>
-              <p>Bitcoin anchors who controls the name; the records it points to stay flexible off-chain.</p>
-            </div>
-          </article>
-        </div>
+      </form>
+      <div class="hero-lookup-status-grid" aria-label="Auction opening rule">
+        <article>
+          <span>Before a bid</span>
+          <strong>Eligible or not eligible</strong>
+        </article>
+        <article>
+          <span>After a bonded opening bid</span>
+          <strong>Auction clock starts</strong>
+        </article>
+      </div>
+      <div class="hero-lookup-actions">
+        <a class="action-link secondary" href="${withBasePath("/auctions", configuredBasePath)}">Open auctions</a>
+        <a class="action-link secondary" href="${withBasePath("/setup", configuredBasePath)}">Set up signing</a>
+      </div>
+      <div id="searchResult" class="result-card empty hero-search-result" hidden></div>
+    </section>
+    <section class="hero-home-launch-strip" aria-label="Launch rules">
+      <article>
+        <span>At launch</span>
+        <strong>Eligible names use the same auction mechanics.</strong>
       </article>
-    </div>
+      <article>
+        <span>Short names</span>
+        <strong>1-4 character names are not eligible until the later short-name wave.</strong>
+      </article>
+      <article>
+        <span>Records</span>
+        <strong>Ownership is on-chain; destinations update off-chain.</strong>
+      </article>
+    </section>
   </header>`;
 }
 
@@ -304,8 +323,7 @@ function renderPanelHead(title: string, summary: string, infoBody?: string): str
 }
 
 function renderHomePageSections(configuredBasePath: string): string {
-  return `${renderSearchSection()}
-    ${renderHomeActionsSection(configuredBasePath)}`;
+  return renderHomeActionsSection(configuredBasePath);
 }
 
 function renderExplorePageSections(configuredBasePath: string): string {
@@ -790,23 +808,6 @@ function renderUsingOntSection(configuredBasePath: string): string {
       <a class="action-link secondary" href="${withBasePath("/transfer", configuredBasePath)}">Open transfer</a>
       <a class="action-link secondary" href="${withBasePath("/advanced", configuredBasePath)}">Open advanced</a>
     </div>
-  </section>`;
-}
-
-function renderSearchSection(): string {
-  return `<section id="lookup" class="panel panel-search panel-home">
-    ${renderPanelHead(
-      "Check A Name",
-      "Resolve a name, inspect ownership, or continue into the auction flow."
-    )}
-    <form id="searchForm" class="search-form">
-      <label class="field-label" for="nameInput">Name</label>
-      <div class="search-row">
-        <input id="nameInput" name="name" type="text" maxlength="32" placeholder="alice" autocomplete="off" />
-        <button type="submit">Resolve</button>
-      </div>
-    </form>
-    <div id="searchResult" class="result-card empty" hidden></div>
   </section>`;
 }
 

@@ -19,15 +19,18 @@ describe("renderPageHtml", () => {
       pageKind: "home"
     });
 
-    expect(html).toContain("Human-Readable Names You Can Actually Own");
-    expect(html).toContain("Two ideas shape ONT.");
-    expect(html).toContain("Names are scarce because bitcoin is bonded and market-priced, but flexible because records live off-chain.");
-    expect(html).toContain("Scarcity Without Rent");
-    expect(html).toContain("Bonded bitcoin creates real cost without paying a platform or registry operator.");
-    expect(html).toContain("Ownership On-Chain, Records Off-Chain");
-    expect(html).toContain("Bitcoin anchors who controls the name; the records it points to stay flexible off-chain.");
-    expect(html).toContain("At launch");
-    expect(html).toContain("Eligible names use one auction lane. Names with 1-4 characters wait for a later short-name wave.");
+    expect(html).toContain("Human-readable names you can actually own");
+    expect(html).toContain("Open an auction when a name is eligible.");
+    expect(html).toContain("Single auction flow");
+    expect(html).toContain("Self-custodied bond");
+    expect(html).toContain("Owner-signed destinations");
+    expect(html).toContain("Check a name");
+    expect(html).toContain("Resolve ownership or see whether the next step is the auction flow.");
+    expect(html).toContain("Before a bid");
+    expect(html).toContain("Eligible or not eligible");
+    expect(html).toContain("After a bonded opening bid");
+    expect(html).toContain("Auction clock starts");
+    expect(html).toContain("1-4 character names are not eligible until the later short-name wave.");
     expect(html).toContain("Choose A Path");
     expect(html).toContain("Understand ONT");
     expect(html).toContain("Try The Prototype");
@@ -44,6 +47,8 @@ describe("renderPageHtml", () => {
     expect(html).not.toContain("Bonded, Not Rented");
     expect(html).not.toContain("Costly To Hoard");
     expect(html).not.toContain("Maps To Destinations");
+    expect(html).not.toContain("Two ideas shape ONT.");
+    expect(html).not.toContain("Eligible names use one auction lane.");
     expect(html).not.toContain("One Name, Many Destinations");
     expect(html).not.toContain("Small Bitcoin footprint");
     expect(html).not.toContain("Resolvers store the current owner-signed bundle for <span class=\"mono\">alice</span>");
