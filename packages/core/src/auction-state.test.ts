@@ -48,7 +48,7 @@ describe("simulateLaunchAuctionStateAtBlock", () => {
     expect(state.currentRequiredMinimumBidSats?.toString()).toBe("12500000");
   });
 
-  it("keeps legacy scheduled-catalog no-bid close behavior covered", () => {
+  it("keeps legacy scheduled-catalog compatibility behavior covered", () => {
     const state = simulateLaunchAuctionStateAtBlock({
       policy,
       currentBlockHeight: 884_321,

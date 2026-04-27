@@ -275,7 +275,7 @@ export function buildAuctionBidArtifacts(
     unlockBlock: bidPackage.unlockBlock
   });
   if (bidPackage.auctionLotCommitment !== expectedAuctionLotCommitment) {
-    throw new Error("bid package auctionLotCommitment does not match the auction lot");
+    throw new Error("bid package name commitment does not match the auction name");
   }
   if (bidPackage.auctionStateCommitment !== expectedAuctionStateCommitment) {
     throw new Error("bid package auctionStateCommitment does not match the observed auction state");

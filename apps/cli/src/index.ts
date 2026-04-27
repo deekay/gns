@@ -185,7 +185,7 @@ async function inspectAuctionBidPackage(filePath: string | undefined): Promise<v
   console.log(`Class: ${parsed.classLabel} (${parsed.auctionClassId})`);
   console.log(`Observed phase: ${parsed.phase}`);
   console.log(`Observed block: ${parsed.currentBlockHeight}`);
-  console.log(`Auction opens: ${parsed.unlockBlock}`);
+  console.log(`Eligible to open at block: ${parsed.unlockBlock}`);
   console.log(`Close after: ${parsed.auctionCloseBlockAfter ?? "(not started yet)"}`);
   console.log(`Settlement lock: ${parsed.settlementLockBlocks.toLocaleString("en-US")} blocks`);
   console.log("");
@@ -202,7 +202,7 @@ async function inspectAuctionBidPackage(filePath: string | undefined): Promise<v
   console.log(parsed.previewSummary);
   console.log("");
   console.log(
-    "If this bidder already has a standing bid for the same lot, the replacement bid should spend the prior bid bond outpoint as one of the funding inputs."
+    "If this bidder already has a standing bid for the same name, the replacement bid should spend the prior bid bond outpoint as one of the funding inputs."
   );
 }
 
@@ -327,7 +327,7 @@ async function createAuctionBidPackageCommand(args: readonly string[]): Promise<
   });
   if (state.phase === "closed_without_winner") {
     throw new Error(
-      "this auction lot has already closed without a winner and no longer accepts auction bids"
+      "this legacy scheduled compatibility state no longer accepts auction bid packages; a launch auction only exists after a valid bonded opening bid"
     );
   }
   const auctionBidPackage = createAuctionBidPackage({

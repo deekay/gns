@@ -89,10 +89,10 @@ The intended outcome is:
 
 This split-lock shape is not fully implemented yet.
 
-## Legacy Scheduled-Catalog No-Bid State
+## Legacy Scheduled-Catalog Compatibility State
 
 The older scheduled-catalog prototype allowed a catalog entry to reach a
-configured no-bid close window without a valid opening bid:
+configured expiry window without a valid opening bid:
 
 - it moves to `closed_without_winner`
 - no auction-owned name is materialized

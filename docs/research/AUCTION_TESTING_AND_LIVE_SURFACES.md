@@ -97,7 +97,7 @@ It currently proves:
 - winner value publication
 - post-release transfer
 - recipient value publication
-- legacy scheduled-catalog no-bid close compatibility is still covered in the
+- legacy scheduled-catalog compatibility is still covered in the
   smoke data, but should not be presented as a current launch outcome
 
 This is the strongest live demo evidence we currently have.
@@ -185,7 +185,7 @@ It gives a real observed end-to-end lifecycle record with:
 - winner value record
 - post-release transfer
 - post-transfer value record
-- legacy no-bid close compatibility remains in the smoke JSON but is not part
+- legacy scheduled-catalog compatibility remains in the smoke JSON but is not part
   of the current public auction story
 
 So even if the parked entries drift and need refreshing, the smoke summary still

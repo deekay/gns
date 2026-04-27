@@ -310,7 +310,7 @@ export function parseAuctionBidPackage(input: unknown): AuctionBidPackage {
     unlockBlock
   });
   if (auctionLotCommitment !== expectedAuctionLotCommitment) {
-    throw new Error("auctionLotCommitment does not match the auction lot");
+    throw new Error("name commitment does not match the auction name");
   }
   if (auctionStateCommitment !== expectedAuctionStateCommitment) {
     throw new Error("auctionStateCommitment does not match the observed auction state");

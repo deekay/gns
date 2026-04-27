@@ -1,6 +1,6 @@
 {
-  "title": "Private smoke lot · release G",
-  "description": "Additional legacy private signet scheduled-catalog fixture dedicated to repeatable late-bid rejection coverage after a no-bid close.",
+  "title": "Private smoke compatibility · release G",
+  "description": "Additional legacy private signet scheduled-catalog fixture dedicated to repeatable bid rejection coverage after the old scheduled state expires.",
   "currentBlockHeight": 128,
   "scenario": {
     "name": "brex",

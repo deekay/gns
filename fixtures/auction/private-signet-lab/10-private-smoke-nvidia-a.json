@@ -1,6 +1,6 @@
 {
-  "title": "Private smoke lot · nvidia A",
-  "description": "Private signet experimental auction lot dedicated to hosted smoke runs with real AUCTION_BID transactions.",
+  "title": "Private smoke auction · nvidia A",
+  "description": "Private signet experimental auction fixture dedicated to hosted smoke runs with real AUCTION_BID transactions.",
   "currentBlockHeight": 128,
   "scenario": {
     "name": "nvidia",

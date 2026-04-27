@@ -1,6 +1,6 @@
 {
-  "title": "Private smoke lot · canva H",
-  "description": "Additional private signet experimental auction lot dedicated to repeatable hosted smoke runs with real AUCTION_BID transactions.",
+  "title": "Private smoke auction · canva H",
+  "description": "Additional private signet experimental auction fixture dedicated to repeatable hosted smoke runs with real AUCTION_BID transactions.",
   "currentBlockHeight": 128,
   "scenario": {
     "name": "canva",

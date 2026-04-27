@@ -14,7 +14,7 @@ The TypeScript identifiers still contain some older `reserved` names in a few
 internal places. Treat those as legacy implementation names, not product or
 launch vocabulary.
 
-The simulator still contains a legacy scheduled-catalog no-bid close state for
+The simulator still contains a legacy scheduled-catalog compatibility state for
 compatibility fixtures. That should not be presented as the current launch UX:
 in the user-started model, no auction exists until the opening bid confirms.
 
@@ -58,7 +58,7 @@ The simulator models:
 - minimum increment rules
 - stronger soft-close increment rules
 - soft-close extension
-- legacy scheduled-catalog no-bid close compatibility
+- legacy scheduled-catalog compatibility
 - bidder budget constraints in market scenarios
 - settlement into a winning bidder when a valid auction clears
 

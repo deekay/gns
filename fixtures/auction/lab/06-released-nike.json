@@ -1,5 +1,5 @@
 {
-  "title": "Legacy no-bid close · nike",
+  "title": "Legacy compatibility state · nike",
   "description": "Legacy scheduled-catalog fixture retained for compatibility tests. The current user-started auction model should not present this as a normal launch outcome.",
   "currentBlockHeight": 884321,
   "scenario": {

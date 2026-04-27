@@ -212,7 +212,7 @@ describe("experimental auction derivation", () => {
     });
   });
 
-  it("keeps legacy scheduled-catalog no-bid close behavior covered", () => {
+  it("keeps legacy scheduled-catalog compatibility behavior covered", () => {
     const policy = createDefaultLaunchAuctionPolicy();
     const catalogEntry = createExperimentalLaunchAuctionCatalogEntry(
       {

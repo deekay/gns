@@ -322,7 +322,7 @@ Implications:
 
 25. Same-block auction tie-break rule
 
-If two competing auction bids for the same lot are confirmed in the same block
+If two competing auction bids for the same name are confirmed in the same block
 and are otherwise tied under the auction rules, the bid appearing earlier in the
 block's transaction order wins.
 

@@ -128,7 +128,7 @@ Still open:
 
 - whether the current loser-release / winner-lock timing is the right final
   rule set
-- whether the legacy scheduled-catalog no-bid close path should be removed
+- whether the legacy scheduled-catalog compatibility path should be removed
   entirely or kept only for compatibility tests
 - whether transfers before maturity are allowed and under what constraints
 - whether any explicit post-win settlement or acknowledgement step is still

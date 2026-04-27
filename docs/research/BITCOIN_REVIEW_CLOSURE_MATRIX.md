@@ -65,7 +65,7 @@ These items are already in a reviewable state:
 - retired claim prototype as historical context
 - universal auction lead architecture
 - auction mechanics as an experimental but real system slice
-- legacy scheduled-catalog no-bid close only as compatibility context
+- legacy scheduled-catalog compatibility only as compatibility context
 - winner materialization into owned names
 
 ## Recommended First-Round Ask

@@ -177,7 +177,7 @@ Today we have:
 - chain-derived auction feed from observed `AUCTION_BID` transactions
 - stale-state rejection
 - same-bidder replacement derivation
-- legacy scheduled-catalog no-bid close coverage kept out of the launch story
+- legacy scheduled-catalog compatibility coverage kept out of the launch story
 - settled winner materialization into a live owned name
 - live private-signet smoke proving auction lifecycle behavior
 

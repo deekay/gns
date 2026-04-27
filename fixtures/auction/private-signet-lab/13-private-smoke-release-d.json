@@ -1,6 +1,6 @@
 {
-  "title": "Private smoke lot · release D",
-  "description": "Legacy private signet scheduled-catalog fixture dedicated to compatibility coverage for late-bid rejection after a no-bid close.",
+  "title": "Private smoke compatibility · release D",
+  "description": "Legacy private signet scheduled-catalog fixture dedicated to compatibility coverage for bid rejection after the old scheduled state expires.",
   "currentBlockHeight": 128,
   "scenario": {
     "name": "notion",

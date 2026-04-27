@@ -40,7 +40,7 @@ These are still temporary and should not be treated as frozen:
 - exact opening-bond floors
 - exact winner settlement duration
 - exact auction window length
-- whether to remove the legacy scheduled-catalog no-bid close path entirely or
+- whether to remove the legacy scheduled-catalog compatibility path entirely or
   keep it only as compatibility coverage
 - exact absolute increment floor
 - exact percentage increment floor

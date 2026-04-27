@@ -226,13 +226,13 @@ function assertAuctionStateAllowsWebsiteBidPackage(
 ): void {
   if (auctionState.phase === "closed_without_winner") {
     throw new Error(
-      `Prototype scheduled-lot state ${auctionState.normalizedName} from ${sourceLabel} is a legacy no-bid close and no longer accepts auction bids.`
+      `Prototype scheduled compatibility state ${auctionState.normalizedName} from ${sourceLabel} is outside the current user-started auction model and no longer accepts auction bid packages.`
     );
   }
 
   if (auctionState.phase === "settled") {
     throw new Error(
-      `Auction lot ${auctionState.normalizedName} from ${sourceLabel} is already settled and no longer accepts new bids.`
+      `Auction for ${auctionState.normalizedName} from ${sourceLabel} is already settled and no longer accepts new bids.`
     );
   }
 }

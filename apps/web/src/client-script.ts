@@ -383,7 +383,7 @@ async function bootstrap() {
       setAuctionPolicyControlsMessage(
         overrides.noBidReleaseBlocks == null
           ? "Using the current prototype timing defaults."
-          : "Preview updated. Legacy scheduled-lot no-bid timing is set to " + String(overrides.noBidReleaseBlocks) + " blocks for compatibility fixtures."
+          : "Preview updated. Legacy catalog compatibility timing is set to " + String(overrides.noBidReleaseBlocks) + " blocks for compatibility fixtures."
       );
     } catch (error) {
       setAuctionPolicyControlsMessage(describeError(error));
@@ -4623,7 +4623,7 @@ function renderAuctionLab() {
       String(auctionLab.cases.length) + " sample auction state" + (auctionLab.cases.length === 1 ? "" : "s"),
       activeOverrides.noBidReleaseBlocks == null
         ? "showing current simulator defaults"
-        : "legacy no-bid timing override active"
+        : "legacy catalog compatibility timing override active"
     ].join(" · ")
   );
   elements.auctionLabList.innerHTML = auctionLab.cases
@@ -4648,7 +4648,7 @@ function renderExperimentalAuctionFeed() {
   }
 
   elements.experimentalAuctionList.classList.remove("empty");
-  const visibleAuctions = payload.auctions.filter((auction) => !isLegacyNoBidAuctionEntry(auction));
+  const visibleAuctions = payload.auctions.filter((auction) => !isLegacyScheduledAuctionEntry(auction));
   setText(
     elements.experimentalAuctionMeta,
     [
@@ -4662,7 +4662,7 @@ function renderExperimentalAuctionFeed() {
     .join("");
 }
 
-function isLegacyNoBidAuctionEntry(entry) {
+function isLegacyScheduledAuctionEntry(entry) {
   if (!entry || typeof entry !== "object") {
     return false;
   }
@@ -4676,7 +4676,10 @@ function isLegacyNoBidAuctionEntry(entry) {
     .join(" ")
     .toLowerCase();
 
-  return text.includes("legacy no-bid")
+  return text.includes("06-released")
+    || text.includes("private-smoke-release")
+    || text.includes("legacy compatibility")
+    || text.includes("legacy no-bid")
     || text.includes("no-bid close")
     || text.includes("no-winner");
 }
@@ -4824,7 +4827,7 @@ function renderAuctionCaseCard(auctionCase) {
       : phase === "awaiting_opening_bid"
         ? "Starts with a valid opening bid"
         : phase === "closed_without_winner"
-          ? "Legacy scheduled-lot close"
+          ? "Legacy compatibility state"
           : (stateView.blocksUntilClose == null ? "-" : String(stateView.blocksUntilClose));
 
   return [
@@ -4897,7 +4900,7 @@ function renderExperimentalAuctionCard(auction) {
         : "Settlement";
   const settlementValue =
     phase === "closed_without_winner"
-      ? (auction.noBidReleaseBlock == null ? "Legacy no-bid close" : "legacy close at block " + String(auction.noBidReleaseBlock))
+      ? (auction.noBidReleaseBlock == null ? "Legacy compatibility state" : "legacy compatibility block " + String(auction.noBidReleaseBlock))
       : phase === "settled"
       ? (auction.winnerBondReleaseBlock == null ? "-" : "block " + String(auction.winnerBondReleaseBlock))
       : "Not settled";
@@ -5048,7 +5051,7 @@ function renderAuctionBidPackageComposer(input) {
       '<details class="detail-technical">',
       "  <summary>Auction bid packages unavailable</summary>",
       '  <div class="detail-technical-body">',
-      '    <p class="tx-panel-note">This is a legacy scheduled-lot state from the prototype catalog, not the current user-started auction model. No bid package is available here.</p>',
+      '    <p class="tx-panel-note">This is a legacy catalog compatibility state, not the current user-started auction model. No bid package is available here.</p>',
       "  </div>",
       "</details>"
     ].join("");

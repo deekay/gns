@@ -656,7 +656,7 @@ async function proxyExperimentalAuctionsJson(
       const record = payload as { auctions: unknown[] };
       writeJson(response, upstream.status, {
         ...record,
-        auctions: record.auctions.filter((entry) => !isLegacyNoBidAuctionEntry(entry))
+        auctions: record.auctions.filter((entry) => !isLegacyScheduledAuctionEntry(entry))
       });
       return;
     }
@@ -670,7 +670,7 @@ async function proxyExperimentalAuctionsJson(
   }
 }
 
-function isLegacyNoBidAuctionEntry(entry: unknown): boolean {
+function isLegacyScheduledAuctionEntry(entry: unknown): boolean {
   if (!entry || typeof entry !== "object") {
     return false;
   }
@@ -691,7 +691,10 @@ function isLegacyNoBidAuctionEntry(entry: unknown): boolean {
     .join(" ")
     .toLowerCase();
 
-  return text.includes("legacy no-bid")
+  return text.includes("06-released")
+    || text.includes("private-smoke-release")
+    || text.includes("legacy compatibility")
+    || text.includes("legacy no-bid")
     || text.includes("no-bid close")
     || text.includes("no-winner");
 }
@@ -721,17 +724,53 @@ async function readPrivateAuctionSmokeStatus(): Promise<unknown> {
 }
 
 function sanitizePrivateAuctionSmokeStatus(payload: unknown): unknown {
-  if (!payload || typeof payload !== "object") {
-    return payload;
+  const sanitized = sanitizePrivateAuctionSmokeStatusValue(payload);
+  if (!sanitized || typeof sanitized !== "object" || Array.isArray(sanitized)) {
+    return sanitized;
   }
 
-  const rest = { ...(payload as Record<string, unknown>) };
-  delete rest.releaseCheck;
   return {
-    ...rest,
+    ...(sanitized as Record<string, unknown>),
     message:
       "Private signet auction smoke covers opening bid, higher bid, settlement, value publication, transfer, and losing-bond violation checks."
   };
+}
+
+function sanitizePrivateAuctionSmokeStatusValue(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map((entry) => sanitizePrivateAuctionSmokeStatusValue(entry));
+  }
+
+  if (!value || typeof value !== "object") {
+    return sanitizePrivateAuctionSmokeStatusText(value);
+  }
+
+  const sanitized: Record<string, unknown> = {};
+  for (const [key, entry] of Object.entries(value as Record<string, unknown>)) {
+    if (
+      key === "releaseCheck"
+      || key === "noBidReleaseBlock"
+      || key === "blocksUntilNoBidRelease"
+    ) {
+      continue;
+    }
+    sanitized[key] = sanitizePrivateAuctionSmokeStatusValue(entry);
+  }
+  return sanitized;
+}
+
+function sanitizePrivateAuctionSmokeStatusText(value: unknown): unknown {
+  if (typeof value !== "string") {
+    return value;
+  }
+
+  return value
+    .replaceAll("Private smoke lot", "Private smoke auction")
+    .replaceAll("auction lot", "auction fixture")
+    .replaceAll("scheduled-lot", "scheduled-catalog")
+    .replaceAll("no-bid close", "legacy scheduled expiry")
+    .replaceAll("no-winner close", "legacy scheduled expiry")
+    .replaceAll("closed without winner", "legacy scheduled state expired");
 }
 
 function writeHtml(response: import("node:http").ServerResponse, html: string): void {

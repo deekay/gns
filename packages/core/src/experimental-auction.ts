@@ -889,7 +889,7 @@ export function formatExperimentalLaunchAuctionPhaseLabel(
     case "awaiting_opening_bid":
       return "Eligible to open";
     case "closed_without_winner":
-      return "Legacy no-bid close";
+      return "Legacy compatibility state";
     case "live_bidding":
       return "Live bidding";
     case "soft_close":

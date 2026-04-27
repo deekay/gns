@@ -95,7 +95,7 @@ describe("loadLaunchAuctionLab", () => {
     ).toThrow(/already settled/i);
   });
 
-  it("keeps legacy no-bid close states out of the public lab payload", async () => {
+  it("keeps legacy scheduled compatibility states out of the public lab payload", async () => {
     const payload = await loadLaunchAuctionLab({
       policyOverrides: {
         noBidReleaseBlocks: 10_000
