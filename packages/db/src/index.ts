@@ -13,7 +13,7 @@ export interface PersistedNameRecord {
   readonly name: string;
   readonly status: "pending" | "immature" | "mature" | "invalid";
   readonly currentOwnerPubkey: string;
-  readonly acquisitionKind?: "claim" | "auction";
+  readonly acquisitionKind?: "auction";
   readonly acquisitionAuctionId?: string;
   readonly acquisitionAuctionLotCommitment?: string;
   readonly acquisitionAuctionBidTxid?: string;
@@ -32,31 +32,6 @@ export interface PersistedNameRecord {
   readonly winningCommitTxIndex: number;
 }
 
-export interface PersistedPendingCommit {
-  readonly txid: string;
-  readonly bondVout: number;
-  readonly bondValueSats: string | null;
-  readonly ownerPubkey: string;
-  readonly commitHash: string;
-  readonly blockHeight: number;
-  readonly txIndex: number;
-  readonly revealDeadlineHeight: number;
-}
-
-export interface PersistedPendingBatchAnchor {
-  readonly txid: string;
-  readonly merkleRoot: string;
-  readonly leafCount: number;
-  readonly bondOutputs: ReadonlyArray<{
-    readonly vout: number;
-    readonly bondValueSats: string | null;
-  }>;
-  readonly revealedBondVouts: readonly number[];
-  readonly blockHeight: number;
-  readonly txIndex: number;
-  readonly revealDeadlineHeight: number;
-}
-
 export interface PersistedTransactionOutput {
   readonly valueSats: string;
   readonly scriptType: "op_return" | "payment" | "unknown";
@@ -64,25 +39,6 @@ export interface PersistedTransactionOutput {
 }
 
 export type PersistedTransactionProvenancePayload =
-  | {
-      readonly bondVout: number;
-      readonly ownerPubkey: string;
-      readonly commitHash: string;
-    }
-  | {
-      readonly commitTxid: string;
-      readonly nonce: string;
-      readonly name: string;
-    }
-  | {
-      readonly anchorTxid: string;
-      readonly ownerPubkey: string;
-      readonly nonce: string;
-      readonly bondVout: number;
-      readonly proofBytesLength: number;
-      readonly proofChunkCount: number;
-      readonly name: string;
-    }
   | {
       readonly prevStateTxid: string;
       readonly newOwnerPubkey: string;
@@ -92,17 +48,8 @@ export type PersistedTransactionProvenancePayload =
     }
   | {
       readonly flags: number;
-      readonly leafCount: number;
-      readonly merkleRoot: string;
-    }
-  | {
-      readonly chunkIndex: number;
-      readonly proofBytesHex: string;
-    }
-  | {
-      readonly flags: number;
       readonly bondVout: number;
-      readonly reservedLockBlocks: number;
+      readonly settlementLockBlocks: number;
       readonly bidAmountSats: string;
       readonly ownerPubkey: string;
       readonly auctionLotCommitment: string;
@@ -114,12 +61,7 @@ export interface PersistedTransactionProvenanceEvent {
   readonly vout: number;
   readonly type: number;
   readonly typeName:
-    | "COMMIT"
-    | "REVEAL"
     | "TRANSFER"
-    | "BATCH_ANCHOR"
-    | "BATCH_REVEAL"
-    | "REVEAL_PROOF_CHUNK"
     | "AUCTION_BID";
   readonly payload: PersistedTransactionProvenancePayload;
   readonly validationStatus: "applied" | "ignored";
@@ -156,8 +98,6 @@ export interface PersistedIndexerSnapshot {
   readonly currentBlockHash: string | null;
   readonly processedBlocks: number;
   readonly names: readonly PersistedNameRecord[];
-  readonly pendingCommits: readonly PersistedPendingCommit[];
-  readonly pendingBatchAnchors: readonly PersistedPendingBatchAnchor[];
   readonly spentOutpoints?: readonly PersistedSpentOutpointObservation[];
   readonly transactionProvenance: readonly PersistedTransactionProvenance[];
   readonly recentCheckpoints?: readonly PersistedIndexerSnapshotState[];
@@ -169,8 +109,6 @@ export interface PersistedIndexerSnapshotState {
   readonly currentBlockHash: string | null;
   readonly processedBlocks: number;
   readonly names: readonly PersistedNameRecord[];
-  readonly pendingCommits: readonly PersistedPendingCommit[];
-  readonly pendingBatchAnchors: readonly PersistedPendingBatchAnchor[];
   readonly spentOutpoints?: readonly PersistedSpentOutpointObservation[];
   readonly transactionProvenance: readonly PersistedTransactionProvenance[];
 }
@@ -213,8 +151,6 @@ export function parseIndexerSnapshot(input: unknown): PersistedIndexerSnapshot {
   const currentBlockHash = getNullableString(input, "currentBlockHash");
   const processedBlocks = getRequiredInteger(input, "processedBlocks");
   const names = getRequiredArray(input, "names");
-  const pendingCommits = getRequiredArray(input, "pendingCommits");
-  const pendingBatchAnchors = getOptionalArray(input, "pendingBatchAnchors") ?? [];
   const spentOutpoints = getOptionalArray(input, "spentOutpoints") ?? [];
   const transactionProvenance = getOptionalArray(input, "transactionProvenance") ?? [];
   const recentCheckpoints = getOptionalArray(input, "recentCheckpoints");
@@ -225,8 +161,6 @@ export function parseIndexerSnapshot(input: unknown): PersistedIndexerSnapshot {
     currentBlockHash,
     processedBlocks,
     names: names.map(parseNameRecordSnapshot),
-    pendingCommits: pendingCommits.map(parsePendingCommitRecord),
-    pendingBatchAnchors: pendingBatchAnchors.map(parsePendingBatchAnchorRecord),
     spentOutpoints: spentOutpoints.map(parseSpentOutpointObservation),
     transactionProvenance: transactionProvenance.map(parseTransactionProvenanceRecord),
     ...(recentCheckpoints === undefined
@@ -243,8 +177,6 @@ function parseIndexerSnapshotState(input: unknown): PersistedIndexerSnapshotStat
     currentBlockHash: parsed.currentBlockHash,
     processedBlocks: parsed.processedBlocks,
     names: parsed.names,
-    pendingCommits: parsed.pendingCommits,
-    pendingBatchAnchors: parsed.pendingBatchAnchors,
     ...(parsed.spentOutpoints === undefined ? {} : { spentOutpoints: parsed.spentOutpoints }),
     transactionProvenance: parsed.transactionProvenance
   };
@@ -427,57 +359,6 @@ function quoteIdentifier(value: string): string {
   return `"${value.replaceAll('"', '""')}"`;
 }
 
-function parsePendingCommitRecord(input: unknown): PersistedIndexerSnapshot["pendingCommits"][number] {
-  if (!isRecord(input)) {
-    throw new Error("pending commit record must be an object");
-  }
-
-  return {
-    txid: getRequiredString(input, "txid"),
-    bondVout: getRequiredInteger(input, "bondVout"),
-    bondValueSats: getNullableString(input, "bondValueSats"),
-    ownerPubkey: getRequiredString(input, "ownerPubkey"),
-    commitHash: getRequiredString(input, "commitHash"),
-    blockHeight: getRequiredInteger(input, "blockHeight"),
-    txIndex: getRequiredInteger(input, "txIndex"),
-    revealDeadlineHeight: getRequiredInteger(input, "revealDeadlineHeight")
-  };
-}
-
-function parsePendingBatchAnchorRecord(
-  input: unknown
-): PersistedIndexerSnapshot["pendingBatchAnchors"][number] {
-  if (!isRecord(input)) {
-    throw new Error("pending batch anchor record must be an object");
-  }
-
-  return {
-    txid: getRequiredString(input, "txid"),
-    merkleRoot: getRequiredString(input, "merkleRoot"),
-    leafCount: getRequiredInteger(input, "leafCount"),
-    bondOutputs: getRequiredArray(input, "bondOutputs").map((output) => {
-      if (!isRecord(output)) {
-        throw new Error("pending batch anchor bond output must be an object");
-      }
-
-      return {
-        vout: getRequiredInteger(output, "vout"),
-        bondValueSats: getNullableString(output, "bondValueSats")
-      };
-    }),
-    revealedBondVouts: getRequiredArray(input, "revealedBondVouts").map((value) => {
-      if (typeof value !== "number" || !Number.isInteger(value)) {
-        throw new Error("pending batch anchor revealedBondVouts entries must be integers");
-      }
-
-      return value;
-    }),
-    blockHeight: getRequiredInteger(input, "blockHeight"),
-    txIndex: getRequiredInteger(input, "txIndex"),
-    revealDeadlineHeight: getRequiredInteger(input, "revealDeadlineHeight")
-  };
-}
-
 function parseSpentOutpointObservation(
   input: unknown
 ): PersistedSpentOutpointObservation {
@@ -582,16 +463,11 @@ function parseTransactionProvenanceEvent(
 
   const typeName = input.typeName;
   if (
-    typeName !== "COMMIT" &&
-    typeName !== "REVEAL" &&
     typeName !== "TRANSFER" &&
-    typeName !== "BATCH_ANCHOR" &&
-    typeName !== "BATCH_REVEAL" &&
-    typeName !== "REVEAL_PROOF_CHUNK" &&
     typeName !== "AUCTION_BID"
   ) {
     throw new Error(
-      "transaction provenance event typeName must be COMMIT, REVEAL, TRANSFER, BATCH_ANCHOR, BATCH_REVEAL, REVEAL_PROOF_CHUNK, or AUCTION_BID"
+      "transaction provenance event typeName must be TRANSFER or AUCTION_BID"
     );
   }
 
@@ -614,59 +490,16 @@ function parseTransactionProvenanceEvent(
 function parseTransactionProvenancePayload(
   input: Record<string, unknown>
 ): PersistedTransactionProvenancePayload {
-  if ("anchorTxid" in input) {
-    return {
-      anchorTxid: getRequiredString(input, "anchorTxid"),
-      ownerPubkey: getRequiredString(input, "ownerPubkey"),
-      nonce: getRequiredString(input, "nonce"),
-      bondVout: getRequiredInteger(input, "bondVout"),
-      proofBytesLength: getRequiredInteger(input, "proofBytesLength"),
-      proofChunkCount: getRequiredInteger(input, "proofChunkCount"),
-      name: getRequiredString(input, "name")
-    };
-  }
-
-  if ("merkleRoot" in input) {
-    return {
-      flags: getRequiredInteger(input, "flags"),
-      leafCount: getRequiredInteger(input, "leafCount"),
-      merkleRoot: getRequiredString(input, "merkleRoot")
-    };
-  }
-
-  if ("chunkIndex" in input) {
-    return {
-      chunkIndex: getRequiredInteger(input, "chunkIndex"),
-      proofBytesHex: getRequiredString(input, "proofBytesHex")
-    };
-  }
-
   if ("auctionCommitment" in input) {
     return {
       flags: getRequiredInteger(input, "flags"),
       bondVout: getRequiredInteger(input, "bondVout"),
-      reservedLockBlocks: getRequiredInteger(input, "reservedLockBlocks"),
+      settlementLockBlocks: getRequiredInteger(input, "settlementLockBlocks"),
       bidAmountSats: getRequiredString(input, "bidAmountSats"),
       ownerPubkey: getRequiredString(input, "ownerPubkey"),
       auctionLotCommitment: getRequiredString(input, "auctionLotCommitment"),
       auctionCommitment: getRequiredString(input, "auctionCommitment"),
       bidderCommitment: getRequiredString(input, "bidderCommitment")
-    };
-  }
-
-  if ("bondVout" in input) {
-    return {
-      bondVout: getRequiredInteger(input, "bondVout"),
-      ownerPubkey: getRequiredString(input, "ownerPubkey"),
-      commitHash: getRequiredString(input, "commitHash")
-    };
-  }
-
-  if ("nonce" in input) {
-    return {
-      commitTxid: getRequiredString(input, "commitTxid"),
-      nonce: getRequiredString(input, "nonce"),
-      name: getRequiredString(input, "name")
     };
   }
 
@@ -816,8 +649,8 @@ function getOptionalAuctionAcquisitionKind(
     return undefined;
   }
 
-  if (value !== "claim" && value !== "auction") {
-    throw new Error(`${key} must be claim or auction when present`);
+  if (value !== "auction") {
+    throw new Error(`${key} must be auction when present`);
   }
 
   return value;

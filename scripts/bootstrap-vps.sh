@@ -127,7 +127,7 @@ maxmempool=${MAX_MEMPOOL_MB}
 rpcbind=127.0.0.1
 rpcallowip=127.0.0.1
 rpcport=${RPC_PORT}
-rpcuser=gnsrpc
+rpcuser=ontrpc
 rpcpassword=\${RPC_PASSWORD}
 zmqpubrawblock=tcp://127.0.0.1:28332
 zmqpubrawtx=tcp://127.0.0.1:28333
@@ -170,12 +170,11 @@ cat >/etc/ont/ont.env <<ENVFILE
 ONT_SOURCE_MODE=rpc
 ONT_EXPECT_CHAIN=signet
 ONT_BITCOIN_RPC_URL=http://127.0.0.1:${RPC_PORT}
-ONT_BITCOIN_RPC_USERNAME=gnsrpc
+ONT_BITCOIN_RPC_USERNAME=ontrpc
 ONT_BITCOIN_RPC_PASSWORD=\${RPC_PASSWORD}
 ONT_LAUNCH_HEIGHT=\${CURRENT_BLOCKS}
 ONT_RESOLVER_PORT=${RESOLVER_PORT}
 ONT_WEB_PORT=${WEB_PORT}
-ONT_WEB_PRIVATE_BATCH_SMOKE_STATUS_PATH=/var/lib/ont/private-batch-smoke-summary.json
 ONT_SNAPSHOT_PATH=/var/lib/ont/resolver-snapshot.json
 ONT_VALUE_STORE_PATH=/var/lib/ont/value-records.json
 ENVFILE

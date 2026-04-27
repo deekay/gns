@@ -1,0 +1,17 @@
+{
+  "title": "Pending unlock · nvidia",
+  "description": "Launch auction before its unlock block. This is the state before any valid opening bid can be accepted.",
+  "currentBlockHeight": 839990,
+  "scenario": {
+    "name": "nvidia",
+    "auctionClassId": "launch_name",
+    "unlockBlock": 840000,
+    "bidAttempts": [
+      {
+        "bidderId": "alpha",
+        "blockHeight": 840010,
+        "amountSats": "1000000000"
+      }
+    ]
+  }
+}

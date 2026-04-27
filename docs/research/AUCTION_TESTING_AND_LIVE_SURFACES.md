@@ -13,10 +13,10 @@ This matters because it is easy to blur together three different things:
 
 Related notes:
 
-- [TESTING.md](/Users/davidking/dev/gns/docs/core/TESTING.md)
-- [ONT_IMPLEMENTATION_AND_VALIDATION.md](/Users/davidking/dev/gns/docs/research/ONT_IMPLEMENTATION_AND_VALIDATION.md)
-- [RESERVED_AUCTION_SIMULATOR.md](/Users/davidking/dev/gns/docs/research/RESERVED_AUCTION_SIMULATOR.md)
-- [AUCTION_IMPLEMENTATION_GAP_LIST.md](/Users/davidking/dev/gns/docs/research/AUCTION_IMPLEMENTATION_GAP_LIST.md)
+- [TESTING.md](../core/TESTING.md)
+- [ONT_IMPLEMENTATION_AND_VALIDATION.md](./ONT_IMPLEMENTATION_AND_VALIDATION.md)
+- [AUCTION_IMPLEMENTATION_GAP_LIST.md](./AUCTION_IMPLEMENTATION_GAP_LIST.md)
+- [AUCTION_IMPLEMENTATION_GAP_LIST.md](./AUCTION_IMPLEMENTATION_GAP_LIST.md)
 
 ## Short Answer
 
@@ -97,8 +97,8 @@ It currently proves:
 - winner value publication
 - post-release transfer
 - recipient value publication
-- a separate no-bid lot releasing to the ordinary lane
-- a deliberately late bid rejected as `released_to_ordinary_lane`
+- a separate no-bid lot closing without a winner
+- a deliberately late bid rejected as `closed_without_winner`
 
 This is the strongest live demo evidence we currently have.
 
@@ -120,7 +120,7 @@ At the time of this audit, the public lab API includes explicit cases for:
 - `live_bidding`
 - `soft_close`
 - `settled`
-- `released_to_ordinary_lane`
+- `closed_without_winner`
 
 This is the right place to say:
 
@@ -142,12 +142,12 @@ That means the set of visible phases depends on:
 
 - current private chain height
 - current dedicated smoke lots
-- whether a lot has already been used, settled, or released
+- whether a lot has already been used, settled, or closed
 
 The private feed is now maintained in two ways:
 
 - the private auction smoke leaves behind real `settled` and
-  `released_to_ordinary_lane` outcomes
+  `closed_without_winner` outcomes
 - a dedicated private phase-gallery refresh script parks real lots in
   `pending_unlock`, `awaiting_opening_bid`, `live_bidding`, and `soft_close`
 
@@ -184,7 +184,7 @@ It gives a real observed end-to-end lifecycle record with:
 - winner value record
 - post-release transfer
 - post-transfer value record
-- no-bid release-valve rejection
+- no-winner late-bid rejection
 
 So even if the parked lots drift and need refreshing, the smoke summary still
 proves the key live transitions.
@@ -193,7 +193,7 @@ proves the key live transitions.
 
 The clearest accurate wording today is:
 
-> ONT reserved auctions are tested across simulator, package, regtest, and
+> ONT auctions are tested across simulator, package, regtest, and
 > hosted private-signet layers. The public auction lab shows all major phases
 > through curated fixture cases, while the private signet live feed and smoke
 > summary show real chain-derived examples across the same major phases on the

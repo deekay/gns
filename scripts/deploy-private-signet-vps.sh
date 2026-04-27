@@ -13,9 +13,35 @@ Examples:
   ./scripts/deploy-private-signet-vps.sh root@example.com ~/.ssh/your_key
 
 Environment:
-  ONT_SSH_TARGET  Default SSH target when the first argument is omitted.
-  ONT_SSH_KEY     Optional SSH key path when the second argument is omitted.
+  ONT_SSH_TARGET         Default SSH target when the first argument is omitted.
+  ONT_SSH_KEY            Optional SSH key path when the second argument is omitted.
+  ONT_DEPLOY_ALLOW_DIRTY Set to 1 to deploy an uncommitted working tree. Default: 0
 EOF
+}
+
+require_clean_git_tree() {
+  if ! git -C "$ROOT_DIR" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    echo "Skipping Git cleanliness check because $ROOT_DIR is not a Git worktree." >&2
+    return
+  fi
+
+  local sha
+  sha="$(git -C "$ROOT_DIR" rev-parse --short HEAD)"
+
+  if [[ "${ONT_DEPLOY_ALLOW_DIRTY:-0}" == "1" ]]; then
+    echo "Deploying Git SHA $sha with ONT_DEPLOY_ALLOW_DIRTY=1."
+    return
+  fi
+
+  if ! git -C "$ROOT_DIR" diff --quiet \
+    || ! git -C "$ROOT_DIR" diff --cached --quiet \
+    || [[ -n "$(git -C "$ROOT_DIR" ls-files --others --exclude-standard)" ]]; then
+    echo "Refusing to deploy dirty working tree at Git SHA $sha." >&2
+    echo "Commit or stash changes first, or set ONT_DEPLOY_ALLOW_DIRTY=1 for an intentional prototype deploy." >&2
+    exit 1
+  fi
+
+  echo "Deploying clean Git SHA $sha."
 }
 
 if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
@@ -44,6 +70,8 @@ if [[ -n "$SSH_KEY_PATH" && ! -f "$SSH_KEY_PATH" ]]; then
   exit 1
 fi
 
+require_clean_git_tree
+
 SSH_ARGS=(
   -o StrictHostKeyChecking=accept-new
 )
@@ -58,7 +86,11 @@ fi
 
 echo "Deploying private signet services to $REMOTE"
 
-RELEASE_DIR=$(ssh "${SSH_ARGS[@]}" "$REMOTE" 'install -d /opt/ont/releases && mktemp -d /opt/ont/releases/private-XXXXXX')
+RELEASE_DIR=$(ssh "${SSH_ARGS[@]}" "$REMOTE" '
+  release_base=/opt/ont/releases
+  install -d "$release_base"
+  mktemp -d "$release_base/private-XXXXXX"
+')
 
 rsync -az --delete \
   --exclude '.git' \
@@ -114,21 +146,36 @@ echo "Waiting for deploy lock: $LOCK_PATH"
 exec 9>"$LOCK_PATH"
 flock 9
 
-install -d /opt/ont/app
-rsync -a --delete "${RELEASE_DIR}/" /opt/ont/app/
-chown -R ont:ont /opt/ont/app
-su -s /bin/bash ont -c 'cd /opt/ont/app && npm ci --no-audit --no-fund'
+APP_PREFIX=ont
+APP_USER=ont
+APP_ROOT=/opt/ont/app
+DATA_DIR=/var/lib/ont
+PRIVATE_ENV=/etc/ont/ont-private.env
+
+PRIVATE_RESOLVER_SERVICE="${APP_PREFIX}-private-resolver.service"
+PRIVATE_WEB_SERVICE="${APP_PREFIX}-private-web.service"
+AUTO_MINE_BIN="/usr/local/bin/${APP_PREFIX}-private-signet-auto-mine"
+AUTO_MINE_ENV="/etc/default/${APP_PREFIX}-private-signet-auto-mine"
+AUTO_MINE_SERVICE="${APP_PREFIX}-private-signet-auto-mine.service"
+
+echo "Using ${APP_PREFIX} private-signet service layout at ${APP_ROOT}."
+
+install -d "$APP_ROOT"
+rsync -a --delete "${RELEASE_DIR}/" "$APP_ROOT/"
+chown -R "${APP_USER}:${APP_USER}" "$APP_ROOT"
+su -s /bin/bash "$APP_USER" -c "cd '$APP_ROOT' && npm ci --no-audit --no-fund"
 
 if [[ -f /etc/bitcoin-private-signet.conf ]]; then
-  install -m 755 /opt/ont/app/scripts/private-signet-auto-mine.sh /usr/local/bin/ont-private-signet-auto-mine
-  install -m 755 /opt/ont/app/scripts/install-private-signet-electrum.sh /usr/local/bin/install-private-signet-electrum
-  cat >/etc/default/ont-private-signet-auto-mine <<'ENVFILE'
+  install -m 755 "${APP_ROOT}/scripts/private-signet-auto-mine.sh" "$AUTO_MINE_BIN"
+  install -m 755 "${APP_ROOT}/scripts/install-private-signet-electrum.sh" /usr/local/bin/install-private-signet-electrum
+cat >"$AUTO_MINE_ENV" <<'ENVFILE'
 ONT_PRIVATE_SIGNET_AUTO_MINE_INTERVAL_SECONDS=30
+ONT_PRIVATE_SIGNET_AUTO_MINE_HEARTBEAT_SECONDS=600
 ENVFILE
-  chown root:root /etc/default/ont-private-signet-auto-mine
-  chmod 644 /etc/default/ont-private-signet-auto-mine
+  chown root:root "$AUTO_MINE_ENV"
+  chmod 644 "$AUTO_MINE_ENV"
 
-  cat >/etc/systemd/system/ont-private-signet-auto-mine.service <<'SERVICE'
+  cat >"/etc/systemd/system/${AUTO_MINE_SERVICE}" <<SERVICE
 [Unit]
 Description=Open Name Tags private signet auto-miner
 After=bitcoind-private-signet.service
@@ -137,8 +184,8 @@ Requires=bitcoind-private-signet.service
 [Service]
 User=bitcoin
 Group=bitcoin
-EnvironmentFile=-/etc/default/ont-private-signet-auto-mine
-ExecStart=/usr/local/bin/ont-private-signet-auto-mine
+EnvironmentFile=-${AUTO_MINE_ENV}
+ExecStart=${AUTO_MINE_BIN}
 Restart=always
 RestartSec=5
 NoNewPrivileges=true
@@ -150,29 +197,28 @@ WantedBy=multi-user.target
 SERVICE
 
   systemctl daemon-reload
-  systemctl enable --now ont-private-signet-auto-mine.service
-  systemctl restart ont-private-signet-auto-mine.service
+  systemctl enable --now "$AUTO_MINE_SERVICE"
+  systemctl restart "$AUTO_MINE_SERVICE"
   ONT_PRIVATE_SIGNET_ELECTRUM_PORT="${ELECTRUM_PORT}" /usr/local/bin/install-private-signet-electrum
 
-  if [[ -f /etc/ont/ont-private.env ]]; then
-    upsert_env /etc/ont/ont-private.env ONT_EXPERIMENTAL_AUCTION_FIXTURE_DIR /opt/ont/app/fixtures/auction/private-signet-lab
-    upsert_env /etc/ont/ont-private.env ONT_EXPERIMENTAL_AUCTION_BASE_WINDOW_BLOCKS 8
-    upsert_env /etc/ont/ont-private.env ONT_EXPERIMENTAL_AUCTION_SOFT_CLOSE_EXTENSION_BLOCKS 4
-    upsert_env /etc/ont/ont-private.env ONT_EXPERIMENTAL_AUCTION_NO_BID_RELEASE_BLOCKS 16
-    upsert_env /etc/ont/ont-private.env ONT_EXPERIMENTAL_AUCTION_TOP_COLLISION_LOCK_BLOCKS 24
-    upsert_env /etc/ont/ont-private.env ONT_EXPERIMENTAL_AUCTION_MAJOR_EXISTING_NAME_LOCK_BLOCKS 12
-    upsert_env /etc/ont/ont-private.env ONT_EXPERIMENTAL_AUCTION_PUBLIC_IDENTITY_LOCK_BLOCKS 8
-    upsert_env /etc/ont/ont-private.env ONT_WEB_PRIVATE_SIGNET_ELECTRUM_ENDPOINT "${PUBLIC_HOST}:${ELECTRUM_PORT}:t"
-    upsert_env /etc/ont/ont-private.env ONT_WEB_PRIVATE_BATCH_SMOKE_STATUS_PATH /var/lib/ont/private-batch-smoke-summary.json
-    upsert_env /etc/ont/ont-private.env ONT_WEB_PRIVATE_AUCTION_SMOKE_STATUS_PATH /var/lib/ont/private-auction-smoke-summary.json
+  if [[ -f "$PRIVATE_ENV" ]]; then
+    upsert_env "$PRIVATE_ENV" ONT_EXPERIMENTAL_AUCTION_FIXTURE_DIR "${APP_ROOT}/fixtures/auction/private-signet-lab"
+    upsert_env "$PRIVATE_ENV" ONT_EXPERIMENTAL_AUCTION_BASE_WINDOW_BLOCKS 30
+    upsert_env "$PRIVATE_ENV" ONT_EXPERIMENTAL_AUCTION_SOFT_CLOSE_EXTENSION_BLOCKS 28
+    upsert_env "$PRIVATE_ENV" ONT_EXPERIMENTAL_AUCTION_NO_BID_RELEASE_BLOCKS 80
+    upsert_env "$PRIVATE_ENV" ONT_EXPERIMENTAL_AUCTION_TOP_COLLISION_LOCK_BLOCKS 24
+    upsert_env "$PRIVATE_ENV" ONT_EXPERIMENTAL_AUCTION_MAJOR_EXISTING_NAME_LOCK_BLOCKS 12
+    upsert_env "$PRIVATE_ENV" ONT_EXPERIMENTAL_AUCTION_PUBLIC_IDENTITY_LOCK_BLOCKS 8
+    upsert_env "$PRIVATE_ENV" ONT_WEB_PRIVATE_SIGNET_ELECTRUM_ENDPOINT "${PUBLIC_HOST}:${ELECTRUM_PORT}:t"
+    upsert_env "$PRIVATE_ENV" ONT_WEB_PRIVATE_AUCTION_SMOKE_STATUS_PATH "${DATA_DIR}/private-auction-smoke-summary.json"
   fi
 fi
 
-systemctl restart ont-private-resolver.service ont-private-web.service
+systemctl restart "$PRIVATE_RESOLVER_SERVICE" "$PRIVATE_WEB_SERVICE"
 
-WEB_PORT=$(env_value ONT_WEB_PORT /etc/ont/ont-private.env)
-RESOLVER_PORT=$(env_value ONT_RESOLVER_PORT /etc/ont/ont-private.env)
-WEB_BASE_PATH=$(env_value ONT_WEB_BASE_PATH /etc/ont/ont-private.env)
+WEB_PORT=$(env_value ONT_WEB_PORT "$PRIVATE_ENV")
+RESOLVER_PORT=$(env_value ONT_RESOLVER_PORT "$PRIVATE_ENV")
+WEB_BASE_PATH=$(env_value ONT_WEB_BASE_PATH "$PRIVATE_ENV")
 
 wait_for_http() {
   local url="$1"

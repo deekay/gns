@@ -9,7 +9,7 @@
       {
         "auctionId": "openai-main",
         "name": "openai",
-        "reservedClassId": "major_existing_name",
+        "auctionClassId": "launch_name",
         "unlockBlock": 900000,
         "bidAttempts": [
           {
@@ -27,7 +27,7 @@
       {
         "auctionId": "tyler-side",
         "name": "tylercowen",
-        "reservedClassId": "public_identity",
+        "auctionClassId": "launch_name",
         "unlockBlock": 900050,
         "bidAttempts": [
           {
@@ -45,7 +45,7 @@
       {
         "auctionId": "garry-followup",
         "name": "garrytan",
-        "reservedClassId": "public_identity",
+        "auctionClassId": "launch_name",
         "unlockBlock": 904500,
         "bidAttempts": [
           {

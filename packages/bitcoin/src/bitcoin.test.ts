@@ -114,7 +114,7 @@ describe("parseBitcoinRpcBlock", () => {
               value: 0,
               scriptPubKey: {
                 type: "nulldata",
-                asm: "OP_RETURN 474e530102aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa000000000000002a05616c696365"
+                asm: "OP_RETURN 4f4e540102aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa000000000000002a05616c696365"
               }
             },
             {
@@ -146,7 +146,7 @@ describe("parseBitcoinRpcBlock", () => {
               valueSats: 0n,
               scriptType: "op_return",
               dataHex:
-                "474e530102aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa000000000000002a05616c696365"
+                "4f4e540102aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa000000000000002a05616c696365"
             },
             {
               valueSats: 12_500_000n,
@@ -178,7 +178,7 @@ describe("getOpReturnPayloads", () => {
         {
           valueSats: 0n,
           scriptType: "op_return",
-          dataHex: "474e53"
+          dataHex: "4f4e54"
         }
       ]
     });
@@ -186,7 +186,7 @@ describe("getOpReturnPayloads", () => {
     expect(payloads).toEqual([
       {
         vout: 2,
-        payload: Uint8Array.from([0x47, 0x4e, 0x53])
+        payload: Uint8Array.from([0x4f, 0x4e, 0x54])
       }
     ]);
   });
@@ -257,7 +257,7 @@ describe("Esplora-backed block loading", () => {
               {
                 value: 0,
                 scriptpubkey_type: "op_return",
-                scriptpubkey_asm: "OP_RETURN 474e53"
+                scriptpubkey_asm: "OP_RETURN 4f4e54"
               }
             ]
           }),
@@ -313,7 +313,7 @@ describe("Esplora-backed block loading", () => {
             inputs: [{ txid: "prevtxid100", vout: 1, coinbase: false }],
             outputs: [
               { valueSats: 5000n, scriptType: "payment" },
-              { valueSats: 0n, scriptType: "op_return", dataHex: "474e53" }
+              { valueSats: 0n, scriptType: "op_return", dataHex: "4f4e54" }
             ]
           }
         ]

@@ -3,13 +3,13 @@ import { fileURLToPath } from "node:url";
 
 import { createAuctionBidPackage, type AuctionBidPackage } from "@ont/protocol";
 import {
-  createDefaultReservedAuctionPolicy,
-  parseReservedAuctionScenario,
-  serializeReservedAuctionPolicy,
-  serializeReservedAuctionStateAtBlock,
-  simulateReservedAuctionStateAtBlock,
-  type ReservedAuctionPolicy,
-  type SerializedReservedAuctionPolicy
+  createDefaultLaunchAuctionPolicy,
+  parseLaunchAuctionScenario,
+  serializeLaunchAuctionPolicy,
+  serializeLaunchAuctionStateAtBlock,
+  simulateLaunchAuctionStateAtBlock,
+  type LaunchAuctionPolicy,
+  type SerializedLaunchAuctionPolicy
 } from "@ont/core";
 
 interface AuctionLabFixtureFile {
@@ -23,23 +23,23 @@ export interface AuctionLabCase {
   readonly id: string;
   readonly title: string;
   readonly description: string;
-  readonly state: ReturnType<typeof serializeReservedAuctionStateAtBlock>;
+  readonly state: ReturnType<typeof serializeLaunchAuctionStateAtBlock>;
 }
 
-export interface ReservedAuctionLabPayload {
-  readonly kind: "reserved_auction_lab";
-  readonly policy: SerializedReservedAuctionPolicy;
+export interface LaunchAuctionLabPayload {
+  readonly kind: "auction_lab";
+  readonly policy: SerializedLaunchAuctionPolicy;
   readonly cases: ReadonlyArray<AuctionLabCase>;
 }
 
-export interface ReservedAuctionLabPolicyOverrides {
+export interface LaunchAuctionLabPolicyOverrides {
   readonly noBidReleaseBlocks?: number;
 }
 
 interface WebsiteAuctionBidPackageStateInput {
   readonly auctionId: string;
   readonly normalizedName: string;
-  readonly reservedClassId: string;
+  readonly auctionClassId: string;
   readonly classLabel: string;
   readonly currentBlockHeight: number;
   readonly phase: string;
@@ -50,24 +50,24 @@ interface WebsiteAuctionBidPackageStateInput {
   readonly currentLeaderBidderCommitment?: string | null;
   readonly currentHighestBidSats: string | null;
   readonly currentRequiredMinimumBidSats: string | null;
-  readonly reservedLockBlocks: number;
+  readonly settlementLockBlocks: number;
   readonly blocksUntilUnlock: number;
   readonly blocksUntilClose: number | null;
-  readonly ordinaryMinimumBidSats?: string;
+  readonly baseMinimumBidSats?: string;
 }
 
 const AUCTION_LAB_FIXTURE_DIR =
   process.env.ONT_EXPERIMENTAL_AUCTION_FIXTURE_DIR?.trim()
   || fileURLToPath(new URL("../../../fixtures/auction/lab", import.meta.url));
 
-export async function loadReservedAuctionLab(input?: {
-  readonly policyOverrides?: ReservedAuctionLabPolicyOverrides;
-}): Promise<ReservedAuctionLabPayload> {
-  const policy = applyReservedAuctionLabPolicyOverrides(
-    createDefaultReservedAuctionPolicy(),
+export async function loadLaunchAuctionLab(input?: {
+  readonly policyOverrides?: LaunchAuctionLabPolicyOverrides;
+}): Promise<LaunchAuctionLabPayload> {
+  const policy = applyLaunchAuctionLabPolicyOverrides(
+    createDefaultLaunchAuctionPolicy(),
     input?.policyOverrides
   );
-  const policyPayload = serializeReservedAuctionPolicy(policy);
+  const policyPayload = serializeLaunchAuctionPolicy(policy);
   const fixtureFileNames = (await readdir(AUCTION_LAB_FIXTURE_DIR))
     .filter((name) => name.endsWith(".json"))
     .sort((left, right) => left.localeCompare(right));
@@ -76,8 +76,8 @@ export async function loadReservedAuctionLab(input?: {
     fixtureFileNames.map(async (fileName) => {
       const raw = await readFile(`${AUCTION_LAB_FIXTURE_DIR}/${fileName}`, "utf8");
       const fixture = JSON.parse(raw) as AuctionLabFixtureFile;
-      const scenario = parseReservedAuctionScenario(fixture.scenario);
-      const state = simulateReservedAuctionStateAtBlock({
+      const scenario = parseLaunchAuctionScenario(fixture.scenario);
+      const state = simulateLaunchAuctionStateAtBlock({
         policy,
         scenario,
         currentBlockHeight: fixture.currentBlockHeight
@@ -87,26 +87,26 @@ export async function loadReservedAuctionLab(input?: {
         id: fileName.replace(/\.json$/u, ""),
         title: fixture.title,
         description: fixture.description,
-        state: serializeReservedAuctionStateAtBlock(state)
+        state: serializeLaunchAuctionStateAtBlock(state)
       } satisfies AuctionLabCase;
     })
   );
 
   return {
-    kind: "reserved_auction_lab",
+    kind: "auction_lab",
     policy: policyPayload,
     cases
   };
 }
 
-export async function createReservedAuctionLabBidPackage(input: {
+export async function createLaunchAuctionLabBidPackage(input: {
   readonly caseId: string;
   readonly bidderId: string;
   readonly ownerPubkey: string;
   readonly bidAmountSats: bigint | number | string;
-  readonly policyOverrides?: ReservedAuctionLabPolicyOverrides;
+  readonly policyOverrides?: LaunchAuctionLabPolicyOverrides;
 }): Promise<AuctionBidPackage> {
-  const payload = await loadReservedAuctionLab(
+  const payload = await loadLaunchAuctionLab(
     input.policyOverrides === undefined
       ? undefined
       : {
@@ -123,7 +123,7 @@ export async function createReservedAuctionLabBidPackage(input: {
     auctionState: {
       auctionId: auctionCase.id,
       normalizedName: auctionCase.state.normalizedName,
-      reservedClassId: auctionCase.state.reservedClassId,
+      auctionClassId: auctionCase.state.auctionClassId,
       classLabel: auctionCase.state.classLabel,
       currentBlockHeight: auctionCase.state.currentBlockHeight,
       phase: auctionCase.state.phase,
@@ -133,10 +133,10 @@ export async function createReservedAuctionLabBidPackage(input: {
       currentLeaderBidderId: auctionCase.state.currentLeaderBidderId,
       currentHighestBidSats: auctionCase.state.currentHighestBidSats,
       currentRequiredMinimumBidSats: auctionCase.state.currentRequiredMinimumBidSats,
-      reservedLockBlocks: auctionCase.state.reservedLockBlocks,
+      settlementLockBlocks: auctionCase.state.settlementLockBlocks,
       blocksUntilUnlock: auctionCase.state.blocksUntilUnlock,
       blocksUntilClose: auctionCase.state.blocksUntilClose,
-      ordinaryMinimumBidSats: auctionCase.state.ordinaryMinimumBidSats
+      baseMinimumBidSats: auctionCase.state.baseMinimumBidSats
     },
     bidderId: input.bidderId,
     ownerPubkey: input.ownerPubkey,
@@ -160,10 +160,10 @@ export function createExperimentalAuctionFeedBidPackage(input: {
   });
 }
 
-function applyReservedAuctionLabPolicyOverrides(
-  policy: ReservedAuctionPolicy,
-  overrides: ReservedAuctionLabPolicyOverrides | undefined
-): ReservedAuctionPolicy {
+function applyLaunchAuctionLabPolicyOverrides(
+  policy: LaunchAuctionPolicy,
+  overrides: LaunchAuctionLabPolicyOverrides | undefined
+): LaunchAuctionPolicy {
   if (!overrides || overrides.noBidReleaseBlocks === undefined) {
     return policy;
   }
@@ -189,7 +189,7 @@ function createWebsiteAuctionBidPackage(input: {
   return createAuctionBidPackage({
     auctionId: input.auctionState.auctionId,
     name: input.auctionState.normalizedName,
-    reservedClassId: input.auctionState.reservedClassId,
+    auctionClassId: input.auctionState.auctionClassId,
     classLabel: input.auctionState.classLabel,
     currentBlockHeight: input.auctionState.currentBlockHeight,
     phase: input.auctionState.phase as
@@ -208,7 +208,7 @@ function createWebsiteAuctionBidPackage(input: {
       : { currentLeaderBidderCommitment: input.auctionState.currentLeaderBidderCommitment }),
     currentHighestBidSats: input.auctionState.currentHighestBidSats,
     currentRequiredMinimumBidSats: input.auctionState.currentRequiredMinimumBidSats,
-    reservedLockBlocks: input.auctionState.reservedLockBlocks,
+    settlementLockBlocks: input.auctionState.settlementLockBlocks,
     blocksUntilUnlock: input.auctionState.blocksUntilUnlock,
     blocksUntilClose: input.auctionState.blocksUntilClose,
     bidderId: input.bidderId,
@@ -221,9 +221,9 @@ function assertAuctionStateAllowsWebsiteBidPackage(
   auctionState: WebsiteAuctionBidPackageStateInput,
   sourceLabel: string
 ): void {
-  if (auctionState.phase === "released_to_ordinary_lane") {
+  if (auctionState.phase === "closed_without_winner") {
     throw new Error(
-      `Auction lot ${auctionState.normalizedName} from ${sourceLabel} has already fallen back to the ordinary lane. Use the ordinary claim flow instead.`
+      `Auction lot ${auctionState.normalizedName} from ${sourceLabel} has already closed without a winner and no longer accepts auction bids.`
     );
   }
 

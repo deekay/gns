@@ -1,6 +1,29 @@
 # Open Name Tags / ONT Decision Log
 
-This file records protocol decisions that have been resolved during design work on Open Name Tags / ONT. It is intended to keep the evolving draft grounded in explicit decisions rather than conversational context.
+This file records protocol decisions and current working assumptions that have
+become explicit during design work on Open Name Tags / ONT. It is intended to
+keep the evolving draft grounded in written choices rather than conversational
+context.
+
+Related notes:
+
+- [LAUNCH_SPEC_V0.md](../research/LAUNCH_SPEC_V0.md)
+- [UNIVERSAL_AUCTION_LAUNCH_MODEL.md](../research/UNIVERSAL_AUCTION_LAUNCH_MODEL.md)
+- [BITCOIN_REVIEW_CLOSURE_MATRIX.md](../research/BITCOIN_REVIEW_CLOSURE_MATRIX.md)
+
+## How To Read This File
+
+This file now uses three buckets:
+
+- **Resolved decisions**
+  - stable enough that the project should speak and build as though they are
+    decided unless new evidence forces a revisit
+- **Current working assumptions**
+  - current lead direction for implementation, website framing, and external
+    review, but not yet an immutable launch freeze
+- **Open questions**
+  - still intentionally unresolved and not ready to be described as closed
+    decisions
 
 ## Resolved Decisions
 
@@ -54,6 +77,7 @@ Rules:
 - The successor bond output must contain at least the required bond amount.
 - The original claim height remains the maturity anchor.
 - If bond continuity breaks before maturity, the name is immediately released back to the unclaimed pool.
+- No two live names or pending claims may reference the same bond outpoint at the same time.
 
 Notes:
 - The successor bond amount may be topped up with extra inputs.
@@ -61,39 +85,28 @@ Notes:
 - The successor bond may be funded by the seller, the recipient, or any combination of transaction inputs, as long as the old bond outpoint is spent and the required new bond output is created in the same transaction.
 - Fees should be funded separately so the bonded amount is not accidentally reduced below threshold.
 
-6. Initial pairing rule
+6. Initial auction pairing rule
 
-The initial commit transaction must create both:
-- the claim commitment carried in OP_RETURN
-- the initial dedicated bond UTXO
+The winning bid transaction must establish both:
+- the name owner key carried in the auction bid payload
+- the dedicated bond UTXO that backs the name
 
-7. Commit/reveal requirement
+7. Auction-first allocation
 
-Initial claims use mandatory commit/reveal.
+Initial launch allocation uses auctions, not a separate direct-claim lane.
 
 Purpose:
-- Prevent miner and mempool front-running of visible plaintext name claims.
+- Let markets price scarce names.
+- Avoid maintaining a subjective reserved-name list.
+- Keep ordinary long-tail names reachable without special editorial decisions.
 
-Commit:
-- Confirms an OP_RETURN commitment to the claim.
-- Locks the required bond capital in the same transaction.
+8. Short-name wave
 
-Reveal:
-- Must reveal the committed name and nonce.
-- Must be confirmed within the reveal window.
-
-8. Reveal window
-
-Reveal window is 24 blocks after the commit confirms.
-
-Rules:
-- If commit confirms at height H, reveal must confirm by height H + 24.
-- If no valid reveal confirms in time, the claim expires immediately.
-- Availability during the reveal window is pending, not final.
+Names of length `1-4` are held for a later auction wave.
 
 9. Maturity anchor
 
-Maturity starts at the commit block height, since that is when the capital first becomes locked.
+Maturity starts from the winning auction state once the name has settled into ownership, since that is when the active owner bond becomes protocol-relevant.
 
 10. Bond pricing function shape
 
@@ -112,31 +125,38 @@ Formula under consideration:
 
 `bond_sats(length) = max(floor_sats, base_sats >> (length - 1))`
 
-12. Launch maturity
+12. Maturity duration binding
 
-Initial maturity for new claims is 52,000 blocks, about 1 year.
-
-13. Minimum maturity floor
-
-Minimum maturity for new claims is 4,000 blocks, about 4 weeks.
-
-14. Epoch length
-
-Epoch length is 52,000 blocks, about 1 year.
+Every claim receives a deterministic maturity duration from the launch rules in
+effect when its commit confirms.
 
 Rules:
-- Each epoch lasts 52,000 blocks.
-- Newly committed claims use the maturity duration assigned to their epoch.
-- Maturity duration halves each epoch until it reaches the minimum floor.
+- The maturity clock starts at the commit block height.
+- The maturity duration for a claim must be computable from pre-announced
+  objective protocol parameters.
+- The duration cannot be adjusted discretionarily after the claim is committed.
 
-Illustrative schedule:
-- Epoch 0: 52,000 blocks
-- Epoch 1: 26,000 blocks
-- Epoch 2: 13,000 blocks
-- Epoch 3: 6,500 blocks
-- Epoch 4+: 4,000-block floor
+Implications:
+- A claimant should know the maturity burden before committing.
+- An indexer should not need subjective context to decide when a name is mature.
+- The exact launch duration is a launch-parameter choice, not a reason to keep
+  the maturity rule itself vague.
 
-15. Immutability
+13. Prototype maturity schedule status
+
+The earlier epoch-halving schedule is a prototype capability and historical
+design path, not the current lead launch recommendation.
+
+Current status:
+- The codebase still supports test overrides and maturity-schedule experiments.
+- The current lead launch spec favors a simpler fixed ordinary lock, currently
+  around one year, rather than a visible epoch-halving schedule.
+- Any final maturity parameters must be frozen before launch.
+
+This keeps the implementation flexible during prototype work without implying
+that every prototype schedule is a launch commitment.
+
+14. Immutability
 
 Core economic and validity parameters are intended to be immutable once launched.
 
@@ -145,7 +165,7 @@ This includes:
 - bond floor
 - maturity schedule
 - epoch length
-- reveal window
+- auction timing rules
 - validity rules
 
 Any incompatible change after launch should be treated as a new protocol version or competing namespace, not a normal upgrade.
@@ -159,7 +179,7 @@ Testing recommendation:
 - use regtest, signet, testnet, or a clearly labeled experimental mainnet namespace/version for iteration
 - avoid creating ambiguity that experimental claims are part of the final canonical namespace
 
-16. Name syntax
+15. Name syntax
 
 Names are restricted to:
 
@@ -171,7 +191,7 @@ Rules:
 - Allowed alphabet size is 36.
 - No punctuation, separators, whitespace, or Unicode in v1.
 
-17. Ownership versus value placement
+16. Ownership versus value placement
 
 Bitcoin carries ownership events only. Optional values are off-chain by default.
 
@@ -180,7 +200,7 @@ Implications:
 - Routine value updates should not consume blockspace in v1.
 - Loss of off-chain value data does not affect on-chain ownership validity.
 
-18. Off-chain value authentication
+17. Off-chain value authentication
 
 Off-chain values are authenticated by signatures from the current owner key.
 
@@ -215,7 +235,7 @@ Rationale:
 - This mirrors the useful part of Keybase-style signature chains without
   requiring routine mutable value updates to be posted to Bitcoin.
 
-19. Value behavior on transfer
+18. Value behavior on transfer
 
 On transfer, the current off-chain value is cleared by default.
 
@@ -224,7 +244,7 @@ Rules:
 - A transfer format may support an explicit preserve signal, but preserve is not the default behavior.
 - After transfer, the new owner may publish a fresh value record under their own key and sequence space.
 
-20. Bitcoin footprint minimization
+19. Bitcoin footprint minimization
 
 The protocol should minimize on-chain footprint while preserving independent, trust-minimized ownership verification.
 
@@ -234,7 +254,7 @@ Implications:
 - Prefer small ownership events over full on-chain application state.
 - Make blockspace and UTXO trade-offs explicit in the draft for Bitcoin-focused reviewers.
 
-21. Resolver strategy
+20. Resolver strategy
 
 ONT core remains transport-agnostic for off-chain values, but the project should ship a reference implementation of a minimal read-only ONT resolver/indexer profile.
 
@@ -244,7 +264,7 @@ Implications:
 - Clients may use a hosted resolver, self-host a resolver, or implement compatible alternatives.
 - The project should prefer a reference implementation over remaining only a protocol hypothesis.
 
-22. Minimal resolver API surface
+21. Minimal resolver API surface
 
 The first recommended ONT-native resolver profile should be minimal and read-only.
 
@@ -265,7 +285,7 @@ Design constraints:
 - Prefer explicit provenance fields over opaque answers.
 - Avoid standardizing write APIs in the protocol profile.
 
-23. Off-chain value encoding envelope
+22. Off-chain value encoding envelope
 
 Off-chain values use a compact typed binary envelope.
 
@@ -276,7 +296,7 @@ Envelope shape:
 
 This keeps value records compact while allowing a small standardized type set and future extension.
 
-24. Initial standardized value types
+23. Initial standardized value types
 
 The initial standardized value types for v1 are:
 - `0x00`: null
@@ -289,7 +309,7 @@ Notes:
 - This is intended to avoid unnecessary social or technical coupling between ONT and Nostr.
 - Future standardized value types, if any, should be introduced conservatively and explicitly.
 
-25. Bond amount parameters
+24. Bond amount parameters
 
 The launch bond curve parameters are:
 - `base_sats = 100,000,000` sats
@@ -300,9 +320,11 @@ Implications:
 - Each additional character halves the required bond until the 50,000-sat floor is reached.
 - The 4,000-block value previously resolved is the minimum maturity floor, not the bond floor.
 
-26. Same-block tie-break rule
+25. Same-block auction tie-break rule
 
-If two competing commits for the same name are confirmed in the same block, the commit appearing earlier in the block's transaction order wins.
+If two competing auction bids for the same lot are confirmed in the same block
+and are otherwise tied under the auction rules, the bid appearing earlier in the
+block's transaction order wins.
 
 Rationale:
 - deterministic
@@ -310,13 +332,12 @@ Rationale:
 - simpler and more legible than hash-based tie-break schemes
 - avoids introducing a more complex tie-break rule that still would not eliminate miner influence
 
-27. V1 on-chain event set
+26. V1 on-chain event set
 
 The v1 on-chain event set is intentionally minimal.
 
 Standardized on-chain events:
-- `COMMIT`
-- `REVEAL`
+- `AUCTION_BID`
 - `TRANSFER`
 
 Implications:
@@ -324,7 +345,7 @@ Implications:
 - v1 does not standardize on-chain `CLEAR_VALUE`
 - routine mutable value changes remain off-chain
 
-28. Pre-maturity transfer linkage
+27. Pre-maturity transfer linkage
 
 For immature names, a transfer must identify the successor bond output created by the transfer transaction so the indexer can verify bond continuity without ambiguity.
 
@@ -336,16 +357,16 @@ Implications:
 - the indexer verifies that the referenced output exists and meets the required bond threshold
 - mature transfers do not require successor bond output linkage
 
-29. Wire-format direction for v1
+28. Wire-format direction for v1
 
-The v1 wire format should optimize for small ownership events:
-- `COMMIT` should fit in a single conservative OP_RETURN payload
-- `REVEAL` should fit in a single conservative OP_RETURN payload under the 32-character name cap
-- `TRANSFER` may use a slightly richer or chunked format if needed because it must carry signature material
+The v1 wire format should optimize for compact auction and ownership events:
+- `AUCTION_BID` should fit in a single conservative OP_RETURN payload
+- `TRANSFER` may use a slightly richer payload because it must carry signature material
 
-The exact byte-level format remains open, but the protocol direction is to avoid larger on-chain payloads where smaller ownership events are sufficient.
+The protocol direction is to avoid larger on-chain payloads where smaller
+auction and ownership events are sufficient.
 
-30. Prototype interaction boundary
+29. Prototype interaction boundary
 
 The project should support a prototype website, but the boundary between interface and signer should remain explicit.
 
@@ -357,7 +378,7 @@ Implementation principle:
 - website-assisted actions should have CLI-capable equivalents
 - the website should not be the only way to perform protocol actions
 
-31. Atomic transfer-for-payment model
+30. Atomic transfer-for-payment model
 
 ONT should distinguish between:
 - ownership validity
@@ -379,7 +400,7 @@ Rationale:
 - preserves clear indexer responsibilities
 - uses ordinary Bitcoin transaction atomicity rather than adding commerce parsing to ONT validity rules
 
-32. Sale-intent listings are off-chain
+31. Sale-intent listings are off-chain
 
 Owners may want to advertise that a name is for sale and at what price. That should be documented as an optional off-chain layer, not part of canonical ONT ownership state.
 
@@ -397,24 +418,88 @@ Rationale:
 - they do not belong on Bitcoin
 - they should not complicate canonical indexer behavior
 
-## Fairness Principles To Carry Into The Rewrite
+## Current Working Assumptions
 
-The rewritten draft should explicitly state:
-- No reserved names
+These are not yet immutable launch commitments, but they are concrete enough
+that implementation, documentation, and reviewer-facing materials should treat
+them as the current defaults unless they are later revised explicitly.
+
+32. Retired direct-allocation batching baseline
+
+The old direct-allocation scaling baseline is retired from launch planning.
+Future footprint work should be evaluated against auction openings, bids,
+transfers, and value-publication flows.
+
+34. Launch architecture lead direction
+
+The current lead launch architecture is a **single auction lane**.
+
+Current shape:
+- every launch-eligible name is allocated by auction
+- there is no semantic reserved-name list
+- there is no ordinary claim lane in the launch model
+- names of length `1-4` are held for a later short-name auction wave
+- names of length `5-32` are eligible at launch
+- old direct-claim tooling should be removed from public surfaces rather than
+  treated as a parallel launch path
+
+This is strong enough to build supporting materials around, but it should still
+be treated as a working launch assumption rather than an immutable protocol
+freeze.
+
+35. Universal auction family
+
+The current auction family is:
+
+- open ascending
+- on-chain bonded bids
+- soft close
+- meaningful minimum increments
+- stronger minimum increments for bids that would extend the auction
+- no valid bid means the name remains unclaimed, not redirected into another
+  allocation path
+
+Implications:
+- the project can explain one coherent allocation rule for all eligible names
+- old reserved-list generation work is no longer launch-critical
+- placeholder floors, windows, and lock durations should not be presented as
+  frozen constants just because the auction family itself is now the working
+  assumption
+
+36. Prototype demo network posture
+
+The only supported live demo chain is **private signet**. Public signet is
+retired from the active demo and review path.
+
+Implications:
+- hosted demo guidance should assume private signet plus Sparrow support
+- review-refresh and reseed tooling should treat private signet and regtest as
+  the maintained environments
+- public signet should only appear in historical notes or explicit cleanup
+  context, not as an active user path
+
+## Fairness Principles To Carry Into The Launch Rewrite
+
+The rewritten launch draft should explicitly state:
 - No founder allocation
-- No discounted claims
+- No discounted insider claims
 - No whitelist
 - No identity-based quotas
 - Every immature claim requires dedicated bonded BTC
 - Bond and maturity rules are fixed at launch
-- Fairness is auditable by anyone from chain data
+- Short-name wave timing must be pre-announced and auditable
+- Auction rules and release conditions must be objective enough that outcomes
+  are auditable from chain data plus the pre-announced launch artifacts
 
 The protocol should aim for objective fairness, not semantic fairness.
 
 That means:
-- Names of the same length are treated identically by the protocol.
-- The protocol does not attempt to judge whether a name is a common word, brand, or vanity string.
-- Scarcity and anti-hoarding pressure come from bonded BTC and time, not from subjective pricing rules.
+- Names with the same objective policy inputs are treated identically by the
+  protocol.
+- Scarcity and anti-hoarding pressure come from auction-discovered bonded BTC
+  and time, not from subjective pricing rules.
+- If launch treatment differs for short names, that difference comes from an
+  objective length boundary rather than discretionary per-user judgment.
 
 ## Open Questions
 
@@ -453,28 +538,28 @@ Reviewer-facing trade-offs that should be stated plainly include:
 - the current prototype `TRANSFER` payload exceeds older conservative `OP_RETURN` relay limits; modern Bitcoin Core defaults are more permissive, but broader network relay compatibility still depends on node policy
 - mature names currently remain valid without ongoing bond continuity
 - v1 resolver usage may still concentrate value-record availability around a small number of hosted resolvers
-- a missed reveal does not just fail a claim; it also exposes demand for that specific name before the claimant secures it
+- stale or failed auction bids may expose demand for a specific name before a
+  bidder wins it
 - the owner key is distinct from the funding wallet key, and v1 does not include a protocol recovery path if that owner key is lost
 
 5. Concrete wire format
 
 Need to specify exact OP_RETURN payload formats for:
-- COMMIT
-- REVEAL
+- AUCTION_BID
 - TRANSFER
 
 6. Canonical indexing and tie-breaking rules
 
 Need to define:
 - reorg handling
-- duplicate reveal handling
+- duplicate bid handling
 - invalidation behavior for malformed sequences
 
 7. Wallet and CLI safety rules
 
 Need to define UX and implementation safeguards to prevent users from accidentally breaking bond continuity before maturity.
 
-Need to define clearer operator and wallet guidance around missed reveals:
-- a missed reveal should have an obvious recovery path for funds
-- the docs should explain that a failed reveal also reveals which name was being attempted
-- pre-launch review should revisit whether the 24-block reveal window is the right trade-off between uncertainty and demand leakage
+Need to define clearer operator and wallet guidance around stale or failed bids:
+- a failed bid package should have an obvious recovery path for funds
+- the docs should explain when a bid exposes demand for a name before the bidder wins it
+- pre-launch review should revisit auction windows, soft-close extensions, and stale-state behavior

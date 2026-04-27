@@ -1,30 +1,18 @@
 import { describe, expect, it } from "vitest";
 import ECPairFactory from "ecpair";
-import { initEccLib, networks, payments, Psbt, Transaction } from "bitcoinjs-lib";
-import { BIP32Factory } from "bip32";
+import { initEccLib, networks, payments, Transaction } from "bitcoinjs-lib";
 import * as tinysecp from "tiny-secp256k1";
 
 import {
   createAuctionBidPackage,
-  CLAIM_PACKAGE_FORMAT,
-  CLAIM_PACKAGE_VERSION,
-  BATCH_REVEAL_MIN_PAYLOAD_LENGTH,
-  computeCommitHash,
   decodeAuctionBidPayload,
   decodeOntPayload,
-  encodeCommitPayload,
-  OntEventType,
-  parseClaimPackage,
-  PROTOCOL_NAME
+  OntEventType
 } from "@ont/protocol";
 
 import {
   buildAuctionBidArtifacts,
-  buildBatchCommitArtifacts,
-  buildBatchRevealArtifacts,
-  buildCommitArtifacts,
   buildImmatureSaleTransferArtifacts,
-  buildRevealArtifacts,
   buildSaleTransferArtifacts,
   buildTransferArtifacts,
   parseFundingInputDescriptor
@@ -32,7 +20,6 @@ import {
 
 initEccLib(tinysecp);
 const ECPair = ECPairFactory(tinysecp);
-const bip32 = BIP32Factory(tinysecp);
 
 function createTestAddress(seed: number): string {
   const hash = Buffer.alloc(20, seed);
@@ -45,90 +32,12 @@ function createTestAddress(seed: number): string {
   return address;
 }
 
-function createClaimPackage() {
-  const name = "bob";
-  const ownerPubkey = "11".repeat(32);
-  const nonceHex = "0102030405060708";
-  const commitHash = computeCommitHash({
-    name,
-    nonce: BigInt(`0x${nonceHex}`),
-    ownerPubkey
-  });
-
-  return parseClaimPackage({
-    format: CLAIM_PACKAGE_FORMAT,
-    packageVersion: CLAIM_PACKAGE_VERSION,
-    protocol: PROTOCOL_NAME,
-    exportedAt: "2026-03-18T20:00:00.000Z",
-    name,
-    ownerPubkey,
-    nonceHex,
-    nonceDecimal: BigInt(`0x${nonceHex}`).toString(),
-    requiredBondSats: "25000000",
-    bondVout: 0,
-    bondDestination: createTestAddress(1),
-    changeDestination: createTestAddress(2),
-    commitHash,
-    commitPayloadHex: Buffer.from(
-      encodeCommitPayload({
-        bondVout: 0,
-        ownerPubkey,
-        commitHash
-      })
-    ).toString("hex"),
-    commitPayloadBytes: 70,
-    commitTxid: null,
-    revealReady: false,
-    revealPayloadHex: null,
-    revealPayloadBytes: null
-  });
-}
-
-function createSecondClaimPackage() {
-  const name = "alice";
-  const ownerPubkey = "22".repeat(32);
-  const nonceHex = "1112131415161718";
-  const commitHash = computeCommitHash({
-    name,
-    nonce: BigInt(`0x${nonceHex}`),
-    ownerPubkey
-  });
-
-  return parseClaimPackage({
-    format: CLAIM_PACKAGE_FORMAT,
-    packageVersion: CLAIM_PACKAGE_VERSION,
-    protocol: PROTOCOL_NAME,
-    exportedAt: "2026-03-18T20:00:00.000Z",
-    name,
-    ownerPubkey,
-    nonceHex,
-    nonceDecimal: BigInt(`0x${nonceHex}`).toString(),
-    requiredBondSats: "6250000",
-    bondVout: 0,
-    bondDestination: createTestAddress(11),
-    changeDestination: createTestAddress(12),
-    commitHash,
-    commitPayloadHex: Buffer.from(
-      encodeCommitPayload({
-        bondVout: 0,
-        ownerPubkey,
-        commitHash
-      })
-    ).toString("hex"),
-    commitPayloadBytes: 70,
-    commitTxid: null,
-    revealReady: false,
-    revealPayloadHex: null,
-    revealPayloadBytes: null
-  });
-}
-
 function createAuctionBidPackageFixture() {
   return createAuctionBidPackage({
-    auctionId: "04-soft-close-google",
-    name: "google",
-    reservedClassId: "top_collision",
-    classLabel: "Top collision / ultra-scarce",
+    auctionId: "04-soft-close-nvidia",
+    name: "nvidia",
+    auctionClassId: "launch_name",
+    classLabel: "Launch auction",
     currentBlockHeight: 844_360,
     phase: "soft_close",
     unlockBlock: 840_000,
@@ -137,7 +46,7 @@ function createAuctionBidPackageFixture() {
     currentLeaderBidderId: "gamma",
     currentHighestBidSats: 1_210_000_000n,
     currentRequiredMinimumBidSats: 1_331_000_000n,
-    reservedLockBlocks: 525_600,
+    settlementLockBlocks: 525_600,
     bidderId: "operator_alpha",
     ownerPubkey: "33".repeat(32),
     bidAmountSats: 1_340_000_000n,
@@ -174,122 +83,8 @@ describe("parseFundingInputDescriptor", () => {
   });
 });
 
-describe("buildCommitArtifacts", () => {
-  it("builds unsigned commit artifacts and upgrades the claim package to reveal-ready", () => {
-    const claimPackage = createClaimPackage();
-    const artifacts = buildCommitArtifacts({
-      claimPackage,
-      fundingInputs: [
-        {
-          txid: "aa".repeat(32),
-          vout: 0,
-          valueSats: 30_000_000n,
-          address: createTestAddress(3)
-        }
-      ],
-      feeSats: 1_000n,
-      network: "signet"
-    });
-
-    expect(artifacts.kind).toBe("ont-commit-artifacts");
-    expect(artifacts.commitTxid).toHaveLength(64);
-    expect(artifacts.updatedClaimPackage.revealReady).toBe(true);
-    expect(artifacts.updatedClaimPackage.commitTxid).toBe(artifacts.commitTxid);
-
-    const transaction = Transaction.fromHex(artifacts.unsignedTransactionHex);
-    expect(transaction.outs).toHaveLength(3);
-    expect(transaction.outs[0]?.value).toBe(25_000_000n);
-    expect(transaction.outs[1]?.value).toBe(0n);
-  });
-
-  it("includes BIP32 derivation metadata when wallet information is supplied", () => {
-    const seed = Buffer.alloc(32, 42);
-    const root = bip32.fromSeed(seed, networks.testnet);
-    const accountNode = root.deriveHardened(84).deriveHardened(1).deriveHardened(0);
-    const fundingNode = accountNode.derive(0).derive(3);
-    const fundingAddress = payments.p2wpkh({
-      pubkey: Buffer.from(fundingNode.publicKey),
-      network: networks.testnet
-    }).address;
-
-    if (!fundingAddress) {
-      throw new Error("unable to derive funding address");
-    }
-
-    const artifacts = buildCommitArtifacts({
-      claimPackage: createClaimPackage(),
-      fundingInputs: [
-        {
-          txid: "cc".repeat(32),
-          vout: 0,
-          valueSats: 30_000_000n,
-          address: fundingAddress
-        }
-      ],
-      feeSats: 1_000n,
-      network: "signet",
-      walletDerivation: {
-        masterFingerprint: Buffer.from(root.fingerprint).toString("hex"),
-        accountXpub: accountNode.neutered().toBase58(),
-        accountDerivationPath: "m/84'/1'/0'",
-        scanLimit: 10
-      }
-    });
-
-    const psbt = Psbt.fromBase64(artifacts.psbtBase64, { network: networks.testnet });
-    const derivation = psbt.data.inputs[0]?.bip32Derivation?.[0];
-
-    expect(derivation?.path).toBe("m/84'/1'/0'/0/3");
-    expect(Buffer.from(derivation?.masterFingerprint ?? []).toString("hex")).toBe(
-      Buffer.from(root.fingerprint).toString("hex")
-    );
-    expect(Buffer.from(derivation?.pubkey ?? []).toString("hex")).toBe(
-      Buffer.from(fundingNode.publicKey).toString("hex")
-    );
-  });
-});
-
-describe("buildRevealArtifacts", () => {
-  it("builds unsigned reveal artifacts from a reveal-ready claim package", () => {
-    const claimPackage = createClaimPackage();
-    const commitArtifacts = buildCommitArtifacts({
-      claimPackage,
-      fundingInputs: [
-        {
-          txid: "aa".repeat(32),
-          vout: 0,
-          valueSats: 30_000_000n,
-          address: createTestAddress(3)
-        }
-      ],
-      feeSats: 1_000n,
-      network: "signet"
-    });
-
-    const revealArtifacts = buildRevealArtifacts({
-      claimPackage: commitArtifacts.updatedClaimPackage,
-      fundingInputs: [
-        {
-          txid: "bb".repeat(32),
-          vout: 1,
-          valueSats: 15_000n,
-          address: createTestAddress(4)
-        }
-      ],
-      feeSats: 500n,
-      network: "signet"
-    });
-
-    expect(revealArtifacts.kind).toBe("ont-reveal-artifacts");
-    expect(revealArtifacts.revealTxid).toHaveLength(64);
-
-    const transaction = Transaction.fromHex(revealArtifacts.unsignedTransactionHex);
-    expect(transaction.outs[0]?.value).toBe(0n);
-  });
-});
-
 describe("buildAuctionBidArtifacts", () => {
-  it("builds unsigned experimental auction bid artifacts from a bid package", () => {
+  it("builds unsigned auction bid artifacts from a bid package", () => {
     const bidPackage = createAuctionBidPackageFixture();
     const artifacts = buildAuctionBidArtifacts({
       bidPackage,
@@ -309,7 +104,6 @@ describe("buildAuctionBidArtifacts", () => {
 
     expect(artifacts.kind).toBe("ont-auction-bid-artifacts");
     expect(artifacts.bidTxid).toHaveLength(64);
-    expect(artifacts.payloadBytes).toBeGreaterThan(0);
     expect(artifacts.outputs[0]?.role).toBe("auction_bid_bond");
     expect(artifacts.outputs[0]?.valueSats).toBe("1340000000");
     expect(artifacts.outputs[1]?.role).toBe("ont_auction_bid");
@@ -318,7 +112,7 @@ describe("buildAuctionBidArtifacts", () => {
     expect(transaction.outs[0]?.value).toBe(1_340_000_000n);
     const payload = decodeAuctionBidPayload(Buffer.from(artifacts.payloadHex, "hex"));
     expect(payload.bidAmountSats).toBe(1_340_000_000n);
-    expect(payload.reservedLockBlocks).toBe(525_600);
+    expect(payload.settlementLockBlocks).toBe(525_600);
     expect(payload.bondVout).toBe(0);
     expect(decodeOntPayload(Buffer.from(artifacts.payloadHex, "hex"))).toEqual({
       type: OntEventType.AuctionBid,
@@ -355,77 +149,6 @@ describe("buildAuctionBidArtifacts", () => {
     expect(artifacts.outputs[0]?.role).toBe("auction_bid_bond");
     expect(artifacts.outputs[0]?.valueSats).toBe("1340000000");
     expect(artifacts.changeValueSats).toBe("0");
-  });
-});
-
-describe("buildBatchCommitArtifacts", () => {
-  it("builds one batch anchor transaction and returns reveal-ready batch packages", () => {
-    const artifacts = buildBatchCommitArtifacts({
-      claimPackages: [createClaimPackage(), createSecondClaimPackage()],
-      fundingInputs: [
-        {
-          txid: "aa".repeat(32),
-          vout: 0,
-          valueSats: 40_000_000n,
-          address: createTestAddress(13)
-        }
-      ],
-      feeSats: 1_500n,
-      network: "signet"
-    });
-
-    expect(artifacts.kind).toBe("ont-batch-commit-artifacts");
-    expect(artifacts.leafCount).toBe(2);
-    expect(artifacts.updatedClaimPackages).toHaveLength(2);
-
-    const transaction = Transaction.fromHex(artifacts.unsignedTransactionHex);
-    expect(transaction.outs).toHaveLength(4);
-    expect(artifacts.outputs[0]?.role).toBe("ont_batch_anchor");
-    expect(artifacts.outputs[1]).toMatchObject({ role: "bond", claimName: "bob" });
-    expect(artifacts.outputs[2]).toMatchObject({ role: "bond", claimName: "alice" });
-    expect(artifacts.updatedClaimPackages[0]?.bondVout).toBe(1);
-    expect(artifacts.updatedClaimPackages[1]?.bondVout).toBe(2);
-  });
-});
-
-describe("buildBatchRevealArtifacts", () => {
-  it("builds a reveal transaction with an explicit batch header and proof chunks", () => {
-    const commitArtifacts = buildBatchCommitArtifacts({
-      claimPackages: [createClaimPackage(), createSecondClaimPackage()],
-      fundingInputs: [
-        {
-          txid: "aa".repeat(32),
-          vout: 0,
-          valueSats: 40_000_000n,
-          address: createTestAddress(14)
-        }
-      ],
-      feeSats: 1_500n,
-      network: "signet"
-    });
-
-    const revealArtifacts = buildBatchRevealArtifacts({
-      claimPackage: commitArtifacts.updatedClaimPackages[0]!,
-      fundingInputs: [
-        {
-          txid: "bb".repeat(32),
-          vout: 1,
-          valueSats: 15_000n,
-          address: createTestAddress(15)
-        }
-      ],
-      feeSats: 500n,
-      network: "signet"
-    });
-
-    expect(revealArtifacts.kind).toBe("ont-batch-reveal-artifacts");
-    const transaction = Transaction.fromHex(revealArtifacts.unsignedTransactionHex);
-    expect(transaction.outs[0]?.value).toBe(0n);
-    expect(revealArtifacts.outputs[0]?.role).toBe("ont_batch_reveal");
-    expect(revealArtifacts.outputs[1]?.role).toBe("ont_reveal_proof_chunk");
-    expect(commitArtifacts.updatedClaimPackages[0]?.revealPayloadBytes).toBeGreaterThanOrEqual(
-      BATCH_REVEAL_MIN_PAYLOAD_LENGTH
-    );
   });
 });
 

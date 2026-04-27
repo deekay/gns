@@ -165,18 +165,19 @@ These scenes imply certain client behaviors that may deserve stronger emphasis i
 
 These are not all protocol features. Some are product and client behaviors. But they make the narrative more believable because they show how ONT would actually help a human stay in control.
 
-## Relationship To The Two-Lane Story
+## Relationship To Universal Auctions
 
 These scenes also help explain why salient names matter.
 
-If names become part of how humans tell software which service they trust, then certain names carry outsized coordination value. Pretending all names should be allocated the same way no longer looks neutral.
+If names become part of how humans tell software which service they trust, then certain names carry outsized coordination value. Pretending the protocol can know in advance which names are ordinary and which are special no longer looks neutral.
 
-That strengthens the two-lane case:
+That strengthens the universal-auction case:
 
-- ordinary names can stay simple
-- salient names need a more legitimate market process
+- launch-eligible names should face the same allocation rule
+- the market should discover which names draw real demand
+- `1-4` character names can wait for a later objective wave
 
-The fairness argument is not mainly about prestige. It is about coordination pressure and the cost of misallocation.
+The fairness argument is not mainly about prestige. It is about coordination pressure, market discovery, and the cost of misallocation.
 
 ## Open Questions
 

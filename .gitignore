@@ -9,6 +9,12 @@ coverage
 *.log
 COMMERCIAL_IDEAS.md
 
+# Local narration/audio scratch artifacts
+/audio_compressed.mp3
+/audio_to_analyze.wav
+/*-narration-v1.json
+/*-narration-v1.wav
+
 # Private strategy and outreach materials
 private/
 PRIVATE/

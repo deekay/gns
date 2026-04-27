@@ -8,8 +8,8 @@ The hosted website is mainly a tool surface:
 
 - browse names
 - check availability
-- prepare claims
-- prepare offline and batched ordinary-lane claim artifacts
+- inspect auction lots
+- prepare prototype auction bid packages
 - prepare transfers
 - fund the private signet demo
 
@@ -24,7 +24,7 @@ If you want the shortest honest project orientation before touching the product 
 1. [docs/research/BITCOIN_EXPERT_REVIEW_PACKET.md](./docs/research/BITCOIN_EXPERT_REVIEW_PACKET.md)
 2. [docs/core/ONT_FROM_ZERO.md](./docs/core/ONT_FROM_ZERO.md)
 3. [docs/research/ONT_IMPLEMENTATION_AND_VALIDATION.md](./docs/research/ONT_IMPLEMENTATION_AND_VALIDATION.md)
-4. [docs/research/MERKLE_BATCHING_STATUS.md](./docs/research/MERKLE_BATCHING_STATUS.md)
+4. [docs/research/UNIVERSAL_AUCTION_LAUNCH_MODEL.md](./docs/research/UNIVERSAL_AUCTION_LAUNCH_MODEL.md)
 5. [docs/research/LAUNCH_SPEC_V0.md](./docs/research/LAUNCH_SPEC_V0.md)
 6. [docs/research/BITCOIN_REVIEW_CLOSURE_MATRIX.md](./docs/research/BITCOIN_REVIEW_CLOSURE_MATRIX.md)
 7. [docs/core/TESTING.md](./docs/core/TESTING.md)
@@ -33,8 +33,8 @@ If you want the fastest first walkthrough, use the hosted private demo:
 
 1. Open [setup](https://opennametags.org/setup) and point Sparrow at the hosted demo wallet endpoint shown there.
 2. Request demo coins into the same Sparrow wallet you plan to spend from.
-3. Open [claim prep](https://opennametags.org/claim), choose the name, and save the owner key + backup package.
-4. Build the commit and reveal PSBTs, sign them in Sparrow, and watch the name appear in [explore](https://opennametags.org/explore).
+3. Open [auctions](https://opennametags.org/auctions), inspect a lot, and prepare a bid package with an owner key.
+4. Build and sign the auction bid transaction in Sparrow, then watch the name appear in [explore](https://opennametags.org/explore) after settlement.
 
 If you want the tightest possible product demo instead of the full docs path, use:
 
@@ -50,14 +50,14 @@ Keep these distinctions in mind:
 One important testing/status distinction:
 
 - the hosted private demo is a **private signet** walkthrough and the active live environment we maintain
-- explicit ordinary-lane Merkle batching is implemented and validated in fixture mode, controlled-chain regtest, and the hosted **private signet** batch smoke flow
+- the leading launch model is one auction lane for launch-eligible names, with 1-4 character names saved for a later wave
 - the old shared **public signet** path has been retired from the active demo and validation story because faucet funding never became reliable
 
 ## Quick Map
 
 ```mermaid
 flowchart LR
-  A["Wallet Key"] -->|"signs"| B["Claim / Transfer Bitcoin Transactions"]
+  A["Wallet Key"] -->|"signs"| B["Auction / Transfer Bitcoin Transactions"]
   B -->|"records ownership on"| C["Bitcoin Chain"]
   C -->|"canonical state for"| D["Resolver / Website"]
   E["Owner Key"] -->|"signs"| F["Value Record / Profile Bundle"]
@@ -77,25 +77,21 @@ There are three practical ways to use ONT today:
 | --- | --- | --- | --- |
 | `Hosted Private Demo` | Fastest first walkthrough | Hosted site, hosted resolver, private demo chain | Yes |
 | `Self-Hosted Website + Resolver` | Running your own browsing and resolution surface | Your own web stack and resolver; optionally your own Bitcoin backend | Yes |
-| `Offline / Higher-Trust Claim Prep` | Preparing claims without depending on the hosted site UI | Local browser bundle plus your own signer | Yes |
+| `Auction Bid Prep` | Reviewing auction state and preparing bidder handoffs | Website preview plus your own wallet signer | Prototype |
 
 Hosted private demo:
 - website: [https://opennametags.org](https://opennametags.org)
 - setup: [https://opennametags.org/setup](https://opennametags.org/setup)
-- claim prep: [https://opennametags.org/claim](https://opennametags.org/claim)
-- experimental auction lab + chain-derived bid feed: [https://opennametags.org/auctions](https://opennametags.org/auctions)
+- auctions + chain-derived bid feed: [https://opennametags.org/auctions](https://opennametags.org/auctions)
 
 Self-hosted website + resolver:
 - quick guide: [SELF_HOSTING.md](./docs/core/SELF_HOSTING.md)
-
-Offline / higher-trust claim prep:
-- offline architect: [https://opennametags.org/claim/offline](https://opennametags.org/claim/offline)
 
 ## What Works Today
 
 | Capability | Status | Notes |
 | --- | --- | --- |
-| Hosted private demo claims | Yes | Best first walkthrough today |
+| Hosted private demo auctions | Prototype | Best first walkthrough today |
 | Self-hosted website + resolver | Yes | Fixture-backed by default; can point at your own backend later |
 | Browser value publishing | Yes | Owner-signed in the browser |
 | Profile bundle value records | Yes | One record can point to several destinations |
@@ -106,19 +102,18 @@ Offline / higher-trust claim prep:
 
 | Key | What it controls | Used for | If lost |
 | --- | --- | --- | --- |
-| `Wallet key` | Bitcoin UTXOs | Signing claim and transfer transactions | You lose control of the bitcoin and cannot complete those transactions |
-| `Owner key` | Name authority after claim | Signing value updates and authorizing transfers | In v1, you lose update and transfer authority for that name |
+| `Wallet key` | Bitcoin UTXOs | Signing auction bid and transfer transactions | You lose control of the bitcoin and cannot complete those transactions |
+| `Owner key` | Name authority after auction settlement | Signing value updates and authorizing transfers | In v1, you lose update and transfer authority for that name |
 
-## Claim Lifecycle At A Glance
+## Auction Lifecycle At A Glance
 
 | Phase | What it means | What you do next |
 | --- | --- | --- |
-| `Prepare` | Pick the name, create or paste the owner key, and build the claim plan | Save the owner key and backup package |
-| `Commit Broadcast` | The hidden claim transaction is on-chain | Wait for confirmation |
-| `Reveal Broadcast` | The name is published within the reveal window and becomes claimed | Watch the name move into settlement |
+| `Review` | Inspect the lot, current phase, minimum bid, and closing rules | Decide whether to prepare a bid |
+| `Bid Broadcast` | A bid transaction is on-chain with bonded bitcoin | Watch whether the bid becomes or remains the leader |
 | `Settling` | The name is already owned and usable, but bond continuity still matters | Keep the bond intact until maturity |
 | `Active` | The name is mature, so ongoing bond continuity no longer matters | Publish values, update the key/value bundle, or transfer later |
-| `Released` | The name returned to the pool | Start a fresh claim if you still want it |
+| `Released` | The name returned to the pool | Start from the auction flow if you still want it |
 
 ## Hosted Demo Walkthrough
 
@@ -128,42 +123,34 @@ For the shortest presenter-friendly version, use [docs/demo/FLINT_DEMO.md](./doc
 
 ### 1. Start at the homepage
 
-Use the homepage to look up a name, see the quick model, and choose whether you want `Setup`, `Claim`, or `Explore`.
-
-![ONT homepage](./docs/assets/website-home.png)
+Use the homepage to look up a name, see the quick model, and choose whether you want `Setup`, `Auctions`, or `Explore`.
 
 ### 2. Set up Sparrow and request demo coins
 
 Use the setup page to point Sparrow at the hosted private signet wallet endpoint, confirm it sees the demo chain, then fund the same wallet you plan to spend from.
 
-![ONT setup](./docs/assets/website-setup.png)
+### 3. Prepare an auction bid
 
-### 3. Prepare the claim
-
-On claim prep, pick the name, generate or paste the owner key, save the backup package, and build the commit/reveal signer handoff.
-
-![ONT claim prep](./docs/assets/website-claim.png)
+On auctions, inspect the lot, generate or paste the owner key, and build the bid-package signer handoff.
 
 ### 4. Publish what the name points to
 
 Once the name is active, use the values tool to publish ordered key/value pairs that describe where the name should resolve.
 
-![ONT value bundle](./docs/assets/website-values-bundle.png)
-
 ### 5. Inspect the live prototype status
 
-Use the explore page to inspect recent names, provenance, and the current smoke summaries. On the hosted private signet demo, the explorer now also surfaces the latest batched ordinary-claim smoke run so you can see a real batch anchor, later reveals, and a post-claim transfer check.
+Use the explore page to inspect recent names, provenance, and the current smoke summaries.
 
-Use the auction page to inspect both:
+Use the auction page to inspect the prototype auction mechanics:
 
-- the current reserved-auction simulator states directly in the website
-- and the newer chain-derived experimental `AUCTION_BID` feed for catalog lots,
-  including stale-bid rejection, same-bidder replacement, and derived
-  bond spend / release summaries
-- plus the hosted private signet auction-smoke summary showing a real opening
-  bid, higher bid, settlement into a live owned name, winner value publishing,
-  post-release transfer, and an intentionally early losing-bond spend on a
-  dedicated smoke lot
+- simulator states for waiting, bidding, soft close, settlement, and no-winner
+  outcomes
+- the chain-derived experimental `AUCTION_BID` feed, including stale-bid
+  rejection, same-bidder replacement, and derived bond spend / release summaries
+- the hosted private signet auction-smoke summary showing a real opening bid,
+  higher bid, settlement into a live owned name, winner value publishing,
+  transfer, and an intentionally early losing-bond spend on a dedicated smoke
+  lot
 
 ## What ONT Is
 
@@ -198,22 +185,22 @@ Adjacent work is worth keeping in mind here too. Systems like Pubky / PKARR (whi
 
 ## How Ownership Works
 
-### Claims
+### Auctions
 
-Claims use a commit/reveal flow.
+Launch-eligible names use one auction lane.
 
-1. `COMMIT` hides the intended name while establishing the claim attempt.
-2. `REVEAL` publishes the name within the allowed reveal window.
-3. the name then enters a settlement period during which bond continuity matters
+1. a bid names the auction lot, bidder, owner key, and bonded amount
+2. market rules determine the leading bid, soft close, and settlement
+3. the winning name then enters a settlement period during which bond continuity matters
 
 ### Bonds
 
-Claims are backed by locked bitcoin bonds, not fees paid to an issuer.
+Names are backed by bonded bitcoin, not fees paid to an issuer.
 
 - shorter names require larger bonds
 - longer names quickly fall toward a floor
 - the bond is not paid to ONT
-- the claimer keeps the bitcoin and only gives up liquidity for the settlement period
+- the owner keeps the bitcoin and gives up liquidity while the bond is active
 
 ### Transfers
 
@@ -245,25 +232,36 @@ It does that by using locked bitcoin bonds instead of:
 - whitelist access
 - protocol-level sales of names
 
-For ordinary names, the current lead launch direction still uses a public objective curve. For salient existing names, the current lead launch direction is a separate deferred reserved lane with public auctions instead of hand-priced protocol sales.
+The current lead launch direction is intentionally simple:
 
-### Bond Curve
+- names of length `5-32` use one auction lane at launch
+- names of length `1-4` are held for a later short-name auction wave
+- there is no semantic reserved-name list
+- there is no separate ordinary lane
 
-The current launch curve is:
+Auctions discover the BTC amount. Length may still provide an objective
+opening-bond floor, but ONT should not decide which brands, people, companies,
+or words deserve special launch treatment.
+
+### Bond Floors
+
+The current legacy floor curve is:
 
 - `₿100,000,000 (1 BTC)` for a 1-character name
 - each additional character halves the required bond
 - the bond floors at `₿50,000 (0.0005 BTC)` for names of length 12 and longer
 
-That makes short names economically expensive to corner while keeping the long tail accessible.
+Under the universal-auction launch model, this kind of curve is best understood
+as an opening-bond / anti-spam floor. It is not the final price; the auction
+discovers that.
 
 ### Why The Namespace Remains Open
 
 Using the current v1 alphabet (`a-z0-9`), there are about `2.18 billion` possible 6-character names.
 
-At the current 6-character bond of `₿3,125,000 (0.03125 BTC)`, claiming all possible 6-character names would require about `68 million BTC`, which is more than three times Bitcoin’s total `21 million` supply.
+At the current 6-character bond of `₿3,125,000 (0.03125 BTC)`, bonding all possible 6-character names would require about `68 million BTC`, which is more than three times Bitcoin's total `21 million` supply.
 
-Even if every bitcoin in existence were somehow devoted to 6-character claims, it would only be enough to bond about `672 million` names out of roughly `2.18 billion` possible 6-character names. The majority of that namespace would still remain open.
+Even if every bitcoin in existence were somehow devoted to 6-character bonds, it would only be enough to bond about `672 million` names out of roughly `2.18 billion` possible 6-character names. The majority of that namespace would still remain open.
 
 That does not make allocation perfectly neutral. Early participants, wealthy claimants, and fee conditions will matter. But under the current v1 alphabet and bond curve, it does mean that from 6-character names onward, fully cornering the namespace becomes economically impossible: combinatorial supply outgrows the total capital that can exist.
 
@@ -271,17 +269,17 @@ That does not make allocation perfectly neutral. Early participants, wealthy cla
 
 Mature names currently remain valid without ongoing bond continuity.
 
-This is intentional. The fairness mechanism is the opportunity cost of locking capital through settlement, not perpetual rent. Once a claimer has committed bitcoin for the full maturity period, the protocol has already observed a meaningful economic signal that they value the name and gave up the chance to use that capital elsewhere. Requiring the bond to remain parked indefinitely would add ongoing carrying cost without materially improving initial allocation fairness, while also increasing permanent UTXO pressure.
+This is intentional. The fairness mechanism is the opportunity cost of locking capital through settlement, not perpetual rent. Once an auction winner has committed bitcoin for the full maturity period, the protocol has already observed a meaningful economic signal that they value the name and gave up the chance to use that capital elsewhere. Requiring the bond to remain parked indefinitely would add ongoing carrying cost without materially improving initial allocation fairness, while also increasing permanent UTXO pressure.
 
 ## Blockspace Footprint
 
-ONT keeps its pure naming payload small, but it still consumes real Bitcoin blockspace because each successful claim is a pair of ordinary Bitcoin transactions.
+ONT keeps its pure naming payload small, but it still consumes real Bitcoin blockspace because auction bids, settlement, and later state changes are ordinary Bitcoin transactions.
 
 Current implementation summary:
 
-- pure naming payload per completed claim: about `117–148 bytes`
-- observed full claim footprint: about `404 vbytes`
-- observed full serialized footprint: about `566 raw bytes`
+- auction bid packages carry compact ONT payloads plus normal Bitcoin inputs and outputs
+- observed footprint depends on signer policy, fee inputs, and whether a later transfer or value update is included
+- exact vbytes should be measured against the current auction transaction templates before mainnet parameters are finalized
 
 So ONT is compact as protocol data, but it still competes in the normal fee market like any other transaction. The main brakes on overuse are:
 
@@ -317,10 +315,9 @@ The current hosted product is here:
 
 - Home / lookup: [https://opennametags.org](https://opennametags.org)
 - Explore: [https://opennametags.org/explore](https://opennametags.org/explore)
-- Claim prep: [https://opennametags.org/claim](https://opennametags.org/claim)
+- Auctions: [https://opennametags.org/auctions](https://opennametags.org/auctions)
 - Transfer prep: [https://opennametags.org/transfer](https://opennametags.org/transfer)
 - Setup: [https://opennametags.org/setup](https://opennametags.org/setup)
-- Offline claim architect: [https://opennametags.org/claim/offline](https://opennametags.org/claim/offline)
 
 The website is intentionally becoming more tool-oriented over time. The deeper explanation, economics, and design rationale are expected to live here in the repo.
 
@@ -373,12 +370,6 @@ Then open:
 
 That default path runs against the bundled fixture chain so you can use your own site and resolver immediately. If the doctor step says Docker is missing, install Docker Desktop or Docker Engine first. To point the stack at your own Bitcoin backend later, use [SELF_HOSTING.md](./docs/core/SELF_HOSTING.md).
 
-### Run the controlled-chain suite
-
-```bash
-npm run test:regtest-cli-suite
-```
-
 ### Private signet demo with Sparrow
 
 - guide: [SPARROW_PRIVATE_SIGNET.md](./docs/demo/SPARROW_PRIVATE_SIGNET.md)
@@ -391,8 +382,8 @@ This is a TypeScript monorepo using `npm` workspaces.
 
 ### Product surfaces
 
-- `apps/web`: hosted site, explorer, claim prep, transfer prep, setup, offline architect bundle
-- `apps/cli`: claim, transfer, value-record, and operator tooling
+- `apps/web`: hosted site, explorer, auctions, transfer prep, setup
+- `apps/cli`: auction, transfer, value-record, and operator tooling
 
 ### Chain and resolution services
 
@@ -423,7 +414,7 @@ Start here:
 - [docs/core/SELF_HOSTING.md](./docs/core/SELF_HOSTING.md): run your own website + resolver stack
 - [docs/core/ARCHITECTURE.md](./docs/core/ARCHITECTURE.md): system structure, trust boundaries, and runtime modes
 - [docs/core/DECISIONS.md](./docs/core/DECISIONS.md): design decisions and open tradeoffs
-- [docs/core/TESTING.md](./docs/core/TESTING.md): fixture, regtest, public signet, and private signet testing paths
+- [docs/core/TESTING.md](./docs/core/TESTING.md): fixture, regtest, and private signet testing paths
 - [docs/research/TRANSFER_RELAY_OPTIONS.md](./docs/research/TRANSFER_RELAY_OPTIONS.md): why transfers are still policy-sensitive and what the real redesign options are
 - [CONTRIBUTING.md](./CONTRIBUTING.md): local setup and contribution workflow
 

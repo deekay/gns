@@ -14,6 +14,7 @@ import {
   localRpcUrl,
   mineBlocks,
   resolverUrl,
+  runRemote,
   scenarioArtifactsDir,
   waitForResolverHeight,
   withPrivateSignetSession
@@ -37,6 +38,9 @@ async function main() {
   await withPrivateSignetSession(async ({ owner, rpcPassword }) => {
     const outDir = scenarioArtifactsDir("auction-phase-gallery");
     await mkdir(outDir, { recursive: true });
+
+    const initialHeight = await getBlockCount();
+    await preparePhaseFixtureUnlocks(initialHeight);
 
     const beforeFeed = await fetchExperimentalAuctionFeed();
     const pendingLot = requireAuction(beforeFeed.auctions, PHASE_GALLERY_IDS.pending);
@@ -88,8 +92,53 @@ async function main() {
   });
 }
 
+async function preparePhaseFixtureUnlocks(currentHeight) {
+  const schedule = {
+    "19-private-phase-pending.json": currentHeight + 80,
+    "20-private-phase-awaiting.json": currentHeight + 5,
+    "21-private-phase-live.json": currentHeight + 15,
+    "22-private-phase-soft-close.json": currentHeight + 6
+  };
+
+  await runRemote(`node <<'NODE'
+const { readFileSync, writeFileSync, existsSync } = require("node:fs");
+const { join } = require("node:path");
+
+const appRoot = "/opt/ont/app";
+const fixtureDir = join(appRoot, "fixtures/auction/private-signet-lab");
+const schedule = ${JSON.stringify(schedule)};
+
+for (const [fileName, unlockBlock] of Object.entries(schedule)) {
+  const fixturePath = join(fixtureDir, fileName);
+  const fixture = JSON.parse(readFileSync(fixturePath, "utf8"));
+  fixture.currentBlockHeight = Math.max(0, unlockBlock - 1);
+  fixture.scenario.unlockBlock = unlockBlock;
+  fixture.scenario.bidAttempts = [];
+  writeFileSync(fixturePath, JSON.stringify(fixture, null, 2) + "\\n");
+}
+
+console.log(JSON.stringify({ fixtureDir, schedule }));
+NODE`);
+
+  await runRemote("systemctl restart ont-private-resolver.service");
+  await waitForExperimentalAuctionFeed();
+}
+
 async function fetchExperimentalAuctionFeed() {
   return await fetchJson(`${resolverUrl()}/experimental-auctions`);
+}
+
+async function waitForExperimentalAuctionFeed() {
+  for (let attempt = 0; attempt < 60; attempt += 1) {
+    try {
+      await fetchExperimentalAuctionFeed();
+      return;
+    } catch {
+      await new Promise((resolvePromise) => setTimeout(resolvePromise, 1_000));
+    }
+  }
+
+  throw new Error("experimental auction feed did not recover after phase fixture refresh");
 }
 
 function requireAuction(auctions, auctionId) {
@@ -260,7 +309,7 @@ async function buildAndBroadcastAuctionBid({
   const bidPackage = createAuctionBidPackage({
     auctionId: auctionState.auctionId,
     name: auctionState.normalizedName,
-    reservedClassId: auctionState.reservedClassId,
+    auctionClassId: auctionState.auctionClassId,
     classLabel: auctionState.classLabel,
     currentBlockHeight: auctionState.currentBlockHeight,
     phase: auctionState.phase,
@@ -270,7 +319,7 @@ async function buildAndBroadcastAuctionBid({
     currentLeaderBidderCommitment: auctionState.currentLeaderBidderCommitment,
     currentHighestBidSats: auctionState.currentHighestBidSats,
     currentRequiredMinimumBidSats: auctionState.currentRequiredMinimumBidSats,
-    reservedLockBlocks: auctionState.reservedLockBlocks,
+    settlementLockBlocks: auctionState.settlementLockBlocks,
     blocksUntilUnlock: auctionState.blocksUntilUnlock,
     blocksUntilClose: auctionState.blocksUntilClose,
     bidderId,
@@ -319,7 +368,7 @@ async function buildAndBroadcastAuctionBid({
     "--rpc-url",
     localRpcUrl(),
     "--rpc-username",
-    "gnsrpcprivate",
+    "ontrpcprivate",
     "--rpc-password",
     rpcPassword,
     "--expected-chain",

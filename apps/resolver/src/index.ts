@@ -20,14 +20,14 @@ import {
   loadBitcoinBlocksFromSource
 } from "@ont/bitcoin";
 import {
-  createDefaultReservedAuctionPolicy,
-  createExperimentalReservedAuctionCatalogEntry,
+  createDefaultLaunchAuctionPolicy,
+  createExperimentalLaunchAuctionCatalogEntry,
   InMemoryOntIndexer,
-  parseReservedAuctionScenario,
-  serializeReservedAuctionPolicy,
-  type ExperimentalReservedAuctionCatalogEntry,
+  parseLaunchAuctionScenario,
+  serializeLaunchAuctionPolicy,
+  type ExperimentalLaunchAuctionCatalogEntry,
   type NameRecord,
-  type ReservedAuctionPolicy
+  type LaunchAuctionPolicy
 } from "@ont/core";
 import {
   createDatabaseConfig,
@@ -40,15 +40,10 @@ import {
 } from "@ont/db";
 import {
   computeValueRecordHash,
-  getBondSats,
-  getEpochIndex,
-  getMaturityBlocks,
-  getMaturityHeight,
   normalizeName,
   parseSignedValueRecord,
   PRODUCT_NAME,
   PROTOCOL_NAME,
-  REVEAL_WINDOW_BLOCKS,
   type SignedValueRecord,
   verifyValueRecord
 } from "@ont/protocol";
@@ -136,10 +131,10 @@ async function main(): Promise<void> {
   }
 
   let restoredFromSnapshot = false;
-  const experimentalReservedAuctionPolicy = resolveExperimentalReservedAuctionPolicy();
-  const experimentalReservedAuctionCatalog = await loadExperimentalReservedAuctionCatalog(
+  const experimentalLaunchAuctionPolicy = resolveExperimentalLaunchAuctionPolicy();
+  const experimentalLaunchAuctionCatalog = await loadExperimentalLaunchAuctionCatalog(
     auctionFixtureDir,
-    experimentalReservedAuctionPolicy
+    experimentalLaunchAuctionPolicy
   );
   let indexer: InMemoryOntIndexer;
   const valueRecords =
@@ -161,8 +156,8 @@ async function main(): Promise<void> {
       indexer = InMemoryOntIndexer.fromSnapshot(
         await loadSnapshot(database, snapshotPath, snapshotDocumentKey),
         {
-          experimentalReservedAuctionPolicy,
-          experimentalReservedAuctionCatalog
+          experimentalLaunchAuctionPolicy,
+          experimentalLaunchAuctionCatalog
         }
       );
       restoredFromSnapshot = true;
@@ -175,8 +170,8 @@ async function main(): Promise<void> {
 
       indexer = new InMemoryOntIndexer({
         launchHeight,
-        experimentalReservedAuctionPolicy,
-        experimentalReservedAuctionCatalog
+        experimentalLaunchAuctionPolicy,
+        experimentalLaunchAuctionCatalog
       });
     }
 
@@ -203,8 +198,8 @@ async function main(): Promise<void> {
         restoredFromSnapshot = false;
         indexer = new InMemoryOntIndexer({
           launchHeight,
-          experimentalReservedAuctionPolicy,
-          experimentalReservedAuctionCatalog
+          experimentalLaunchAuctionPolicy,
+          experimentalLaunchAuctionCatalog
         });
       }
     }
@@ -257,8 +252,8 @@ async function main(): Promise<void> {
 
             indexer = new InMemoryOntIndexer({
               launchHeight: indexer.getLaunchHeight(),
-              experimentalReservedAuctionPolicy,
-              experimentalReservedAuctionCatalog
+              experimentalLaunchAuctionPolicy,
+              experimentalLaunchAuctionCatalog
             });
             const rebuildPoller = new BitcoinRpcBlockPoller({
               rpc,
@@ -296,8 +291,8 @@ async function main(): Promise<void> {
       indexer = InMemoryOntIndexer.fromSnapshot(
         await loadSnapshot(database, snapshotPath, snapshotDocumentKey),
         {
-          experimentalReservedAuctionPolicy,
-          experimentalReservedAuctionCatalog
+          experimentalLaunchAuctionPolicy,
+          experimentalLaunchAuctionCatalog
         }
       );
       restoredFromSnapshot = true;
@@ -310,8 +305,8 @@ async function main(): Promise<void> {
 
       indexer = new InMemoryOntIndexer({
         launchHeight,
-        experimentalReservedAuctionPolicy,
-        experimentalReservedAuctionCatalog
+        experimentalLaunchAuctionPolicy,
+        experimentalLaunchAuctionCatalog
       });
     }
 
@@ -341,8 +336,8 @@ async function main(): Promise<void> {
         restoredFromSnapshot = false;
         indexer = new InMemoryOntIndexer({
           launchHeight,
-          experimentalReservedAuctionPolicy,
-          experimentalReservedAuctionCatalog
+          experimentalLaunchAuctionPolicy,
+          experimentalLaunchAuctionCatalog
         });
       }
     }
@@ -401,8 +396,8 @@ async function main(): Promise<void> {
 
             indexer = new InMemoryOntIndexer({
               launchHeight: indexer.getLaunchHeight(),
-              experimentalReservedAuctionPolicy,
-              experimentalReservedAuctionCatalog
+              experimentalLaunchAuctionPolicy,
+              experimentalLaunchAuctionCatalog
             });
             const rebuildPoller = new BitcoinEsploraBlockPoller({
               esplora,
@@ -445,8 +440,8 @@ async function main(): Promise<void> {
     syncMode = "fixture";
     indexer = new InMemoryOntIndexer({
       launchHeight: loaded.launchHeight,
-      experimentalReservedAuctionPolicy,
-      experimentalReservedAuctionCatalog
+      experimentalLaunchAuctionPolicy,
+      experimentalLaunchAuctionCatalog
     });
     indexer.ingestBlocks(loaded.blocks);
   }
@@ -606,16 +601,10 @@ async function main(): Promise<void> {
       });
     }
 
-    if (url.pathname === "/pending-commits") {
-      return writeJson(response, 200, {
-        pendingCommits: indexer.listPendingCommits()
-      });
-    }
-
     if (url.pathname === "/experimental-auctions") {
       return writeJson(response, 200, {
-        kind: "experimental_reserved_auctions",
-        policy: serializeReservedAuctionPolicy(experimentalReservedAuctionPolicy),
+        kind: "experimental_auctions",
+        policy: serializeLaunchAuctionPolicy(experimentalLaunchAuctionPolicy),
         currentBlockHeight: indexer.getStats().currentHeight,
         auctions: indexer.listExperimentalAuctions()
       });
@@ -657,20 +646,6 @@ async function main(): Promise<void> {
       }
 
       return writeJson(response, 200, record);
-    }
-
-    if (url.pathname.startsWith("/claim-plan/")) {
-      const requested = decodeURIComponent(url.pathname.slice("/claim-plan/".length));
-
-      try {
-        const normalized = normalizeName(requested);
-        return writeJson(response, 200, buildClaimPlan(indexer, normalized));
-      } catch (error) {
-        return writeJson(response, 400, {
-          error: "invalid_name",
-          message: error instanceof Error ? error.message : "Invalid name"
-        });
-      }
     }
 
     if (url.pathname.startsWith("/name/")) {
@@ -796,7 +771,7 @@ async function main(): Promise<void> {
     return writeJson(response, 404, {
       error: "not_found",
       message:
-        "Supported prototype endpoints: /health, /stats, /names, /pending-commits, /experimental-auctions, /activity, /tx/{txid}, /claim-plan/{normalized_name}, /name/{normalized_name}, /name/{normalized_name}/activity, /name/{normalized_name}/value, /name/{normalized_name}/value/history, POST /values"
+        "Supported prototype endpoints: /health, /stats, /names, /experimental-auctions, /activity, /tx/{txid}, /name/{normalized_name}, /name/{normalized_name}/activity, /name/{normalized_name}/value, /name/{normalized_name}/value/history, POST /values"
     });
   }
 
@@ -829,10 +804,10 @@ interface AuctionLabFixtureFile {
   readonly scenario: unknown;
 }
 
-async function loadExperimentalReservedAuctionCatalog(
+async function loadExperimentalLaunchAuctionCatalog(
   fixtureDir: string,
-  policy: ReservedAuctionPolicy
-): Promise<ExperimentalReservedAuctionCatalogEntry[]> {
+  policy: LaunchAuctionPolicy
+): Promise<ExperimentalLaunchAuctionCatalogEntry[]> {
   const fileNames = (await readdir(fixtureDir))
     .filter((name) => name.endsWith(".json"))
     .sort((left, right) => left.localeCompare(right));
@@ -841,15 +816,15 @@ async function loadExperimentalReservedAuctionCatalog(
     fileNames.map(async (fileName) => {
       const raw = await readFile(resolve(fixtureDir, fileName), "utf8");
       const fixture = JSON.parse(raw) as AuctionLabFixtureFile;
-      const scenario = parseReservedAuctionScenario(fixture.scenario);
+      const scenario = parseLaunchAuctionScenario(fixture.scenario);
 
-      return createExperimentalReservedAuctionCatalogEntry(
+      return createExperimentalLaunchAuctionCatalogEntry(
         {
           auctionId: fileName.replace(/\.json$/u, ""),
           title: fixture.title,
           description: fixture.description,
           name: scenario.name,
-          reservedClassId: scenario.reservedClassId,
+          auctionClassId: scenario.auctionClassId,
           unlockBlock: scenario.unlockBlock
         },
         policy
@@ -919,8 +894,8 @@ function parseNonNegativeInteger(value: string, label: string): number {
   return parsed;
 }
 
-function resolveExperimentalReservedAuctionPolicy(): ReservedAuctionPolicy {
-  const basePolicy = createDefaultReservedAuctionPolicy();
+function resolveExperimentalLaunchAuctionPolicy(): LaunchAuctionPolicy {
+  const basePolicy = createDefaultLaunchAuctionPolicy();
   const baseWindowBlocks = readOptionalExperimentalAuctionInteger("ONT_EXPERIMENTAL_AUCTION_BASE_WINDOW_BLOCKS");
   const softCloseExtensionBlocks = readOptionalExperimentalAuctionInteger(
     "ONT_EXPERIMENTAL_AUCTION_SOFT_CLOSE_EXTENSION_BLOCKS"
@@ -940,14 +915,11 @@ function resolveExperimentalReservedAuctionPolicy(): ReservedAuctionPolicy {
   const softCloseMinimumIncrementBasisPoints = readOptionalExperimentalAuctionInteger(
     "ONT_EXPERIMENTAL_AUCTION_SOFT_CLOSE_MINIMUM_INCREMENT_BASIS_POINTS"
   );
-  const topCollisionLockBlocks = readOptionalExperimentalAuctionInteger(
-    "ONT_EXPERIMENTAL_AUCTION_TOP_COLLISION_LOCK_BLOCKS"
+  const launchNameLockBlocks = readOptionalExperimentalAuctionInteger(
+    "ONT_EXPERIMENTAL_AUCTION_LAUNCH_NAME_LOCK_BLOCKS"
   );
-  const majorExistingNameLockBlocks = readOptionalExperimentalAuctionInteger(
-    "ONT_EXPERIMENTAL_AUCTION_MAJOR_EXISTING_NAME_LOCK_BLOCKS"
-  );
-  const publicIdentityLockBlocks = readOptionalExperimentalAuctionInteger(
-    "ONT_EXPERIMENTAL_AUCTION_PUBLIC_IDENTITY_LOCK_BLOCKS"
+  const shortNameWaveLockBlocks = readOptionalExperimentalAuctionInteger(
+    "ONT_EXPERIMENTAL_AUCTION_SHORT_NAME_WAVE_LOCK_BLOCKS"
   );
 
   return {
@@ -966,19 +938,15 @@ function resolveExperimentalReservedAuctionPolicy(): ReservedAuctionPolicy {
         ? {}
         : { softCloseMinimumIncrementBasisPoints })
     },
-    reservedClasses: {
-      ...basePolicy.reservedClasses,
-      top_collision: {
-        ...basePolicy.reservedClasses.top_collision,
-        ...(topCollisionLockBlocks === undefined ? {} : { lockBlocks: topCollisionLockBlocks })
+    auctionClasses: {
+      ...basePolicy.auctionClasses,
+      launch_name: {
+        ...basePolicy.auctionClasses.launch_name,
+        ...(launchNameLockBlocks === undefined ? {} : { lockBlocks: launchNameLockBlocks })
       },
-      major_existing_name: {
-        ...basePolicy.reservedClasses.major_existing_name,
-        ...(majorExistingNameLockBlocks === undefined ? {} : { lockBlocks: majorExistingNameLockBlocks })
-      },
-      public_identity: {
-        ...basePolicy.reservedClasses.public_identity,
-        ...(publicIdentityLockBlocks === undefined ? {} : { lockBlocks: publicIdentityLockBlocks })
+      short_name_wave: {
+        ...basePolicy.auctionClasses.short_name_wave,
+        ...(shortNameWaveLockBlocks === undefined ? {} : { lockBlocks: shortNameWaveLockBlocks })
       }
     }
   };
@@ -1217,50 +1185,4 @@ function getOwnershipRef(record: NameRecord): string {
 
 function hasSequenceGaps(chain: ValueRecordChain): boolean {
   return chain.records.some((record, index) => record.sequence !== index + 1);
-}
-
-function buildClaimPlan(indexer: InMemoryOntIndexer, normalizedName: string) {
-  const existingRecord = indexer.getName(normalizedName);
-  const stats = indexer.getStats();
-  const currentHeight = stats.currentHeight ?? indexer.getLaunchHeight() - 1;
-  const plannedCommitHeight = Math.max(indexer.getLaunchHeight(), currentHeight + 1);
-  const epochIndex = getEpochIndex(plannedCommitHeight, indexer.getLaunchHeight());
-  const maturityBlocks = getMaturityBlocks(epochIndex);
-
-  return {
-    name: normalizedName,
-    appearsAvailable: existingRecord === null,
-    availabilityNote:
-      existingRecord === null
-        ? "No revealed claim is visible right now. Hidden commits inside the reveal window are still possible."
-        : "A revealed claim is already visible for this name in the current resolver view.",
-    currentResolverHeight: stats.currentHeight,
-    launchHeight: indexer.getLaunchHeight(),
-    plannedCommitHeight,
-    recommendedBondVout: 0,
-    revealWindowBlocks: REVEAL_WINDOW_BLOCKS,
-    revealDeadlineHeight: plannedCommitHeight + REVEAL_WINDOW_BLOCKS,
-    epochIndex,
-    maturityBlocks,
-    maturityHeight: getMaturityHeight(plannedCommitHeight, maturityBlocks),
-    requiredBondSats: getBondSats(normalizedName.length),
-    existingClaim:
-      existingRecord === null
-        ? null
-        : {
-            status: existingRecord.status,
-            currentOwnerPubkey: existingRecord.currentOwnerPubkey,
-            claimCommitTxid: existingRecord.claimCommitTxid,
-            claimRevealTxid: existingRecord.claimRevealTxid,
-            currentBondTxid: existingRecord.currentBondTxid,
-            currentBondVout: existingRecord.currentBondVout,
-            currentBondValueSats: existingRecord.currentBondValueSats
-          },
-    nextSteps: [
-      "Build a commit transaction with the dedicated bond output and commit payload.",
-      "Wait for the commit transaction to confirm.",
-      `Broadcast the reveal transaction within ${REVEAL_WINDOW_BLOCKS} blocks of the commit confirmation.`,
-      "Monitor the resolver until the name appears as immature, then later mature."
-    ]
-  };
 }

@@ -3,9 +3,9 @@ import { readFile } from "node:fs/promises";
 import { describe, expect, it } from "vitest";
 
 import {
-  createDefaultReservedAuctionPolicy,
-  parseReservedAuctionScenario,
-  simulateReservedAuction
+  createDefaultLaunchAuctionPolicy,
+  parseLaunchAuctionScenario,
+  simulateLaunchAuction
 } from "./index.js";
 
 interface AuctionFixtureExpectation {
@@ -23,7 +23,7 @@ interface AuctionFixtureFile {
 }
 
 const FIXTURE_FILES = [
-  "google-competitive.json",
+  "nvidia-competitive.json",
   "openai-moderate.json",
   "tylercowen-thin-market.json",
   "no-bids.json",
@@ -31,13 +31,13 @@ const FIXTURE_FILES = [
   "soft-close-tail.json"
 ] as const;
 
-describe("reserved auction fixture coverage", () => {
+describe("auction fixture coverage", () => {
   for (const fixtureFile of FIXTURE_FILES) {
     it(`matches expected outcome for ${fixtureFile}`, async () => {
       const fixture = await loadAuctionFixture(fixtureFile);
-      const result = simulateReservedAuction({
-        policy: createDefaultReservedAuctionPolicy(),
-        scenario: parseReservedAuctionScenario(fixture.scenario)
+      const result = simulateLaunchAuction({
+        policy: createDefaultLaunchAuctionPolicy(),
+        scenario: parseLaunchAuctionScenario(fixture.scenario)
       });
 
       expect(result.status).toBe(fixture.expected.status);

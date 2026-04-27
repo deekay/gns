@@ -7,7 +7,7 @@ Use this when you want to show ONT quickly to someone new without sending them t
 In one short walkthrough, the person should see all three layers:
 
 1. connect a wallet to the hosted private demo
-2. claim a name
+2. acquire a name through the auction flow
 3. publish key/value pairs for that name
 
 ## Best Audience
@@ -72,7 +72,7 @@ Then:
 
 - prepare the draft
 - build the signer files
-- sign and broadcast commit and reveal in Sparrow
+- sign and broadcast an auction bid in Sparrow
 
 Success looks like:
 
@@ -81,9 +81,9 @@ Success looks like:
 
 ### 3. Publish A Value Bundle
 
-Open [values](https://opennametags.org/values?name=valuedemo) or replace the name with the one just claimed.
+Open [values](https://opennametags.org/values) and use a live name from Explore, or replace the name with the one just acquired through auction.
 
-Load the claimed name, then publish a few key/value pairs such as:
+Load the acquired name, then publish a few key/value pairs such as:
 
 - `website` → `https://example.com`
 - `btc` → `bitcoin:bc1...`
@@ -95,20 +95,20 @@ Success looks like:
 - sequence increments
 - future updates require the owner key, not the funding wallet key
 
-## Canonical Examples
+## Live Examples
 
-If they want to inspect the product before claiming, point them at:
+If they want to inspect the product before bidding, point them at:
 
-- [claimdemo](https://opennametags.org/names/claimdemo): claimed name with no value yet
-- [valuedemo](https://opennametags.org/names/valuedemo): claimed name with repeatable key/value pairs
-- [transferdemo](https://opennametags.org/names/transferdemo): transferred name with new-owner authority
+- [auctions](https://opennametags.org/auctions): reference cases and observed bid activity
+- [explore](https://opennametags.org/explore): currently owned names and recent chain-derived events
+- [destinations](https://opennametags.org/values): owner-signed records for live names
 
 ## What To Say If They Ask “What Works Today?”
 
 Use this short answer:
 
 - hosted private demo with Sparrow: yes
-- claim flow: yes
+- auction bid flow: yes
 - browser value publishing: yes
 - transfers: prototype
 - self-hosting: yes
@@ -129,5 +129,5 @@ Use this order:
 
 1. homepage: explain the product in one sentence
 2. setup: show that the wallet can connect and get demo coins
-3. claim: show the commit/reveal flow exists
-4. valuedemo: show what a claimed name can point to
+3. auctions: show how a bid package is prepared and signed
+4. destinations: show what an acquired name can point to

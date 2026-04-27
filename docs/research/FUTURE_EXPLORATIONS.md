@@ -22,7 +22,7 @@ This document captures speculative technical directions and brainstorming for th
 ## 2. "Scriptless" Protocol Design (Minimizing Bloat)
 
 ### Taproot Tweaking
-- **The Idea:** Hide the `COMMIT` hash by tweaking the Owner Public Key ($P' = P + hash(name)G$).
+- **The Idea:** Hide some auction commitment material by tweaking the owner public key ($P' = P + hash(name)G$).
 - **Benefit:** **Zero bytes** of extra data on-chain. ONT transactions look identical to standard Bitcoin spends.
 
 ### Inference-Based Transfers
@@ -84,7 +84,7 @@ Off-chain value records have an additional DA challenge: unlike ownership state,
 - **Resolver transparency roots:** A future resolver can periodically sign a Merkle root over accepted value-record heads and append receipts. This helps clients detect rollback, withholding, or forked resolver views without putting every mutable value update on Bitcoin.
 - **Nostr as optional value record transport:** Value records are already Schnorr-signed. A Nostr event kind for ONT records is a natural fit — Nostr relays are designed for signed mutable data. This keeps Nostr optional (not required for ownership verification) while giving owners a decentralized publication layer they don't have to self-host. Consistent with Decision #2 as long as Nostr is never required.
 
-See [VALUE_RECORD_HISTORY_AND_KEYBASE_NOTES.md](/Users/davidking/dev/gns/docs/research/VALUE_RECORD_HISTORY_AND_KEYBASE_NOTES.md) for the current implementation notes and remaining transparency questions.
+See [VALUE_RECORD_HISTORY_AND_KEYBASE_NOTES.md](./VALUE_RECORD_HISTORY_AND_KEYBASE_NOTES.md) for the current implementation notes and remaining transparency questions.
 
 ## 6. First-Class Identity (No Suffixes)
 

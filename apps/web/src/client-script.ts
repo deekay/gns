@@ -1,13 +1,17 @@
-import { PRODUCT_NAME, PROTOCOL_NAME, REVEAL_WINDOW_BLOCKS, TRANSFER_PACKAGE_FORMAT, TRANSFER_PACKAGE_VERSION } from "@ont/protocol";
+import { PRODUCT_NAME, PROTOCOL_NAME, TRANSFER_PACKAGE_FORMAT, TRANSFER_PACKAGE_VERSION } from "@ont/protocol";
 
 export function renderClientScript(configuredBasePath: string): string {
+  const keyToolsModulePath =
+    configuredBasePath === ""
+      ? "/key-tools.js"
+      : `${configuredBasePath}/key-tools.js`;
   return `
 const BASE_PATH = ${JSON.stringify(configuredBasePath)};
+const KEY_TOOLS_MODULE_PATH = ${JSON.stringify(keyToolsModulePath)};
 const PROTOCOL_ID = ${JSON.stringify(PROTOCOL_NAME)};
 const PRODUCT_LABEL = ${JSON.stringify(PRODUCT_NAME)};
 const TRANSFER_PACKAGE_FORMAT = ${JSON.stringify(TRANSFER_PACKAGE_FORMAT)};
 const TRANSFER_PACKAGE_VERSION = ${JSON.stringify(TRANSFER_PACKAGE_VERSION)};
-const CLAIM_PROGRESS_STORAGE_KEY = "ont.claim-progress.v1";
 const TRANSFER_PROGRESS_STORAGE_KEY = "ont.transfer-progress.v1";
 const state = {
   config: null,
@@ -15,16 +19,13 @@ const state = {
   names: [],
   activity: [],
   activeNameActivity: [],
-  pendingCommits: [],
-  generatedOwnerKey: null,
-  claimDraft: null,
-  claimPsbtBundle: null,
+  transferGeneratedOwnerKey: null,
   transferDraft: null,
-  privateBatchSmokeStatus: null,
   privateAuctionSmokeStatus: null,
   auctionLab: null,
   experimentalAuctions: null,
   auctionBidPackages: new Map(),
+  auctionGeneratedOwnerKeys: new Map(),
   nameFilter: "all",
   activityFilter: "all",
   txCache: new Map()
@@ -37,34 +38,6 @@ const elements = {
   privateFundingForm: document.getElementById("privateFundingForm"),
   privateFundingAddressInput: document.getElementById("privateFundingAddressInput"),
   privateFundingResult: document.getElementById("privateFundingResult"),
-  claimDraftForm: document.getElementById("claimDraftForm"),
-  claimStepInputs: document.getElementById("claim-step-inputs"),
-  claimStepInputsState: document.getElementById("claimStepInputsState"),
-  claimStepBackups: document.getElementById("claim-step-backups"),
-  claimStepBackupsState: document.getElementById("claimStepBackupsState"),
-  claimStepPsbts: document.getElementById("claim-step-psbts"),
-  claimStepPsbtsState: document.getElementById("claimStepPsbtsState"),
-  claimNameInput: document.getElementById("claimNameInput"),
-  ownerPubkeyInput: document.getElementById("ownerPubkeyInput"),
-  generateOwnerKeyButton: document.getElementById("generateOwnerKeyButton"),
-  nonceInput: document.getElementById("nonceInput"),
-  bondVoutInput: document.getElementById("bondVoutInput"),
-  bondDestinationInput: document.getElementById("bondDestinationInput"),
-  changeDestinationInput: document.getElementById("changeDestinationInput"),
-  commitTxidInput: document.getElementById("commitTxidInput"),
-  regenNonceButton: document.getElementById("regenNonceButton"),
-  downloadClaimPackageButton: document.getElementById("downloadClaimPackageButton"),
-  downloadSignerNotesButton: document.getElementById("downloadSignerNotesButton"),
-  walletMasterFingerprintInput: document.getElementById("walletMasterFingerprintInput"),
-  walletAccountXpubInput: document.getElementById("walletAccountXpubInput"),
-  walletAccountPathInput: document.getElementById("walletAccountPathInput"),
-  walletScanLimitInput: document.getElementById("walletScanLimitInput"),
-  commitFeeSatsInput: document.getElementById("commitFeeSatsInput"),
-  revealFeeSatsInput: document.getElementById("revealFeeSatsInput"),
-  buildClaimPsbtsButton: document.getElementById("buildClaimPsbtsButton"),
-  downloadClaimCommitPsbtButton: document.getElementById("downloadClaimCommitPsbtButton"),
-  downloadClaimRevealPsbtButton: document.getElementById("downloadClaimRevealPsbtButton"),
-  downloadRevealReadyPackageButton: document.getElementById("downloadRevealReadyPackageButton"),
   transferDraftForm: document.getElementById("transferDraftForm"),
   transferStepInputs: document.getElementById("transfer-step-inputs"),
   transferStepInputsState: document.getElementById("transferStepInputsState"),
@@ -72,20 +45,26 @@ const elements = {
   transferStepReviewState: document.getElementById("transferStepReviewState"),
   transferNameInput: document.getElementById("transferNameInput"),
   transferNewOwnerPubkeyInput: document.getElementById("transferNewOwnerPubkeyInput"),
+  generateTransferOwnerKeyLocalButton: document.getElementById("generateTransferOwnerKeyLocalButton"),
+  transferReviewRoleInput: document.getElementById("transferReviewRoleInput"),
+  transferReviewFileInput: document.getElementById("transferReviewFileInput"),
+  transferReviewPackageInput: document.getElementById("transferReviewPackageInput"),
+  reviewTransferPackageButton: document.getElementById("reviewTransferPackageButton"),
   transferModeInput: document.getElementById("transferModeInput"),
   transferSellerPayoutAddressInput: document.getElementById("transferSellerPayoutAddressInput"),
   transferBondAddressInput: document.getElementById("transferBondAddressInput"),
+  downloadTransferSellerPackageButton: document.getElementById("downloadTransferSellerPackageButton"),
+  downloadTransferBuyerPackageButton: document.getElementById("downloadTransferBuyerPackageButton"),
   downloadTransferPackageButton: document.getElementById("downloadTransferPackageButton"),
-  downloadTransferNotesButton: document.getElementById("downloadTransferNotesButton"),
+  downloadTransferSellerNotesButton: document.getElementById("downloadTransferSellerNotesButton"),
+  downloadTransferBuyerNotesButton: document.getElementById("downloadTransferBuyerNotesButton"),
   transferDraftResult: document.getElementById("transferDraftResult"),
-  testKeyResult: document.getElementById("testKeyResult"),
-  claimDraftResult: document.getElementById("claimDraftResult"),
-  claimPsbtResult: document.getElementById("claimPsbtResult"),
+  transferRecipientKeyResult: document.getElementById("transferRecipientKeyResult"),
+  transferPackageReviewResult: document.getElementById("transferPackageReviewResult"),
   trackedNames: document.getElementById("trackedNames"),
   immatureNames: document.getElementById("immatureNames"),
   matureNames: document.getElementById("matureNames"),
   invalidNames: document.getElementById("invalidNames"),
-  pendingCommits: document.getElementById("pendingCommits"),
   currentHeight: document.getElementById("currentHeight"),
   currentBlockHash: document.getElementById("currentBlockHash"),
   syncMode: document.getElementById("syncMode"),
@@ -94,8 +73,6 @@ const elements = {
   networkChain: document.getElementById("networkChain"),
   networkResolver: document.getElementById("networkResolver"),
   chainSummary: document.getElementById("chainSummary"),
-  privateBatchSmokeMeta: document.getElementById("privateBatchSmokeMeta"),
-  privateBatchSmokeResult: document.getElementById("privateBatchSmokeResult"),
   privateAuctionSmokeMeta: document.getElementById("privateAuctionSmokeMeta"),
   privateAuctionSmokeResult: document.getElementById("privateAuctionSmokeResult"),
   auctionPolicyControls: document.getElementById("auctionPolicyControls"),
@@ -117,44 +94,30 @@ const elements = {
   pendingList: document.getElementById("pendingList"),
   namesFilters: document.getElementById("namesFilters"),
   namesState: document.getElementById("namesState"),
-  namesList: document.getElementById("namesList")
+  namesList: document.getElementById("namesList"),
+  exploreEmptyState: document.getElementById("explore-empty-state"),
+  exploreEmptyStateMessage: document.getElementById("exploreEmptyStateMessage"),
+  exploreEmptyStateDetail: document.getElementById("exploreEmptyStateDetail")
 };
-
-function updateClaimActionStates() {
-  const hasDraft = state.claimDraft !== null;
-  const hasPsbtBundle = state.claimPsbtBundle !== null;
-
-  if (elements.downloadClaimPackageButton instanceof HTMLButtonElement) {
-    elements.downloadClaimPackageButton.disabled = !hasDraft;
-  }
-  if (elements.downloadSignerNotesButton instanceof HTMLButtonElement) {
-    elements.downloadSignerNotesButton.disabled = !hasDraft;
-  }
-  if (elements.buildClaimPsbtsButton instanceof HTMLButtonElement) {
-    elements.buildClaimPsbtsButton.disabled = !hasDraft;
-  }
-  if (elements.downloadClaimCommitPsbtButton instanceof HTMLButtonElement) {
-    elements.downloadClaimCommitPsbtButton.disabled = !hasPsbtBundle;
-  }
-  if (elements.downloadClaimRevealPsbtButton instanceof HTMLButtonElement) {
-    elements.downloadClaimRevealPsbtButton.disabled = !hasPsbtBundle;
-  }
-  if (elements.downloadRevealReadyPackageButton instanceof HTMLButtonElement) {
-    elements.downloadRevealReadyPackageButton.disabled = !hasPsbtBundle;
-  }
-
-  syncClaimWizard();
-}
 
 function updateTransferActionStates() {
   const hasTransferDraft = state.transferDraft !== null;
   const canExportPackage = hasTransferDraft && state.transferDraft?.kind !== "invalid";
 
+  if (elements.downloadTransferSellerPackageButton instanceof HTMLButtonElement) {
+    elements.downloadTransferSellerPackageButton.disabled = !canExportPackage;
+  }
+  if (elements.downloadTransferBuyerPackageButton instanceof HTMLButtonElement) {
+    elements.downloadTransferBuyerPackageButton.disabled = !canExportPackage;
+  }
   if (elements.downloadTransferPackageButton instanceof HTMLButtonElement) {
     elements.downloadTransferPackageButton.disabled = !canExportPackage;
   }
-  if (elements.downloadTransferNotesButton instanceof HTMLButtonElement) {
-    elements.downloadTransferNotesButton.disabled = !hasTransferDraft;
+  if (elements.downloadTransferSellerNotesButton instanceof HTMLButtonElement) {
+    elements.downloadTransferSellerNotesButton.disabled = !hasTransferDraft;
+  }
+  if (elements.downloadTransferBuyerNotesButton instanceof HTMLButtonElement) {
+    elements.downloadTransferBuyerNotesButton.disabled = !hasTransferDraft;
   }
 
   syncTransferWizard();
@@ -178,54 +141,6 @@ function setDetailsOpen(node, open) {
   }
 }
 
-function hasSelectedGeneratedOwnerKey() {
-  return state.generatedOwnerKey !== null
-    && String(elements.ownerPubkeyInput?.value?.trim() ?? "") === String(state.generatedOwnerKey.ownerPubkey);
-}
-
-function syncClaimWizard() {
-  const hasDraft = state.claimDraft !== null;
-  const hasPsbtBundle = state.claimPsbtBundle !== null;
-  const hasGeneratedOwnerKey = hasSelectedGeneratedOwnerKey();
-
-  setStepChip(elements.claimStepInputsState, hasDraft ? "Done" : "Start here", hasDraft ? "complete" : "current");
-  setStepChip(
-    elements.claimStepBackupsState,
-    hasDraft || hasGeneratedOwnerKey ? "Do this now" : "After step 1",
-    hasDraft || hasGeneratedOwnerKey ? "ready" : "waiting"
-  );
-  setStepChip(
-    elements.claimStepPsbtsState,
-    hasPsbtBundle ? "Bundle ready" : hasDraft ? "Build next" : "After step 2",
-    hasPsbtBundle ? "complete" : hasDraft ? "ready" : "waiting"
-  );
-
-  if (hasPsbtBundle) {
-    setDetailsOpen(elements.claimStepInputs, false);
-    setDetailsOpen(elements.claimStepBackups, false);
-    setDetailsOpen(elements.claimStepPsbts, true);
-    return;
-  }
-
-  if (hasDraft) {
-    setDetailsOpen(elements.claimStepInputs, false);
-    setDetailsOpen(elements.claimStepBackups, true);
-    setDetailsOpen(elements.claimStepPsbts, false);
-    return;
-  }
-
-  if (hasGeneratedOwnerKey) {
-    setDetailsOpen(elements.claimStepInputs, true);
-    setDetailsOpen(elements.claimStepBackups, true);
-    setDetailsOpen(elements.claimStepPsbts, false);
-    return;
-  }
-
-  setDetailsOpen(elements.claimStepInputs, true);
-  setDetailsOpen(elements.claimStepBackups, false);
-  setDetailsOpen(elements.claimStepPsbts, false);
-}
-
 function syncTransferWizard() {
   const hasTransferDraft = state.transferDraft !== null;
   setStepChip(
@@ -247,19 +162,6 @@ function syncTransferWizard() {
 
   setDetailsOpen(elements.transferStepInputs, true);
   setDetailsOpen(elements.transferStepReview, false);
-}
-
-function invalidateClaimDraftState(draftMessage, psbtMessage) {
-  const hadClaimArtifacts = state.claimDraft !== null || state.claimPsbtBundle !== null;
-  state.claimDraft = null;
-  state.claimPsbtBundle = null;
-
-  if (hadClaimArtifacts) {
-    renderClaimDraftMessage(draftMessage);
-    renderClaimPsbtMessage(psbtMessage);
-  }
-
-  updateClaimActionStates();
 }
 
 function readStoredObject(key) {
@@ -290,63 +192,58 @@ function writeStoredObject(key, payload) {
   }
 }
 
-function restoreClaimProgress(initialClaimName) {
-  const saved = readStoredObject(CLAIM_PROGRESS_STORAGE_KEY);
-  if (!saved) {
-    return false;
+let keyToolsPromise = null;
+
+async function loadKeyTools() {
+  if (keyToolsPromise === null) {
+    keyToolsPromise = import(KEY_TOOLS_MODULE_PATH);
   }
 
-  const claimName = typeof saved.claimName === "string" ? saved.claimName : "";
-  const ownerPubkey = typeof saved.ownerPubkey === "string" ? saved.ownerPubkey : "";
-  const nonceHex = typeof saved.nonceHex === "string" ? saved.nonceHex : "";
-  const bondVout = typeof saved.bondVout === "string" ? saved.bondVout : "";
-  const bondDestination = typeof saved.bondDestination === "string" ? saved.bondDestination : "";
-  const changeDestination = typeof saved.changeDestination === "string" ? saved.changeDestination : "";
-  const commitTxid = typeof saved.commitTxid === "string" ? saved.commitTxid : "";
-  let restored = false;
-
-  if (elements.claimNameInput && !elements.claimNameInput.value && !initialClaimName && claimName) {
-    elements.claimNameInput.value = claimName;
-    restored = true;
-  }
-  if (elements.ownerPubkeyInput && !elements.ownerPubkeyInput.value && ownerPubkey) {
-    elements.ownerPubkeyInput.value = ownerPubkey;
-    restored = true;
-  }
-  if (elements.nonceInput && !elements.nonceInput.value && nonceHex) {
-    elements.nonceInput.value = nonceHex;
-    restored = true;
-  }
-  if (elements.bondVoutInput && !elements.bondVoutInput.value && bondVout) {
-    elements.bondVoutInput.value = bondVout;
-    restored = true;
-  }
-  if (elements.bondDestinationInput && !elements.bondDestinationInput.value && bondDestination) {
-    elements.bondDestinationInput.value = bondDestination;
-    restored = true;
-  }
-  if (elements.changeDestinationInput && !elements.changeDestinationInput.value && changeDestination) {
-    elements.changeDestinationInput.value = changeDestination;
-    restored = true;
-  }
-  if (elements.commitTxidInput && !elements.commitTxidInput.value && commitTxid) {
-    elements.commitTxidInput.value = commitTxid;
-    restored = true;
-  }
-
-  return restored;
+  return keyToolsPromise;
 }
 
-function persistClaimProgress() {
-  writeStoredObject(CLAIM_PROGRESS_STORAGE_KEY, {
-    claimName: elements.claimNameInput?.value ?? "",
-    ownerPubkey: elements.ownerPubkeyInput?.value ?? "",
-    nonceHex: elements.nonceInput?.value ?? "",
-    bondVout: elements.bondVoutInput?.value ?? "",
-    bondDestination: elements.bondDestinationInput?.value ?? "",
-    changeDestination: elements.changeDestinationInput?.value ?? "",
-    commitTxid: elements.commitTxidInput?.value ?? ""
-  });
+async function generateLocalBrowserOwnerKey() {
+  const keyTools = await loadKeyTools();
+  const generated = keyTools.generateBrowserOwnerKey();
+
+  return {
+    ownerPubkey: generated.ownerPubkey,
+    privateKeyHex: generated.privateKeyHex,
+    source: "browser-local",
+    sourceLabel: "local browser",
+    warning:
+      "Generated locally in this browser. Save this private key if you want to update destinations or authorize transfers later."
+  };
+}
+
+async function generateHostedDemoOwnerKey() {
+  const generated = await fetchJson(withBasePath("/api/dev-owner-key"));
+
+  return {
+    ownerPubkey: generated.ownerPubkey,
+    privateKeyHex: generated.privateKeyHex,
+    source: "hosted-demo",
+    sourceLabel: "hosted demo",
+    warning:
+      typeof generated.warning === "string" && generated.warning.length > 0
+        ? generated.warning
+        : "Hosted demo helper only. This key came from the prototype server and should not be used for real value."
+  };
+}
+
+function applyGeneratedTransferOwnerKey(generated, updateMessage) {
+  state.transferGeneratedOwnerKey = generated;
+  if (elements.transferNewOwnerPubkeyInput) {
+    elements.transferNewOwnerPubkeyInput.value = generated.ownerPubkey;
+  }
+  persistTransferProgress();
+  if (state.transferDraft !== null) {
+    state.transferDraft = null;
+    renderTransferDraftMessage(updateMessage);
+  } else {
+    updateTransferActionStates();
+  }
+  renderTransferRecipientKey(generated);
 }
 
 function restoreTransferProgress(initialTransferName) {
@@ -400,47 +297,26 @@ void bootstrap();
 
 async function bootstrap() {
   const initialDetailName = getInitialDetailName();
-  const initialClaimName = getInitialClaimName();
   const initialTransferName = getInitialTransferName();
-  const restoredClaimProgress = restoreClaimProgress(initialClaimName);
   const restoredTransferProgress = restoreTransferProgress(initialTransferName);
-
-  if (elements.nonceInput && !elements.nonceInput.value) {
-    elements.nonceInput.value = generateNonceHex();
-  }
-
-  if (initialClaimName) {
-    if (elements.claimNameInput && !elements.claimNameInput.value) {
-      elements.claimNameInput.value = initialClaimName;
-    }
-    if (elements.nameInput && !elements.nameInput.value) {
-      elements.nameInput.value = initialClaimName;
-    }
-  }
 
   if (initialTransferName && elements.transferNameInput && !elements.transferNameInput.value) {
     elements.transferNameInput.value = initialTransferName;
   }
 
-  persistClaimProgress();
   persistTransferProgress();
 
-  updateClaimActionStates();
   updateTransferActionStates();
 
   try {
-    const [config, health, namesPayload, pendingPayload, activityPayload, auctionLabPayload, experimentalAuctionsPayload] = await Promise.all([
+    const [config, health, namesPayload, activityPayload, auctionLabPayload, experimentalAuctionsPayload] = await Promise.all([
       fetchJson(withBasePath("/api/config")),
       fetchJson(withBasePath("/api/health")),
       fetchJson(withBasePath("/api/names")),
-      fetchJson(withBasePath("/api/pending-commits")),
       fetchJson(withBasePath("/api/activity?limit=10")),
       isAuctionsPage() ? fetchJson(getAuctionLabApiPath()).catch(() => null) : Promise.resolve(null),
       isAuctionsPage() ? fetchJson(withBasePath("/api/experimental-auctions")).catch(() => null) : Promise.resolve(null)
     ]);
-    const privateBatchSmokeStatus = config.showPrivateBatchSmoke
-      ? await fetchJson(withBasePath("/api/private-batch-smoke-status")).catch(() => null)
-      : null;
     const privateAuctionSmokeStatus = config.showPrivateAuctionSmoke
       ? await fetchJson(withBasePath("/api/private-auction-smoke-status")).catch(() => null)
       : null;
@@ -449,45 +325,31 @@ async function bootstrap() {
     state.health = health;
     state.names = Array.isArray(namesPayload.names) ? namesPayload.names : [];
     state.activity = Array.isArray(activityPayload.activity) ? activityPayload.activity : [];
-    state.pendingCommits = Array.isArray(pendingPayload.pendingCommits) ? pendingPayload.pendingCommits : [];
-    state.privateBatchSmokeStatus = privateBatchSmokeStatus;
     state.privateAuctionSmokeStatus = privateAuctionSmokeStatus;
     state.auctionLab = auctionLabPayload;
     state.experimentalAuctions = experimentalAuctionsPayload;
 
     renderHealth();
-    renderPrivateBatchSmokeStatus();
     renderPrivateAuctionSmokeStatus();
     renderAuctionLab();
     renderExperimentalAuctionFeed();
     renderRecentNames();
     renderActivity();
-    renderPendingCommits();
     renderNames();
+    renderExploreEmptyState();
 
     if (initialDetailName) {
       if (elements.nameInput) {
         elements.nameInput.value = initialDetailName;
       }
-      if (elements.claimNameInput) {
-        elements.claimNameInput.value = initialDetailName;
-      }
       await resolveNameLookup(initialDetailName, {
         updateHistory: false
       });
-    } else if (isClaimPrepPage() && initialClaimName) {
-      renderClaimDraftMessage(
-        'Ready to prepare a claim for "' + initialClaimName + '". Fill in the owner pubkey and nonce, then continue in your signer.'
-      );
-    } else if (isClaimPrepPage() && restoredClaimProgress) {
-      renderClaimDraftMessage(
-        "Recovered claim details from this browser. Prepare the draft again to resume, and save the reveal backup before you leave later."
-      );
     } else if (isTransferPrepPage() && initialTransferName) {
       renderTransferDraftMessage(
         'Ready to prepare a transfer for "' +
           initialTransferName +
-          '". Add the new owner pubkey and the site will recommend the right transfer path from the current name state.'
+          '". Add the recipient pubkey and the site will recommend the right transfer path from the current name state.'
       );
     } else if (isTransferPrepPage() && restoredTransferProgress) {
       renderTransferDraftMessage(
@@ -520,8 +382,8 @@ async function bootstrap() {
       await reloadAuctionLab();
       setAuctionPolicyControlsMessage(
         overrides.noBidReleaseBlocks == null
-          ? "Using the current default release window."
-          : "Applied a custom no-bid release window to the simulator view."
+          ? "Using the current default no-winner close window."
+          : "Preview updated. Unbid lots now close without a winner after " + String(overrides.noBidReleaseBlocks) + " blocks in this reference view."
       );
     } catch (error) {
       setAuctionPolicyControlsMessage(describeError(error));
@@ -539,7 +401,7 @@ async function bootstrap() {
 
     try {
       await reloadAuctionLab();
-      setAuctionPolicyControlsMessage("Reset the simulator policy back to the current defaults.");
+      setAuctionPolicyControlsMessage("Preview reset to the current default no-winner close window.");
     } catch (error) {
       setAuctionPolicyControlsMessage(describeError(error));
     }
@@ -566,34 +428,58 @@ async function bootstrap() {
     setAuctionBidPackageMessage(domKey, "Inputs changed. Preview the current bid package before downloading it.");
   });
 
-  elements.regenNonceButton?.addEventListener("click", () => {
-    if (elements.nonceInput) {
-      elements.nonceInput.value = generateNonceHex();
-    }
-    persistClaimProgress();
-    invalidateClaimDraftState(
-      "Nonce updated. Prepare the claim draft again.",
-      "Prepare the updated claim draft again before building Sparrow-native PSBTs."
-    );
-  });
-
-  elements.generateOwnerKeyButton?.addEventListener("click", async () => {
-    renderTestKeyMessage("Generating a local prototype key...");
+  elements.generateTransferOwnerKeyLocalButton?.addEventListener("click", async () => {
+    renderTransferRecipientKeyMessage("Generating a local browser key for the buyer...");
 
     try {
-      const generated = await fetchJson(withBasePath("/api/dev-owner-key"));
-      state.generatedOwnerKey = generated;
-      if (elements.ownerPubkeyInput) {
-        elements.ownerPubkeyInput.value = generated.ownerPubkey;
-      }
-      persistClaimProgress();
-      invalidateClaimDraftState(
-        "Test key updated. Prepare a fresh claim draft next.",
-        "Prepare a fresh claim draft, then build Sparrow-native PSBTs from your wallet metadata."
+      const generated = await generateLocalBrowserOwnerKey();
+      applyGeneratedTransferOwnerKey(
+        generated,
+        "Recipient key updated. Build the transfer plan again so the handoff stays in sync."
       );
-      renderTestKey(generated);
     } catch (error) {
-      renderTestKeyError(error);
+      renderTransferRecipientKeyError(error);
+    }
+  });
+
+  elements.transferReviewFileInput?.addEventListener("change", async (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLInputElement)) {
+      return;
+    }
+
+    const file = target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    try {
+      const text = await file.text();
+      if (elements.transferReviewPackageInput instanceof HTMLTextAreaElement) {
+        elements.transferReviewPackageInput.value = text;
+      }
+      renderTransferPackageReviewMessage(
+        "Loaded package file. Choose buyer or seller review, then inspect the package."
+      );
+    } catch (error) {
+      renderTransferPackageReviewError(error);
+    }
+  });
+
+  elements.reviewTransferPackageButton?.addEventListener("click", () => {
+    const rawPackage = elements.transferReviewPackageInput?.value?.trim() ?? "";
+    const role = elements.transferReviewRoleInput?.value === "seller" ? "seller" : "buyer";
+
+    if (rawPackage.length === 0) {
+      renderTransferPackageReviewMessage("Paste or upload a transfer package JSON file first.");
+      return;
+    }
+
+    try {
+      const parsed = parseTransferPackageForReview(JSON.parse(rawPackage));
+      renderTransferPackageReview(parsed, role);
+    } catch (error) {
+      renderTransferPackageReviewError(error);
     }
   });
 
@@ -616,168 +502,6 @@ async function bootstrap() {
     } catch (error) {
       renderPrivateFundingError(error);
     }
-  });
-
-  elements.claimDraftForm?.addEventListener("submit", async (event) => {
-    event.preventDefault();
-
-    const rawName = elements.claimNameInput?.value?.trim() ?? "";
-    const ownerPubkey = elements.ownerPubkeyInput?.value?.trim() ?? "";
-    const nonceHex = elements.nonceInput?.value?.trim().toLowerCase() ?? "";
-    const bondVout = elements.bondVoutInput?.value?.trim() ?? "0";
-    const bondDestination = elements.bondDestinationInput?.value?.trim() ?? "";
-    const changeDestination = elements.changeDestinationInput?.value?.trim() ?? "";
-    const commitTxid = elements.commitTxidInput?.value?.trim().toLowerCase() ?? "";
-
-    if (rawName.length === 0) {
-      renderClaimDraftMessage("Enter a desired name first.");
-      return;
-    }
-
-    if (ownerPubkey.length === 0) {
-      renderClaimDraftMessage("Enter the owner pubkey in 32-byte hex form.");
-      return;
-    }
-
-    if (nonceHex.length === 0) {
-      renderClaimDraftMessage("Generate or enter an 8-byte nonce.");
-      return;
-    }
-
-    const normalizedName = rawName.toLowerCase();
-    if (elements.claimNameInput) {
-      elements.claimNameInput.value = normalizedName;
-    }
-
-    renderClaimDraftMessage("Preparing claim draft...");
-    state.claimPsbtBundle = null;
-    renderClaimPsbtMessage("Draft is updating. Rebuild the Sparrow PSBTs after the new draft is ready.");
-    updateClaimActionStates();
-
-    try {
-      const query = new URLSearchParams({
-        ownerPubkey,
-        nonceHex,
-        bondVout,
-        ...(bondDestination === "" ? {} : { bondDestination }),
-        ...(changeDestination === "" ? {} : { changeDestination }),
-        ...(commitTxid === "" ? {} : { commitTxid })
-      });
-      const draft = await fetchJson(
-        withBasePath("/api/claim-draft/" + encodeURIComponent(normalizedName) + "?" + query.toString())
-      );
-      state.claimDraft = draft;
-      renderClaimDraft(draft);
-      renderClaimPsbtMessage(
-        "Draft ready. Paste the Sparrow account fingerprint and xpub below to generate ready-to-sign PSBTs."
-      );
-      updateClaimActionStates();
-    } catch (error) {
-      renderClaimDraftError(error);
-      state.claimPsbtBundle = null;
-      renderClaimPsbtMessage("Fix the claim draft first, then build Sparrow-native PSBTs.");
-      updateClaimActionStates();
-    }
-  });
-
-  elements.downloadClaimPackageButton?.addEventListener("click", () => {
-    if (!state.claimDraft) {
-      renderClaimDraftMessage("Prepare a claim draft before downloading a claim package.");
-      return;
-    }
-
-    downloadJsonFile(
-      withClaimDraftLocalData(state.claimDraft),
-      "ont-claim-" +
-        state.claimDraft.name +
-        (state.claimDraft.commitTxid ? "-reveal-ready" : "-commit-ready") +
-        ".json"
-    );
-  });
-
-  elements.downloadSignerNotesButton?.addEventListener("click", () => {
-    if (!state.claimDraft) {
-      renderClaimDraftMessage("Prepare a claim draft before downloading signer notes.");
-      return;
-    }
-
-    downloadTextFile(
-      buildClaimEssentialsText(state.claimDraft),
-      "ont-claim-" + state.claimDraft.name + "-signer-notes.txt"
-    );
-  });
-
-  elements.buildClaimPsbtsButton?.addEventListener("click", async () => {
-    if (!state.claimDraft) {
-      renderClaimPsbtMessage("Prepare a claim draft before building Sparrow-native PSBTs.");
-      return;
-    }
-
-    const walletMasterFingerprint = elements.walletMasterFingerprintInput?.value?.trim() ?? "";
-    const walletAccountXpub = elements.walletAccountXpubInput?.value?.trim() ?? "";
-    const walletAccountPath = elements.walletAccountPathInput?.value?.trim() ?? "";
-    const walletScanLimit = elements.walletScanLimitInput?.value?.trim() ?? "";
-    const commitFeeSats = elements.commitFeeSatsInput?.value?.trim() ?? "";
-    const revealFeeSats = elements.revealFeeSatsInput?.value?.trim() ?? "";
-
-    if (walletMasterFingerprint.length === 0 || walletAccountXpub.length === 0 || walletAccountPath.length === 0) {
-      renderClaimPsbtMessage("Paste the Sparrow master fingerprint, account xpub, and account derivation path first.");
-      return;
-    }
-
-    renderClaimPsbtMessage("Scanning the Sparrow account and building ready-to-sign commit/reveal PSBTs...");
-
-    try {
-      const bundle = await postJson(withBasePath("/api/private-signet-claim-psbts"), {
-        name: state.claimDraft.name,
-        ownerPubkey: state.claimDraft.ownerPubkey,
-        nonceHex: state.claimDraft.nonceHex,
-        bondVout: state.claimDraft.bondVout,
-        bondDestination: state.claimDraft.bondDestination,
-        changeDestination: state.claimDraft.changeDestination,
-        walletMasterFingerprint,
-        walletAccountXpub,
-        walletAccountPath,
-        ...(walletScanLimit === "" ? {} : { walletScanLimit: Number.parseInt(walletScanLimit, 10) }),
-        ...(commitFeeSats === "" ? {} : { commitFeeSats }),
-        ...(revealFeeSats === "" ? {} : { revealFeeSats })
-      });
-      state.claimPsbtBundle = bundle;
-      renderClaimPsbtBundle(bundle);
-      updateClaimActionStates();
-    } catch (error) {
-      state.claimPsbtBundle = null;
-      renderClaimPsbtError(error);
-      updateClaimActionStates();
-    }
-  });
-
-  const claimInputsThatInvalidateDraft = [
-    elements.claimNameInput,
-    elements.ownerPubkeyInput,
-    elements.nonceInput,
-    elements.bondVoutInput,
-    elements.bondDestinationInput,
-    elements.changeDestinationInput,
-    elements.commitTxidInput
-  ];
-
-  const handleClaimInputMutation = () => {
-    invalidateClaimDraftState(
-      "Claim details changed. Prepare the draft again so the backup files and PSBT step stay in sync.",
-      "Claim details changed. Prepare the draft again before building Sparrow-native PSBTs."
-    );
-  };
-
-  claimInputsThatInvalidateDraft.forEach((input) => {
-    input?.addEventListener("input", () => {
-      persistClaimProgress();
-      handleClaimInputMutation();
-    });
-    input?.addEventListener("change", () => {
-      persistClaimProgress();
-      handleClaimInputMutation();
-    });
   });
 
   [
@@ -803,42 +527,6 @@ async function bootstrap() {
     input?.addEventListener("change", handleTransferMutation);
   });
 
-  elements.downloadClaimCommitPsbtButton?.addEventListener("click", () => {
-    if (!state.claimPsbtBundle) {
-      renderClaimPsbtMessage("Build the Sparrow-native PSBT bundle first.");
-      return;
-    }
-
-    downloadBase64BinaryFile(
-      state.claimPsbtBundle.commitArtifacts.psbtBase64,
-      "ont-commit-" + state.claimPsbtBundle.revealReadyClaimPackage.name + "-sparrow.psbt"
-    );
-  });
-
-  elements.downloadClaimRevealPsbtButton?.addEventListener("click", () => {
-    if (!state.claimPsbtBundle) {
-      renderClaimPsbtMessage("Build the Sparrow-native PSBT bundle first.");
-      return;
-    }
-
-    downloadBase64BinaryFile(
-      state.claimPsbtBundle.revealArtifacts.psbtBase64,
-      "ont-reveal-" + state.claimPsbtBundle.revealReadyClaimPackage.name + "-sparrow.psbt"
-    );
-  });
-
-  elements.downloadRevealReadyPackageButton?.addEventListener("click", () => {
-    if (!state.claimPsbtBundle) {
-      renderClaimPsbtMessage("Build the Sparrow-native PSBT bundle first.");
-      return;
-    }
-
-    downloadJsonFile(
-      withClaimPackageLocalData(state.claimPsbtBundle.revealReadyClaimPackage),
-      "ont-claim-" + state.claimPsbtBundle.revealReadyClaimPackage.name + "-reveal-ready.json"
-    );
-  });
-
   elements.transferDraftForm?.addEventListener("submit", async (event) => {
     event.preventDefault();
 
@@ -854,7 +542,7 @@ async function bootstrap() {
     }
 
     if (newOwnerPubkey.length === 0) {
-      renderTransferDraftMessage("Enter the new owner pubkey in 32-byte hex form.");
+      renderTransferDraftMessage("Enter the recipient pubkey in 32-byte hex form.");
       return;
     }
 
@@ -887,15 +575,61 @@ async function bootstrap() {
     }
   });
 
-  elements.downloadTransferNotesButton?.addEventListener("click", () => {
+  elements.downloadTransferSellerPackageButton?.addEventListener("click", () => {
     if (!state.transferDraft) {
-      renderTransferDraftMessage("Prepare a transfer handoff before downloading signer notes.");
+      renderTransferDraftMessage("Prepare a transfer handoff before downloading the seller package.");
+      return;
+    }
+
+    if (state.transferDraft.kind === "invalid") {
+      renderTransferDraftMessage("Released names need a fresh auction path, so there is no seller package to export.");
+      return;
+    }
+
+    downloadJsonFile(
+      buildSellerTransferPackage(state.transferDraft),
+      "ont-transfer-" + state.transferDraft.name + "-seller-package.json"
+    );
+  });
+
+  elements.downloadTransferBuyerPackageButton?.addEventListener("click", () => {
+    if (!state.transferDraft) {
+      renderTransferDraftMessage("Prepare a transfer handoff before downloading the buyer package.");
+      return;
+    }
+
+    if (state.transferDraft.kind === "invalid") {
+      renderTransferDraftMessage("Released names need a fresh auction path, so there is no buyer package to export.");
+      return;
+    }
+
+    downloadJsonFile(
+      buildBuyerTransferPackage(state.transferDraft),
+      "ont-transfer-" + state.transferDraft.name + "-buyer-package.json"
+    );
+  });
+
+  elements.downloadTransferSellerNotesButton?.addEventListener("click", () => {
+    if (!state.transferDraft) {
+      renderTransferDraftMessage("Prepare a transfer handoff before downloading seller notes.");
       return;
     }
 
     downloadTextFile(
-      buildTransferEssentialsText(state.transferDraft),
-      "ont-transfer-" + state.transferDraft.name + "-signer-notes.txt"
+      buildSellerTransferNotesText(state.transferDraft),
+      "ont-transfer-" + state.transferDraft.name + "-seller-notes.txt"
+    );
+  });
+
+  elements.downloadTransferBuyerNotesButton?.addEventListener("click", () => {
+    if (!state.transferDraft) {
+      renderTransferDraftMessage("Prepare a transfer handoff before downloading buyer notes.");
+      return;
+    }
+
+    downloadTextFile(
+      buildBuyerTransferNotesText(state.transferDraft),
+      "ont-transfer-" + state.transferDraft.name + "-buyer-notes.txt"
     );
   });
 
@@ -906,7 +640,7 @@ async function bootstrap() {
     }
 
     if (state.transferDraft.kind === "invalid") {
-      renderTransferDraftMessage("Invalid names should be reclaimed, so there is no transfer package to export.");
+      renderTransferDraftMessage("Released names need a fresh auction path, so there is no transfer package to export.");
       return;
     }
 
@@ -953,52 +687,42 @@ async function bootstrap() {
       return;
     }
 
-    const ownerKeyDownloadButton = target.closest("[data-download-owner-key]");
-    if (ownerKeyDownloadButton instanceof HTMLElement) {
-      if (!state.claimDraft) {
-        renderClaimDraftMessage("Prepare a claim draft before downloading the demo owner key.");
+    const transferGeneratedOwnerKeyDownloadButton = target.closest("[data-download-transfer-generated-owner-key]");
+    if (transferGeneratedOwnerKeyDownloadButton instanceof HTMLElement) {
+      if (!state.transferGeneratedOwnerKey) {
+        renderTransferRecipientKeyMessage("Generate a recipient key before downloading it.");
         return;
       }
 
-      const generatedOwnerKey = getGeneratedOwnerKeyForDraft(state.claimDraft);
-      if (!generatedOwnerKey) {
-        renderClaimDraftMessage("This draft is not using a locally generated demo owner key.");
-        return;
-      }
-
+      const nameHint = elements.transferNameInput?.value?.trim() || null;
       downloadTextFile(
-        buildDemoOwnerKeyText(state.claimDraft),
-        "ont-" + state.claimDraft.name + "-demo-owner-key.txt"
+        buildGeneratedOwnerKeyText(state.transferGeneratedOwnerKey, nameHint),
+        "ont-" + (nameHint || "recipient") + "-recipient-demo-owner-key.txt"
       );
       return;
     }
 
-    const generatedOwnerKeyDownloadButton = target.closest("[data-download-generated-owner-key]");
-    if (generatedOwnerKeyDownloadButton instanceof HTMLElement) {
-      if (!state.generatedOwnerKey) {
-        renderTestKeyMessage("Generate a test owner key before downloading it.");
+    const useTransferGeneratedOwnerKeyButton = target.closest("[data-use-transfer-generated-owner-key]");
+    if (useTransferGeneratedOwnerKeyButton instanceof HTMLElement) {
+      if (!state.transferGeneratedOwnerKey) {
+        renderTransferRecipientKeyMessage("Generate a recipient key first.");
         return;
       }
 
-      const nameHint = elements.claimNameInput?.value?.trim() || null;
-      downloadTextFile(
-        buildGeneratedOwnerKeyText(state.generatedOwnerKey, nameHint),
-        "ont-" + (nameHint || "demo-name") + "-demo-owner-key.txt"
-      );
-      return;
-    }
-
-    const revealBackupDownloadButton = target.closest("[data-download-reveal-ready]");
-    if (revealBackupDownloadButton instanceof HTMLElement) {
-      if (!state.claimPsbtBundle) {
-        renderClaimPsbtMessage("Build the Sparrow-native PSBT bundle first.");
-        return;
+      if (elements.transferNewOwnerPubkeyInput) {
+        elements.transferNewOwnerPubkeyInput.value = state.transferGeneratedOwnerKey.ownerPubkey;
+        elements.transferNewOwnerPubkeyInput.focus();
       }
+      persistTransferProgress();
 
-      downloadJsonFile(
-        withClaimPackageLocalData(state.claimPsbtBundle.revealReadyClaimPackage),
-        "ont-claim-" + state.claimPsbtBundle.revealReadyClaimPackage.name + "-reveal-ready.json"
-      );
+      if (state.transferDraft !== null) {
+        state.transferDraft = null;
+        renderTransferDraftMessage("Recipient pubkey copied into the seller form. Build the transfer plan again so the handoff stays in sync.");
+      } else {
+        renderTransferDraftMessage("Recipient pubkey copied into the seller form. Review the transfer details and build the plan when ready.");
+      }
+      updateTransferActionStates();
+      setDetailsOpen(elements.transferStepInputs, true);
       return;
     }
 
@@ -1080,6 +804,65 @@ async function bootstrap() {
       return;
     }
 
+    const auctionOwnerKeyActionButton = target.closest("[data-auction-owner-key-action]");
+    if (auctionOwnerKeyActionButton instanceof HTMLElement) {
+      const action = auctionOwnerKeyActionButton.getAttribute("data-auction-owner-key-action");
+      const source = auctionOwnerKeyActionButton.getAttribute("data-auction-package-source");
+      const id = auctionOwnerKeyActionButton.getAttribute("data-auction-package-id");
+      const name = auctionOwnerKeyActionButton.getAttribute("data-auction-name");
+
+      if (!action || !source || !id) {
+        return;
+      }
+
+      const domKey = buildAuctionPackageDomKey(source, id);
+      const ownerPubkeyInput = document.querySelector(
+        '[data-auction-owner-pubkey="' + cssEscape(id) + '"][data-auction-package-source="' + cssEscape(source) + '"]'
+      );
+
+      if (action === "download") {
+        const generated = state.auctionGeneratedOwnerKeys.get(domKey);
+        if (!generated) {
+          setAuctionOwnerKeyHelperMessage(domKey, "Generate an owner key for this lot before downloading it.");
+          return;
+        }
+
+        const normalizedName = typeof name === "string" && name.trim().length > 0 ? name.trim().toLowerCase() : null;
+        downloadTextFile(
+          buildGeneratedOwnerKeyText(generated, normalizedName),
+          "ont-" + String(normalizedName ?? "auction-lot") + "-auction-owner-key.txt"
+        );
+        return;
+      }
+
+      try {
+        setAuctionOwnerKeyHelperMessage(
+          domKey,
+          action === "generate-local"
+            ? "Creating an owner key in this browser for this bid..."
+            : "Requesting a demo owner key from the server for this bid..."
+        );
+
+        const generated =
+          action === "generate-local"
+            ? await generateLocalBrowserOwnerKey()
+            : await generateHostedDemoOwnerKey();
+
+        state.auctionGeneratedOwnerKeys.set(domKey, generated);
+        if (ownerPubkeyInput instanceof HTMLInputElement) {
+          ownerPubkeyInput.value = generated.ownerPubkey;
+          ownerPubkeyInput.focus();
+        }
+        state.auctionBidPackages.delete(domKey);
+        setAuctionBidPackagePreview(domKey, "");
+        setAuctionBidPackageMessage(domKey, "Owner key updated. Preview the current bid package before downloading it.");
+        renderAuctionOwnerKeyHelper(domKey, source, id, name, generated);
+      } catch (error) {
+        setAuctionOwnerKeyHelperMessage(domKey, describeError(error));
+      }
+      return;
+    }
+
     const button = target.closest("[data-copy]");
     if (!(button instanceof HTMLElement)) {
       return;
@@ -1112,10 +895,6 @@ async function bootstrap() {
     if (elements.nameInput) {
       elements.nameInput.value = routeName;
     }
-    if (elements.claimNameInput) {
-      elements.claimNameInput.value = routeName;
-    }
-
     void resolveNameLookup(routeName, {
       updateHistory: false
     });
@@ -1133,10 +912,6 @@ async function resolveNameLookup(rawName, options = {}) {
   if (elements.nameInput) {
     elements.nameInput.value = normalizedName;
   }
-  if (elements.claimNameInput) {
-    elements.claimNameInput.value = normalizedName;
-  }
-
   if (options.updateHistory !== false) {
     updateNameDetailHistory(normalizedName);
   }
@@ -1168,15 +943,9 @@ async function resolveNameLookup(rawName, options = {}) {
     renderSearchRecord(record, valueRecord);
   } catch (error) {
     if (error instanceof Error && error.code === "name_not_found") {
-      try {
-        const plan = await fetchJson(withBasePath("/api/claim-plan/" + encodeURIComponent(normalizedName)));
-        state.activeNameActivity = [];
-        renderClaimPlan(plan);
-        return;
-      } catch (planError) {
-        renderSearchError(planError);
-        return;
-      }
+      state.activeNameActivity = [];
+      renderAuctionFirstNameNotFound(normalizedName);
+      return;
     }
 
     renderSearchError(error);
@@ -1203,7 +972,6 @@ function renderHealth() {
   setText(elements.immatureNames, String(immatureNames));
   setText(elements.matureNames, String(matureNames));
   setText(elements.invalidNames, String(invalidNames));
-  setText(elements.pendingCommits, String(stats.pendingCommits ?? 0));
   setText(elements.currentHeight, stats.currentHeight == null ? "-" : String(stats.currentHeight));
   setCompactHash(elements.currentBlockHash, stats.currentBlockHash ?? "-");
   setText(
@@ -1213,8 +981,7 @@ function renderHealth() {
       "Height " + (stats.currentHeight == null ? "-" : String(stats.currentHeight)),
       String(claimedNames) + " names",
       String(immatureNames) + " settling",
-      String(matureNames) + " active",
-      String(stats.pendingCommits ?? 0) + " awaiting reveal"
+      String(matureNames) + " active"
     ].join(" · ")
   );
 }
@@ -1228,8 +995,19 @@ function renderNames() {
   renderNamesFilters();
 
   if (state.names.length === 0) {
-    setText(elements.namesState, "No tracked names are visible from the resolver yet.");
-    list.innerHTML = "";
+    const resolverEmpty = !resolverHasVisibleState();
+    setText(
+      elements.namesState,
+      resolverEmpty
+        ? "Resolver reachable · waiting for a new demo reseed."
+        : "No tracked names are visible from the resolver yet."
+    );
+    list.innerHTML = resolverEmpty
+      ? renderExploreResolverEmptyCard(
+          "Registry Waiting For Seed Data",
+          "Owned, settling, and released names will appear here after the canonical demo seed or a fresh auction walkthrough lands on this resolver."
+        )
+      : "";
     return;
   }
 
@@ -1274,6 +1052,33 @@ function renderNames() {
     "</div>";
 }
 
+function renderExploreEmptyState() {
+  const panel = elements.exploreEmptyState;
+  if (!(panel instanceof HTMLElement)) {
+    return;
+  }
+
+  if (resolverHasVisibleState()) {
+    panel.hidden = true;
+    return;
+  }
+
+  panel.hidden = false;
+  const networkLabel = String(state.config?.networkLabel ?? "live demo");
+  const currentHeight = state.health?.stats?.currentHeight ?? null;
+
+  setText(
+    elements.exploreEmptyStateMessage,
+    "This " + networkLabel + " resolver is reachable, but it is not showing any seeded names, auction activity, or resolver updates right now."
+  );
+  setText(
+    elements.exploreEmptyStateDetail,
+    currentHeight == null
+      ? "That usually means the demo chain was reset or has not been reseeded yet."
+      : "Current height " + String(currentHeight) + ". That usually means the demo chain was reset or has not been reseeded yet."
+  );
+}
+
 function renderRecentNames() {
   const list = elements.recentNamesList;
   if (!list) {
@@ -1281,8 +1086,19 @@ function renderRecentNames() {
   }
 
   if (state.names.length === 0) {
-    setText(elements.recentNamesState, "No tracked names are visible from the resolver yet.");
-    list.innerHTML = "";
+    const resolverEmpty = !resolverHasVisibleState();
+    setText(
+      elements.recentNamesState,
+      resolverEmpty
+        ? "Resolver reachable · waiting for a new demo reseed."
+        : "No tracked names are visible from the resolver yet."
+    );
+    list.innerHTML = resolverEmpty
+      ? renderExploreResolverEmptyCard(
+          "No Recorded Names Yet",
+          "Once the demo chain is reseeded, newly owned and transferred names will show up here in recency order."
+        )
+      : "";
     return;
   }
 
@@ -1308,9 +1124,20 @@ function renderActivity() {
   renderActivityFilters();
 
   if (state.activity.length === 0) {
-    setText(elements.activityState, "No recent Open Name Tags activity is visible from the resolver yet.");
+    const resolverEmpty = !resolverHasVisibleState();
+    setText(
+      elements.activityState,
+      resolverEmpty
+        ? "Resolver reachable · waiting for a new demo reseed."
+        : "No recent Open Name Tags activity is visible from the resolver yet."
+    );
     if (highlightsContainer) {
-      highlightsContainer.innerHTML = "";
+      highlightsContainer.innerHTML = resolverEmpty
+        ? renderExploreResolverEmptyCard(
+            "No Recent Activity Yet",
+            "Auction bids, transfers, and value updates will appear here once this resolver has visible chain activity again."
+          )
+        : "";
     }
     list.innerHTML = "";
     return;
@@ -1413,7 +1240,7 @@ function renderActivityFilters() {
 
   const options = [
     { value: "all", label: "All" },
-    { value: "claims", label: "Claims" },
+    { value: "acquisitions", label: "Acquisitions" },
     { value: "transfers", label: "Transfers" },
     { value: "invalidated", label: "Invalidations" }
   ];
@@ -1533,78 +1360,22 @@ function renderActivityHighlightCard(record, index) {
   \`;
 }
 
-function renderPendingCommits() {
-  const list = elements.pendingList;
-  if (!list) {
-    return;
-  }
+function resolverHasVisibleState() {
+  return state.names.length > 0 || state.activity.length > 0;
+}
 
-  if (state.pendingCommits.length === 0) {
-    setText(elements.pendingState, "No pending commits are currently waiting for reveal.");
-    list.innerHTML = "";
-    return;
-  }
-
-  const currentHeight = state.health?.stats?.currentHeight ?? null;
-  setText(
-    elements.pendingState,
-    state.pendingCommits.length + " pending commit" + (state.pendingCommits.length === 1 ? "" : "s")
-  );
-  list.innerHTML = state.pendingCommits
-    .map((record) => {
-      const panelId = "pendingTxPanel-" + record.txid;
-      const blocksLeft =
-        currentHeight == null ? null : Number(record.revealDeadlineHeight) - Number(currentHeight);
-
-      return \`
-        <article class="pending-card">
-          <div class="result-title">
-            <h3>Pending Commit</h3>
-            <span class="status-pill pending">awaiting reveal</span>
-          </div>
-          <div class="result-grid">
-            <div class="result-item">
-              <label>Commit Txid</label>
-              \${renderCopyableCode(record.txid)}
-            </div>
-            <div class="result-item">
-              <label>Owner Pubkey</label>
-              \${renderCopyableCode(record.ownerPubkey)}
-            </div>
-            <div class="result-item">
-              <label>Commit Height</label>
-              <p class="field-value">\${escapeHtml(String(record.blockHeight))}</p>
-            </div>
-            <div class="result-item">
-              <label>Reveal Deadline</label>
-              <p class="field-value">
-                \${escapeHtml(String(record.revealDeadlineHeight))}
-                \${blocksLeft === null ? "" : '<span class="inline-note">(' + escapeHtml(String(blocksLeft)) + ' blocks left)</span>'}
-              </p>
-            </div>
-            <div class="result-item">
-              <label>Bond Vout</label>
-              <p class="field-value">\${escapeHtml(String(record.bondVout))}</p>
-            </div>
-            <div class="result-item">
-              <label>Bond Amount</label>
-              <p class="field-value">\${escapeHtml(record.bondValueSats == null ? "Unknown" : formatSats(record.bondValueSats))}</p>
-            </div>
-          </div>
-          <p class="pending-meta">
-            The name is still hidden at the commit stage. It only becomes public when the reveal is broadcast within the allowed window.
-          </p>
-          <div class="step-list">
-            <p class="step-list-label">Transaction Provenance</p>
-            <div class="tx-link-list">
-              <button type="button" class="tx-inspect-button" data-view-tx="\${escapeHtml(record.txid)}" data-target-panel="\${escapeHtml(panelId)}">Commit Tx</button>
-            </div>
-            <div id="\${escapeHtml(panelId)}" class="tx-provenance-panel empty"></div>
-          </div>
-        </article>
-      \`;
-    })
-    .join("");
+function renderExploreResolverEmptyCard(title, copy) {
+  return \`
+    <article class="guide-card explore-empty-card">
+      <p class="highlight-kicker">Demo resolver waiting for reseed</p>
+      <h3>\${escapeHtml(title)}</h3>
+      <p>\${escapeHtml(copy)}</p>
+      <div class="guide-card-actions">
+        <a class="action-link secondary" href="\${escapeHtml(withBasePath("/setup"))}">Open setup</a>
+        <a class="action-link secondary" href="\${escapeHtml(withBasePath("/auctions"))}">Open auctions</a>
+      </div>
+    </article>
+  \`;
 }
 
 function summarizeActivityTitle(record) {
@@ -1674,12 +1445,8 @@ function activityPriority(record) {
     return 3;
   }
 
-  if (eventTypes.includes("REVEAL") || eventTypes.includes("BATCH_REVEAL")) {
+  if (eventTypes.includes("AUCTION_BID")) {
     return 2;
-  }
-
-  if (eventTypes.includes("COMMIT") || eventTypes.includes("BATCH_ANCHOR")) {
-    return 1;
   }
 
   return 0;
@@ -1696,16 +1463,8 @@ function activityHighlightLabel(record) {
     return "Transfer";
   }
 
-  if (eventTypes.includes("REVEAL") || eventTypes.includes("BATCH_REVEAL")) {
-    return "Claim Revealed";
-  }
-
-  if (eventTypes.includes("BATCH_ANCHOR")) {
-    return "Batch Commit Broadcast";
-  }
-
-  if (eventTypes.includes("COMMIT")) {
-    return "Commit Broadcast";
+  if (eventTypes.includes("AUCTION_BID")) {
+    return "Auction Bid";
   }
 
   return summarizeActivityTitle(record);
@@ -1723,14 +1482,6 @@ function activityStatusLabel(record) {
 
   const firstType = String(appliedEvents[0]?.typeName ?? "").toUpperCase();
 
-  if (firstType === "BATCH_ANCHOR") {
-    return "batch_anchor";
-  }
-
-  if (firstType === "BATCH_REVEAL") {
-    return "batch_reveal";
-  }
-
   return String(appliedEvents[0]?.typeName ?? "activity").toLowerCase();
 }
 
@@ -1742,23 +1493,11 @@ function activityStatusPill(record) {
   const appliedEvents = (record.events ?? []).filter((event) => event.validationStatus === "applied");
   const firstType = String(appliedEvents[0]?.typeName ?? "").toUpperCase();
 
-  if (firstType === "REVEAL") {
-    return "immature";
-  }
-
-  if (firstType === "BATCH_REVEAL") {
-    return "immature";
-  }
-
   if (firstType === "TRANSFER") {
     return "mature";
   }
 
-  if (firstType === "BATCH_ANCHOR") {
-    return "pending";
-  }
-
-  if (firstType === "COMMIT") {
+  if (firstType === "AUCTION_BID") {
     return "pending";
   }
 
@@ -1767,10 +1506,6 @@ function activityStatusPill(record) {
 
 function renderSearchRecord(record, valueRecord) {
   setDocumentTitle(record.name, record.status);
-
-  if (elements.claimNameInput) {
-    elements.claimNameInput.value = record.name;
-  }
 
   if (!elements.searchResult) {
     return;
@@ -1798,14 +1533,14 @@ function renderSearchRecord(record, valueRecord) {
     <div class="lookup-facts">
       \${renderLookupFact("Settlement", detailSettlementValue(record, state.health?.stats?.currentHeight ?? null))}
       \${renderLookupFact("Required bond", formatSats(record.requiredBondSats))}
-      \${renderLookupFact("Off-chain data", valueRecord ? "Published" : "Not published")}
+      \${renderLookupFact("Destinations", valueRecord ? "Published" : "Not published")}
     </div>
     <p class="lookup-note">\${escapeHtml(primaryLookupNote(record, valueRecord, state.health?.stats?.currentHeight ?? null))}</p>
     \${String(record.status) === "invalid" ? \`<p class="lookup-note lookup-note-warning">\${escapeHtml(invalidLookupWarning())}</p>\` : ""}
     <div class="hero-cta-row lookup-result-actions">
       \${String(record.status) === "invalid"
-        ? \`<a class="action-link" href="\${escapeHtml(buildClaimPrepPath(record.name))}">Prepare a reclaim</a>\`
-        : \`<a class="action-link" href="\${escapeHtml(buildValuePublishPath(record.name))}">Publish value</a>
+        ? \`<a class="action-link" href="\${escapeHtml(buildAuctionsPath(record.name))}">Open auctions</a>\`
+        : \`<a class="action-link" href="\${escapeHtml(buildValuePublishPath(record.name))}">Update destinations</a>
            <a class="action-link secondary" href="\${escapeHtml(buildTransferPrepPath(record.name))}">Prepare transfer</a>\`}
       <a class="action-link secondary" href="\${escapeHtml(buildNameDetailPath(record.name))}">Open detail page</a>
     </div>
@@ -1818,7 +1553,7 @@ function renderSearchRecord(record, valueRecord) {
             \${renderCopyableCode(record.currentOwnerPubkey)}
           </div>
           <div class="result-item">
-            <label>Claim Height</label>
+            <label>Acquired Height</label>
             <p class="field-value">\${escapeHtml(String(record.claimHeight))}</p>
           </div>
           <div class="result-item">
@@ -1852,16 +1587,16 @@ function renderNameDetailRecord(record, valueRecord, panelId) {
     <div class="detail-actions-row">
       <a class="action-link secondary" href="\${escapeHtml(withBasePath("/"))}">Back to explorer</a>
       \${String(record.status) === "invalid"
-        ? \`<a class="action-link" href="\${escapeHtml(buildClaimPrepPath(record.name))}">Prepare a reclaim</a>\`
-        : \`<a class="action-link" href="\${escapeHtml(buildValuePublishPath(record.name))}">Publish value</a>
+        ? \`<a class="action-link" href="\${escapeHtml(buildAuctionsPath(record.name))}">Open auctions</a>\`
+        : \`<a class="action-link" href="\${escapeHtml(buildValuePublishPath(record.name))}">Update destinations</a>
            <a class="action-link secondary" href="\${escapeHtml(buildTransferPrepPath(record.name))}">Prepare a transfer</a>
-           <a class="action-link secondary" href="\${escapeHtml(withBasePath("/claim"))}">Prepare a new claim</a>\`}
+           <a class="action-link secondary" href="\${escapeHtml(withBasePath("/auctions"))}">Open auctions</a>\`}
     </div>
     \${renderInvalidationSummary(record, state.activeNameActivity, panelId)}
     <div class="detail-overview-grid">
       \${renderDetailSummaryCard("Current owner", truncateMiddle(record.currentOwnerPubkey, 16, 10), ownerSummaryCopy(record))}
       \${renderDetailSummaryCard("Settlement", detailSettlementValue(record, currentHeight), detailSettlementCopy(record, currentHeight))}
-      \${renderDetailSummaryCard("Off-chain data", detailValueValue(valueRecord), detailValueCopy(valueRecord))}
+      \${renderDetailSummaryCard("Destinations", detailValueValue(valueRecord), detailValueCopy(valueRecord))}
     </div>
     \${renderTimelineSummary(record, valueRecord, state.activeNameActivity, currentHeight)}
     \${renderOffChainDataSection(valueRecord)}
@@ -1882,7 +1617,7 @@ function renderNameDetailRecord(record, valueRecord, panelId) {
             \${renderCopyableCode(record.currentOwnerPubkey)}
           </div>
           <div class="result-item">
-            <label>Claim Height</label>
+            <label>Acquired Height</label>
             <p class="field-value">\${escapeHtml(String(record.claimHeight))}</p>
           </div>
           <div class="result-item">
@@ -1894,11 +1629,11 @@ function renderNameDetailRecord(record, valueRecord, panelId) {
             <p class="field-value">\${escapeHtml(formatSats(record.requiredBondSats))}</p>
           </div>
           <div class="result-item">
-            <label>\${escapeHtml(isAuctionNameRecord(record) ? "Winning Bid Tx" : "Commit Tx")}</label>
+            <label>\${escapeHtml(isAuctionNameRecord(record) ? "Winning Bid Tx" : "Acquisition Tx")}</label>
             \${renderCopyableCode(isAuctionNameRecord(record) ? (record.acquisitionAuctionBidTxid || record.claimCommitTxid) : record.claimCommitTxid)}
           </div>
           <div class="result-item">
-            <label>\${escapeHtml(isAuctionNameRecord(record) ? "Auction Id" : "Reveal Tx")}</label>
+            <label>\${escapeHtml(isAuctionNameRecord(record) ? "Auction Id" : "Visibility Tx")}</label>
             \${isAuctionNameRecord(record)
               ? '<p class="field-value">' + escapeHtml(String(record.acquisitionAuctionId ?? "unknown")) + '</p>'
               : renderCopyableCode(record.claimRevealTxid)}
@@ -1948,15 +1683,6 @@ function hideSearchResult() {
   elements.searchResult.hidden = true;
 }
 
-function renderClaimDraftMessage(message) {
-  if (!elements.claimDraftResult) {
-    return;
-  }
-
-  elements.claimDraftResult.classList.add("empty");
-  elements.claimDraftResult.textContent = message;
-}
-
 function renderPrivateFundingMessage(message) {
   if (!elements.privateFundingResult) {
     return;
@@ -1976,13 +1702,22 @@ function renderTransferDraftMessage(message) {
   updateTransferActionStates();
 }
 
-function renderTestKeyMessage(message) {
-  if (!elements.testKeyResult) {
+function renderTransferPackageReviewMessage(message) {
+  if (!elements.transferPackageReviewResult) {
     return;
   }
 
-  elements.testKeyResult.classList.add("empty");
-  elements.testKeyResult.textContent = message;
+  elements.transferPackageReviewResult.classList.add("empty");
+  elements.transferPackageReviewResult.textContent = message;
+}
+
+function renderTransferRecipientKeyMessage(message) {
+  if (!elements.transferRecipientKeyResult) {
+    return;
+  }
+
+  elements.transferRecipientKeyResult.classList.add("empty");
+  elements.transferRecipientKeyResult.textContent = message;
 }
 
 function renderSearchError(error) {
@@ -1995,19 +1730,12 @@ function renderPrivateFundingError(error) {
   renderPrivateFundingMessage(message);
 }
 
-function renderClaimDraftError(error) {
-  const message = error instanceof Error ? error.message : "Unable to prepare the claim draft.";
-  state.claimDraft = null;
-  renderClaimDraftMessage(message);
-  updateClaimActionStates();
-}
-
 function renderTransferDraftError(error, name) {
   state.transferDraft = null;
 
   if (error && typeof error === "object" && "status" in error && error.status === 404) {
     renderTransferDraftMessage(
-      'This name is not currently claimed in the resolver view. Search it first, then use claim prep if you want to register "' +
+      'This name is not currently claimed in the resolver view. Search it first, then use auctions if you want to bid for "' +
         String(name) +
         '".'
     );
@@ -2019,9 +1747,14 @@ function renderTransferDraftError(error, name) {
   updateTransferActionStates();
 }
 
-function renderTestKeyError(error) {
-  const message = error instanceof Error ? error.message : "Unable to generate a test owner key.";
-  renderTestKeyMessage(message);
+function renderTransferPackageReviewError(error) {
+  const message = error instanceof Error ? error.message : "Unable to review the transfer package.";
+  renderTransferPackageReviewMessage(message);
+}
+
+function renderTransferRecipientKeyError(error) {
+  const message = error instanceof Error ? error.message : "Unable to generate a recipient key in the prototype helper.";
+  renderTransferRecipientKeyMessage(message);
 }
 
 function renderBootError(error) {
@@ -2122,7 +1855,7 @@ function readAuctionLabPolicyOverridesFromControls() {
 
   const parsed = Number.parseInt(rawValue, 10);
   if (!Number.isSafeInteger(parsed) || parsed < 0) {
-    throw new Error("No-bid release blocks must be a non-negative integer.");
+    throw new Error("Release window must be a non-negative whole number of blocks.");
   }
 
   return {
@@ -2206,17 +1939,6 @@ function getInitialDetailName() {
   }
 }
 
-function getInitialClaimName() {
-  const currentUrl = new URL(window.location.href);
-  const prefill = currentUrl.searchParams.get("name");
-
-  if (!prefill) {
-    return null;
-  }
-
-  return prefill.trim().toLowerCase() || null;
-}
-
 function getInitialTransferName() {
   const currentUrl = new URL(window.location.href);
   const prefill = currentUrl.searchParams.get("name");
@@ -2226,12 +1948,6 @@ function getInitialTransferName() {
   }
 
   return prefill.trim().toLowerCase() || null;
-}
-
-function isClaimPrepPage() {
-  const currentUrl = new URL(window.location.href);
-  const pathname = stripClientBasePath(currentUrl.pathname);
-  return pathname === "/claim" || pathname === "/claim/";
 }
 
 function isAuctionsPage() {
@@ -2270,10 +1986,8 @@ function buildNameDetailPath(name, configuredBasePath = BASE_PATH) {
   return withBasePath("/names/" + encodeURIComponent(String(name).trim().toLowerCase()), configuredBasePath);
 }
 
-function buildClaimPrepPath(name, configuredBasePath = BASE_PATH) {
-  const normalizedName = String(name ?? "").trim().toLowerCase();
-  const baseClaimPath = withBasePath("/claim", configuredBasePath);
-  return normalizedName === "" ? baseClaimPath : baseClaimPath + "?name=" + encodeURIComponent(normalizedName);
+function buildAuctionsPath(_name = "", configuredBasePath = BASE_PATH) {
+  return withBasePath("/auctions", configuredBasePath);
 }
 
 function buildTransferPrepPath(name, configuredBasePath = BASE_PATH) {
@@ -2340,14 +2054,10 @@ function formatLiveSmokeStatus(value) {
   switch (value) {
     case "awaiting_funds":
       return "Awaiting Funds";
-    case "claim_broadcast":
-      return "Claim Broadcast";
-    case "reveal_broadcast":
-      return "Reveal Broadcast";
     case "claimed":
       return "Claimed";
     case "value_published":
-      return "Value Published";
+      return "Destinations Published";
     case "transferred":
       return "Transferred";
     case "name_unavailable":
@@ -2364,9 +2074,6 @@ function formatLiveSmokeStatus(value) {
 function mapLiveSmokeStatusPill(value) {
   switch (value) {
     case "awaiting_funds":
-      return "pending";
-    case "claim_broadcast":
-    case "reveal_broadcast":
       return "pending";
     case "claimed":
     case "value_published":
@@ -2482,7 +2189,7 @@ function renderNameCard(record) {
           </div>
           <div class="name-summary-meta">
             <span>Owner \${escapeHtml(truncateMiddle(record.currentOwnerPubkey, 10, 6))}</span>
-            <span>Claim height \${escapeHtml(String(record.claimHeight))}</span>
+            <span>Acquired height \${escapeHtml(String(record.claimHeight))}</span>
             <span>Bond \${escapeHtml(formatCompactSats(record.requiredBondSats))}</span>
           </div>
         </div>
@@ -2490,7 +2197,7 @@ function renderNameCard(record) {
       <div class="name-card-body">
         <p class="result-meta">
           \${renderDetailLink(record.name, "Open detail page")}
-          \${String(record.status) === "invalid" ? "" : " · " + renderValuePublishLink(record.name, "Publish value") + " · " + renderTransferPrepLink(record.name, "Prepare transfer")}
+          \${String(record.status) === "invalid" ? "" : " · " + renderValuePublishLink(record.name, "Update destinations") + " · " + renderTransferPrepLink(record.name, "Prepare transfer")}
         </p>
         <div class="name-grid">
           <div class="name-item">
@@ -2498,7 +2205,7 @@ function renderNameCard(record) {
             \${renderCopyableCode(record.currentOwnerPubkey)}
           </div>
           <div class="name-item">
-            <label>Claim Height</label>
+            <label>Acquired Height</label>
             <p class="field-value">\${escapeHtml(String(record.claimHeight))}</p>
           </div>
           <div class="name-item">
@@ -2548,7 +2255,7 @@ function renderCompactNameCard(record) {
           </div>
           <div class="compact-name-meta">
             <span>Owner \${escapeHtml(truncateMiddle(record.currentOwnerPubkey, 10, 6))}</span>
-            <span>Claim \${escapeHtml(String(record.claimHeight))}</span>
+            <span>Acquired \${escapeHtml(String(record.claimHeight))}</span>
             <span>Bond \${escapeHtml(formatCompactSats(record.requiredBondSats))}</span>
           </div>
         </div>
@@ -2556,7 +2263,7 @@ function renderCompactNameCard(record) {
       <div class="name-card-body">
         <p class="result-meta">
           \${renderDetailLink(record.name, "Open detail page")}
-          \${String(record.status) === "invalid" ? "" : " · " + renderValuePublishLink(record.name, "Publish value")}
+          \${String(record.status) === "invalid" ? "" : " · " + renderValuePublishLink(record.name, "Update destinations")}
         </p>
         <div class="name-grid">
           <div class="name-item">
@@ -2564,7 +2271,7 @@ function renderCompactNameCard(record) {
             \${renderCopyableCode(record.currentOwnerPubkey)}
           </div>
           <div class="name-item">
-            <label>Claim Height</label>
+            <label>Acquired Height</label>
             <p class="field-value">\${escapeHtml(String(record.claimHeight))}</p>
           </div>
           <div class="name-item">
@@ -2600,7 +2307,7 @@ function renderRecentNameRow(record) {
         </div>
         <div class="recent-name-links result-meta">
           \${renderDetailLink(record.name, "Open detail page")}
-          \${String(record.status) === "invalid" ? "" : " · " + renderValuePublishLink(record.name, "Publish value") + " · " + renderTransferPrepLink(record.name, "Prepare transfer")}
+          \${String(record.status) === "invalid" ? "" : " · " + renderValuePublishLink(record.name, "Update destinations") + " · " + renderTransferPrepLink(record.name, "Prepare transfer")}
         </div>
       </div>
       <p class="recent-name-meta">
@@ -2633,11 +2340,11 @@ function statusGroupTitle(status) {
 function statusGroupDescription(status) {
   switch (String(status)) {
     case "immature":
-      return "These names are already claimed and are still in the bond-backed settlement period.";
+      return "These names are already owned and are still in the bond-backed settlement period.";
     case "mature":
       return "These names have finished settlement and no longer depend on a live bond UTXO.";
     case "invalid":
-      return "These names were released because bond continuity failed before settlement finished, so inspect their history before treating them as reclaimable.";
+      return "These names were released because bond continuity failed before settlement finished, so inspect their history before treating them as available again.";
     default:
       return "Names that do not fit the main lifecycle buckets above.";
   }
@@ -2703,13 +2410,13 @@ function searchOutcomeSummary(record) {
   if (isAuctionNameRecord(record)) {
     switch (status) {
       case "immature":
-        return "This reserved auction has settled, and the winning bond is still locked in its post-auction holding period.";
+        return "This auction has settled, and the winning bond is still locked in its post-auction holding period.";
       case "mature":
-        return "This reserved auction has settled, the winner owns the name, and the post-auction bond lock has cleared.";
+        return "This auction has settled, the winner owns the name, and the post-auction bond lock has cleared.";
       case "invalid":
         return "This auction-derived name was released because the winning bond continuity failed before the required lock ended.";
       default:
-        return "This reserved auction name is in a transitional state.";
+        return "This auction-derived name is in a transitional state.";
     }
   }
 
@@ -2743,9 +2450,9 @@ function searchStateTitle(record) {
 
   switch (status) {
     case "immature":
-      return "Claimed And Still Settling";
+      return "Owned And Still Settling";
     case "mature":
-      return "Claimed And Active";
+      return "Owned And Active";
     case "invalid":
       return "Released Back To The Pool";
     default:
@@ -2760,7 +2467,7 @@ function searchOutcomeSteps(status, record) {
         return [
           "The winning bid bond must remain continuous until block " + String(record.maturityHeight) + ".",
           "A transfer is still possible, but it must carry the full winning bond amount into the successor bond in the same transaction.",
-          "If you are evaluating the name, inspect the winning bid and later state transactions rather than expecting commit/reveal events."
+          "If you are evaluating the name, inspect the winning bid and later state transactions before treating the state as final."
         ];
       case "mature":
         return [
@@ -2792,14 +2499,14 @@ function searchOutcomeSteps(status, record) {
     case "mature":
       return [
         "Ownership is now active and no longer depends on the original bond output remaining live.",
-        "The current owner can publish new off-chain values or transfer the name without successor-bond continuity.",
-        "If you want to understand how it got here, inspect the commit, reveal, and latest state transaction."
+        "The current owner can publish new destinations or transfer the name without successor-bond continuity.",
+        "If you want to understand how it got here, inspect the acquisition transaction and any later state transaction."
       ];
     case "invalid":
       return [
         "Inspect the release transaction first. That is the clearest explanation for why the name returned to the pool.",
         "The usual cause is that the active bond UTXO was spent before settlement finished without creating a valid successor bond in the same transaction.",
-        "Do not treat the name as safely available until the resolver and transaction history make the reclaim path clear."
+        "Do not treat the name as safely available until the resolver and transaction history make the next auction path clear."
       ];
     default:
       return [
@@ -2902,14 +2609,8 @@ function formatNameFilterLabel(filter) {
 
 function matchesActivityFilter(record, filter) {
   switch (String(filter)) {
-    case "claims":
-      return (record.events ?? []).some(
-        (event) =>
-          event.typeName === "COMMIT" ||
-          event.typeName === "REVEAL" ||
-          event.typeName === "BATCH_ANCHOR" ||
-          event.typeName === "BATCH_REVEAL"
-      );
+    case "acquisitions":
+      return (record.events ?? []).some((event) => event.typeName === "AUCTION_BID");
     case "transfers":
       return (record.events ?? []).some((event) => event.typeName === "TRANSFER");
     case "invalidated":
@@ -2921,8 +2622,8 @@ function matchesActivityFilter(record, filter) {
 
 function formatActivityFilterLabel(filter) {
   switch (String(filter)) {
-    case "claims":
-      return "Claims";
+    case "acquisitions":
+      return "Acquisitions";
     case "transfers":
       return "Transfers";
     case "invalidated":
@@ -2961,11 +2662,6 @@ function renderDetailLink(name, label, configuredBasePath = BASE_PATH) {
   return '<a class="detail-link" href="' + escapeHtml(buildNameDetailPath(normalizedName, configuredBasePath)) + '">' + escapeHtml(label) + "</a>";
 }
 
-function renderClaimPrepLink(name, label, configuredBasePath = BASE_PATH) {
-  const normalizedName = String(name).trim().toLowerCase();
-  return '<a class="detail-link" href="' + escapeHtml(buildClaimPrepPath(normalizedName, configuredBasePath)) + '">' + escapeHtml(label) + "</a>";
-}
-
 function renderTransferPrepLink(name, label, configuredBasePath = BASE_PATH) {
   const normalizedName = String(name).trim().toLowerCase();
   return '<a class="detail-link" href="' + escapeHtml(buildTransferPrepPath(normalizedName, configuredBasePath)) + '">' + escapeHtml(label) + "</a>";
@@ -2979,7 +2675,7 @@ function renderValuePublishLink(name, label, configuredBasePath = BASE_PATH) {
 function renderDetailPageMeta(record, valueRecord, currentHeight) {
   const parts = [
     detailSettlementValue(record, currentHeight),
-    valueRecord ? "value published" : "no value published yet"
+    valueRecord ? "destinations published" : "no destinations published yet"
   ];
 
   if (String(record.status) === "invalid") {
@@ -2996,7 +2692,7 @@ function renderLookupMeta(record, valueRecord, currentHeight) {
     parts.unshift("released");
   }
 
-  parts.push(valueRecord ? "value published" : "no value published yet");
+  parts.push(valueRecord ? "destinations published" : "no destinations published yet");
   return parts.join(" · ");
 }
 
@@ -3037,19 +2733,19 @@ function primaryLookupNote(record, valueRecord, currentHeight) {
   if (status === "invalid") {
     return isAuctionNameRecord(record)
       ? "This auction-derived name was released before the winning bond lock finished. Use the detail page if you want the full bid and bond history before acting on it."
-      : "This name was released before settlement finished. Use the detail page if you want the full transaction history before reclaiming it.";
+      : "This name was released before settlement finished. Use the detail page if you want the full transaction history before treating it as available again.";
   }
 
   if (status === "mature") {
     if (isAuctionNameRecord(record)) {
       return valueRecord
-        ? "The reserved auction has fully settled and the current owner has published an off-chain value record."
-        : "The reserved auction has fully settled and the current owner has not published an off-chain value record yet.";
+        ? "The auction has fully settled and the current owner has published destinations."
+        : "The auction has fully settled and the current owner has not published destinations yet.";
     }
 
     return valueRecord
-      ? "The name is active and has a current off-chain value record."
-      : "The name is active, but the owner has not published an off-chain value record yet.";
+      ? "The name is active and has current destinations."
+      : "The name is active, but the owner has not published destinations yet.";
   }
 
   if (currentHeight === null) {
@@ -3108,7 +2804,7 @@ function detailSettlementCopy(record, currentHeight) {
 
   if (status === "mature") {
     return isAuctionNameRecord(record)
-      ? "The reserved auction winner has cleared the post-auction bond lock and is now active without depending on the original winning bond staying live."
+      ? "The auction winner has cleared the post-auction bond lock and is now active without depending on the original winning bond staying live."
       : "The name has cleared the bond-backed settlement period and is now active without depending on the original bond output staying live.";
   }
 
@@ -3152,7 +2848,7 @@ function detailValueValue(valueRecord) {
 
 function detailValueCopy(valueRecord) {
   if (!valueRecord) {
-    return "The owner has not published an off-chain value record yet.";
+    return "The owner has not published destinations yet.";
   }
 
   const bundle = Number(valueRecord.valueType) === 255
@@ -3193,8 +2889,8 @@ function renderOffChainDataSection(valueRecord) {
   const explanatoryCopy = valueRecord
     ? bundle !== null
       ? "This name currently resolves through one signed key/value bundle. Ownership stays on-chain; the bundle carries several off-chain destinations at once."
-      : "This is the current signed value record for the name. Ownership stays on-chain; the resolution target is stored and updated off-chain."
-    : "No signed off-chain value record has been published yet. The name exists, but it does not currently point anywhere.";
+      : "These are the current signed destinations for the name. Ownership stays on-chain; destinations are stored and updated off-chain."
+    : "No signed destinations have been published yet. The name exists, but it does not currently point anywhere.";
   const destinationCountValue = bundle !== null ? String(listProfileBundleEntries(bundle).length) : null;
 
   return (
@@ -3267,8 +2963,8 @@ function buildTimelineItems(record, valueRecord, activity, currentHeight) {
     });
   } else {
     items.push({
-      label: "Commit",
-      title: "Bonded claim committed",
+      label: "Acquisition",
+      title: "Bonded ownership committed",
       meta:
         "Height " +
         String(record.winningCommitBlockHeight ?? record.claimHeight) +
@@ -3277,8 +2973,8 @@ function buildTimelineItems(record, valueRecord, activity, currentHeight) {
     });
 
     items.push({
-      label: "Reveal",
-      title: "Name became public",
+      label: "Ownership",
+      title: "Name became visible",
       meta: "Height " + String(record.claimHeight) + " · " + truncateMiddle(record.claimRevealTxid, 10, 8)
     });
   }
@@ -3322,7 +3018,7 @@ function buildTimelineItems(record, valueRecord, activity, currentHeight) {
   if (valueRecord) {
     items.push({
       label: "Value",
-      title: "Current value published",
+      title: "Current destinations published",
       meta:
         "Sequence " +
         String(valueRecord.sequence) +
@@ -3336,12 +3032,8 @@ function buildTimelineItems(record, valueRecord, activity, currentHeight) {
   return items;
 }
 
-function renderClaimPlan(plan) {
-  setDocumentTitle(plan.name, "available");
-
-  if (elements.claimNameInput) {
-    elements.claimNameInput.value = plan.name;
-  }
+function renderAuctionFirstNameNotFound(name) {
+  setDocumentTitle(name, "not found");
 
   if (!elements.searchResult) {
     return;
@@ -3352,259 +3044,18 @@ function renderClaimPlan(plan) {
   elements.searchResult.innerHTML = \`
     <div class="search-state-banner available">
       <p class="search-state-label">Current State</p>
-      <h4 class="search-state-title">Available Right Now</h4>
-      <p class="search-state-copy">This name appears available in the current resolver view, so you can move into claim preparation next.</p>
+      <h4 class="search-state-title">No Current Owner Found</h4>
+      <p class="search-state-copy">This resolver does not show an active owner for this name. In the current launch model, eligible names start from the auction flow.</p>
     </div>
     <div class="result-title">
-      <h3>\${escapeHtml(plan.name)}</h3>
-      <span class="status-pill available">\${plan.appearsAvailable ? "appears available" : "claimed"}</span>
+      <h3>\${escapeHtml(name)}</h3>
+      <span class="status-pill available">not owned here</span>
     </div>
-    <p class="result-meta">\${escapeHtml(plan.availabilityNote)}</p>
-    <div class="lookup-facts">
-      \${renderLookupFact("Required bond", formatSats(plan.requiredBondSats))}
-      \${renderLookupFact("Reveal window", String(plan.revealWindowBlocks) + " blocks")}
-      \${renderLookupFact("Settlement", String(plan.maturityBlocks) + " blocks")}
-    </div>
-    <p class="lookup-note">The next move is to prepare the claim package and finish signing outside the browser.</p>
+    <p class="lookup-note">Open Auctions to review active lots, prepare a bid package, or inspect the current auction policy.</p>
     <div class="hero-cta-row lookup-result-actions">
-      <a class="action-link" href="\${escapeHtml(buildClaimPrepPath(plan.name))}">Prepare this claim</a>
-      <a class="action-link secondary" href="\${escapeHtml(withBasePath("/setup"))}">Open setup</a>
+      <a class="action-link" href="\${escapeHtml(withBasePath("/auctions"))}">Open auctions</a>
+      <a class="action-link secondary" href="\${escapeHtml(withBasePath("/explainer"))}">Open overview</a>
     </div>
-    <details class="step-list detail-technical">
-      <summary>Claim planning details</summary>
-      <div class="detail-technical-body">
-        <div class="result-grid">
-          <div class="result-item">
-            <label>Planned Commit Height</label>
-            <p class="field-value">\${escapeHtml(String(plan.plannedCommitHeight))}</p>
-          </div>
-          <div class="result-item">
-            <label>Recommended Bond Output</label>
-            <p class="field-value">vout \${escapeHtml(String(plan.recommendedBondVout ?? 0))}</p>
-          </div>
-          <div class="result-item">
-            <label>Reveal Deadline</label>
-            <p class="field-value">\${escapeHtml(String(plan.revealDeadlineHeight))}</p>
-          </div>
-          <div class="result-item">
-            <label>Maturity Height</label>
-            <p class="field-value">\${escapeHtml(String(plan.maturityHeight))}</p>
-          </div>
-        </div>
-      </div>
-    </details>
-    <div class="step-list">
-      <p class="step-list-label">Next</p>
-      <ol>
-        \${plan.nextSteps.slice(0, 3).map((step) => \`<li>\${escapeHtml(step)}</li>\`).join("")}
-      </ol>
-    </div>
-  \`;
-}
-
-function renderClaimDraft(draft) {
-  if (!elements.claimDraftResult) {
-    return;
-  }
-
-  const generatedOwnerKey = getGeneratedOwnerKeyForDraft(draft);
-  const claimEssentialsText = buildClaimEssentialsText(draft);
-  elements.claimDraftResult.classList.remove("empty");
-  elements.claimDraftResult.innerHTML = \`
-    <div class="result-title">
-      <h3>\${escapeHtml(draft.name)}</h3>
-      <span class="status-pill available">draft ready</span>
-    </div>
-    <p class="field-value">The claim draft is ready. Finish the backup step here, then move to Step 3 to build the signer-ready PSBTs.</p>
-    \${generatedOwnerKey
-      ? \`<div class="step-list">
-          <p class="step-list-label">Save This Demo Owner Key</p>
-          <p class="field-value">This is the key you will need later for off-chain value updates and owner-authorized transfers. Save it with the claim package before you leave this page.</p>
-          <div class="copy-block">
-            <div class="copy-block-head">
-              <label>Downloadable backup</label>
-              <button type="button" class="copy-button" data-download-owner-key="1">Download demo owner key</button>
-            </div>
-            <pre>\${escapeHtml(buildDemoOwnerKeyText(draft))}</pre>
-          </div>
-          <div class="result-grid">
-            <div class="result-item">
-              <label>Owner Pubkey</label>
-              \${renderCopyableCode(generatedOwnerKey.ownerPubkey)}
-            </div>
-            <div class="result-item">
-              <label>Owner Private Key</label>
-              \${renderCopyableCode(generatedOwnerKey.privateKeyHex)}
-            </div>
-          </div>
-        </div>\`
-      : ""}
-    <div class="result-grid">
-      <div class="result-item">
-        <label>Required Bond</label>
-        <p class="field-value">\${escapeHtml(formatSats(draft.requiredBondSats))}</p>
-      </div>
-      <div class="result-item">
-        <label>Bond Output</label>
-        <p class="field-value">vout \${escapeHtml(String(draft.bondVout))}</p>
-      </div>
-      <div class="result-item">
-        <label>Bond Destination</label>
-        <p class="field-value">\${escapeHtml(draft.bondDestination ?? "Choose a self-custody destination in your wallet builder.")}</p>
-      </div>
-      <div class="result-item">
-        <label>Change Destination</label>
-        <p class="field-value">\${escapeHtml(draft.changeDestination ?? "Let the wallet choose, or set one explicitly.")}</p>
-      </div>
-      <div class="result-item">
-        <label>Nonce</label>
-        <p class="field-value">\${escapeHtml(draft.nonceHex)} <span class="inline-note">(decimal \${escapeHtml(draft.nonceDecimal)})</span></p>
-      </div>
-      <div class="result-item">
-        <label>Owner Pubkey</label>
-        \${renderCopyableCode(draft.ownerPubkey)}
-      </div>
-      <div class="result-item">
-        <label>Reveal Status</label>
-        <p class="field-value">\${draft.revealReady ? "Commit txid is already known, so reveal artifacts can be exported." : "Reveal artifacts appear after the final commit txid is known."}</p>
-      </div>
-    </div>
-    <div class="quick-copy-grid">
-      <article class="quick-copy-card">
-        <label>Commit Payload</label>
-        \${renderCopyableCode(draft.commitPayloadHex)}
-        <p class="quick-copy-copy">Use this exact <code>OP_RETURN</code> payload in the commit transaction.</p>
-      </article>
-      <article class="quick-copy-card">
-        <label>Owner Pubkey</label>
-        \${renderCopyableCode(draft.ownerPubkey)}
-        <p class="quick-copy-copy">This key controls later owner-authorized actions for the name.</p>
-      </article>
-      <article class="quick-copy-card">
-        <label>Reveal Payload</label>
-        \${draft.revealReady ? renderCopyableCode(draft.revealPayloadHex) : '<p class="quick-copy-value">Still waiting on final commit txid</p>'}
-        <p class="quick-copy-copy">\${draft.revealReady ? "The reveal payload is ready when you return after the commit confirms." : "Once the commit txid is known, prepare the draft again or use the reveal backup flow."}</p>
-      </article>
-    </div>
-    <details class="step-list detail-technical">
-      <summary>Manual claim details</summary>
-      <div class="detail-technical-body">
-        <div class="copy-block">
-          <div class="copy-block-head">
-            <label>Claim essentials</label>
-            <button type="button" class="copy-button" data-copy="\${escapeHtml(claimEssentialsText)}">Copy all essentials</button>
-          </div>
-          <pre>\${escapeHtml(claimEssentialsText)}</pre>
-        </div>
-      </div>
-    </details>
-    <div class="step-list">
-      <p class="step-list-label">What To Do Next</p>
-      <ol>
-        <li>\${generatedOwnerKey ? "Save the generated owner private key first." : "Confirm the owner pubkey is the one you intend to use."}</li>
-        <li>Download the backup package if you want a structured resume file.</li>
-        <li>Download signer notes only if you want a human-readable fallback.</li>
-        <li>Continue to Step 3 and build the Sparrow PSBTs.</li>
-      </ol>
-    </div>
-  \`;
-}
-
-function renderClaimPsbtMessage(message) {
-  if (!elements.claimPsbtResult) {
-    return;
-  }
-
-  elements.claimPsbtResult.classList.add("empty");
-  elements.claimPsbtResult.textContent = message;
-}
-
-function renderClaimPsbtError(error) {
-  const message =
-    error instanceof Error ? error.message : "Unable to build Sparrow-native claim PSBTs.";
-  renderClaimPsbtMessage(message);
-  updateClaimActionStates();
-}
-
-function renderClaimPsbtBundle(bundle) {
-  if (!elements.claimPsbtResult) {
-    return;
-  }
-
-  elements.claimPsbtResult.classList.remove("empty");
-  elements.claimPsbtResult.innerHTML = \`
-    <div class="result-title">
-      <h3>Sparrow PSBT Bundle Ready</h3>
-      <span class="status-pill available">signer-ready</span>
-    </div>
-    <p class="field-value">These are the only files from this page that belong in Sparrow. Import the <code>.psbt</code> files there, and keep the reveal backup to resume later. The hosted demo should confirm pending claim transactions automatically after broadcast.</p>
-    <div class="step-list resume-callout">
-      <p class="step-list-label">Before You Leave This Page</p>
-      <p class="field-value">Download the Reveal Backup (.json). It is the easiest way to resume the reveal step after the commit confirms.</p>
-      <div class="hero-cta-row">
-        <button type="button" class="secondary-button" data-download-reveal-ready="1">Download Reveal Backup (.json)</button>
-      </div>
-    </div>
-    <div class="result-grid">
-      <div class="result-item">
-        <label>Commit Fee</label>
-        <p class="field-value">\${escapeHtml(formatSats(bundle.commitFeeSats))}</p>
-      </div>
-      <div class="result-item">
-        <label>Reveal Fee</label>
-        <p class="field-value">\${escapeHtml(formatSats(bundle.revealFeeSats))}</p>
-      </div>
-      <div class="result-item">
-        <label>Commit Change Address</label>
-        <p class="field-value">\${escapeHtml(bundle.commitChangeAddress)}</p>
-      </div>
-      <div class="result-item">
-        <label>Reveal Funding Source</label>
-        <p class="field-value">\${
-          bundle.revealFundingSource === "commit_change"
-            ? "Reveal spends the predicted commit change output, so the workflow stays self-contained."
-            : "Reveal spends additional confirmed wallet UTXOs from the same Sparrow account."
-        }</p>
-      </div>
-    </div>
-    <div class="step-list">
-      <p class="step-list-label">What To Do Next</p>
-      <ol>
-        <li>Download and open the commit PSBT in Sparrow.</li>
-        <li>Sign and broadcast the commit transaction. This private demo should confirm it automatically within about 30 seconds.</li>
-        <li>Once the commit confirms, open the reveal PSBT in Sparrow.</li>
-        <li>Sign and broadcast the reveal transaction within the ${REVEAL_WINDOW_BLOCKS}-block reveal window. The hosted demo should confirm that automatically too.</li>
-      </ol>
-    </div>
-    <details class="step-list detail-technical">
-      <summary>Inspect selected wallet inputs</summary>
-      <div class="detail-technical-body">
-        <div class="template-list">
-          \${bundle.selectedCommitInputs
-            .map(
-              (input) => \`
-            <div class="template-row">
-              <strong>Commit · \${escapeHtml(truncateMiddle(input.txid, 16, 10))}:\${escapeHtml(String(input.vout))}</strong>
-              <span class="inline-note">\${escapeHtml(formatSats(input.valueSats))} · \${escapeHtml(input.derivationPath)}</span>
-              <p class="field-value">\${escapeHtml(input.address)}</p>
-            </div>\`
-            )
-            .join("")}
-          \${bundle.selectedRevealInputs
-            .map(
-              (input) => \`
-            <div class="template-row">
-              <strong>Reveal · \${escapeHtml(truncateMiddle(input.txid, 16, 10))}:\${escapeHtml(String(input.vout))}</strong>
-              <span class="inline-note">\${escapeHtml(formatSats(input.valueSats))}\${
-                input.derivationPath ? " · " + escapeHtml(input.derivationPath) : ""
-              }</span>
-              <p class="field-value">\${escapeHtml(input.address)}</p>
-            </div>\`
-            )
-            .join("")}
-        </div>
-      </div>
-    </details>
   \`;
 }
 
@@ -3633,48 +3084,51 @@ function setSearchResultVariant(status) {
   }
 }
 
-function renderTestKey(generated) {
-  if (!elements.testKeyResult) {
+function renderTransferRecipientKey(generated) {
+  if (!elements.transferRecipientKeyResult) {
     return;
   }
 
-  elements.testKeyResult.classList.remove("empty");
-  elements.testKeyResult.innerHTML = \`
+  elements.transferRecipientKeyResult.classList.remove("empty");
+  elements.transferRecipientKeyResult.innerHTML = \`
     <div class="result-title">
-      <h3>Generated Test Owner Key</h3>
-      <span class="status-pill invalid">prototype only</span>
+      <h3>Generated Recipient Key</h3>
+      <span class="status-pill \${escapeHtml(generated.source === "browser-local" ? "mature" : "pending")}">\${escapeHtml(generated.sourceLabel)}</span>
     </div>
     <p class="prototype-warning">\${escapeHtml(generated.warning)}</p>
     <div class="step-list">
-      <p class="step-list-label">Do This Now</p>
+      <p class="step-list-label">Buyer Side</p>
       <ol>
-        <li>Download or copy the private key before you continue.</li>
-        <li>Keep it with your claim package if you want to publish off-chain values or authorize transfers later.</li>
-        <li>Then continue with <strong>Prepare Draft</strong> and build the Sparrow PSBTs below.</li>
+        <li>Download or copy the private key now and keep it with the buyer.</li>
+        <li>Share only the pubkey with the seller for transfer prep.</li>
+        <li>Use this private key later if the recipient will publish values or authorize the next transfer.</li>
       </ol>
       <div class="hero-cta-row">
-        <button type="button" class="secondary-button" data-download-generated-owner-key="1">Download demo owner key</button>
+        <button type="button" class="secondary-button" data-download-transfer-generated-owner-key="1">Download recipient key</button>
+        <button type="button" class="secondary-button" data-use-transfer-generated-owner-key="1">Use In Seller Form</button>
       </div>
     </div>
     <div class="result-grid">
       <div class="result-item">
-        <label>Owner Pubkey</label>
+        <label>Recipient Pubkey</label>
         \${renderCopyableCode(generated.ownerPubkey)}
       </div>
       <div class="result-item">
-        <label>Private Key</label>
+        <label>Recipient Private Key</label>
         \${renderCopyableCode(generated.privateKeyHex)}
       </div>
     </div>
   \`;
 }
 
-function getGeneratedOwnerKeyForDraft(draft) {
-  if (!draft || !state.generatedOwnerKey) {
+function getGeneratedTransferOwnerKeyForDraft(draft) {
+  if (!draft || !state.transferGeneratedOwnerKey) {
     return null;
   }
 
-  return String(draft.ownerPubkey) === String(state.generatedOwnerKey.ownerPubkey) ? state.generatedOwnerKey : null;
+  return String(draft.newOwnerPubkey) === String(state.transferGeneratedOwnerKey.ownerPubkey)
+    ? state.transferGeneratedOwnerKey
+    : null;
 }
 
 function renderPrivateFundingResult(result) {
@@ -3713,19 +3167,12 @@ function renderPrivateFundingResult(result) {
       <p class="step-list-label">What To Do Next</p>
       <ol>
         <li>Refresh Sparrow so the new confirmed UTXO appears.</li>
-        <li>Keep using that same wallet when you build the claim transaction.</li>
-        <li>Copy a fresh receive address from Sparrow into Bond Destination so the bond output is easy to distinguish from the funding UTXO.</li>
-        <li>Optionally paste a dedicated change address too, or let the wallet choose one.</li>
-        <li>Continue with the claim draft below and save the generated demo owner key before you leave the page. Later claim transactions on this hosted demo will confirm automatically after you broadcast them.</li>
+        <li>Keep using that same wallet when you prepare auction bid transactions.</li>
+        <li>Use Auctions to inspect lots, create an owner key, and build bid-package handoffs.</li>
+        <li>Use the CLI for custom bid construction until the website auction flow is fully settled.</li>
       </ol>
     </div>
   \`;
-}
-
-function generateNonceHex() {
-  const bytes = new Uint8Array(8);
-  crypto.getRandomValues(bytes);
-  return Array.from(bytes, (value) => value.toString(16).padStart(2, "0")).join("");
 }
 
 function downloadJsonFile(payload, filename) {
@@ -3756,161 +3203,25 @@ function downloadTextFile(text, filename) {
   URL.revokeObjectURL(url);
 }
 
-function downloadBase64BinaryFile(base64, filename) {
-  const binary = atob(String(base64));
-  const bytes = new Uint8Array(binary.length);
-  for (let index = 0; index < binary.length; index += 1) {
-    bytes[index] = binary.charCodeAt(index);
-  }
-
-  const blob = new Blob([bytes], {
-    type: "application/octet-stream"
-  });
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = filename;
-  document.body.appendChild(anchor);
-  anchor.click();
-  anchor.remove();
-  URL.revokeObjectURL(url);
-}
-
-function renderWalletOutput(output) {
-  return \`
-    <div class="template-row">
-      <strong>\${escapeHtml(output.role)} output</strong>
-      <span class="inline-note">
-        \${output.fixedVout === null ? "vout flexible" : "vout " + escapeHtml(String(output.fixedVout))} ·
-        \${output.required ? "required" : "optional"} ·
-        \${escapeHtml(output.scriptType)} ·
-        \${escapeHtml(String(output.valueSats) === "wallet-calculated" ? "wallet-calculated" : formatSats(output.valueSats))}
-      </span>
-      \${output.destination ? \`<p class="field-value">Destination: \${escapeHtml(output.destination)}</p>\` : ""}
-      \${output.dataHex ? renderCopyableCode(output.dataHex) : ""}
-    </div>
-  \`;
-}
-
-function buildClaimEssentialsText(draft) {
-  const generatedOwnerKey = getGeneratedOwnerKeyForDraft(draft);
-  const lines = [
-    "Open Name Tags claim essentials",
-    "====================",
-    "",
-    "Name: " + String(draft.name),
-    "Owner pubkey: " + String(draft.ownerPubkey),
-    "Required bond: " + formatSats(draft.requiredBondSats),
-    "Bond vout: " + String(draft.bondVout),
-    "Bond destination: " + String(draft.bondDestination ?? "Choose in signer"),
-    "Change destination: " + String(draft.changeDestination ?? "Choose in signer"),
-    "Nonce: " + String(draft.nonceHex),
-    "Commit hash: " + String(draft.commitHash),
-    "Commit payload hex: " + String(draft.commitPayloadHex),
-    ""
-  ];
-
-  if (generatedOwnerKey) {
-    lines.push(
-      "Demo owner private key: " + String(generatedOwnerKey.privateKeyHex),
-      "Demo owner key warning: Save this key if you want to publish off-chain values or authorize transfers later.",
-      ""
-    );
-  }
-
-  if (draft.commitTxid) {
-    lines.push("Commit txid: " + String(draft.commitTxid));
-  } else {
-    lines.push("Commit txid: still needed");
-  }
-
-  if (draft.revealReady && draft.revealPayloadHex) {
-    lines.push("Reveal payload hex: " + String(draft.revealPayloadHex));
-  } else {
-    lines.push("Reveal payload hex: derive after commit txid is known");
-  }
-
-  lines.push(
-    "",
-    "Sparrow checklist",
-    "-----------------",
-    "1. Preserve the bond output at the declared vout with at least the required bond amount.",
-    "2. Add the exact commit OP_RETURN payload above to the commit transaction.",
-    "3. Fund fees separately so the bond output does not shrink below the required bond.",
-    "4. Broadcast the commit, then paste the final commit txid back into the claim page.",
-    "5. On the hosted private demo, the commit should confirm automatically soon after broadcast.",
-    "6. After confirmation, build and broadcast the reveal within the ${REVEAL_WINDOW_BLOCKS}-block reveal window."
-  );
-
-  return lines.join("\\n");
-}
-
-function buildDemoOwnerKeyText(draft) {
-  const generatedOwnerKey = getGeneratedOwnerKeyForDraft(draft);
-
-  if (!generatedOwnerKey) {
-    return "";
-  }
-
-  return buildGeneratedOwnerKeyText(generatedOwnerKey, String(draft.name));
-}
-
 function buildGeneratedOwnerKeyText(generatedOwnerKey, nameHint) {
   return [
-    "Open Name Tags demo owner key",
+    "Open Name Tags generated owner key",
     "===================",
     "",
     "Name: " + String(nameHint ?? "unassigned"),
+    "Source: " + String(generatedOwnerKey.sourceLabel ?? "generated helper"),
     "Owner pubkey: " + String(generatedOwnerKey.ownerPubkey),
     "Owner private key: " + String(generatedOwnerKey.privateKeyHex),
     "",
     "Why this matters",
     "----------------",
     "This key controls owner-authorized actions for the name itself.",
-    "Keep it if you want to publish off-chain values or authorize transfers later.",
+    "Keep it if you want to update destinations or authorize transfers later.",
     "",
     "Warning",
     "-------",
     String(generatedOwnerKey.warning)
   ].join("\\n");
-}
-
-function withClaimDraftLocalData(draft) {
-  const generatedOwnerKey = getGeneratedOwnerKeyForDraft(draft);
-
-  if (!generatedOwnerKey) {
-    return draft;
-  }
-
-  return {
-    ...draft,
-    localDemoOwnerKey: {
-      ownerPubkey: generatedOwnerKey.ownerPubkey,
-      privateKeyHex: generatedOwnerKey.privateKeyHex,
-      warning:
-        "Local demo helper only. This generated owner private key is required for later off-chain value updates and owner-authorized transfers."
-    }
-  };
-}
-
-function withClaimPackageLocalData(claimPackage) {
-  if (!state.generatedOwnerKey) {
-    return claimPackage;
-  }
-
-  if (String(claimPackage.ownerPubkey) !== String(state.generatedOwnerKey.ownerPubkey)) {
-    return claimPackage;
-  }
-
-  return {
-    ...claimPackage,
-    localDemoOwnerKey: {
-      ownerPubkey: state.generatedOwnerKey.ownerPubkey,
-      privateKeyHex: state.generatedOwnerKey.privateKeyHex,
-      warning:
-        "Local demo helper only. This generated owner private key is required for later off-chain value updates and owner-authorized transfers."
-    }
-  };
 }
 
 function buildTransferDraft({ record, activity, newOwnerPubkey, mode, sellerPayoutAddress, bondAddress }) {
@@ -3923,7 +3234,7 @@ function buildTransferDraft({ record, activity, newOwnerPubkey, mode, sellerPayo
       activity,
       newOwnerPubkey,
       summary:
-        "This name has been released, so the next move is to reclaim it rather than transfer it.",
+        "This name has been released, so the next move is a fresh auction path rather than a transfer.",
       modes: [],
       recommendedMode: null
     };
@@ -4059,6 +3370,8 @@ function buildTransferPackage(draft) {
     throw new Error("invalid names cannot be exported as transfer packages");
   }
 
+  const recommendedMode = getRecommendedTransferMode(draft);
+
   return {
     format: TRANSFER_PACKAGE_FORMAT,
     packageVersion: TRANSFER_PACKAGE_VERSION,
@@ -4074,8 +3387,14 @@ function buildTransferPackage(draft) {
     currentBondValueSats: String(draft.record.currentBondValueSats),
     requiredBondSats: String(draft.record.requiredBondSats),
     recommendedMode: String(draft.recommendedMode),
+    settlementExpectation: String(getTransferSettlementExpectation(recommendedMode)),
+    prototypeExecutionModel: String(getTransferPrototypeExecutionModel(recommendedMode)),
     sellerPayoutAddress: draft.sellerPayoutAddress || null,
     successorBondAddress: draft.bondAddress || null,
+    participantSummary: transferParticipantLines(draft, recommendedMode),
+    sharedReviewChecklist: buildTransferSharedReviewChecklist(draft, recommendedMode),
+    sellerChecklist: buildTransferRoleChecklist(draft, recommendedMode, "seller"),
+    buyerChecklist: buildTransferRoleChecklist(draft, recommendedMode, "buyer"),
     modes: draft.modes.map((mode) => ({
       key: String(mode.key),
       title: String(mode.title),
@@ -4083,6 +3402,81 @@ function buildTransferPackage(draft) {
       summary: String(mode.copy),
       command: String(mode.command)
     }))
+  };
+}
+
+function buildSellerTransferPackage(draft) {
+  if (draft.kind === "invalid") {
+    throw new Error("invalid names cannot be exported as seller transfer packages");
+  }
+
+  const recommendedMode = getRecommendedTransferMode(draft);
+
+  return {
+    format: TRANSFER_PACKAGE_FORMAT,
+    packageVersion: TRANSFER_PACKAGE_VERSION,
+    protocol: PROTOCOL_ID,
+    role: "seller",
+    exportedAt: new Date().toISOString(),
+    name: String(draft.name),
+    currentStatus: String(draft.status),
+    currentOwnerPubkey: String(draft.record.currentOwnerPubkey),
+    newOwnerPubkey: String(draft.newOwnerPubkey),
+    lastStateTxid: String(draft.record.lastStateTxid),
+    currentBondTxid: String(draft.record.currentBondTxid),
+    currentBondVout: Number(draft.record.currentBondVout),
+    currentBondValueSats: String(draft.record.currentBondValueSats),
+    requiredBondSats: String(draft.record.requiredBondSats),
+    recommendedMode: String(draft.recommendedMode),
+    settlementExpectation: String(getTransferSettlementExpectation(recommendedMode)),
+    prototypeExecutionModel: String(getTransferPrototypeExecutionModel(recommendedMode)),
+    sellerPayoutAddress: draft.sellerPayoutAddress || null,
+    successorBondAddress: draft.bondAddress || null,
+    sharedReviewChecklist: buildTransferSharedReviewChecklist(draft, recommendedMode),
+    roleChecklist: buildTransferRoleChecklist(draft, recommendedMode, "seller"),
+    recommendedCommand: String(recommendedMode.command),
+    participantSummary: transferParticipantLines(draft, recommendedMode)
+  };
+}
+
+function buildBuyerTransferPackage(draft) {
+  if (draft.kind === "invalid") {
+    throw new Error("invalid names cannot be exported as buyer transfer packages");
+  }
+
+  const recommendedMode = getRecommendedTransferMode(draft);
+  const generatedRecipientKey = getGeneratedTransferOwnerKeyForDraft(draft);
+
+  return {
+    format: TRANSFER_PACKAGE_FORMAT,
+    packageVersion: TRANSFER_PACKAGE_VERSION,
+    protocol: PROTOCOL_ID,
+    role: "buyer",
+    exportedAt: new Date().toISOString(),
+    name: String(draft.name),
+    currentStatus: String(draft.status),
+    currentOwnerPubkey: String(draft.record.currentOwnerPubkey),
+    newOwnerPubkey: String(draft.newOwnerPubkey),
+    lastStateTxid: String(draft.record.lastStateTxid),
+    currentBondValueSats: String(draft.record.currentBondValueSats),
+    requiredBondSats: String(draft.record.requiredBondSats),
+    recommendedMode: String(draft.recommendedMode),
+    settlementExpectation: String(getTransferSettlementExpectation(recommendedMode)),
+    prototypeExecutionModel: String(getTransferPrototypeExecutionModel(recommendedMode)),
+    sharedReviewChecklist: buildTransferSharedReviewChecklist(draft, recommendedMode),
+    roleChecklist: buildTransferRoleChecklist(draft, recommendedMode, "buyer"),
+    participantSummary: transferParticipantLines(draft, recommendedMode),
+    ...(generatedRecipientKey
+      ? {
+          generatedRecipientKey: {
+            ownerPubkey: generatedRecipientKey.ownerPubkey,
+            privateKeyHex: generatedRecipientKey.privateKeyHex,
+            source: generatedRecipientKey.source,
+            sourceLabel: generatedRecipientKey.sourceLabel,
+            warning: generatedRecipientKey.warning
+          }
+        }
+      : {})
   };
 }
 
@@ -4107,17 +3501,86 @@ function transferParticipantLines(draft, mode) {
 
   if (mode.key === "immature-sale") {
     return [
-      "The seller provides the owner key material and the live bond state.",
+      "The seller provides the owner key material and confirms the exact transfer terms.",
       "The buyer provides the funding inputs for the successor bond and the seller payout.",
-      "This is the right sale path while the name is still settling because payment and bond continuity settle together."
+      "Both sides should review one exact transaction because payment and bond continuity settle together."
     ];
   }
 
   return [
     "The seller provides the owner key material and a seller-side input.",
     "The buyer provides payment-side funding inputs for the sale settlement.",
-    "This is the clean active-name sale path when ownership and seller payout need to settle together."
+    "Both sides should review one exact transaction so seller payment and ownership move together."
   ];
+}
+
+function getTransferSettlementExpectation(mode) {
+  return mode.key === "gift"
+    ? "gift_or_prearranged_handoff"
+    : "atomic_same_transaction_for_sale";
+}
+
+function getTransferPrototypeExecutionModel(mode) {
+  return mode.key === "gift"
+    ? "coordinated_cli_handoff"
+    : "coordinated_cli_handoff_pending_two_party_psbt_flow";
+}
+
+function buildTransferSharedReviewChecklist(draft, mode) {
+  const checklist = [
+    "Confirm the exact name, current owner pubkey, recipient pubkey, and last state txid."
+  ];
+
+  if (mode.key !== "gift") {
+    checklist.push(
+      "Confirm the seller payment address, intended payment amount, and every transaction input/output before anyone signs."
+    );
+    checklist.push(
+      "Do not split payment and transfer into separate promises. Both sides should settle against the same exact Bitcoin transaction."
+    );
+  }
+
+  if (String(draft.status) === "immature") {
+    checklist.push(
+      "Confirm the successor bond output is present in the same transaction and still meets the required bond."
+    );
+  }
+
+  return checklist;
+}
+
+function buildTransferRoleChecklist(draft, mode, role) {
+  if (role === "seller") {
+    const checklist = [
+      "Confirm the recipient pubkey is the exact buyer key you intend to authorize."
+    ];
+
+    if (mode.key === "gift") {
+      checklist.push("Confirm the bond details and fee inputs before signing.");
+    } else {
+      checklist.push("Confirm the seller payout address and payment amount before signing any shared transaction.");
+      checklist.push("Do not release owner authorization against a separate promise to pay later.");
+    }
+
+    return checklist;
+  }
+
+  const checklist = [
+    "Confirm the recipient pubkey matches the key whose private half you actually control."
+  ];
+
+  if (mode.key === "gift") {
+    checklist.push("Confirm the resulting ownership handoff matches the exact name and state txid in this package.");
+  } else {
+    checklist.push("Confirm the transaction you fund is the same transaction that moves the name to your pubkey.");
+    checklist.push("Do not send payment in a separate step against a promise to transfer later.");
+  }
+
+  if (String(draft.status) === "immature") {
+    checklist.push("Confirm the successor bond output is created for the buyer side in the same transaction.");
+  }
+
+  return checklist;
 }
 
 function transferPrimarySteps(draft, mode) {
@@ -4130,12 +3593,18 @@ function transferPrimarySteps(draft, mode) {
     steps.push("Use the gift transfer command when no buyer payment needs to settle inside the transfer transaction.");
   } else if (mode.key === "immature-sale") {
     steps.push("Use the buyer-funded settling sale command so the successor bond and seller payout happen atomically.");
+    steps.push("Both sides should review the same exact transaction details before anyone signs or funds it.");
   } else {
     steps.push("Use the cooperative active sale command so the seller payout and ownership transfer finalize together.");
+    steps.push("Both sides should review the same exact transaction details before anyone signs or funds it.");
   }
 
   if (String(draft.status) === "immature") {
     steps.push("Because this name is still settling, confirm the successor bond output is present and at least meets the required bond.");
+  }
+
+  if (mode.key !== "gift") {
+    steps.push("Current prototype note: this page still exports a coordinated CLI handoff rather than a full two-party PSBT wizard.");
   }
 
   steps.push("Run the command locally, then return to the explorer to confirm the new owner and state txid.");
@@ -4153,7 +3622,7 @@ function renderTransferDraft(draft) {
     elements.transferDraftResult.innerHTML = \`
       <div class="search-state-banner invalid">
         <p class="search-state-label">Transfer Status</p>
-        <h4 class="search-state-title">Reclaim Instead Of Transfer</h4>
+        <h4 class="search-state-title">Auction Path Instead Of Transfer</h4>
         <p class="search-state-copy">\${escapeHtml(draft.summary)}</p>
       </div>
       <div class="result-title">
@@ -4161,7 +3630,7 @@ function renderTransferDraft(draft) {
         <span class="status-pill invalid">Released</span>
       </div>
       <div class="hero-cta-row">
-        <a class="action-link" href="\${escapeHtml(buildClaimPrepPath(draft.name))}">Prepare a reclaim</a>
+        <a class="action-link" href="\${escapeHtml(buildAuctionsPath(draft.name))}">Open auctions</a>
         <a class="action-link secondary" href="\${escapeHtml(buildNameDetailPath(draft.name))}">Open detail page</a>
       </div>
     \`;
@@ -4171,6 +3640,8 @@ function renderTransferDraft(draft) {
   const transferEssentialsText = buildTransferEssentialsText(draft);
   const recommendedMode = getRecommendedTransferMode(draft);
   const alternativeModes = getAlternativeTransferModes(draft);
+  const sellerLabel = recommendedMode.key === "gift" ? "Current Owner Review" : "Seller Review";
+  const buyerLabel = recommendedMode.key === "gift" ? "Recipient Review" : "Buyer Review";
   elements.transferDraftResult.innerHTML = \`
     <div class="search-state-banner \${escapeHtml(draft.status)}">
       <p class="search-state-label">Transfer Status</p>
@@ -4227,6 +3698,18 @@ function renderTransferDraft(draft) {
           </ul>
         </article>
       </div>
+      \${recommendedMode.key === "gift" ? "" : \`
+        <div class="guide-grid">
+          <article class="guide-card">
+            <h3>Settle In One Transaction</h3>
+            <p class="field-value">Do not treat payment and name transfer as separate promises. Both sides should settle against the same exact Bitcoin transaction.</p>
+          </article>
+          <article class="guide-card">
+            <h3>Current Prototype Boundary</h3>
+            <p class="field-value">This page still exports a coordinated CLI handoff. It is not yet a full two-party PSBT wizard for buyer and seller, so both parties should review the exact fields before any signatures happen.</p>
+          </article>
+        </div>
+      \`}
       <div class="copy-block">
         <div class="copy-block-head">
           <label>Primary CLI command</label>
@@ -4235,7 +3718,37 @@ function renderTransferDraft(draft) {
         <pre>\${escapeHtml(recommendedMode.command)}</pre>
       </div>
     </div>
-    <p class="field-value">Use the download buttons above if you want the package or notes on disk. For most people, the primary command block is the shortest path out of this page.</p>
+    <div class="guide-grid">
+	      <article class="guide-card">
+	        <h3>Current Owner</h3>
+	        <p class="field-value">Use the seller package and seller notes when the current owner is preparing the handoff or reviewing the exact transaction terms.</p>
+	      </article>
+	      <article class="guide-card">
+	        <h3>Receiver</h3>
+	        <p class="field-value">Use the buyer package and buyer notes when the receiver is confirming the recipient pubkey, funding side, and atomic settlement details.</p>
+	      </article>
+    </div>
+    <div class="step-list">
+      <p class="step-list-label">Role Checklists</p>
+      <div class="guide-grid">
+        <article class="guide-card">
+          <h3>\${escapeHtml(sellerLabel)}</h3>
+          <ul class="guide-list">
+            \${buildTransferRoleChecklist(draft, recommendedMode, "seller")
+              .map((line) => \`<li>\${escapeHtml(line)}</li>\`)
+              .join("")}
+          </ul>
+        </article>
+        <article class="guide-card">
+          <h3>\${escapeHtml(buyerLabel)}</h3>
+          <ul class="guide-list">
+            \${buildTransferRoleChecklist(draft, recommendedMode, "buyer")
+              .map((line) => \`<li>\${escapeHtml(line)}</li>\`)
+              .join("")}
+          </ul>
+        </article>
+      </div>
+    </div>
     <div class="step-list">
       <p class="step-list-label">Run This Flow</p>
       <ol>
@@ -4294,10 +3807,285 @@ function renderTransferDraft(draft) {
   \`;
 }
 
+function parseTransferPackageForReview(input) {
+  if (typeof input !== "object" || input === null || Array.isArray(input)) {
+    throw new Error("Transfer package JSON must be an object.");
+  }
+
+  const record = input;
+  const format = typeof record.format === "string" ? record.format : "";
+  if (format !== "ont-transfer-package") {
+    throw new Error("Transfer package format must be ont-transfer-package.");
+  }
+
+  const packageVersion = Number(record.packageVersion);
+  if (!Number.isInteger(packageVersion) || packageVersion !== 1) {
+    throw new Error("Transfer package version must be 1.");
+  }
+
+  const protocol = typeof record.protocol === "string" ? record.protocol : "";
+  if (protocol !== PROTOCOL_ID) {
+    throw new Error("Transfer package protocol must match ONT.");
+  }
+
+  const name = parseTransferPackageString(record.name, "name");
+  const currentStatus = parseTransferPackageEnum(record.currentStatus, "currentStatus", ["immature", "mature"]);
+  const currentOwnerPubkey = parseTransferPackageHex(record.currentOwnerPubkey, 64, "currentOwnerPubkey");
+  const newOwnerPubkey = parseTransferPackageHex(record.newOwnerPubkey, 64, "newOwnerPubkey");
+  const lastStateTxid = parseTransferPackageHex(record.lastStateTxid, 64, "lastStateTxid");
+  const currentBondTxid = parseTransferPackageHex(record.currentBondTxid, 64, "currentBondTxid");
+  const currentBondVout = parseTransferPackageByte(record.currentBondVout, "currentBondVout");
+  const currentBondValueSats = parseTransferPackageBigIntString(record.currentBondValueSats, "currentBondValueSats");
+  const requiredBondSats = parseTransferPackageBigIntString(record.requiredBondSats, "requiredBondSats");
+  const recommendedMode = parseTransferPackageEnum(record.recommendedMode, "recommendedMode", ["gift", "immature-sale", "sale"]);
+  const sellerPayoutAddress = parseTransferPackageOptionalString(record.sellerPayoutAddress, "sellerPayoutAddress");
+  const successorBondAddress = parseTransferPackageOptionalString(record.successorBondAddress, "successorBondAddress");
+  const modes = parseTransferPackageModes(record.modes);
+
+  if (!modes.some((mode) => mode.key === recommendedMode)) {
+    throw new Error("Recommended mode must match one of the package modes.");
+  }
+
+  return {
+    format,
+    packageVersion,
+    protocol,
+    name,
+    currentStatus,
+    currentOwnerPubkey,
+    newOwnerPubkey,
+    lastStateTxid,
+    currentBondTxid,
+    currentBondVout,
+    currentBondValueSats,
+    requiredBondSats,
+    recommendedMode,
+    sellerPayoutAddress,
+    successorBondAddress,
+    modes
+  };
+}
+
+function renderTransferPackageReview(pkg, role) {
+  if (!elements.transferPackageReviewResult) {
+    return;
+  }
+
+  const recommendedMode = pkg.modes.find((mode) => mode.key === pkg.recommendedMode) ?? null;
+  const checklist = buildTransferPackageReviewChecklist(pkg, role);
+
+  elements.transferPackageReviewResult.classList.remove("empty");
+  elements.transferPackageReviewResult.innerHTML = \`
+    <div class="result-title">
+      <h3>\${escapeHtml(role === "buyer" ? "Buyer Package Review" : "Seller Package Review")}</h3>
+      <span class="status-pill transfer">\${escapeHtml(role)}</span>
+    </div>
+    <div class="result-grid">
+      <div class="result-item">
+        <label>Name</label>
+        <p class="field-value">\${escapeHtml(pkg.name)}</p>
+      </div>
+      <div class="result-item">
+        <label>Current status</label>
+        <p class="field-value">\${escapeHtml(pkg.currentStatus)}</p>
+      </div>
+      <div class="result-item">
+        <label>Current owner</label>
+        \${renderCopyableCode(pkg.currentOwnerPubkey)}
+      </div>
+      <div class="result-item">
+        <label>New owner</label>
+        \${renderCopyableCode(pkg.newOwnerPubkey)}
+      </div>
+      <div class="result-item">
+        <label>Last state txid</label>
+        \${renderCopyableCode(pkg.lastStateTxid)}
+      </div>
+      <div class="result-item">
+        <label>Current bond outpoint</label>
+        <p class="field-value">\${escapeHtml(pkg.currentBondTxid)}:\${escapeHtml(String(pkg.currentBondVout))}</p>
+      </div>
+      <div class="result-item">
+        <label>Current bond amount</label>
+        <p class="field-value">\${escapeHtml(formatSats(pkg.currentBondValueSats))}</p>
+      </div>
+      <div class="result-item">
+        <label>Required bond</label>
+        <p class="field-value">\${escapeHtml(formatSats(pkg.requiredBondSats))}</p>
+      </div>
+      <div class="result-item">
+        <label>Recommended mode</label>
+        <p class="field-value">\${escapeHtml(pkg.recommendedMode)}</p>
+      </div>
+      <div class="result-item">
+        <label>Seller payout</label>
+        <p class="field-value">\${escapeHtml(pkg.sellerPayoutAddress ?? "(set before signing)")}</p>
+      </div>
+      <div class="result-item">
+        <label>Successor bond address</label>
+        <p class="field-value">\${escapeHtml(pkg.successorBondAddress ?? "(set before signing)")}</p>
+      </div>
+    </div>
+    \${recommendedMode ? \`
+      <div class="step-list">
+        <p class="step-list-label">Recommended path</p>
+        <div class="guide-grid">
+          <article class="guide-card">
+            <h3>\${escapeHtml(recommendedMode.title)}</h3>
+            <p class="field-value">\${escapeHtml(recommendedMode.suitability)}</p>
+            <p class="inline-note">\${escapeHtml(recommendedMode.summary)}</p>
+          </article>
+          <article class="guide-card">
+            <h3>CLI command</h3>
+            <div class="copy-block">
+              <div class="copy-block-head">
+                <label>Recommended command</label>
+                <button type="button" class="copy-button" data-copy="\${escapeHtml(recommendedMode.command)}">Copy command</button>
+              </div>
+              <pre>\${escapeHtml(recommendedMode.command)}</pre>
+            </div>
+          </article>
+        </div>
+      </div>
+    \` : ""}
+    <div class="step-list">
+      <p class="step-list-label">\${escapeHtml(role === "buyer" ? "Buyer checklist" : "Seller checklist")}</p>
+      <ul class="guide-list">
+        \${checklist.map((item) => \`<li>\${escapeHtml(item)}</li>\`).join("")}
+      </ul>
+    </div>
+  \`;
+}
+
+function buildTransferPackageReviewChecklist(pkg, role) {
+  const items = [];
+  if (role === "buyer") {
+    items.push("Confirm the new owner pubkey is your pubkey before you fund or sign anything.");
+    items.push("Confirm the recommended mode matches what you believe you are buying or receiving.");
+    if (pkg.recommendedMode !== "gift") {
+      items.push("Do not fund a separate payment step against a promise to transfer later.");
+      items.push("The Bitcoin transaction you fund should be the same transaction that moves the name to your pubkey.");
+      items.push(
+        pkg.sellerPayoutAddress
+          ? "Confirm the seller payout address matches the agreed destination."
+          : "Ask the seller to finalize and share the expected seller payout address before signing."
+      );
+    }
+    if (pkg.currentStatus === "immature") {
+      items.push(
+        pkg.successorBondAddress
+          ? "Confirm the successor bond address is present for the live bond path."
+          : "Ask the seller to finalize the successor bond address before signing, because bond continuity still matters."
+      );
+    }
+    items.push("Only proceed once the package fields match the exact transaction terms you expect.");
+    return items;
+  }
+
+  items.push("Confirm the new owner pubkey came from the intended buyer.");
+  items.push("Confirm the recommended mode matches the deal you intend to settle.");
+  if (pkg.recommendedMode !== "gift") {
+    items.push("Do not authorize the transfer against a separate promise to pay later.");
+    items.push("Seller payment and name transfer should settle in the same exact Bitcoin transaction.");
+    items.push(
+      pkg.sellerPayoutAddress
+        ? "Confirm the seller payout address is correct."
+        : "Set and verify the seller payout address before any signatures happen."
+    );
+  }
+  if (pkg.currentStatus === "immature") {
+    items.push(
+      pkg.successorBondAddress
+        ? "Confirm the successor bond address is correct for the live bond path."
+        : "Set and verify the successor bond address before signing, because bond continuity still matters."
+    );
+  }
+  items.push("Only proceed once the package fields match the exact transaction terms you intend to settle.");
+  return items;
+}
+
+function parseTransferPackageModes(value) {
+  if (!Array.isArray(value) || value.length === 0) {
+    throw new Error("Transfer package modes must be a non-empty array.");
+  }
+
+  return value.map((item, index) => {
+    if (typeof item !== "object" || item === null || Array.isArray(item)) {
+      throw new Error("Transfer package modes[" + String(index) + "] must be an object.");
+    }
+
+    return {
+      key: parseTransferPackageEnum(item.key, "modes[" + String(index) + "].key", ["gift", "immature-sale", "sale"]),
+      title: parseTransferPackageString(item.title, "modes[" + String(index) + "].title"),
+      suitability: parseTransferPackageString(item.suitability, "modes[" + String(index) + "].suitability"),
+      summary: parseTransferPackageString(item.summary, "modes[" + String(index) + "].summary"),
+      command: parseTransferPackageString(item.command, "modes[" + String(index) + "].command")
+    };
+  });
+}
+
+function parseTransferPackageString(value, label) {
+  if (typeof value !== "string" || value.length === 0) {
+    throw new Error(label + " must be a non-empty string.");
+  }
+
+  return value;
+}
+
+function parseTransferPackageOptionalString(value, label) {
+  if (value === null || value === undefined) {
+    return null;
+  }
+
+  if (typeof value !== "string") {
+    throw new Error(label + " must be a string when present.");
+  }
+
+  return value;
+}
+
+function parseTransferPackageEnum(value, label, allowed) {
+  const parsed = parseTransferPackageString(value, label);
+  if (!allowed.includes(parsed)) {
+    throw new Error(label + " must be one of: " + allowed.join(", "));
+  }
+
+  return parsed;
+}
+
+function parseTransferPackageHex(value, length, label) {
+  const parsed = parseTransferPackageString(value, label).toLowerCase();
+  if (!/^[0-9a-f]+$/.test(parsed) || parsed.length !== length) {
+    throw new Error(label + " must be " + String(length / 2) + " bytes of hex.");
+  }
+
+  return parsed;
+}
+
+function parseTransferPackageByte(value, label) {
+  if (typeof value !== "number" || !Number.isInteger(value) || value < 0 || value > 255) {
+    throw new Error(label + " must be an integer between 0 and 255.");
+  }
+
+  return value;
+}
+
+function parseTransferPackageBigIntString(value, label) {
+  const parsed = parseTransferPackageString(value, label);
+  const numeric = BigInt(parsed);
+  if (numeric < 0n) {
+    throw new Error(label + " must be non-negative.");
+  }
+
+  return numeric.toString();
+}
+
 function buildTransferEssentialsText(draft) {
   if (draft.kind === "invalid") {
-    return "This name has been released. Reclaim it instead of transferring it.";
+    return "This name has been released. Use a fresh auction path instead of transferring it.";
   }
+
+  const recommendedMode = getRecommendedTransferMode(draft);
 
   const lines = [
     "Open Name Tags transfer essentials",
@@ -4312,10 +4100,22 @@ function buildTransferEssentialsText(draft) {
     "Current bond amount: " + formatSats(draft.record.currentBondValueSats),
     "Required bond: " + formatSats(draft.record.requiredBondSats),
     "Recommended mode: " + String(draft.recommendedMode),
+    "Settlement expectation: " + getTransferSettlementExpectation(recommendedMode),
+    "Prototype execution model: " + getTransferPrototypeExecutionModel(recommendedMode),
+    "",
+    "Shared review checklist",
+    "-----------------------"
+  ];
+
+  for (const item of buildTransferSharedReviewChecklist(draft, recommendedMode)) {
+    lines.push("- " + item);
+  }
+
+  lines.push(
     "",
     "Mode notes",
     "----------"
-  ];
+  );
 
   for (const mode of draft.modes) {
     lines.push(mode.title + ": " + mode.copy);
@@ -4329,9 +4129,100 @@ function buildTransferEssentialsText(draft) {
   return lines.join("\\n");
 }
 
+function buildSellerTransferNotesText(draft) {
+  if (draft.kind === "invalid") {
+    return "This name has been released. Use a fresh auction path instead of transferring it.";
+  }
+
+  const recommendedMode = getRecommendedTransferMode(draft);
+  const lines = [
+    "Open Name Tags seller transfer notes",
+    "===============================",
+    "",
+    "Name: " + String(draft.name),
+    "Mode: " + recommendedMode.title,
+    "Current owner pubkey: " + String(draft.record.currentOwnerPubkey),
+    "New owner pubkey: " + String(draft.newOwnerPubkey),
+    "Last state txid: " + String(draft.record.lastStateTxid),
+    ""
+  ];
+
+  if (recommendedMode.key !== "gift") {
+    lines.push(
+      "Atomic sale reminder",
+      "--------------------",
+      "Do not authorize the transfer against a separate promise to pay later.",
+      "Seller payment and ownership transfer should settle in the same exact Bitcoin transaction.",
+      ""
+    );
+  }
+
+  lines.push("Seller checklist", "----------------");
+  for (const item of buildTransferRoleChecklist(draft, recommendedMode, "seller")) {
+    lines.push("- " + item);
+  }
+
+  lines.push(
+    "",
+    "Recommended CLI command",
+    "-----------------------",
+    recommendedMode.command
+  );
+
+  return lines.join("\\n");
+}
+
+function buildBuyerTransferNotesText(draft) {
+  if (draft.kind === "invalid") {
+    return "This name has been released. Use a fresh auction path instead of transferring it.";
+  }
+
+  const recommendedMode = getRecommendedTransferMode(draft);
+  const generatedRecipientKey = getGeneratedTransferOwnerKeyForDraft(draft);
+  const lines = [
+    "Open Name Tags buyer transfer notes",
+    "==============================",
+    "",
+    "Name: " + String(draft.name),
+    "Mode: " + recommendedMode.title,
+    "New owner pubkey: " + String(draft.newOwnerPubkey),
+    "Last state txid: " + String(draft.record.lastStateTxid),
+    ""
+  ];
+
+  if (recommendedMode.key !== "gift") {
+    lines.push(
+      "Atomic sale reminder",
+      "--------------------",
+      "Do not fund a separate payment step against a promise to transfer later.",
+      "The transaction you fund should be the same transaction that moves the name to your pubkey.",
+      ""
+    );
+  }
+
+  lines.push("Buyer checklist", "---------------");
+  for (const item of buildTransferRoleChecklist(draft, recommendedMode, "buyer")) {
+    lines.push("- " + item);
+  }
+
+  if (generatedRecipientKey) {
+    lines.push(
+      "",
+      "Generated recipient key",
+      "-----------------------",
+      "Source: " + String(generatedRecipientKey.sourceLabel ?? "generated helper"),
+      "Owner pubkey: " + String(generatedRecipientKey.ownerPubkey),
+      "Owner private key: " + String(generatedRecipientKey.privateKeyHex),
+      "Warning: " + String(generatedRecipientKey.warning)
+    );
+  }
+
+  return lines.join("\\n");
+}
+
 function transferOutcomeSteps(draft) {
   if (draft.kind === "invalid") {
-    return ["The current state has been released, so reclaim the name instead of transferring it."];
+    return ["The current state has been released, so use a fresh auction path instead of transferring it."];
   }
 
   const steps = [
@@ -4391,8 +4282,8 @@ function renderTxButtonList(record, panelId, activity = []) {
         { label: "Bond Tx", txid: record.currentBondTxid }
       ]
     : [
-        { label: "Commit Tx", txid: record.claimCommitTxid },
-        { label: "Reveal Tx", txid: record.claimRevealTxid },
+        { label: "Acquisition Tx", txid: record.claimCommitTxid },
+        { label: "Visibility Tx", txid: record.claimRevealTxid },
         { label: "Last State Tx", txid: record.lastStateTxid },
         { label: "Bond Tx", txid: record.currentBondTxid }
       ];
@@ -4486,20 +4377,8 @@ function renderTxEventPayload(payload) {
   if (payload.ownerPubkey) {
     rows.push('<div class="result-item"><label>Owner Pubkey</label>' + renderCopyableCode(payload.ownerPubkey) + "</div>");
   }
-  if (payload.commitHash) {
-    rows.push('<div class="result-item"><label>Commit Hash</label>' + renderCopyableCode(payload.commitHash) + "</div>");
-  }
-  if (payload.commitTxid) {
-    rows.push('<div class="result-item"><label>Commit Txid</label>' + renderCopyableCode(payload.commitTxid) + "</div>");
-  }
-  if (payload.anchorTxid) {
-    rows.push('<div class="result-item"><label>Anchor Txid</label>' + renderCopyableCode(payload.anchorTxid) + "</div>");
-  }
   if (payload.name) {
     rows.push('<div class="result-item"><label>Name</label><p class="field-value">' + escapeHtml(String(payload.name)) + "</p></div>");
-  }
-  if (payload.nonce !== undefined) {
-    rows.push('<div class="result-item"><label>Nonce</label><p class="field-value">' + escapeHtml(String(payload.nonce)) + "</p></div>");
   }
   if (payload.newOwnerPubkey) {
     rows.push('<div class="result-item"><label>New Owner</label>' + renderCopyableCode(payload.newOwnerPubkey) + "</div>");
@@ -4522,8 +4401,8 @@ function renderTxEventPayload(payload) {
   if (payload.bidAmountSats !== undefined) {
     rows.push('<div class="result-item"><label>Bid Amount</label><p class="field-value">' + escapeHtml(formatSats(payload.bidAmountSats)) + "</p></div>");
   }
-  if (payload.reservedLockBlocks !== undefined) {
-    rows.push('<div class="result-item"><label>Reserved Lock</label><p class="field-value">' + escapeHtml(formatBlockWindow(payload.reservedLockBlocks)) + "</p></div>");
+  if (payload.settlementLockBlocks !== undefined) {
+    rows.push('<div class="result-item"><label>Settlement Lock</label><p class="field-value">' + escapeHtml(formatBlockWindow(payload.settlementLockBlocks)) + "</p></div>");
   }
   if (payload.bidderCommitment) {
     rows.push('<div class="result-item"><label>Bidder Commitment</label>' + renderCopyableCode(payload.bidderCommitment) + "</div>");
@@ -4534,25 +4413,6 @@ function renderTxEventPayload(payload) {
   if (payload.auctionCommitment) {
     rows.push('<div class="result-item"><label>Auction State Commitment</label>' + renderCopyableCode(payload.auctionCommitment) + "</div>");
   }
-  if (payload.leafCount !== undefined) {
-    rows.push('<div class="result-item"><label>Leaf Count</label><p class="field-value">' + escapeHtml(String(payload.leafCount)) + "</p></div>");
-  }
-  if (payload.merkleRoot) {
-    rows.push('<div class="result-item"><label>Merkle Root</label>' + renderCopyableCode(payload.merkleRoot) + "</div>");
-  }
-  if (payload.proofBytesLength !== undefined) {
-    rows.push('<div class="result-item"><label>Proof Bytes</label><p class="field-value">' + escapeHtml(String(payload.proofBytesLength)) + "</p></div>");
-  }
-  if (payload.proofChunkCount !== undefined) {
-    rows.push('<div class="result-item"><label>Proof Chunks</label><p class="field-value">' + escapeHtml(String(payload.proofChunkCount)) + "</p></div>");
-  }
-  if (payload.chunkIndex !== undefined) {
-    rows.push('<div class="result-item"><label>Chunk Index</label><p class="field-value">' + escapeHtml(String(payload.chunkIndex)) + "</p></div>");
-  }
-  if (payload.proofBytesHex) {
-    rows.push('<div class="result-item"><label>Proof Bytes Hex</label>' + renderCopyableCode(payload.proofBytesHex) + "</div>");
-  }
-
   if (rows.length === 0) {
     return "";
   }
@@ -4562,7 +4422,7 @@ function renderTxEventPayload(payload) {
 
 function renderValueRecordPreview(valueRecord) {
   if (!valueRecord) {
-    return '<p class="field-value">No published value record yet.</p>';
+    return '<p class="field-value">No destinations published yet.</p>';
   }
 
   if (String(valueRecord.payloadHex ?? "").length === 0 || Number(valueRecord.valueType) === 0) {
@@ -4596,7 +4456,7 @@ function renderValueRecordPreview(valueRecord) {
 
 function formatValueRecordMeta(valueRecord) {
   if (!valueRecord) {
-    return "No value record";
+    return "No destinations";
   }
 
   return "type " + formatValueType(valueRecord.valueType, valueRecord.payloadHex) + " · sequence " + String(valueRecord.sequence);
@@ -4746,7 +4606,7 @@ function renderAuctionLab() {
     }
     setText(
       elements.auctionLabMeta,
-      "Waiting for the reserved-auction lab payload."
+      "Waiting for the auction lab payload."
     );
     return;
   }
@@ -4760,11 +4620,10 @@ function renderAuctionLab() {
   setText(
     elements.auctionLabMeta,
     [
-      String(auctionLab.cases.length) + " experimental auction state" + (auctionLab.cases.length === 1 ? "" : "s"),
+      String(auctionLab.cases.length) + " sample auction state" + (auctionLab.cases.length === 1 ? "" : "s"),
       activeOverrides.noBidReleaseBlocks == null
-        ? "using current stub reserved-class floors and lock durations"
-        : "using a custom no-bid release window override",
-      "website/API/tests are all reading the same fixture set"
+        ? "showing current simulator defaults"
+        : "previewing a custom no-winner close window"
     ].join(" · ")
   );
   elements.auctionLabList.innerHTML = auctionLab.cases
@@ -4807,24 +4666,24 @@ function renderAuctionPolicySummary(policy) {
     return "";
   }
 
-  const reservedClasses = policy.reservedClasses && typeof policy.reservedClasses === "object"
-    ? Object.entries(policy.reservedClasses)
+  const auctionClasses = policy.auctionClasses && typeof policy.auctionClasses === "object"
+    ? Object.entries(policy.auctionClasses)
     : [];
   const topRow = [
     {
-      title: "Base window",
+      title: "Wait for opening bid",
       value: formatBlockWindow(policy.auction?.baseWindowBlocks)
     },
     {
-      title: "No-bid release",
+      title: "Closes with no bids",
       value: formatBlockWindow(policy.auction?.noBidReleaseBlocks)
     },
     {
-      title: "Soft close",
+      title: "Late bid extends close",
       value: formatBlockWindow(policy.auction?.softCloseExtensionBlocks)
     },
     {
-      title: "Min increment",
+      title: "Normal bid step",
       value:
         formatSats(policy.auction?.minimumIncrementAbsoluteSats ?? "0") +
         " or " +
@@ -4832,7 +4691,7 @@ function renderAuctionPolicySummary(policy) {
         "%"
     },
     {
-      title: "Soft-close increment",
+      title: "Late-bid step",
       value:
         formatSats(policy.auction?.softCloseMinimumIncrementAbsoluteSats ?? "0") +
         " or " +
@@ -4843,7 +4702,8 @@ function renderAuctionPolicySummary(policy) {
 
   return [
     '<article class="guide-card">',
-    "  <h3>Current Prototype Policy</h3>",
+    "  <h3>Current defaults</h3>",
+    '  <p class="result-meta">Plain English: an auction waits for an opening bid, closes without a winner if nobody opens, and extends the close when a late bid lands.</p>',
     '  <div class="result-grid">',
     topRow
       .map((row) => {
@@ -4858,19 +4718,36 @@ function renderAuctionPolicySummary(policy) {
       .join(""),
     "  </div>",
     "</article>",
-    ...reservedClasses.map(([classId, entry]) => {
+    ...auctionClasses.map(([classId, entry]) => {
       return [
         '<article class="guide-card">',
         "  <h3>" + escapeHtml(String(entry.label ?? classId)) + "</h3>",
+        '  <p class="result-meta">' + escapeHtml(describeLaunchAuctionClass(classId)) + "</p>",
         '  <div class="result-grid">',
-        '    <div class="result-item"><label>Opening floor</label><p class="field-value">' + escapeHtml(formatSats(entry.floorSats ?? "0")) + "</p></div>",
-        '    <div class="result-item"><label>Lock length</label><p class="field-value">' + escapeHtml(formatBlockWindow(entry.lockBlocks)) + "</p></div>",
-        '    <div class="result-item"><label>Class id</label><p class="field-value">' + escapeHtml(String(classId)) + "</p></div>",
+        '    <div class="result-item"><label>Starting bid</label><p class="field-value">' + escapeHtml(formatSats(entry.floorSats ?? "0")) + "</p></div>",
+        '    <div class="result-item"><label>Winner lock</label><p class="field-value">' + escapeHtml(formatBlockWindow(entry.lockBlocks)) + "</p></div>",
         "  </div>",
         "</article>"
       ].join("");
     })
   ].join("");
+}
+
+function describeLaunchAuctionClass(classId) {
+  switch (String(classId)) {
+    case "top_collision":
+      return "Legacy top-collision bucket retained for prototype fixtures; not a semantic launch class.";
+    case "major_existing_name":
+      return "Legacy major-name bucket retained for prototype fixtures; not a semantic launch class.";
+    case "public_identity":
+      return "Legacy public-identity bucket retained for prototype fixtures; not a semantic launch class.";
+    case "launch_name":
+      return "Launch-eligible names use the standard auction rule.";
+    case "short_name_wave":
+      return "Names with 1-4 characters are held for the later short-name wave.";
+    default:
+      return "This class sets the starting bid and winner lock for this auction group.";
+  }
 }
 
 function renderAuctionCaseCard(auctionCase) {
@@ -4887,22 +4764,22 @@ function renderAuctionCaseCard(auctionCase) {
   const phasePill = mapAuctionPhasePill(phase);
   const leaderLabel = phase === "settled" ? "Winner" : "Current leader";
   const nextBidLabel =
-    phase === "released_to_ordinary_lane"
-      ? "Ordinary-lane floor"
+    phase === "closed_without_winner"
+      ? "Opening floor"
       : phase === "soft_close"
         ? "Next valid bid (extends close)"
         : "Next valid bid";
   const closeLabel = phase === "pending_unlock"
     ? "Unlock block"
-    : phase === "released_to_ordinary_lane"
-      ? "Released at block"
+    : phase === "closed_without_winner"
+      ? "Closed at block"
     : phase === "awaiting_opening_bid"
-      ? "No-bid release"
+      ? "No-bid close"
       : "Auction close";
   const closeValue =
     phase === "pending_unlock"
       ? String(stateView.unlockBlock ?? "-")
-      : phase === "released_to_ordinary_lane"
+      : phase === "closed_without_winner"
         ? String(stateView.noBidReleaseBlock ?? "-")
       : phase === "awaiting_opening_bid"
         ? String(stateView.noBidReleaseBlock ?? "-")
@@ -4910,24 +4787,24 @@ function renderAuctionCaseCard(auctionCase) {
           ? "-"
           : String(stateView.auctionCloseBlockAfter);
   const nextBidValue =
-    phase === "released_to_ordinary_lane"
-      ? formatSats(stateView.ordinaryMinimumBidSats ?? "0")
+    phase === "closed_without_winner"
+      ? formatSats(stateView.openingMinimumBidSats ?? stateView.baseMinimumBidSats ?? "0")
       : stateView.currentRequiredMinimumBidSats
         ? formatSats(stateView.currentRequiredMinimumBidSats)
         : "Auction settled";
   const secondaryTimingLabel =
-    phase === "awaiting_opening_bid" || phase === "released_to_ordinary_lane"
-      ? "Blocks to release"
+    phase === "awaiting_opening_bid" || phase === "closed_without_winner"
+      ? "Blocks to close"
       : "Blocks to close";
   const secondaryTimingValue =
-    phase === "awaiting_opening_bid" || phase === "released_to_ordinary_lane"
+    phase === "awaiting_opening_bid" || phase === "closed_without_winner"
       ? (stateView.blocksUntilNoBidRelease == null ? "-" : String(stateView.blocksUntilNoBidRelease))
       : (stateView.blocksUntilClose == null ? "-" : String(stateView.blocksUntilClose));
 
   return [
     '<article class="activity-card">',
     '  <div class="result-title">',
-    '    <h3>' + escapeHtml(String(auctionCase.title ?? stateView.normalizedName ?? "Reserved auction")) + "</h3>",
+    '    <h3>' + escapeHtml(String(auctionCase.title ?? stateView.normalizedName ?? "Auction")) + "</h3>",
     '    <span class="status-pill ' + escapeHtml(phasePill) + '">' + escapeHtml(String(stateView.phaseLabel ?? phase)) + "</span>",
     "  </div>",
     '  <p class="field-value">' + escapeHtml(String(auctionCase.description ?? "")) + "</p>",
@@ -4936,13 +4813,13 @@ function renderAuctionCaseCard(auctionCase) {
     '    <div class="result-item"><label>Class</label><p class="field-value">' + escapeHtml(String(stateView.classLabel ?? "-")) + "</p></div>",
     '    <div class="result-item"><label>Observed block</label><p class="field-value">' + escapeHtml(String(stateView.currentBlockHeight ?? "-")) + "</p></div>",
     '    <div class="result-item"><label>' + escapeHtml(closeLabel) + '</label><p class="field-value">' + escapeHtml(closeValue) + "</p></div>",
-    '    <div class="result-item"><label>Ordinary-lane floor</label><p class="field-value">' + escapeHtml(formatSats(stateView.ordinaryMinimumBidSats ?? "0")) + "</p></div>",
+    '    <div class="result-item"><label>Base floor</label><p class="field-value">' + escapeHtml(formatSats(stateView.baseMinimumBidSats ?? "0")) + "</p></div>",
     '    <div class="result-item"><label>Opening minimum</label><p class="field-value">' + escapeHtml(formatSats(stateView.openingMinimumBidSats ?? "0")) + "</p></div>",
     '    <div class="result-item"><label>' + escapeHtml(leaderLabel) + '</label><p class="field-value">' + escapeHtml(stateView.currentLeaderBidderId ?? "None yet") + "</p></div>",
     '    <div class="result-item"><label>Highest bid</label><p class="field-value">' + escapeHtml(stateView.currentHighestBidSats ? formatSats(stateView.currentHighestBidSats) : "None yet") + "</p></div>",
     '    <div class="result-item"><label>' + escapeHtml(nextBidLabel) + '</label><p class="field-value">' + escapeHtml(nextBidValue) + "</p></div>",
     '    <div class="result-item"><label>Accepted / rejected</label><p class="field-value">' + escapeHtml(String(stateView.acceptedBidCount ?? 0) + " / " + String(stateView.rejectedBidCount ?? 0)) + "</p></div>",
-    '    <div class="result-item"><label>Reserved lock</label><p class="field-value">' + escapeHtml(formatBlockWindow(stateView.reservedLockBlocks)) + "</p></div>",
+    '    <div class="result-item"><label>Settlement lock</label><p class="field-value">' + escapeHtml(formatBlockWindow(stateView.settlementLockBlocks)) + "</p></div>",
     '    <div class="result-item"><label>Blocks to unlock</label><p class="field-value">' + escapeHtml(String(stateView.blocksUntilUnlock ?? 0)) + "</p></div>",
     '    <div class="result-item"><label>' + escapeHtml(secondaryTimingLabel) + '</label><p class="field-value">' + escapeHtml(secondaryTimingValue) + "</p></div>",
     "  </div>",
@@ -4957,7 +4834,7 @@ function renderAuctionCaseCard(auctionCase) {
         stateView.phase === "soft_close"
           ? "Soft close is active. A bid from this state must clear the stronger late-extension increment."
           : "Build a bid package from the simulator state shown on this card.",
-      fallbackPath: buildClaimPrepPath(stateView.normalizedName ?? "")
+      fallbackPath: buildAuctionsPath(stateView.normalizedName ?? "")
     }),
     renderAuctionBidHistory(stateView.visibleBidOutcomes),
     "</article>"
@@ -4969,35 +4846,35 @@ function renderExperimentalAuctionCard(auction) {
   const phasePill = mapAuctionPhasePill(phase);
   const leaderLabel = phase === "settled" ? "Winner commitment" : "Leader commitment";
   const nextBidLabel =
-    phase === "released_to_ordinary_lane"
-      ? "Ordinary-lane floor"
+    phase === "closed_without_winner"
+      ? "Opening floor"
       : phase === "soft_close"
         ? "Next valid bid (extends close)"
         : "Next valid bid";
   const nextBidValue =
-    phase === "released_to_ordinary_lane"
-      ? formatSats(auction.ordinaryMinimumBidSats ?? "0")
+    phase === "closed_without_winner"
+      ? formatSats(auction.openingMinimumBidSats ?? auction.baseMinimumBidSats ?? "0")
       : auction.currentRequiredMinimumBidSats
         ? formatSats(auction.currentRequiredMinimumBidSats)
         : "Auction settled";
   const settlementLabel =
-    phase === "released_to_ordinary_lane"
-      ? "Ordinary lane"
+    phase === "closed_without_winner"
+      ? "No winner"
       : phase === "settled"
         ? "Winner release"
         : "Settlement";
   const settlementValue =
-    phase === "released_to_ordinary_lane"
-      ? (auction.noBidReleaseBlock == null ? "Released to ordinary lane" : "released at block " + String(auction.noBidReleaseBlock))
+    phase === "closed_without_winner"
+      ? (auction.noBidReleaseBlock == null ? "Closed without winner" : "closed at block " + String(auction.noBidReleaseBlock))
       : phase === "settled"
       ? (auction.winnerBondReleaseBlock == null ? "-" : "block " + String(auction.winnerBondReleaseBlock))
       : "Not settled";
   const closeLabel =
-    phase === "released_to_ordinary_lane"
-      ? "Released at block"
+    phase === "closed_without_winner"
+      ? "Closed at block"
       : "Blocks to close";
   const closeValue =
-    phase === "released_to_ordinary_lane"
+    phase === "closed_without_winner"
       ? String(auction.noBidReleaseBlock ?? "-")
       : (auction.blocksUntilClose == null ? "-" : String(auction.blocksUntilClose));
   const settledHandoff =
@@ -5017,7 +4894,7 @@ function renderExperimentalAuctionCard(auction) {
     '    <div class="result-item"><label>Class</label><p class="field-value">' + escapeHtml(String(auction.classLabel ?? "-")) + "</p></div>",
     '    <div class="result-item"><label>Lot commitment</label><p class="field-value">' + escapeHtml(formatAuctionCommitment(auction.auctionLotCommitment)) + "</p></div>",
     '    <div class="result-item"><label>Current block</label><p class="field-value">' + escapeHtml(String(auction.currentBlockHeight ?? "-")) + "</p></div>",
-    '    <div class="result-item"><label>Ordinary-lane floor</label><p class="field-value">' + escapeHtml(formatSats(auction.ordinaryMinimumBidSats ?? "0")) + "</p></div>",
+    '    <div class="result-item"><label>Base floor</label><p class="field-value">' + escapeHtml(formatSats(auction.baseMinimumBidSats ?? "0")) + "</p></div>",
     '    <div class="result-item"><label>Opening minimum</label><p class="field-value">' + escapeHtml(formatSats(auction.openingMinimumBidSats ?? "0")) + "</p></div>",
     '    <div class="result-item"><label>' + escapeHtml(leaderLabel) + '</label><p class="field-value">' + escapeHtml(formatAuctionCommitment(auction.currentLeaderBidderCommitment)) + "</p></div>",
     '    <div class="result-item"><label>Highest bid</label><p class="field-value">' + escapeHtml(auction.currentHighestBidSats ? formatSats(auction.currentHighestBidSats) : "None yet") + "</p></div>",
@@ -5054,7 +4931,7 @@ function renderExperimentalAuctionCard(auction) {
         phase === "soft_close"
           ? "Built from current resolver-derived state. A soft-close extension bid must clear the stronger late increment and may go stale if another bid lands first."
           : "Build a bid package from the current resolver-derived experimental auction state.",
-      fallbackPath: buildClaimPrepPath(auction.normalizedName ?? "")
+      fallbackPath: buildAuctionsPath(auction.normalizedName ?? "")
     }),
     renderExperimentalAuctionBidHistory(auction.visibleBidOutcomes),
     "</article>"
@@ -5084,7 +4961,7 @@ function renderSettledAuctionHandoff(auction, configuredBasePath = BASE_PATH) {
     : "This settled lot is already a live name with a normal owner workflow.";
   const copy = lockIsActive
     ? "Use the detail page for the current owner-visible state, publish a value if you want a destination or profile attached, and only transfer with bond continuity until the release height clears."
-    : "Use the detail page for the current owner-visible state, publish or update the off-chain value, and treat transfer prep the same way you would for any other mature name.";
+    : "Use the detail page for the current owner-visible state, update destinations, and treat transfer prep the same way you would for any other mature name.";
   const releaseCopy =
     blocksUntilRelease === null
       ? "Winner release height is not available in this snapshot."
@@ -5120,16 +4997,14 @@ function caseIdFromAuctionState(id, fallbackName) {
 
 function renderAuctionBidPackageComposer(input) {
   const domKey = buildAuctionPackageDomKey(input.source, input.id);
-  const generatedOwnerKey = state.generatedOwnerKey;
-  const defaultOwnerPubkey = String(input.defaultOwnerPubkey ?? generatedOwnerKey?.ownerPubkey ?? "");
+  const defaultOwnerPubkey = String(input.defaultOwnerPubkey ?? "");
 
-  if (input.phase === "released_to_ordinary_lane") {
+  if (input.phase === "closed_without_winner") {
     return [
       '<details class="detail-technical">',
       "  <summary>Auction bid packages unavailable</summary>",
       '  <div class="detail-technical-body">',
-      '    <p class="tx-panel-note">This lot attracted no valid opening bid before the release window ended, so it has fallen back to the ordinary lane.</p>',
-      '    <p><a class="action-link" href="' + escapeHtml(input.fallbackPath) + '">Prepare an ordinary claim</a></p>',
+      '    <p class="tx-panel-note">This lot attracted no valid opening bid before the close window ended, so it closed without a winner. The name remains unclaimed.</p>',
       "  </div>",
       "</details>"
     ].join("");
@@ -5150,14 +5025,17 @@ function renderAuctionBidPackageComposer(input) {
     '<details class="detail-technical">',
     "  <summary>Preview or download bid package</summary>",
     '  <div class="detail-technical-body draft-grid">',
-    '    <div class="field"><label class="field-label" for="auction-bidder-' + escapeHtml(domKey) + '">Bidder id</label><input id="auction-bidder-' + escapeHtml(domKey) + '" type="text" data-auction-bidder-id="' + escapeHtml(input.id) + '" data-auction-package-source="' + escapeHtml(input.source) + '" value="' + escapeHtml(input.defaultBidderId) + '" /></div>',
+    '    <div class="field"><label class="field-label" for="auction-bidder-' + escapeHtml(domKey) + '">Bidder label</label><input id="auction-bidder-' + escapeHtml(domKey) + '" type="text" data-auction-bidder-id="' + escapeHtml(input.id) + '" data-auction-package-source="' + escapeHtml(input.source) + '" value="' + escapeHtml(input.defaultBidderId) + '" /><p class="field-note">This is a stable identifier for the bidding entity. The website pre-fills a demo label here and the package derives a bidder commitment from it.</p></div>',
     '    <div class="field"><label class="field-label" for="auction-owner-' + escapeHtml(domKey) + '">Owner pubkey</label><input id="auction-owner-' + escapeHtml(domKey) + '" type="text" data-auction-owner-pubkey="' + escapeHtml(input.id) + '" data-auction-package-source="' + escapeHtml(input.source) + '" value="' + escapeHtml(defaultOwnerPubkey) + '" placeholder="32-byte x-only pubkey" /></div>',
     '    <div class="field"><label class="field-label" for="auction-amount-' + escapeHtml(domKey) + '">Bid amount (sats)</label><input id="auction-amount-' + escapeHtml(domKey) + '" type="text" inputmode="numeric" data-auction-bid-amount="' + escapeHtml(input.id) + '" data-auction-package-source="' + escapeHtml(input.source) + '" value="' + escapeHtml(input.defaultBidAmount) + '" /></div>',
     '    <div class="draft-field-full">',
-    (generatedOwnerKey && defaultOwnerPubkey === generatedOwnerKey.ownerPubkey
-      ? '      <p class="tx-panel-note">Using the current demo owner key. If this bid wins, that pubkey becomes the live owner key for the name.</p>'
-      : '      <p class="tx-panel-note">Set the x-only owner pubkey that should control the name if this bid wins. This becomes the actual on-chain owner state after settlement.</p>'),
-      '      <div class="field-actions">',
+    '      <p class="tx-panel-note">Set the x-only owner pubkey that should control the name if this bid wins. Create it in this browser for the normal self-custody path, or use a demo key from the server only for prototype testing.</p>',
+    '      <div class="field-actions">',
+    '        <button type="button" data-auction-owner-key-action="generate-local" data-auction-package-source="' + escapeHtml(input.source) + '" data-auction-package-id="' + escapeHtml(input.id) + '" data-auction-name="' + escapeHtml(input.normalizedName ?? "") + '">Create In This Browser</button>',
+    '        <button type="button" class="secondary-button" data-auction-owner-key-action="generate-hosted" data-auction-package-source="' + escapeHtml(input.source) + '" data-auction-package-id="' + escapeHtml(input.id) + '" data-auction-name="' + escapeHtml(input.normalizedName ?? "") + '">Use Demo Key From Server</button>',
+    "      </div>",
+    '      <div class="result-card empty" data-auction-owner-key-result="' + escapeHtml(domKey) + '">No generated owner key yet for this lot. Create one in this browser for the normal self-custody path, or use a demo key from the server only for prototype testing.</div>',
+    '      <div class="field-actions">',
     '        <button type="button" data-auction-package-action="preview" data-auction-package-source="' + escapeHtml(input.source) + '" data-auction-package-id="' + escapeHtml(input.id) + '">Preview bid package</button>',
     '        <button type="button" class="secondary-button" data-auction-package-action="download" data-auction-package-source="' + escapeHtml(input.source) + '" data-auction-package-id="' + escapeHtml(input.id) + '">Download bid package</button>',
     "      </div>",
@@ -5185,6 +5063,45 @@ function setAuctionBidPackagePreview(domKey, html) {
   if (node instanceof HTMLElement) {
     node.innerHTML = html;
   }
+}
+
+function setAuctionOwnerKeyHelperMessage(domKey, message) {
+  const node = document.querySelector('[data-auction-owner-key-result="' + cssEscape(domKey) + '"]');
+  if (node instanceof HTMLElement) {
+    node.classList.add("empty");
+    node.textContent = message;
+  }
+}
+
+function renderAuctionOwnerKeyHelper(domKey, source, id, name, generated) {
+  const node = document.querySelector('[data-auction-owner-key-result="' + cssEscape(domKey) + '"]');
+  if (!(node instanceof HTMLElement)) {
+    return;
+  }
+
+  node.classList.remove("empty");
+  node.innerHTML = [
+    '<div class="result-title">',
+    "  <h3>Generated Auction Owner Key</h3>",
+    '  <span class="status-pill ' + escapeHtml(generated.source === "browser-local" ? "mature" : "pending") + '">' + escapeHtml(generated.sourceLabel) + "</span>",
+    "</div>",
+    '  <p class="prototype-warning">' + escapeHtml(String(generated.warning)) + "</p>",
+    '  <div class="step-list">',
+    '    <p class="step-list-label">Do This Now</p>',
+    "    <ol>",
+    "      <li>Save the private key before you leave this page.</li>",
+    "      <li>Use only the x-only pubkey in the owner pubkey field above.</li>",
+    "      <li>If this bid wins, keep this private key for later value updates or owner-authorized transfers.</li>",
+    "    </ol>",
+    '    <div class="hero-cta-row">',
+    '      <button type="button" class="secondary-button" data-auction-owner-key-action="download" data-auction-package-source="' + escapeHtml(source) + '" data-auction-package-id="' + escapeHtml(id) + '" data-auction-name="' + escapeHtml(typeof name === "string" ? name : "") + '">Download owner key</button>',
+    "    </div>",
+    "  </div>",
+    '  <div class="result-grid">',
+    '    <div class="result-item"><label>Owner Pubkey</label>' + renderCopyableCode(String(generated.ownerPubkey)) + "</div>",
+    '    <div class="result-item"><label>Private Key</label>' + renderCopyableCode(String(generated.privateKeyHex)) + "</div>",
+    "  </div>"
+  ].join("");
 }
 
 async function buildAuctionBidPackageForUi(input) {
@@ -5229,7 +5146,7 @@ function renderAuctionBidPackagePreview(pkg, sourceLabel) {
     '    <div class="result-item"><label>Bidder commitment</label>' + renderCopyableCode(pkg.bidderCommitment) + "</div>",
     '    <div class="result-item"><label>State commitment</label>' + renderCopyableCode(pkg.auctionStateCommitment) + "</div>",
     '    <div class="result-item"><label>Lot commitment</label>' + renderCopyableCode(pkg.auctionLotCommitment) + "</div>",
-    '    <div class="result-item"><label>Reserved lock</label><p class="field-value">' + escapeHtml(formatBlockWindow(pkg.reservedLockBlocks)) + "</p></div>",
+    '    <div class="result-item"><label>Settlement lock</label><p class="field-value">' + escapeHtml(formatBlockWindow(pkg.settlementLockBlocks)) + "</p></div>",
     "  </div>",
     '  <ul class="guide-list">',
     '    <li>Save the package if you want a durable handoff from this observed auction state.</li>',
@@ -5388,7 +5305,7 @@ function mapAuctionPhasePill(phase) {
       return "pending";
     case "awaiting_opening_bid":
       return "available";
-    case "released_to_ordinary_lane":
+    case "closed_without_winner":
       return "available";
     case "live_bidding":
       return "immature";
@@ -5425,106 +5342,6 @@ function getPrivateDemoBasePath() {
   return typeof state.config?.privateDemoBasePath === "string" && state.config.privateDemoBasePath.length > 0
     ? state.config.privateDemoBasePath
     : BASE_PATH;
-}
-
-function renderPrivateBatchSmokeStatus() {
-  if (!elements.privateBatchSmokeResult) {
-    return;
-  }
-
-  const batchSmoke = state.privateBatchSmokeStatus;
-  if (!batchSmoke) {
-    elements.privateBatchSmokeResult.classList.add("empty");
-    elements.privateBatchSmokeResult.textContent = "No private signet batch smoke status is available yet.";
-    setText(
-      elements.privateBatchSmokeMeta,
-      "Waiting for the first published private signet batched ordinary-claim smoke summary."
-    );
-    return;
-  }
-
-  const status = String(batchSmoke.status ?? "unknown");
-  const alphaName = batchSmoke.names?.alpha ?? null;
-  const betaName = batchSmoke.names?.beta ?? null;
-  const transferName = batchSmoke.transfer?.name ?? null;
-  const revealTxids = batchSmoke.revealTxids && typeof batchSmoke.revealTxids === "object"
-    ? Object.values(batchSmoke.revealTxids).filter((value) => typeof value === "string")
-    : [];
-  const revealSummary =
-    revealTxids.length === 0
-      ? "Reveal txids unavailable"
-      : String(revealTxids.length) + " reveal tx" + (revealTxids.length === 1 ? "" : "s");
-  const privateDemoBasePath = getPrivateDemoBasePath();
-  const nameLinks = [alphaName, betaName]
-    .filter((value) => typeof value === "string" && value.trim().length > 0)
-    .map((name) => renderDetailLink(name, String(name), privateDemoBasePath))
-    .join(" · ");
-  const transferLink =
-    typeof transferName === "string" && transferName.trim().length > 0
-      ? renderDetailLink(transferName, transferName, privateDemoBasePath)
-      : null;
-  const actionLinks = [
-    alphaName ? '<a class="action-link" href="' + escapeHtml(buildNameDetailPath(alphaName, privateDemoBasePath)) + '">Open alpha detail</a>' : "",
-    betaName ? '<a class="action-link secondary" href="' + escapeHtml(buildNameDetailPath(betaName, privateDemoBasePath)) + '">Open beta detail</a>' : "",
-    '<a class="action-link secondary" href="' + escapeHtml(withBasePath("/claim/offline", privateDemoBasePath)) + '">Open offline architect</a>',
-    '<a class="action-link secondary" href="' + escapeHtml(withBasePath("/explore", privateDemoBasePath)) + '">Open explorer</a>'
-  ]
-    .filter(Boolean)
-    .join("");
-
-  setText(
-    elements.privateBatchSmokeMeta,
-    [
-      "Status: " + formatLiveSmokeStatus(status),
-      batchSmoke.completedAt
-        ? "Updated " + new Date(batchSmoke.completedAt).toLocaleString()
-        : batchSmoke.startedAt
-          ? "Started " + new Date(batchSmoke.startedAt).toLocaleString()
-          : null,
-      revealSummary
-    ]
-      .filter(Boolean)
-      .join(" · ")
-  );
-
-  elements.privateBatchSmokeResult.classList.remove("empty");
-  elements.privateBatchSmokeResult.innerHTML = [
-    '<div class="result-title">',
-    '  <h3>' + escapeHtml(alphaName && betaName ? alphaName + " + " + betaName : batchSmoke.kind ?? "Private batch smoke") + '</h3>',
-    '  <span class="status-pill ' + escapeHtml(mapLiveSmokeStatusPill(status)) + '">' + escapeHtml(formatLiveSmokeStatus(status)) + '</span>',
-    '</div>',
-    '<div class="result-grid">',
-    '  <div class="result-item">',
-    "    <label>Message</label>",
-    '    <p class="field-value">' + escapeHtml(batchSmoke.message ?? "No message") + '</p>',
-    "  </div>",
-    '  <div class="result-item">',
-    "    <label>Names</label>",
-    nameLinks ? '    <p class="field-value">' + nameLinks + '</p>' : '    <p class="field-value">Not published</p>',
-    "  </div>",
-    '  <div class="result-item">',
-    "    <label>Batch Commit Txid</label>",
-    batchSmoke.batchCommitTxid ? renderCopyableCode(batchSmoke.batchCommitTxid) : '<p class="field-value">Not published</p>',
-    "  </div>",
-    '  <div class="result-item">',
-    "    <label>Reveal Count</label>",
-    '    <p class="field-value">' + escapeHtml(String(revealTxids.length)) + '</p>',
-    "  </div>",
-    '  <div class="result-item">',
-    "    <label>Transferred Name</label>",
-    transferLink ? '    <p class="field-value">' + transferLink + '</p>' : '    <p class="field-value">Not published</p>',
-    "  </div>",
-    '  <div class="result-item">',
-    "    <label>Payer Funding Address</label>",
-    batchSmoke.payerFundingAddress ? renderCopyableCode(batchSmoke.payerFundingAddress) : '<p class="field-value">Not published</p>',
-    "  </div>",
-    '  <div class="result-item">',
-    "    <label>Resolver</label>",
-    '    <p class="field-value">' + escapeHtml(batchSmoke.resolverUrl ?? "Unavailable") + '</p>',
-    "  </div>",
-    "</div>",
-    actionLinks ? '<div class="result-actions">' + actionLinks + "</div>" : ""
-  ].join("");
 }
 
 function renderPrivateAuctionSmokeStatus() {
@@ -5587,7 +5404,7 @@ function renderPrivateAuctionSmokeStatus() {
       ? '<a class="action-link" href="' + escapeHtml(buildNameDetailPath(finalState.normalizedName, privateDemoBasePath)) + '">Open settled name</a>'
       : "",
     finalState.phase === "settled" && typeof finalState.normalizedName === "string" && finalState.normalizedName.trim().length > 0
-      ? '<a class="action-link secondary" href="' + escapeHtml(buildValuePublishPath(finalState.normalizedName, privateDemoBasePath)) + '">Publish value</a>'
+      ? '<a class="action-link secondary" href="' + escapeHtml(buildValuePublishPath(finalState.normalizedName, privateDemoBasePath)) + '">Update destinations</a>'
       : "",
     finalState.phase === "settled" && typeof finalState.normalizedName === "string" && finalState.normalizedName.trim().length > 0
       ? '<a class="action-link secondary" href="' + escapeHtml(buildTransferPrepPath(finalState.normalizedName, privateDemoBasePath)) + '">Prepare transfer</a>'
@@ -5635,7 +5452,7 @@ function renderPrivateAuctionSmokeStatus() {
     "  </div>",
     '  <div class="result-item">',
     "    <label>Name / class</label>",
-    '    <p class="field-value">' + escapeHtml(String(auction.normalizedName ?? finalState.normalizedName ?? "-")) + " · " + escapeHtml(String(finalState.classLabel ?? auction.reservedClassId ?? "-")) + '</p>',
+    '    <p class="field-value">' + escapeHtml(String(auction.normalizedName ?? finalState.normalizedName ?? "-")) + " · " + escapeHtml(String(finalState.classLabel ?? auction.auctionClassId ?? "-")) + '</p>',
     "  </div>",
     '  <div class="result-item">',
     "    <label>Phase</label>",

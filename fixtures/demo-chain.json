@@ -14,7 +14,7 @@
             {
               "valueSats": "0",
               "scriptType": "op_return",
-              "dataHex": "474e530101001111111111111111111111111111111111111111111111111111111111111111f09c1bbeb9e322d4cf88437e1d59bb5cad1b1d23fd85e0bf3c2a271d75838f29"
+              "dataHex": "4f4e540101001111111111111111111111111111111111111111111111111111111111111111f09c1bbeb9e322d4cf88437e1d59bb5cad1b1d23fd85e0bf3c2a271d75838f29"
             }
           ]
         }
@@ -30,7 +30,7 @@
             {
               "valueSats": "0",
               "scriptType": "op_return",
-              "dataHex": "474e530102aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa000000000000002a05616c696365"
+              "dataHex": "4f4e540102aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa000000000000002a05616c696365"
             }
           ]
         }

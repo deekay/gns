@@ -7,7 +7,7 @@ This document describes the current shape of the Open Name Tags prototype as it 
 The system has two layers:
 
 - **Convenience layer:** the hosted website, resolver, and demo infrastructure
-- **Sovereign layer:** the open-source code, the claim/transfer artifacts, and the Bitcoin chain itself
+- **Sovereign layer:** the open-source code, auction/transfer artifacts, and the Bitcoin chain itself
 
 The goal is to keep those layers aligned without locking users into the hosted convenience path.
 
@@ -20,9 +20,9 @@ The website is an explorer and transaction-prep tool.
 It is responsible for:
 
 - browsing names and state
-- preparing claim and transfer handoffs
+- preparing auction and transfer handoffs
 - generating PSBTs for supported demo flows
-- helping users move between search, claim, and transfer flows
+- helping users move between search, auction, and transfer flows
 
 It is **not** the signing authority.
 
@@ -50,9 +50,9 @@ The authoritative state is the Bitcoin-compatible chain the resolver is indexing
 The product surface:
 
 - explorer
-- claim prep
+- auction bid prep
 - transfer prep
-- offline claim architect download
+- setup and key tools
 
 It uses the shared protocol and architect packages, and talks to the resolver for current state.
 
@@ -61,9 +61,8 @@ It uses the shared protocol and architect packages, and talks to the resolver fo
 The read API and convenience backend:
 
 - name resolution
-- claim availability
+- auction state
 - activity feeds
-- pending commits
 - tx provenance
 - off-chain value records
 
@@ -138,7 +137,7 @@ These are the main issues we already understand and want reviewers to keep pushi
 - **Transfer relay policy:** the current prototype transfer payload exceeds older conservative `OP_RETURN` relay limits. Modern Bitcoin Core defaults are more permissive, but transfer relay is still policy-dependent and broad compatibility is not yet guaranteed.
 - **Post-maturity holding cost:** mature names no longer require bond continuity. That reduces permanent UTXO pressure, but it also means long names become cheap to hold indefinitely after the maturity period.
 - **Resolver concentration:** ownership is chain-derived, but value-record availability is still vulnerable to concentration if only one or a few resolvers matter in practice.
-- **Reveal-window exposure:** a failed reveal is not just a failed claim. It also exposes which name somebody wanted, which can make the next attempt more competitive. That makes the reveal window a market-structure question, not only a wallet UX question.
+- **Auction visibility:** bids are visible once broadcast. That improves market discovery, but it also means later bidders can react to earlier bids.
 - **Owner-key recovery:** the prototype intentionally separates the wallet/funding key from the owner key. That keeps authority clean, but it means v1 has no built-in recovery path if the owner key is lost.
 
 ### `apps/indexer`
@@ -171,7 +170,7 @@ Pure protocol definitions:
 
 Pure transaction-prep logic:
 
-- claim package construction
+- auction bid-package construction
 - PSBT building
 - wallet metadata helpers
 
@@ -239,13 +238,13 @@ User jobs:
 - inspect history and provenance
 - decide what to do next
 
-### Claim prep
+### Auction Bid Prep
 
 User jobs:
 
-- choose a name
-- choose owner key material
-- prepare commit/reveal artifacts
+- inspect the current auction state for a name
+- choose or generate owner key material
+- prepare bid artifacts
 - hand the result to Sparrow or another signer
 
 ### Transfer prep
@@ -256,22 +255,25 @@ User jobs:
 - understand which transfer mode fits
 - generate the right handoff for gift, immature sale, or mature sale
 
-## Why The Offline Architect Exists
+## Higher-Trust Preparation
 
 Hosted prep is the convenience layer.
 
-The offline architect exists for users who want a more sovereign path:
+For high-value use, the stronger path should stay local-first:
 
-- download the single-file tool
-- paste trusted wallet metadata and UTXOs
+- inspect the open-source builder code
+- provide wallet metadata and UTXOs locally
 - generate artifacts locally
 - sign in Sparrow
 
-That keeps high-value preparation closer to the Ian Coleman model: transparent and runnable without trusting a live hosted JavaScript bundle.
+That keeps high-value preparation closer to the Ian Coleman model: transparent
+and runnable without trusting a live hosted JavaScript bundle. The old
+direct-allocation browser path is retired; any higher-trust path should now be
+auction-first.
 
 ## What Still Needs Improvement
 
-- transfer-side offline architect parity
+- clearer local-first auction and transfer preparation
 - cleaner separation between hosted convenience and repo/operator docs
 - eventual durable database-backed indexing as the normal default, not an optional mode
 - long-term cleanup of infrastructure-specific defaults before broad open-source distribution

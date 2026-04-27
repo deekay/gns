@@ -1,21 +1,21 @@
 import { getBondSats, normalizeName } from "@ont/protocol";
 
-export const RESERVED_AUCTION_CLASS_IDS = [
-  "top_collision",
-  "major_existing_name",
-  "public_identity"
+export const LAUNCH_AUCTION_CLASS_IDS = [
+  "launch_name",
+  "short_name_wave"
 ] as const;
+export const SHORT_NAME_SECOND_WAVE_MAX_LENGTH = 4;
 
-export type ReservedAuctionClassId = (typeof RESERVED_AUCTION_CLASS_IDS)[number];
+export type LaunchAuctionClassId = (typeof LAUNCH_AUCTION_CLASS_IDS)[number];
 
-export interface ReservedAuctionClassPolicy {
-  readonly id: ReservedAuctionClassId;
+export interface LaunchAuctionClassPolicy {
+  readonly id: LaunchAuctionClassId;
   readonly label: string;
   readonly floorSats: bigint;
   readonly lockBlocks: number;
 }
 
-export interface ReservedAuctionSettings {
+export interface LaunchAuctionSettings {
   readonly baseWindowBlocks: number;
   readonly softCloseExtensionBlocks: number;
   readonly noBidReleaseBlocks: number;
@@ -25,20 +25,20 @@ export interface ReservedAuctionSettings {
   readonly softCloseMinimumIncrementBasisPoints: number;
 }
 
-export interface ReservedAuctionPolicy {
-  readonly ordinaryLockBlocks: number;
-  readonly auction: ReservedAuctionSettings;
-  readonly reservedClasses: Readonly<Record<ReservedAuctionClassId, ReservedAuctionClassPolicy>>;
+export interface LaunchAuctionPolicy {
+  readonly defaultSettlementLockBlocks: number;
+  readonly auction: LaunchAuctionSettings;
+  readonly auctionClasses: Readonly<Record<LaunchAuctionClassId, LaunchAuctionClassPolicy>>;
 }
 
-export interface SerializedReservedAuctionClassPolicy {
+export interface SerializedLaunchAuctionClassPolicy {
   readonly label: string;
   readonly floorSats: string;
   readonly lockBlocks: number;
 }
 
-export interface SerializedReservedAuctionPolicy {
-  readonly ordinaryLockBlocks: number;
+export interface SerializedLaunchAuctionPolicy {
+  readonly defaultSettlementLockBlocks: number;
   readonly auction: {
     readonly baseWindowBlocks: number;
     readonly softCloseExtensionBlocks: number;
@@ -48,21 +48,21 @@ export interface SerializedReservedAuctionPolicy {
     readonly softCloseMinimumIncrementAbsoluteSats: string;
     readonly softCloseMinimumIncrementBasisPoints: number;
   };
-  readonly reservedClasses: Readonly<Record<ReservedAuctionClassId, SerializedReservedAuctionClassPolicy>>;
+  readonly auctionClasses: Readonly<Record<LaunchAuctionClassId, SerializedLaunchAuctionClassPolicy>>;
 }
 
-export interface ReservedAuctionOpeningRequirements {
+export interface LaunchAuctionOpeningRequirements {
   readonly normalizedName: string;
-  readonly ordinaryMinimumBidSats: bigint;
+  readonly baseMinimumBidSats: bigint;
   readonly classMinimumBidSats: bigint;
   readonly openingMinimumBidSats: bigint;
-  readonly reservedLockBlocks: number;
+  readonly settlementLockBlocks: number;
   readonly classLabel: string;
 }
 
-export function createDefaultReservedAuctionPolicy(): ReservedAuctionPolicy {
+export function createDefaultLaunchAuctionPolicy(): LaunchAuctionPolicy {
   return {
-    ordinaryLockBlocks: 52_560,
+    defaultSettlementLockBlocks: 52_560,
     auction: {
       baseWindowBlocks: 4_320,
       softCloseExtensionBlocks: 144,
@@ -72,60 +72,59 @@ export function createDefaultReservedAuctionPolicy(): ReservedAuctionPolicy {
       softCloseMinimumIncrementAbsoluteSats: 1_000_000n,
       softCloseMinimumIncrementBasisPoints: 1_000
     },
-    reservedClasses: {
-      top_collision: {
-        id: "top_collision",
-        label: "Top collision / ultra-scarce",
-        floorSats: 1_000_000_000n,
-        lockBlocks: 525_600
+    auctionClasses: {
+      launch_name: {
+        id: "launch_name",
+        label: "Launch auction",
+        floorSats: 50_000n,
+        lockBlocks: 52_560
       },
-      major_existing_name: {
-        id: "major_existing_name",
-        label: "Major existing name",
-        floorSats: 200_000_000n,
-        lockBlocks: 262_800
-      },
-      public_identity: {
-        id: "public_identity",
-        label: "Public identity / operator",
-        floorSats: 25_000_000n,
-        lockBlocks: 157_680
+      short_name_wave: {
+        id: "short_name_wave",
+        label: "Short-name second wave",
+        floorSats: 50_000n,
+        lockBlocks: 52_560
       }
     }
   };
 }
 
-export function getReservedAuctionClass(
-  policy: ReservedAuctionPolicy,
-  classId: ReservedAuctionClassId
-): ReservedAuctionClassPolicy {
-  return policy.reservedClasses[classId];
+export function getDefaultLaunchAuctionClassIdForName(name: string): LaunchAuctionClassId {
+  const normalizedName = normalizeName(name);
+  return normalizedName.length <= SHORT_NAME_SECOND_WAVE_MAX_LENGTH ? "short_name_wave" : "launch_name";
 }
 
-export function getReservedAuctionOpeningRequirements(input: {
-  readonly policy: ReservedAuctionPolicy;
+export function getLaunchAuctionClass(
+  policy: LaunchAuctionPolicy,
+  classId: LaunchAuctionClassId
+): LaunchAuctionClassPolicy {
+  return policy.auctionClasses[classId];
+}
+
+export function getLaunchAuctionOpeningRequirements(input: {
+  readonly policy: LaunchAuctionPolicy;
   readonly name: string;
-  readonly reservedClassId: ReservedAuctionClassId;
-}): ReservedAuctionOpeningRequirements {
+  readonly auctionClassId: LaunchAuctionClassId;
+}): LaunchAuctionOpeningRequirements {
   const normalizedName = normalizeName(input.name);
-  const reservedClass = getReservedAuctionClass(input.policy, input.reservedClassId);
-  const ordinaryMinimumBidSats = getBondSats(normalizedName.length);
-  const classMinimumBidSats = reservedClass.floorSats;
+  const auctionClass = getLaunchAuctionClass(input.policy, input.auctionClassId);
+  const baseMinimumBidSats = getBondSats(normalizedName.length);
+  const classMinimumBidSats = auctionClass.floorSats;
 
   return {
     normalizedName,
-    ordinaryMinimumBidSats,
+    baseMinimumBidSats,
     classMinimumBidSats,
     openingMinimumBidSats:
-      ordinaryMinimumBidSats > classMinimumBidSats ? ordinaryMinimumBidSats : classMinimumBidSats,
-    reservedLockBlocks: reservedClass.lockBlocks,
-    classLabel: reservedClass.label
+      baseMinimumBidSats > classMinimumBidSats ? baseMinimumBidSats : classMinimumBidSats,
+    settlementLockBlocks: auctionClass.lockBlocks,
+    classLabel: auctionClass.label
   };
 }
 
-export function calculateReservedAuctionMinimumIncrementBidSats(input: {
+export function calculateLaunchAuctionMinimumIncrementBidSats(input: {
   readonly currentBidSats: bigint;
-  readonly policy: ReservedAuctionPolicy;
+  readonly policy: LaunchAuctionPolicy;
   readonly useSoftCloseIncrement?: boolean;
 }): bigint {
   const minimumIncrementAbsoluteSats = input.useSoftCloseIncrement
@@ -144,10 +143,10 @@ export function calculateReservedAuctionMinimumIncrementBidSats(input: {
   return minimum > input.currentBidSats ? minimum : input.currentBidSats + 1n;
 }
 
-export function isReservedAuctionSoftCloseWindow(input: {
+export function isLaunchAuctionSoftCloseWindow(input: {
   readonly currentBlockHeight: number;
   readonly auctionCloseBlockAfter: number | null;
-  readonly policy: ReservedAuctionPolicy;
+  readonly policy: LaunchAuctionPolicy;
 }): boolean {
   return (
     input.auctionCloseBlockAfter !== null
@@ -157,18 +156,18 @@ export function isReservedAuctionSoftCloseWindow(input: {
   );
 }
 
-export function getReservedAuctionNoBidReleaseBlock(input: {
+export function getLaunchAuctionNoBidReleaseBlock(input: {
   readonly unlockBlock: number;
-  readonly policy: ReservedAuctionPolicy;
+  readonly policy: LaunchAuctionPolicy;
 }): number {
   return input.unlockBlock + input.policy.auction.noBidReleaseBlocks;
 }
 
-export function serializeReservedAuctionPolicy(
-  policy: ReservedAuctionPolicy
-): SerializedReservedAuctionPolicy {
+export function serializeLaunchAuctionPolicy(
+  policy: LaunchAuctionPolicy
+): SerializedLaunchAuctionPolicy {
   return {
-    ordinaryLockBlocks: policy.ordinaryLockBlocks,
+    defaultSettlementLockBlocks: policy.defaultSettlementLockBlocks,
     auction: {
       baseWindowBlocks: policy.auction.baseWindowBlocks,
       softCloseExtensionBlocks: policy.auction.softCloseExtensionBlocks,
@@ -178,21 +177,20 @@ export function serializeReservedAuctionPolicy(
       softCloseMinimumIncrementAbsoluteSats: policy.auction.softCloseMinimumIncrementAbsoluteSats.toString(),
       softCloseMinimumIncrementBasisPoints: policy.auction.softCloseMinimumIncrementBasisPoints
     },
-    reservedClasses: {
-      top_collision: serializeReservedAuctionClass(policy.reservedClasses.top_collision),
-      major_existing_name: serializeReservedAuctionClass(policy.reservedClasses.major_existing_name),
-      public_identity: serializeReservedAuctionClass(policy.reservedClasses.public_identity)
+    auctionClasses: {
+      launch_name: serializeLaunchAuctionClass(policy.auctionClasses.launch_name),
+      short_name_wave: serializeLaunchAuctionClass(policy.auctionClasses.short_name_wave)
     }
   };
 }
 
-export function parseReservedAuctionPolicy(input: unknown): ReservedAuctionPolicy {
-  const record = assertRecord(input, "reserved auction policy");
-  const reservedClasses = assertRecord(record.reservedClasses, "reserved auction policy reservedClasses");
-  const auction = assertRecord(record.auction, "reserved auction policy auction");
+export function parseLaunchAuctionPolicy(input: unknown): LaunchAuctionPolicy {
+  const record = assertRecord(input, "auction policy");
+  const auctionClasses = assertRecord(record.auctionClasses, "auction policy classes");
+  const auction = assertRecord(record.auction, "auction policy auction");
 
   return {
-    ordinaryLockBlocks: parseNonNegativeSafeInteger(record.ordinaryLockBlocks, "ordinaryLockBlocks"),
+    defaultSettlementLockBlocks: parseNonNegativeSafeInteger(record.defaultSettlementLockBlocks, "defaultSettlementLockBlocks"),
     auction: {
       baseWindowBlocks: parseNonNegativeSafeInteger(auction.baseWindowBlocks, "auction.baseWindowBlocks"),
       softCloseExtensionBlocks: parseNonNegativeSafeInteger(
@@ -220,38 +218,34 @@ export function parseReservedAuctionPolicy(input: unknown): ReservedAuctionPolic
         "auction.softCloseMinimumIncrementBasisPoints"
       )
     },
-    reservedClasses: {
-      top_collision: parseReservedAuctionClassPolicy(
-        "top_collision",
-        reservedClasses.top_collision
+    auctionClasses: {
+      launch_name: parseLaunchAuctionClassPolicy(
+        "launch_name",
+        auctionClasses.launch_name
       ),
-      major_existing_name: parseReservedAuctionClassPolicy(
-        "major_existing_name",
-        reservedClasses.major_existing_name
-      ),
-      public_identity: parseReservedAuctionClassPolicy(
-        "public_identity",
-        reservedClasses.public_identity
+      short_name_wave: parseLaunchAuctionClassPolicy(
+        "short_name_wave",
+        auctionClasses.short_name_wave
       )
     }
   };
 }
 
-function serializeReservedAuctionClass(
-  reservedClass: ReservedAuctionClassPolicy
-): SerializedReservedAuctionClassPolicy {
+function serializeLaunchAuctionClass(
+  auctionClass: LaunchAuctionClassPolicy
+): SerializedLaunchAuctionClassPolicy {
   return {
-    label: reservedClass.label,
-    floorSats: reservedClass.floorSats.toString(),
-    lockBlocks: reservedClass.lockBlocks
+    label: auctionClass.label,
+    floorSats: auctionClass.floorSats.toString(),
+    lockBlocks: auctionClass.lockBlocks
   };
 }
 
-function parseReservedAuctionClassPolicy(
-  classId: ReservedAuctionClassId,
+function parseLaunchAuctionClassPolicy(
+  classId: LaunchAuctionClassId,
   input: unknown
-): ReservedAuctionClassPolicy {
-  const record = assertRecord(input, `reserved class ${classId}`);
+): LaunchAuctionClassPolicy {
+  const record = assertRecord(input, `auction class ${classId}`);
 
   return {
     id: classId,

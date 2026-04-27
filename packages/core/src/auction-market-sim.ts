@@ -1,28 +1,28 @@
 import { normalizeName } from "@ont/protocol";
 
 import {
-  calculateReservedAuctionMinimumIncrementBidSats,
-  getReservedAuctionOpeningRequirements,
-  isReservedAuctionSoftCloseWindow,
-  type ReservedAuctionPolicy
+  calculateLaunchAuctionMinimumIncrementBidSats,
+  getLaunchAuctionOpeningRequirements,
+  isLaunchAuctionSoftCloseWindow,
+  type LaunchAuctionPolicy
 } from "./auction-policy.js";
 import {
-  parseReservedAuctionScenario,
-  type ReservedAuctionBidAcceptanceReason,
-  type ReservedAuctionBidOutcome,
-  type ReservedAuctionBidOutcomeReason,
-  type ReservedAuctionScenario,
-  type ReservedAuctionWinningBid
+  parseLaunchAuctionScenario,
+  type LaunchAuctionBidAcceptanceReason,
+  type LaunchAuctionBidOutcome,
+  type LaunchAuctionBidOutcomeReason,
+  type LaunchAuctionScenario,
+  type LaunchAuctionWinningBid
 } from "./auction-sim.js";
 
-export interface ReservedAuctionMarketAuctionScenario extends ReservedAuctionScenario {
+export interface LaunchAuctionMarketAuctionScenario extends LaunchAuctionScenario {
   readonly auctionId: string;
 }
 
-export interface SerializedReservedAuctionMarketAuctionScenario {
+export interface SerializedLaunchAuctionMarketAuctionScenario {
   readonly auctionId: string;
   readonly name: string;
-  readonly reservedClassId: ReservedAuctionScenario["reservedClassId"];
+  readonly auctionClassId: LaunchAuctionScenario["auctionClassId"];
   readonly unlockBlock: number;
   readonly bidAttempts: ReadonlyArray<{
     readonly bidderId: string;
@@ -31,40 +31,40 @@ export interface SerializedReservedAuctionMarketAuctionScenario {
   }>;
 }
 
-export interface ReservedAuctionMarketScenario {
+export interface LaunchAuctionMarketScenario {
   readonly bidderBudgetsSats: Readonly<Record<string, bigint>>;
-  readonly auctions: ReadonlyArray<ReservedAuctionMarketAuctionScenario>;
+  readonly auctions: ReadonlyArray<LaunchAuctionMarketAuctionScenario>;
 }
 
-export interface SerializedReservedAuctionMarketScenario {
+export interface SerializedLaunchAuctionMarketScenario {
   readonly bidderBudgetsSats: Readonly<Record<string, string>>;
-  readonly auctions: ReadonlyArray<SerializedReservedAuctionMarketAuctionScenario>;
+  readonly auctions: ReadonlyArray<SerializedLaunchAuctionMarketAuctionScenario>;
 }
 
-export interface ReservedAuctionMarketAuctionResult {
+export interface LaunchAuctionMarketAuctionResult {
   readonly auctionId: string;
   readonly normalizedName: string;
-  readonly reservedClassId: ReservedAuctionScenario["reservedClassId"];
+  readonly auctionClassId: LaunchAuctionScenario["auctionClassId"];
   readonly classLabel: string;
   readonly unlockBlock: number;
   readonly openingMinimumBidSats: bigint;
-  readonly reservedLockBlocks: number;
+  readonly settlementLockBlocks: number;
   readonly auctionStartBlock: number | null;
   readonly initialAuctionCloseBlock: number | null;
   readonly finalAuctionCloseBlock: number | null;
   readonly status: "no_valid_bids" | "settled";
-  readonly winner: ReservedAuctionWinningBid | null;
-  readonly bidOutcomes: ReadonlyArray<ReservedAuctionBidOutcome>;
+  readonly winner: LaunchAuctionWinningBid | null;
+  readonly bidOutcomes: ReadonlyArray<LaunchAuctionBidOutcome>;
 }
 
-export interface SerializedReservedAuctionMarketAuctionResult {
+export interface SerializedLaunchAuctionMarketAuctionResult {
   readonly auctionId: string;
   readonly normalizedName: string;
-  readonly reservedClassId: ReservedAuctionScenario["reservedClassId"];
+  readonly auctionClassId: LaunchAuctionScenario["auctionClassId"];
   readonly classLabel: string;
   readonly unlockBlock: number;
   readonly openingMinimumBidSats: string;
-  readonly reservedLockBlocks: number;
+  readonly settlementLockBlocks: number;
   readonly auctionStartBlock: number | null;
   readonly initialAuctionCloseBlock: number | null;
   readonly finalAuctionCloseBlock: number | null;
@@ -82,14 +82,14 @@ export interface SerializedReservedAuctionMarketAuctionResult {
     readonly blockHeight: number;
     readonly amountSats: string;
     readonly status: "accepted" | "rejected";
-    readonly reason: ReservedAuctionBidOutcomeReason;
+    readonly reason: LaunchAuctionBidOutcomeReason;
     readonly requiredMinimumBidSats: string;
     readonly auctionCloseBlockAfter: number | null;
     readonly highestBidSatsAfter: string | null;
   }>;
 }
 
-export interface ReservedAuctionMarketBidderSummary {
+export interface LaunchAuctionMarketBidderSummary {
   readonly bidderId: string;
   readonly budgetSats: bigint;
   readonly peakLockedSats: bigint;
@@ -99,7 +99,7 @@ export interface ReservedAuctionMarketBidderSummary {
   readonly insufficientBudgetRejectCount: number;
 }
 
-export interface SerializedReservedAuctionMarketBidderSummary {
+export interface SerializedLaunchAuctionMarketBidderSummary {
   readonly bidderId: string;
   readonly budgetSats: string;
   readonly peakLockedSats: string;
@@ -109,7 +109,7 @@ export interface SerializedReservedAuctionMarketBidderSummary {
   readonly insufficientBudgetRejectCount: number;
 }
 
-export interface ReservedAuctionMarketChronologicalBidOutcome extends ReservedAuctionBidOutcome {
+export interface LaunchAuctionMarketChronologicalBidOutcome extends LaunchAuctionBidOutcome {
   readonly auctionId: string;
   readonly normalizedName: string;
   readonly additionalLockedSats: bigint;
@@ -117,7 +117,7 @@ export interface ReservedAuctionMarketChronologicalBidOutcome extends ReservedAu
   readonly bidderAvailableSatsAfter: bigint;
 }
 
-export interface SerializedReservedAuctionMarketChronologicalBidOutcome {
+export interface SerializedLaunchAuctionMarketChronologicalBidOutcome {
   readonly auctionId: string;
   readonly normalizedName: string;
   readonly index: number;
@@ -125,7 +125,7 @@ export interface SerializedReservedAuctionMarketChronologicalBidOutcome {
   readonly blockHeight: number;
   readonly amountSats: string;
   readonly status: "accepted" | "rejected";
-  readonly reason: ReservedAuctionBidOutcomeReason;
+  readonly reason: LaunchAuctionBidOutcomeReason;
   readonly requiredMinimumBidSats: string;
   readonly auctionCloseBlockAfter: number | null;
   readonly highestBidSatsAfter: string | null;
@@ -134,33 +134,33 @@ export interface SerializedReservedAuctionMarketChronologicalBidOutcome {
   readonly bidderAvailableSatsAfter: string;
 }
 
-export interface ReservedAuctionMarketSimulationResult {
-  readonly auctionResults: ReadonlyArray<ReservedAuctionMarketAuctionResult>;
-  readonly bidderSummaries: ReadonlyArray<ReservedAuctionMarketBidderSummary>;
-  readonly chronologicalBidOutcomes: ReadonlyArray<ReservedAuctionMarketChronologicalBidOutcome>;
+export interface LaunchAuctionMarketSimulationResult {
+  readonly auctionResults: ReadonlyArray<LaunchAuctionMarketAuctionResult>;
+  readonly bidderSummaries: ReadonlyArray<LaunchAuctionMarketBidderSummary>;
+  readonly chronologicalBidOutcomes: ReadonlyArray<LaunchAuctionMarketChronologicalBidOutcome>;
 }
 
-export interface SerializedReservedAuctionMarketSimulationResult {
-  readonly auctionResults: ReadonlyArray<SerializedReservedAuctionMarketAuctionResult>;
-  readonly bidderSummaries: ReadonlyArray<SerializedReservedAuctionMarketBidderSummary>;
-  readonly chronologicalBidOutcomes: ReadonlyArray<SerializedReservedAuctionMarketChronologicalBidOutcome>;
+export interface SerializedLaunchAuctionMarketSimulationResult {
+  readonly auctionResults: ReadonlyArray<SerializedLaunchAuctionMarketAuctionResult>;
+  readonly bidderSummaries: ReadonlyArray<SerializedLaunchAuctionMarketBidderSummary>;
+  readonly chronologicalBidOutcomes: ReadonlyArray<SerializedLaunchAuctionMarketChronologicalBidOutcome>;
 }
 
 interface AuctionRuntime {
   readonly auctionId: string;
   readonly normalizedName: string;
-  readonly reservedClassId: ReservedAuctionScenario["reservedClassId"];
+  readonly auctionClassId: LaunchAuctionScenario["auctionClassId"];
   readonly classLabel: string;
   readonly unlockBlock: number;
   readonly openingMinimumBidSats: bigint;
-  readonly reservedLockBlocks: number;
-  readonly bidAttempts: ReservedAuctionScenario["bidAttempts"];
+  readonly settlementLockBlocks: number;
+  readonly bidAttempts: LaunchAuctionScenario["bidAttempts"];
   readonly bidderCommitmentsSats: Map<string, bigint>;
-  readonly bidOutcomes: ReservedAuctionBidOutcome[];
+  readonly bidOutcomes: LaunchAuctionBidOutcome[];
   auctionStartBlock: number | null;
   initialAuctionCloseBlock: number | null;
   finalAuctionCloseBlock: number | null;
-  winner: ReservedAuctionWinningBid | null;
+  winner: LaunchAuctionWinningBid | null;
   releasesApplied: boolean;
 }
 
@@ -174,10 +174,10 @@ interface ChronologicalBidEvent {
   readonly amountSats: bigint;
 }
 
-export function simulateReservedAuctionMarket(input: {
-  readonly policy: ReservedAuctionPolicy;
-  readonly scenario: ReservedAuctionMarketScenario;
-}): ReservedAuctionMarketSimulationResult {
+export function simulateLaunchAuctionMarket(input: {
+  readonly policy: LaunchAuctionPolicy;
+  readonly scenario: LaunchAuctionMarketScenario;
+}): LaunchAuctionMarketSimulationResult {
   const bidderLockedTotalsSats = new Map<string, bigint>();
   const bidderPeakLockedSats = new Map<string, bigint>();
   const bidderWonAuctionIds = new Map<string, string[]>();
@@ -185,23 +185,23 @@ export function simulateReservedAuctionMarket(input: {
 
   const runtimes = input.scenario.auctions.map((auction) => {
     const normalizedName = normalizeName(auction.name);
-    const openingRequirements = getReservedAuctionOpeningRequirements({
+    const openingRequirements = getLaunchAuctionOpeningRequirements({
       policy: input.policy,
       name: normalizedName,
-      reservedClassId: auction.reservedClassId
+      auctionClassId: auction.auctionClassId
     });
 
     return {
       auctionId: auction.auctionId,
       normalizedName,
-      reservedClassId: auction.reservedClassId,
+      auctionClassId: auction.auctionClassId,
       classLabel: openingRequirements.classLabel,
       unlockBlock: auction.unlockBlock,
       openingMinimumBidSats: openingRequirements.openingMinimumBidSats,
-      reservedLockBlocks: openingRequirements.reservedLockBlocks,
+      settlementLockBlocks: openingRequirements.settlementLockBlocks,
       bidAttempts: auction.bidAttempts,
       bidderCommitmentsSats: new Map<string, bigint>(),
-      bidOutcomes: [] as ReservedAuctionBidOutcome[],
+      bidOutcomes: [] as LaunchAuctionBidOutcome[],
       auctionStartBlock: null,
       initialAuctionCloseBlock: null,
       finalAuctionCloseBlock: null,
@@ -229,7 +229,7 @@ export function simulateReservedAuctionMarket(input: {
         left.bidAttemptIndex - right.bidAttemptIndex
     );
 
-  const chronologicalBidOutcomes: ReservedAuctionMarketChronologicalBidOutcome[] = [];
+  const chronologicalBidOutcomes: LaunchAuctionMarketChronologicalBidOutcome[] = [];
 
   for (const event of chronologicalEvents) {
     releaseClosedAuctionLosers({
@@ -289,14 +289,14 @@ export function simulateReservedAuctionMarket(input: {
     bidderWonAuctionIds
   });
 
-  const auctionResults: ReservedAuctionMarketAuctionResult[] = runtimes.map((runtime) => ({
+  const auctionResults: LaunchAuctionMarketAuctionResult[] = runtimes.map((runtime) => ({
     auctionId: runtime.auctionId,
     normalizedName: runtime.normalizedName,
-    reservedClassId: runtime.reservedClassId,
+    auctionClassId: runtime.auctionClassId,
     classLabel: runtime.classLabel,
     unlockBlock: runtime.unlockBlock,
     openingMinimumBidSats: runtime.openingMinimumBidSats,
-    reservedLockBlocks: runtime.reservedLockBlocks,
+    settlementLockBlocks: runtime.settlementLockBlocks,
     auctionStartBlock: runtime.auctionStartBlock,
     initialAuctionCloseBlock: runtime.initialAuctionCloseBlock,
     finalAuctionCloseBlock: runtime.finalAuctionCloseBlock,
@@ -309,7 +309,7 @@ export function simulateReservedAuctionMarket(input: {
     ...Object.keys(input.scenario.bidderBudgetsSats),
     ...chronologicalEvents.map((event) => event.bidderId)
   ]);
-  const bidderSummaries: ReservedAuctionMarketBidderSummary[] = [...bidderIds]
+  const bidderSummaries: LaunchAuctionMarketBidderSummary[] = [...bidderIds]
     .sort((left, right) => left.localeCompare(right))
     .map((bidderId) => {
       const budgetSats = input.scenario.bidderBudgetsSats[bidderId] ?? 0n;
@@ -333,17 +333,17 @@ export function simulateReservedAuctionMarket(input: {
   };
 }
 
-export function parseReservedAuctionMarketScenario(input: unknown): ReservedAuctionMarketScenario {
-  const record = assertRecord(input, "reserved auction market scenario");
+export function parseLaunchAuctionMarketScenario(input: unknown): LaunchAuctionMarketScenario {
+  const record = assertRecord(input, "auction market scenario");
   const auctionsValue = record.auctions;
   const bidderBudgetsValue = assertRecord(record.bidderBudgetsSats, "bidderBudgetsSats");
 
   if (!Array.isArray(auctionsValue)) {
-    throw new Error("reserved auction market scenario auctions must be an array");
+    throw new Error("auction market scenario auctions must be an array");
   }
 
   const auctions = auctionsValue.map((auction, index) =>
-    parseReservedAuctionMarketAuctionScenario(auction, index)
+    parseLaunchAuctionMarketAuctionScenario(auction, index)
   );
   const bidderBudgetsSats = Object.fromEntries(
     Object.entries(bidderBudgetsValue).map(([bidderId, value]) => [
@@ -366,9 +366,9 @@ export function parseReservedAuctionMarketScenario(input: unknown): ReservedAuct
   };
 }
 
-export function serializeReservedAuctionMarketScenario(
-  scenario: ReservedAuctionMarketScenario
-): SerializedReservedAuctionMarketScenario {
+export function serializeLaunchAuctionMarketScenario(
+  scenario: LaunchAuctionMarketScenario
+): SerializedLaunchAuctionMarketScenario {
   return {
     bidderBudgetsSats: Object.fromEntries(
       Object.entries(scenario.bidderBudgetsSats).map(([bidderId, budgetSats]) => [
@@ -379,7 +379,7 @@ export function serializeReservedAuctionMarketScenario(
     auctions: scenario.auctions.map((auction) => ({
       auctionId: auction.auctionId,
       name: auction.name,
-      reservedClassId: auction.reservedClassId,
+      auctionClassId: auction.auctionClassId,
       unlockBlock: auction.unlockBlock,
       bidAttempts: auction.bidAttempts.map((attempt) => ({
         bidderId: attempt.bidderId,
@@ -390,18 +390,18 @@ export function serializeReservedAuctionMarketScenario(
   };
 }
 
-export function serializeReservedAuctionMarketSimulationResult(
-  result: ReservedAuctionMarketSimulationResult
-): SerializedReservedAuctionMarketSimulationResult {
+export function serializeLaunchAuctionMarketSimulationResult(
+  result: LaunchAuctionMarketSimulationResult
+): SerializedLaunchAuctionMarketSimulationResult {
   return {
     auctionResults: result.auctionResults.map((auction) => ({
       auctionId: auction.auctionId,
       normalizedName: auction.normalizedName,
-      reservedClassId: auction.reservedClassId,
+      auctionClassId: auction.auctionClassId,
       classLabel: auction.classLabel,
       unlockBlock: auction.unlockBlock,
       openingMinimumBidSats: auction.openingMinimumBidSats.toString(),
-      reservedLockBlocks: auction.reservedLockBlocks,
+      settlementLockBlocks: auction.settlementLockBlocks,
       auctionStartBlock: auction.auctionStartBlock,
       initialAuctionCloseBlock: auction.initialAuctionCloseBlock,
       finalAuctionCloseBlock: auction.finalAuctionCloseBlock,
@@ -455,13 +455,13 @@ export function serializeReservedAuctionMarketSimulationResult(
 }
 
 function processChronologicalBidEvent(input: {
-  readonly policy: ReservedAuctionPolicy;
+  readonly policy: LaunchAuctionPolicy;
   readonly runtime: AuctionRuntime;
   readonly event: ChronologicalBidEvent;
   readonly bidderBudgetSats: bigint;
   readonly bidderLockedBeforeSats: bigint;
   readonly bidderExistingCommitmentSats: bigint;
-}): ReservedAuctionMarketChronologicalBidOutcome {
+}): LaunchAuctionMarketChronologicalBidOutcome {
   const attempt = input.event;
   const runtime = input.runtime;
 
@@ -538,7 +538,7 @@ function processChronologicalBidEvent(input: {
       event: attempt,
       status: "rejected",
       reason: "auction_closed",
-      requiredMinimumBidSats: calculateReservedAuctionMinimumIncrementBidSats({
+      requiredMinimumBidSats: calculateLaunchAuctionMinimumIncrementBidSats({
         currentBidSats: runtime.winner.amountSats,
         policy: input.policy
       }),
@@ -550,12 +550,12 @@ function processChronologicalBidEvent(input: {
     });
   }
 
-  const extendsSoftClose = isReservedAuctionSoftCloseWindow({
+  const extendsSoftClose = isLaunchAuctionSoftCloseWindow({
     currentBlockHeight: attempt.blockHeight,
     auctionCloseBlockAfter: runtime.finalAuctionCloseBlock,
     policy: input.policy
   });
-  const requiredMinimumBidSats = calculateReservedAuctionMinimumIncrementBidSats({
+  const requiredMinimumBidSats = calculateLaunchAuctionMinimumIncrementBidSats({
     currentBidSats: runtime.winner.amountSats,
     policy: input.policy,
     useSoftCloseIncrement: extendsSoftClose
@@ -595,7 +595,7 @@ function processChronologicalBidEvent(input: {
     amountSats: attempt.amountSats
   };
 
-  const acceptanceReason: ReservedAuctionBidAcceptanceReason = extendsSoftClose
+  const acceptanceReason: LaunchAuctionBidAcceptanceReason = extendsSoftClose
     ? "higher_bid_soft_close_extended"
     : "higher_bid";
 
@@ -650,17 +650,17 @@ function releaseClosedAuctionLosers(input: {
   }
 }
 
-function parseReservedAuctionMarketAuctionScenario(
+function parseLaunchAuctionMarketAuctionScenario(
   input: unknown,
   index: number
-): ReservedAuctionMarketAuctionScenario {
+): LaunchAuctionMarketAuctionScenario {
   const record = assertRecord(input, `auctions[${index}]`);
 
   return {
     auctionId: parseString(record.auctionId, `auctions[${index}].auctionId`),
-    ...parseReservedAuctionScenario({
+    ...parseLaunchAuctionScenario({
       name: record.name,
-      reservedClassId: record.reservedClassId,
+      auctionClassId: record.auctionClassId,
       unlockBlock: record.unlockBlock,
       bidAttempts: record.bidAttempts
     })
@@ -670,14 +670,14 @@ function parseReservedAuctionMarketAuctionScenario(
 function buildChronologicalOutcome(input: {
   readonly event: ChronologicalBidEvent;
   readonly status: "accepted" | "rejected";
-  readonly reason: ReservedAuctionBidOutcomeReason;
+  readonly reason: LaunchAuctionBidOutcomeReason;
   readonly requiredMinimumBidSats: bigint;
   readonly auctionCloseBlockAfter: number | null;
   readonly highestBidSatsAfter: bigint | null;
   readonly additionalLockedSats: bigint;
   readonly bidderLockedSatsAfter: bigint;
   readonly bidderAvailableSatsAfter: bigint;
-}): ReservedAuctionMarketChronologicalBidOutcome {
+}): LaunchAuctionMarketChronologicalBidOutcome {
   return {
     auctionId: input.event.auctionId,
     normalizedName: input.event.normalizedName,

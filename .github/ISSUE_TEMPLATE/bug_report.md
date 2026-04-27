@@ -25,11 +25,10 @@ Describe what you expected instead.
 - Browser / OS:
 - Runtime path:
   - [ ] hosted explorer
-  - [ ] claim prep
+  - [ ] auction flow
   - [ ] transfer prep
   - [ ] CLI
   - [ ] private signet
-  - [ ] public signet
 
 ## Extra context
 

@@ -8,7 +8,7 @@
       {
         "auctionId": "tyler-first",
         "name": "tylercowen",
-        "reservedClassId": "public_identity",
+        "auctionClassId": "launch_name",
         "unlockBlock": 910000,
         "bidAttempts": [
           {
@@ -21,7 +21,7 @@
       {
         "auctionId": "openai-late",
         "name": "openai",
-        "reservedClassId": "major_existing_name",
+        "auctionClassId": "launch_name",
         "unlockBlock": 914500,
         "bidAttempts": [
           {

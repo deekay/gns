@@ -11,14 +11,14 @@ This document defines the ONT protocol behind Open Name Tags: a Bitcoin-anchored
 
 ## 2. Ownership Model
 
-ONT uses **Pubkey-Controlled Ownership**. A name is owned by a specific public key. Valid state transitions (claims, reveals, transfers) must be authorized by signatures from the corresponding private key.
+ONT uses **Pubkey-Controlled Ownership**. A name is owned by a specific public key. Valid state transitions are auction acquisitions and transfers.
 
 - **Ownership Truth:** The latest valid signed state transition recognized by the ONT indexer from the Bitcoin blockchain.
 - **Separation of Concerns:** Bitcoin records ownership events; application-specific "Values" (e.g., Lightning addresses) are off-chain and owner-signed.
 
 ## 3. The Name-Bond Model
 
-To claim or maintain an immature name, a participant must lock a required amount of bitcoin (the "Bond") in a dedicated UTXO.
+To acquire or maintain an immature name, a participant must lock bitcoin as a bond in a dedicated UTXO.
 
 ### 3.1 Bond Curve
 Bond amounts are length-based and follow a halving curve:
@@ -28,29 +28,24 @@ Bond amounts are length-based and follow a halving curve:
 Names are "immature" for a set period, after which bond continuity is no longer required.
 - **Epoch 0:** 52,000 blocks (~1 year).
 - **Epoch Length:** 52,000 blocks.
-- **Halving:** Maturity duration for newly committed claims halves each epoch until a 4,000-block floor is reached.
+- **Halving:** Earlier direct-claim maturity curves are retired from the launch model; auction settlement and release durations are policy parameters.
 
 ### 3.3 Bond Continuity
 An immature name remains valid only while its dedicated bond outpoint remains unspent (or is moved via a valid ONT Transfer). If bond continuity breaks before maturity, the name is immediately released.
 
 ## 4. On-Chain Events
 
-ONT v1 standardizes three on-chain events via `OP_RETURN`.
+ONT v1 standardizes auction and transfer events via `OP_RETURN`.
 
-### 4.1 COMMIT
-A mandatory hash-commitment to prevent front-running.
-- **Payload:** `magic(3) | version(1) | type(1) | owner_pubkey(32) | commit_hash(32)`
-- **Rule:** Must be in the same transaction as the initial Bond UTXO.
+### 4.1 AUCTION_BID
+Publishes a bonded bid against a specific auction lot and auction-state commitment.
+- **Payload:** `magic(3) | version(1) | type(1) | flags(1) | bond_vout(1) | lock_blocks(4) | bid_sats(8) | owner_pubkey(32) | lot_commitment(16) | auction_commitment(32) | bidder_commitment(16)`
+- **Rule:** Must be in the same transaction as the bid bond UTXO.
 
-### 4.2 REVEAL
-Publishes the committed name.
-- **Payload:** `magic(3) | version(1) | type(1) | commit_txid(32) | nonce(8) | name_len(1) | name(variable)`
-- **Rule:** Must confirm within 24 blocks of the `COMMIT`.
-
-### 4.3 TRANSFER
+### 4.2 TRANSFER
 Atomic ownership and bond transition.
 - **Payload:** `magic(3) | version(1) | type(1) | body(...) | signature(64)`
-- **Rule:** For immature names, the transfer transaction must spend the old bond and create a valid successor bond.
+- **Rule:** For unsettled names, the transfer transaction must spend the old bond and create a valid successor bond.
 
 ## 5. Off-Chain Values
 

@@ -16,13 +16,13 @@ Open Name Tags is a different approach.
 
 An ONT name is a human-readable payment handle anchored to Bitcoin. It gives you a way to say who should get paid before money moves, without relying on a gatekeeper-controlled alias.
 
-There is still a cost to claiming a name. Naming is never free. The difference is what kind of cost it is.
+There is still a cost to acquiring a name. Naming is never free. The difference is what kind of cost it is.
 
 Most naming systems make you pay a third party. ONT uses a bond instead. You lock bitcoin you still own. That bond has a real financial cost because capital has time value and opportunity cost, but it does not have to be paid to a registrar, a company, or a treasury. It is pricing without tribute to a gatekeeper.
 
 Here is how it works.
 
-To claim a name, you lock bitcoin as a bond. The name goes through a settlement period, during which the bond stays parked. Once settlement completes, the bond is yours to reclaim. The name remains yours.
+To acquire a name, you participate in an auction and lock bitcoin as a bond. The name goes through a settlement period, during which the bond stays parked. Once settlement completes, the bond is yours to unlock. The name remains yours.
 
 What the name points to can change. A payment address first; other owner-signed key/value records later if clients support them. Those records live off-chain and are signed by the current owner. The mutable pointer stays lightweight. The ownership record is what stays permanent.
 
@@ -32,7 +32,7 @@ Other naming systems charge rent or depend on organizations that can change term
 
 The first proof point is simple: pay the right person in words you control. Broader key/value uses can come later. The payment problem alone is already real.
 
-ONT is currently live on a private signet: a controlled Bitcoin test environment where anyone can inspect the idea, search names, prepare claims, and verify the ownership history for themselves.
+ONT is currently live on a private signet: a controlled Bitcoin test environment where anyone can inspect the idea, search names, review auctions, and verify the ownership history for themselves.
 
 A payment handle you control, anchored to Bitcoin, for choosing who gets paid before money moves.
 

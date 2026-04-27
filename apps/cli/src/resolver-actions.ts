@@ -1,33 +1,5 @@
 import { normalizeName } from "@ont/protocol";
 
-export interface ResolverClaimPlan {
-  readonly name: string;
-  readonly appearsAvailable: boolean;
-  readonly availabilityNote: string;
-  readonly currentResolverHeight: number | null;
-  readonly launchHeight: number;
-  readonly plannedCommitHeight: number;
-  readonly recommendedBondVout: number;
-  readonly revealWindowBlocks: number;
-  readonly revealDeadlineHeight: number;
-  readonly epochIndex: number;
-  readonly maturityBlocks: number;
-  readonly maturityHeight: number;
-  readonly requiredBondSats: string;
-  readonly existingClaim:
-    | null
-    | {
-        readonly status: string;
-        readonly currentOwnerPubkey: string;
-        readonly claimCommitTxid: string;
-        readonly claimRevealTxid: string;
-        readonly currentBondTxid: string;
-        readonly currentBondVout: number;
-        readonly currentBondValueSats: string;
-      };
-  readonly nextSteps: readonly string[];
-}
-
 export interface ResolverNameRecord {
   readonly name: string;
   readonly status: "pending" | "immature" | "mature" | "invalid";
@@ -121,17 +93,17 @@ export interface ResolverTransactionProvenance {
   readonly events: ReadonlyArray<{
     readonly vout: number;
     readonly type: number;
-    readonly typeName: "COMMIT" | "REVEAL" | "TRANSFER";
+    readonly typeName: "AUCTION_BID" | "TRANSFER";
     readonly payload:
       | {
-          readonly bondVout: number;
+          readonly flags: number;
           readonly ownerPubkey: string;
-          readonly commitHash: string;
-        }
-      | {
-          readonly commitTxid: string;
-          readonly nonce: string;
-          readonly name: string;
+          readonly bondVout: number;
+          readonly settlementLockBlocks: number;
+          readonly bidAmountSats: string;
+          readonly auctionLotCommitment: string;
+          readonly auctionCommitment: string;
+          readonly bidderCommitment: string;
         }
       | {
           readonly prevStateTxid: string;
@@ -191,17 +163,6 @@ export function resolveResolverUrls(explicitResolverUrls?: readonly string[]): r
 
   const port = process.env.ONT_RESOLVER_PORT ?? "8787";
   return [`http://127.0.0.1:${port}`];
-}
-
-export async function fetchClaimPlan(options: {
-  readonly name: string;
-  readonly resolverUrl?: string;
-}): Promise<ResolverClaimPlan> {
-  const normalized = normalizeName(options.name);
-  return fetchResolverJson<ResolverClaimPlan>({
-    ...(options.resolverUrl ? { resolverUrl: options.resolverUrl } : {}),
-    path: `/claim-plan/${encodeURIComponent(normalized)}`
-  });
 }
 
 export async function fetchNameRecord(options: {

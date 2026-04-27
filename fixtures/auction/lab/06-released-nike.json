@@ -1,0 +1,27 @@
+{
+  "title": "Closed without winner · nike",
+  "description": "Launch auction after the no-winner close window passed without any valid opening bid. Auction bidding is over for this lot.",
+  "currentBlockHeight": 884321,
+  "scenario": {
+    "name": "nike",
+    "auctionClassId": "launch_name",
+    "unlockBlock": 880000,
+    "bidAttempts": [
+      {
+        "bidderId": "speculator_a",
+        "blockHeight": 880015,
+        "amountSats": "10000000"
+      },
+      {
+        "bidderId": "speculator_b",
+        "blockHeight": 880020,
+        "amountSats": "11000000"
+      },
+      {
+        "bidderId": "speculator_c",
+        "blockHeight": 880030,
+        "amountSats": "12499999"
+      }
+    ]
+  }
+}

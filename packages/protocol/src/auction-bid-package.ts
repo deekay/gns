@@ -27,7 +27,7 @@ export interface AuctionBidPackage {
   readonly exportedAt: string;
   readonly auctionId: string;
   readonly name: string;
-  readonly reservedClassId: string;
+  readonly auctionClassId: string;
   readonly classLabel: string;
   readonly currentBlockHeight: number;
   readonly phase: AuctionBidPackagePhase;
@@ -38,7 +38,7 @@ export interface AuctionBidPackage {
   readonly currentLeaderBidderCommitment: string | null;
   readonly currentHighestBidSats: string | null;
   readonly currentRequiredMinimumBidSats: string | null;
-  readonly reservedLockBlocks: number;
+  readonly settlementLockBlocks: number;
   readonly blocksUntilUnlock: number;
   readonly blocksUntilClose: number | null;
   readonly bidderId: string;
@@ -57,7 +57,7 @@ export interface AuctionBidPackage {
 export interface CreateAuctionBidPackageInput {
   readonly auctionId: string;
   readonly name: string;
-  readonly reservedClassId: string;
+  readonly auctionClassId: string;
   readonly classLabel: string;
   readonly currentBlockHeight: number;
   readonly phase: AuctionBidPackagePhase;
@@ -68,7 +68,7 @@ export interface CreateAuctionBidPackageInput {
   readonly currentLeaderBidderCommitment?: string | null;
   readonly currentHighestBidSats?: bigint | number | string | null;
   readonly currentRequiredMinimumBidSats?: bigint | number | string | null;
-  readonly reservedLockBlocks: number;
+  readonly settlementLockBlocks: number;
   readonly blocksUntilUnlock?: number;
   readonly blocksUntilClose?: number | null;
   readonly bidderId: string;
@@ -83,7 +83,7 @@ export interface CreateAuctionBidPackageInput {
 export function createAuctionBidPackage(input: CreateAuctionBidPackageInput): AuctionBidPackage {
   const auctionId = normalizeRequiredText(input.auctionId, "auctionId");
   const name = normalizeName(input.name);
-  const reservedClassId = normalizeRequiredText(input.reservedClassId, "reservedClassId");
+  const auctionClassId = normalizeRequiredText(input.auctionClassId, "auctionClassId");
   const classLabel = normalizeRequiredText(input.classLabel, "classLabel");
   const currentBlockHeight = parseNonNegativeSafeInteger(input.currentBlockHeight, "currentBlockHeight");
   const phase = parseAuctionBidPackagePhase(input.phase, "phase");
@@ -100,7 +100,7 @@ export function createAuctionBidPackage(input: CreateAuctionBidPackageInput): Au
     input.currentRequiredMinimumBidSats,
     "currentRequiredMinimumBidSats"
   );
-  const reservedLockBlocks = parseNonNegativeSafeInteger(input.reservedLockBlocks, "reservedLockBlocks");
+  const settlementLockBlocks = parseNonNegativeSafeInteger(input.settlementLockBlocks, "settlementLockBlocks");
   const blocksUntilUnlock = input.blocksUntilUnlock ?? Math.max(0, unlockBlock - currentBlockHeight);
   const blocksUntilClose = input.blocksUntilClose ?? (
     auctionCloseBlockAfter === null ? null : Math.max(0, auctionCloseBlockAfter - currentBlockHeight)
@@ -113,7 +113,7 @@ export function createAuctionBidPackage(input: CreateAuctionBidPackageInput): Au
     : computeAuctionLotCommitment({
         auctionId,
         name,
-        reservedClassId,
+        auctionClassId,
         unlockBlock
       });
   const auctionStateCommitment = input.auctionStateCommitment
@@ -121,7 +121,7 @@ export function createAuctionBidPackage(input: CreateAuctionBidPackageInput): Au
     : computeAuctionBidStateCommitment({
         auctionId,
         name,
-        reservedClassId,
+        auctionClassId,
         currentBlockHeight,
         phase,
         unlockBlock,
@@ -130,7 +130,7 @@ export function createAuctionBidPackage(input: CreateAuctionBidPackageInput): Au
         currentLeaderBidderCommitment,
         currentHighestBidSats,
         currentRequiredMinimumBidSats,
-        reservedLockBlocks
+        settlementLockBlocks
       });
   const bidderCommitment = input.bidderCommitment
     ? assertHexBytes(input.bidderCommitment, 16, "bidderCommitment")
@@ -161,7 +161,7 @@ export function createAuctionBidPackage(input: CreateAuctionBidPackageInput): Au
     exportedAt: input.exportedAt ?? new Date().toISOString(),
     auctionId,
     name,
-    reservedClassId,
+    auctionClassId,
     classLabel,
     currentBlockHeight,
     phase,
@@ -172,7 +172,7 @@ export function createAuctionBidPackage(input: CreateAuctionBidPackageInput): Au
     currentLeaderBidderCommitment,
     currentHighestBidSats: currentHighestBidSats?.toString() ?? null,
     currentRequiredMinimumBidSats: currentRequiredMinimumBidSats?.toString() ?? null,
-    reservedLockBlocks,
+    settlementLockBlocks,
     blocksUntilUnlock,
     blocksUntilClose,
     bidderId,
@@ -214,7 +214,7 @@ export function parseAuctionBidPackage(input: unknown): AuctionBidPackage {
 
   const auctionId = normalizeRequiredText(assertString(record.auctionId, "auctionId"), "auctionId");
   const name = normalizeName(assertString(record.name, "name"));
-  const reservedClassId = normalizeRequiredText(assertString(record.reservedClassId, "reservedClassId"), "reservedClassId");
+  const auctionClassId = normalizeRequiredText(assertString(record.auctionClassId, "auctionClassId"), "auctionClassId");
   const classLabel = normalizeRequiredText(assertString(record.classLabel, "classLabel"), "classLabel");
   const currentBlockHeight = parseNonNegativeSafeInteger(record.currentBlockHeight, "currentBlockHeight");
   const phase = parseAuctionBidPackagePhase(record.phase, "phase");
@@ -231,7 +231,7 @@ export function parseAuctionBidPackage(input: unknown): AuctionBidPackage {
     record.currentRequiredMinimumBidSats,
     "currentRequiredMinimumBidSats"
   );
-  const reservedLockBlocks = parseNonNegativeSafeInteger(record.reservedLockBlocks, "reservedLockBlocks");
+  const settlementLockBlocks = parseNonNegativeSafeInteger(record.settlementLockBlocks, "settlementLockBlocks");
   const blocksUntilUnlock = parseNonNegativeSafeInteger(record.blocksUntilUnlock, "blocksUntilUnlock");
   const blocksUntilClose = parseOptionalNonNegativeSafeInteger(record.blocksUntilClose, "blocksUntilClose");
   const bidderId = normalizeRequiredText(assertString(record.bidderId, "bidderId"), "bidderId");
@@ -292,7 +292,7 @@ export function parseAuctionBidPackage(input: unknown): AuctionBidPackage {
   const expectedAuctionStateCommitment = computeAuctionBidStateCommitment({
     auctionId,
     name,
-    reservedClassId,
+    auctionClassId,
     currentBlockHeight,
     phase,
     unlockBlock,
@@ -301,12 +301,12 @@ export function parseAuctionBidPackage(input: unknown): AuctionBidPackage {
     currentLeaderBidderCommitment,
     currentHighestBidSats,
     currentRequiredMinimumBidSats,
-    reservedLockBlocks
+    settlementLockBlocks
   });
   const expectedAuctionLotCommitment = computeAuctionLotCommitment({
     auctionId,
     name,
-    reservedClassId,
+    auctionClassId,
     unlockBlock
   });
   if (auctionLotCommitment !== expectedAuctionLotCommitment) {
@@ -348,7 +348,7 @@ export function parseAuctionBidPackage(input: unknown): AuctionBidPackage {
     exportedAt,
     auctionId,
     name,
-    reservedClassId,
+    auctionClassId,
     classLabel,
     currentBlockHeight,
     phase,
@@ -359,7 +359,7 @@ export function parseAuctionBidPackage(input: unknown): AuctionBidPackage {
     currentLeaderBidderCommitment,
     currentHighestBidSats: currentHighestBidSats?.toString() ?? null,
     currentRequiredMinimumBidSats: currentRequiredMinimumBidSats?.toString() ?? null,
-    reservedLockBlocks,
+    settlementLockBlocks,
     blocksUntilUnlock,
     blocksUntilClose,
     bidderId,
@@ -388,7 +388,7 @@ export function computeAuctionBidderCommitment(bidderId: string): string {
 export function computeAuctionLotCommitment(input: {
   readonly auctionId: string;
   readonly name: string;
-  readonly reservedClassId: string;
+  readonly auctionClassId: string;
   readonly unlockBlock: number;
 }): string {
   return createHash("sha256")
@@ -398,7 +398,7 @@ export function computeAuctionLotCommitment(input: {
     .update("\u0000", "utf8")
     .update(normalizeName(input.name), "utf8")
     .update("\u0000", "utf8")
-    .update(normalizeRequiredText(input.reservedClassId, "reservedClassId"), "utf8")
+    .update(normalizeRequiredText(input.auctionClassId, "auctionClassId"), "utf8")
     .update("\u0000", "utf8")
     .update(String(parseNonNegativeSafeInteger(input.unlockBlock, "unlockBlock")), "utf8")
     .digest("hex")
@@ -408,7 +408,7 @@ export function computeAuctionLotCommitment(input: {
 export function computeAuctionBidStateCommitment(input: {
   readonly auctionId: string;
   readonly name: string;
-  readonly reservedClassId: string;
+  readonly auctionClassId: string;
   readonly currentBlockHeight: number;
   readonly phase: AuctionBidPackagePhase;
   readonly unlockBlock: number;
@@ -417,14 +417,14 @@ export function computeAuctionBidStateCommitment(input: {
   readonly currentLeaderBidderCommitment: string | null;
   readonly currentHighestBidSats: bigint | null;
   readonly currentRequiredMinimumBidSats: bigint | null;
-  readonly reservedLockBlocks: number;
+  readonly settlementLockBlocks: number;
 }): string {
   const hasher = createHash("sha256");
   const fields = [
     "ont-auction-state-v1",
     normalizeRequiredText(input.auctionId, "auctionId"),
     normalizeName(input.name),
-    normalizeRequiredText(input.reservedClassId, "reservedClassId"),
+    normalizeRequiredText(input.auctionClassId, "auctionClassId"),
     String(parseNonNegativeSafeInteger(input.currentBlockHeight, "currentBlockHeight")),
     parseAuctionBidPackagePhase(input.phase, "phase"),
     String(parseNonNegativeSafeInteger(input.unlockBlock, "unlockBlock")),
@@ -433,7 +433,7 @@ export function computeAuctionBidStateCommitment(input: {
     input.currentLeaderBidderCommitment ?? "",
     input.currentHighestBidSats?.toString() ?? "",
     input.currentRequiredMinimumBidSats?.toString() ?? "",
-    String(parseNonNegativeSafeInteger(input.reservedLockBlocks, "reservedLockBlocks"))
+    String(parseNonNegativeSafeInteger(input.settlementLockBlocks, "settlementLockBlocks"))
   ];
 
   for (const field of fields) {

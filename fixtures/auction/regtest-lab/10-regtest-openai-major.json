@@ -1,9 +1,9 @@
 {
   "title": "Regtest lot · openai",
-  "description": "Controlled-chain experimental reserved-auction lot for settlement and release coverage.",
+  "description": "Controlled-chain experimental auction lot for settlement and release coverage.",
   "scenario": {
     "name": "openai",
-    "reservedClassId": "major_existing_name",
+    "auctionClassId": "launch_name",
     "unlockBlock": 111,
     "bidAttempts": []
   }

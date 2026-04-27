@@ -1,10 +1,10 @@
 {
   "title": "Settled · openai",
-  "description": "Major existing name after the full auction window and soft-close extension have passed. This is the final winner state the protocol would carry forward.",
+  "description": "Launch auction after the full auction window and soft-close extension have passed. This is the final winner state the protocol would carry forward.",
   "currentBlockHeight": 854700,
   "scenario": {
     "name": "openai",
-    "reservedClassId": "major_existing_name",
+    "auctionClassId": "launch_name",
     "unlockBlock": 850000,
     "bidAttempts": [
       {

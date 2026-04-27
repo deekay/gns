@@ -1,19 +1,19 @@
 import { describe, expect, it } from "vitest";
 
-import { createDefaultReservedAuctionPolicy } from "./auction-policy.js";
-import { simulateReservedAuctionStateAtBlock } from "./auction-state.js";
-import { parseReservedAuctionScenario } from "./auction-sim.js";
+import { createDefaultLaunchAuctionPolicy } from "./auction-policy.js";
+import { simulateLaunchAuctionStateAtBlock } from "./auction-state.js";
+import { parseLaunchAuctionScenario } from "./auction-sim.js";
 
-const policy = createDefaultReservedAuctionPolicy();
+const policy = createDefaultLaunchAuctionPolicy();
 
-describe("simulateReservedAuctionStateAtBlock", () => {
-  it("reports pending unlock before the reserved name opens", () => {
-    const state = simulateReservedAuctionStateAtBlock({
+describe("simulateLaunchAuctionStateAtBlock", () => {
+  it("reports pending unlock before the auction opens", () => {
+    const state = simulateLaunchAuctionStateAtBlock({
       policy,
       currentBlockHeight: 839_990,
-      scenario: parseReservedAuctionScenario({
-        name: "google",
-        reservedClassId: "top_collision",
+      scenario: parseLaunchAuctionScenario({
+        name: "nvidia",
+        auctionClassId: "launch_name",
         unlockBlock: 840_000,
         bidAttempts: [
           { bidderId: "alpha", blockHeight: 840_010, amountSats: "1000000000" }
@@ -23,21 +23,21 @@ describe("simulateReservedAuctionStateAtBlock", () => {
 
     expect(state.phase).toBe("pending_unlock");
     expect(state.blocksUntilUnlock).toBe(10);
-    expect(state.currentRequiredMinimumBidSats?.toString()).toBe("1000000000");
+    expect(state.currentRequiredMinimumBidSats?.toString()).toBe("3125000");
   });
 
   it("reports awaiting opening bid when only underfloor bids are visible", () => {
-    const state = simulateReservedAuctionStateAtBlock({
+    const state = simulateLaunchAuctionStateAtBlock({
       policy,
       currentBlockHeight: 880_030,
-      scenario: parseReservedAuctionScenario({
-        name: "sequoia",
-        reservedClassId: "major_existing_name",
+      scenario: parseLaunchAuctionScenario({
+        name: "nike",
+        auctionClassId: "launch_name",
         unlockBlock: 880_000,
         bidAttempts: [
-          { bidderId: "speculator_a", blockHeight: 880_015, amountSats: "150000000" },
-          { bidderId: "speculator_b", blockHeight: 880_020, amountSats: "180000000" },
-          { bidderId: "speculator_c", blockHeight: 880_030, amountSats: "199999999" }
+          { bidderId: "speculator_a", blockHeight: 880_015, amountSats: "10000000" },
+          { bidderId: "speculator_b", blockHeight: 880_020, amountSats: "11000000" },
+          { bidderId: "speculator_c", blockHeight: 880_030, amountSats: "12499999" }
         ]
       })
     });
@@ -45,41 +45,41 @@ describe("simulateReservedAuctionStateAtBlock", () => {
     expect(state.phase).toBe("awaiting_opening_bid");
     expect(state.acceptedBidCount).toBe(0);
     expect(state.rejectedBidCount).toBe(3);
-    expect(state.currentRequiredMinimumBidSats?.toString()).toBe("200000000");
+    expect(state.currentRequiredMinimumBidSats?.toString()).toBe("12500000");
   });
 
-  it("releases a no-bid lot back to the ordinary lane after the release window passes", () => {
-    const state = simulateReservedAuctionStateAtBlock({
+  it("releases a no-bid lot back to the auction lane after the close window passes", () => {
+    const state = simulateLaunchAuctionStateAtBlock({
       policy,
       currentBlockHeight: 884_321,
-      scenario: parseReservedAuctionScenario({
-        name: "sequoia",
-        reservedClassId: "major_existing_name",
+      scenario: parseLaunchAuctionScenario({
+        name: "nike",
+        auctionClassId: "launch_name",
         unlockBlock: 880_000,
         bidAttempts: [
-          { bidderId: "speculator_a", blockHeight: 880_015, amountSats: "150000000" },
-          { bidderId: "speculator_b", blockHeight: 880_020, amountSats: "180000000" },
-          { bidderId: "speculator_c", blockHeight: 880_030, amountSats: "199999999" }
+          { bidderId: "speculator_a", blockHeight: 880_015, amountSats: "10000000" },
+          { bidderId: "speculator_b", blockHeight: 880_020, amountSats: "11000000" },
+          { bidderId: "speculator_c", blockHeight: 880_030, amountSats: "12499999" }
         ]
       })
     });
 
-    expect(state.phase).toBe("released_to_ordinary_lane");
+    expect(state.phase).toBe("closed_without_winner");
     expect(state.noBidReleaseBlock).toBe(884_320);
     expect(state.blocksUntilNoBidRelease).toBe(0);
-    expect(state.ordinaryMinimumBidSats).toBe(1_562_500n);
+    expect(state.baseMinimumBidSats).toBe(12_500_000n);
     expect(state.currentRequiredMinimumBidSats).toBeNull();
     expect(state.acceptedBidCount).toBe(0);
     expect(state.rejectedBidCount).toBe(3);
   });
 
   it("reports live bidding after a valid opening bid before soft close", () => {
-    const state = simulateReservedAuctionStateAtBlock({
+    const state = simulateLaunchAuctionStateAtBlock({
       policy,
       currentBlockHeight: 851_600,
-      scenario: parseReservedAuctionScenario({
+      scenario: parseLaunchAuctionScenario({
         name: "openai",
-        reservedClassId: "major_existing_name",
+        auctionClassId: "launch_name",
         unlockBlock: 850_000,
         bidAttempts: [
           { bidderId: "speculator_a", blockHeight: 850_010, amountSats: "200000000" },
@@ -95,12 +95,12 @@ describe("simulateReservedAuctionStateAtBlock", () => {
   });
 
   it("reports soft close after a late extension bid", () => {
-    const state = simulateReservedAuctionStateAtBlock({
+    const state = simulateLaunchAuctionStateAtBlock({
       policy,
       currentBlockHeight: 844_360,
-      scenario: parseReservedAuctionScenario({
-        name: "google",
-        reservedClassId: "top_collision",
+      scenario: parseLaunchAuctionScenario({
+        name: "nvidia",
+        auctionClassId: "launch_name",
         unlockBlock: 840_000,
         bidAttempts: [
           { bidderId: "alpha", blockHeight: 840_010, amountSats: "1000000000" },
@@ -118,12 +118,12 @@ describe("simulateReservedAuctionStateAtBlock", () => {
   });
 
   it("reports settled after the closing block passes", () => {
-    const state = simulateReservedAuctionStateAtBlock({
+    const state = simulateLaunchAuctionStateAtBlock({
       policy,
       currentBlockHeight: 854_700,
-      scenario: parseReservedAuctionScenario({
+      scenario: parseLaunchAuctionScenario({
         name: "openai",
-        reservedClassId: "major_existing_name",
+        auctionClassId: "launch_name",
         unlockBlock: 850_000,
         bidAttempts: [
           { bidderId: "speculator_a", blockHeight: 850_010, amountSats: "200000000" },

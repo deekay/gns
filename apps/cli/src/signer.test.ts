@@ -3,21 +3,10 @@ import ECPairFactory from "ecpair";
 import { initEccLib, networks, payments, Transaction } from "bitcoinjs-lib";
 import * as tinysecp from "tiny-secp256k1";
 
-import {
-  createAuctionBidPackage,
-  CLAIM_PACKAGE_FORMAT,
-  CLAIM_PACKAGE_VERSION,
-  computeCommitHash,
-  encodeCommitPayload,
-  parseClaimPackage,
-  PROTOCOL_NAME
-} from "@ont/protocol";
+import { createAuctionBidPackage } from "@ont/protocol";
 
 import {
   buildAuctionBidArtifacts,
-  buildBatchCommitArtifacts,
-  buildBatchRevealArtifacts,
-  buildCommitArtifacts,
   buildTransferArtifacts
 } from "./builder.js";
 import { signArtifacts } from "./signer.js";
@@ -25,17 +14,8 @@ import { signArtifacts } from "./signer.js";
 initEccLib(tinysecp);
 const ECPair = ECPairFactory(tinysecp);
 
-function createClaimPackage() {
-  const name = "bob";
-  const ownerPubkey = "11".repeat(32);
-  const nonceHex = "0102030405060708";
-  const commitHash = computeCommitHash({
-    name,
-    nonce: BigInt(`0x${nonceHex}`),
-    ownerPubkey
-  });
-
-  const fundingKey = ECPair.fromPrivateKey(Buffer.alloc(32, 7), {
+function createFundingFixture(seed = 7) {
+  const fundingKey = ECPair.fromPrivateKey(Buffer.alloc(32, seed), {
     network: networks.testnet,
     compressed: true
   });
@@ -43,103 +23,33 @@ function createClaimPackage() {
     pubkey: fundingKey.publicKey,
     network: networks.testnet
   }).address;
-  const bondAddress = payments.p2wpkh({
-    hash: Buffer.alloc(20, 1),
-    network: networks.testnet
-  }).address;
-  const changeAddress = payments.p2wpkh({
-    hash: Buffer.alloc(20, 2),
-    network: networks.testnet
-  }).address;
 
-  if (!fundingAddress || !bondAddress || !changeAddress) {
-    throw new Error("unable to derive test addresses");
+  if (!fundingAddress) {
+    throw new Error("unable to derive funding address");
   }
 
-  return {
-    claimPackage: parseClaimPackage({
-      format: CLAIM_PACKAGE_FORMAT,
-      packageVersion: CLAIM_PACKAGE_VERSION,
-      protocol: PROTOCOL_NAME,
-      exportedAt: "2026-03-18T20:00:00.000Z",
-      name,
-      ownerPubkey,
-      nonceHex,
-      nonceDecimal: BigInt(`0x${nonceHex}`).toString(),
-      requiredBondSats: "25000000",
-      bondVout: 0,
-      bondDestination: bondAddress,
-      changeDestination: changeAddress,
-      commitHash,
-      commitPayloadHex: Buffer.from(
-        encodeCommitPayload({
-          bondVout: 0,
-          ownerPubkey,
-          commitHash
-        })
-      ).toString("hex"),
-      commitPayloadBytes: 70,
-      commitTxid: null,
-      revealReady: false,
-      revealPayloadHex: null,
-      revealPayloadBytes: null
-    }),
-    fundingKey,
-    fundingAddress
-  };
+  return { fundingKey, fundingAddress };
 }
 
-function createSecondClaimPackage() {
-  const name = "alice";
-  const ownerPubkey = "22".repeat(32);
-  const nonceHex = "1112131415161718";
-  const commitHash = computeCommitHash({
-    name,
-    nonce: BigInt(`0x${nonceHex}`),
-    ownerPubkey
-  });
+function createTestAddress(seed: number): string {
+  const address = payments.p2wpkh({
+    hash: Buffer.alloc(20, seed),
+    network: networks.testnet
+  }).address;
 
-  return parseClaimPackage({
-    format: CLAIM_PACKAGE_FORMAT,
-    packageVersion: CLAIM_PACKAGE_VERSION,
-    protocol: PROTOCOL_NAME,
-    exportedAt: "2026-03-18T20:00:00.000Z",
-    name,
-    ownerPubkey,
-    nonceHex,
-    nonceDecimal: BigInt(`0x${nonceHex}`).toString(),
-    requiredBondSats: "6250000",
-    bondVout: 0,
-    bondDestination: payments.p2wpkh({
-      hash: Buffer.alloc(20, 5),
-      network: networks.testnet
-    }).address ?? "",
-    changeDestination: payments.p2wpkh({
-      hash: Buffer.alloc(20, 6),
-      network: networks.testnet
-    }).address ?? "",
-    commitHash,
-    commitPayloadHex: Buffer.from(
-      encodeCommitPayload({
-        bondVout: 0,
-        ownerPubkey,
-        commitHash
-      })
-    ).toString("hex"),
-    commitPayloadBytes: 70,
-    commitTxid: null,
-    revealReady: false,
-    revealPayloadHex: null,
-    revealPayloadBytes: null
-  });
+  if (!address) {
+    throw new Error("unable to derive test address");
+  }
+
+  return address;
 }
 
 function createAuctionBidPackageFixture() {
   return createAuctionBidPackage({
-    auctionId: "04-soft-close-google",
-    name: "google",
-    reservedClassId: "top_collision",
-    classLabel: "Top collision / ultra-scarce",
+    auctionId: "04-soft-close-nvidia",
+    name: "nvidia",
+    auctionClassId: "launch_name",
+    classLabel: "Launch auction",
     currentBlockHeight: 844_360,
     phase: "soft_close",
     unlockBlock: 840_000,
@@ -148,7 +58,7 @@ function createAuctionBidPackageFixture() {
     currentLeaderBidderId: "gamma",
     currentHighestBidSats: 1_210_000_000n,
     currentRequiredMinimumBidSats: 1_331_000_000n,
-    reservedLockBlocks: 525_600,
+    settlementLockBlocks: 525_600,
     bidderId: "operator_alpha",
     ownerPubkey: "33".repeat(32),
     bidAmountSats: 1_340_000_000n,
@@ -157,105 +67,8 @@ function createAuctionBidPackageFixture() {
 }
 
 describe("signArtifacts", () => {
-  it("signs witnesspubkeyhash commit artifacts and preserves txid", () => {
-    const { claimPackage, fundingKey, fundingAddress } = createClaimPackage();
-    const artifacts = buildCommitArtifacts({
-      claimPackage,
-      fundingInputs: [
-        {
-          txid: "aa".repeat(32),
-          vout: 0,
-          valueSats: 30_000_000n,
-          address: fundingAddress
-        }
-      ],
-      feeSats: 1_000n,
-      network: "signet"
-    });
-
-    const signed = signArtifacts({
-      artifacts,
-      wifs: [fundingKey.toWIF()]
-    });
-
-    expect(signed.kind).toBe("ont-signed-commit-artifacts");
-    expect(signed.signedTransactionId).toBe(artifacts.commitTxid);
-
-    const transaction = Transaction.fromHex(signed.signedTransactionHex);
-    expect(transaction.ins[0]?.witness.length).toBeGreaterThan(0);
-  });
-
-  it("signs witnesspubkeyhash batch commit artifacts and preserves txid", () => {
-    const { claimPackage, fundingKey, fundingAddress } = createClaimPackage();
-    const artifacts = buildBatchCommitArtifacts({
-      claimPackages: [claimPackage, createSecondClaimPackage()],
-      fundingInputs: [
-        {
-          txid: "aa".repeat(32),
-          vout: 0,
-          valueSats: 40_000_000n,
-          address: fundingAddress
-        }
-      ],
-      feeSats: 1_500n,
-      network: "signet"
-    });
-
-    const signed = signArtifacts({
-      artifacts,
-      wifs: [fundingKey.toWIF()]
-    });
-
-    expect(signed.kind).toBe("ont-signed-batch-commit-artifacts");
-    expect(signed.signedTransactionId).toBe(artifacts.commitTxid);
-
-    const transaction = Transaction.fromHex(signed.signedTransactionHex);
-    expect(transaction.ins[0]?.witness.length).toBeGreaterThan(0);
-  });
-
-  it("signs witnesspubkeyhash batch reveal artifacts and preserves txid", () => {
-    const { claimPackage, fundingKey, fundingAddress } = createClaimPackage();
-    const batchCommitArtifacts = buildBatchCommitArtifacts({
-      claimPackages: [claimPackage, createSecondClaimPackage()],
-      fundingInputs: [
-        {
-          txid: "aa".repeat(32),
-          vout: 0,
-          valueSats: 40_000_000n,
-          address: fundingAddress
-        }
-      ],
-      feeSats: 1_500n,
-      network: "signet"
-    });
-    const artifacts = buildBatchRevealArtifacts({
-      claimPackage: batchCommitArtifacts.updatedClaimPackages[0]!,
-      fundingInputs: [
-        {
-          txid: "bb".repeat(32),
-          vout: 1,
-          valueSats: 15_000n,
-          address: fundingAddress
-        }
-      ],
-      feeSats: 500n,
-      network: "signet"
-    });
-
-    const signed = signArtifacts({
-      artifacts,
-      wifs: [fundingKey.toWIF()]
-    });
-
-    expect(signed.kind).toBe("ont-signed-batch-reveal-artifacts");
-    expect(signed.signedTransactionId).toBe(artifacts.revealTxid);
-
-    const transaction = Transaction.fromHex(signed.signedTransactionHex);
-    expect(transaction.ins[0]?.witness.length).toBeGreaterThan(0);
-  });
-
   it("signs witnesspubkeyhash transfer artifacts and preserves txid", () => {
-    const { fundingKey, fundingAddress } = createClaimPackage();
+    const { fundingKey, fundingAddress } = createFundingFixture();
     const artifacts = buildTransferArtifacts({
       prevStateTxid: "44".repeat(32),
       ownerPrivateKeyHex: Buffer.from(fundingKey.privateKey ?? []).toString("hex"),
@@ -278,14 +91,8 @@ describe("signArtifacts", () => {
       ],
       feeSats: 1_000n,
       network: "signet",
-      bondAddress: payments.p2wpkh({
-        hash: Buffer.alloc(20, 3),
-        network: networks.testnet
-      }).address ?? "",
-      changeAddress: payments.p2wpkh({
-        hash: Buffer.alloc(20, 4),
-        network: networks.testnet
-      }).address ?? ""
+      bondAddress: createTestAddress(3),
+      changeAddress: createTestAddress(4)
     });
 
     const signed = signArtifacts({
@@ -301,7 +108,7 @@ describe("signArtifacts", () => {
   });
 
   it("signs witnesspubkeyhash auction bid artifacts and preserves txid", () => {
-    const { fundingKey, fundingAddress } = createClaimPackage();
+    const { fundingKey, fundingAddress } = createFundingFixture();
     const artifacts = buildAuctionBidArtifacts({
       bidPackage: createAuctionBidPackageFixture(),
       fundingInputs: [
@@ -314,10 +121,7 @@ describe("signArtifacts", () => {
       ],
       feeSats: 100_000n,
       network: "signet",
-      bondAddress: payments.p2wpkh({
-        hash: Buffer.alloc(20, 8),
-        network: networks.testnet
-      }).address ?? "",
+      bondAddress: createTestAddress(8),
       changeAddress: fundingAddress
     });
 
@@ -334,7 +138,7 @@ describe("signArtifacts", () => {
   });
 
   it("signs replacement-style auction bid artifacts with multiple inputs", () => {
-    const { fundingKey, fundingAddress } = createClaimPackage();
+    const { fundingKey, fundingAddress } = createFundingFixture();
     const artifacts = buildAuctionBidArtifacts({
       bidPackage: createAuctionBidPackageFixture(),
       fundingInputs: [
@@ -353,10 +157,7 @@ describe("signArtifacts", () => {
       ],
       feeSats: 100_000n,
       network: "signet",
-      bondAddress: payments.p2wpkh({
-        hash: Buffer.alloc(20, 9),
-        network: networks.testnet
-      }).address ?? "",
+      bondAddress: createTestAddress(9),
       changeAddress: fundingAddress
     });
 

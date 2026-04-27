@@ -13,17 +13,43 @@ Examples:
   ./scripts/deploy-vps.sh root@example.com ~/.ssh/your_key
 
 This script:
-  - rsyncs the current repo to /opt/ont/app
+  - rsyncs the current repo to the active app root (/opt/ont/app)
   - installs npm dependencies on the server
   - by default, preserves the current launch height and snapshot
-  - restarts ont-resolver and ont-web
+  - restarts the active resolver and web services
   - prints local health checks from the VPS
 
 Environment:
   ONT_SSH_TARGET                   Default SSH target when the first argument is omitted.
   ONT_SSH_KEY                      Optional SSH key path when the second argument is omitted.
   ONT_DEPLOY_REFRESH_LAUNCH_HEIGHT  Set to 1 to refresh ONT_LAUNCH_HEIGHT from the configured RPC tip and clear the configured snapshot. Default: 0
+  ONT_DEPLOY_ALLOW_DIRTY            Set to 1 to deploy an uncommitted working tree. Default: 0
 EOF
+}
+
+require_clean_git_tree() {
+  if ! git -C "$ROOT_DIR" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    echo "Skipping Git cleanliness check because $ROOT_DIR is not a Git worktree." >&2
+    return
+  fi
+
+  local sha
+  sha="$(git -C "$ROOT_DIR" rev-parse --short HEAD)"
+
+  if [[ "${ONT_DEPLOY_ALLOW_DIRTY:-0}" == "1" ]]; then
+    echo "Deploying Git SHA $sha with ONT_DEPLOY_ALLOW_DIRTY=1."
+    return
+  fi
+
+  if ! git -C "$ROOT_DIR" diff --quiet \
+    || ! git -C "$ROOT_DIR" diff --cached --quiet \
+    || [[ -n "$(git -C "$ROOT_DIR" ls-files --others --exclude-standard)" ]]; then
+    echo "Refusing to deploy dirty working tree at Git SHA $sha." >&2
+    echo "Commit or stash changes first, or set ONT_DEPLOY_ALLOW_DIRTY=1 for an intentional prototype deploy." >&2
+    exit 1
+  fi
+
+  echo "Deploying clean Git SHA $sha."
 }
 
 if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
@@ -50,6 +76,8 @@ if [[ -n "$SSH_KEY_PATH" && ! -f "$SSH_KEY_PATH" ]]; then
   exit 1
 fi
 
+require_clean_git_tree
+
 SSH_ARGS=(
   -o StrictHostKeyChecking=accept-new
 )
@@ -65,7 +93,11 @@ REFRESH_LAUNCH_HEIGHT="${ONT_DEPLOY_REFRESH_LAUNCH_HEIGHT:-0}"
 
 echo "Deploying to $REMOTE"
 
-RELEASE_DIR=$(ssh "${SSH_ARGS[@]}" "$REMOTE" 'install -d /opt/ont/releases && mktemp -d /opt/ont/releases/public-XXXXXX')
+RELEASE_DIR=$(ssh "${SSH_ARGS[@]}" "$REMOTE" '
+  release_base=/opt/ont/releases
+  install -d "$release_base"
+  mktemp -d "$release_base/public-XXXXXX"
+')
 
 rsync -az --delete \
   --exclude '.git' \
@@ -121,30 +153,45 @@ echo "Waiting for deploy lock: $LOCK_PATH"
 exec 9>"$LOCK_PATH"
 flock 9
 
-if [[ -f /etc/ont/ont.env ]]; then
-  upsert_env /etc/ont/ont.env ONT_WEB_PRIVATE_BATCH_SMOKE_STATUS_PATH /var/lib/ont/private-batch-smoke-summary.json
-  upsert_env /etc/ont/ont.env ONT_WEB_PRIVATE_AUCTION_SMOKE_STATUS_PATH /var/lib/ont/private-auction-smoke-summary.json
+APP_PREFIX=ont
+APP_USER=ont
+APP_ROOT=/opt/ont/app
+DATA_DIR=/var/lib/ont
+MAIN_ENV=/etc/ont/ont.env
+DOMAIN_ENV=/etc/ont/ont-domain.env
+
+RESOLVER_SERVICE="${APP_PREFIX}-resolver.service"
+WEB_SERVICE="${APP_PREFIX}-web.service"
+DOMAIN_WEB_SERVICE="${APP_PREFIX}-domain-web.service"
+AUTO_MINE_BIN="/usr/local/bin/${APP_PREFIX}-private-signet-auto-mine"
+AUTO_MINE_ENV="/etc/default/${APP_PREFIX}-private-signet-auto-mine"
+AUTO_MINE_SERVICE="${APP_PREFIX}-private-signet-auto-mine.service"
+
+echo "Using ${APP_PREFIX} service layout at ${APP_ROOT}."
+
+if [[ -f "$MAIN_ENV" ]]; then
+  upsert_env "$MAIN_ENV" ONT_WEB_PRIVATE_AUCTION_SMOKE_STATUS_PATH "${DATA_DIR}/private-auction-smoke-summary.json"
 fi
-if [[ -f /etc/ont/ont-domain.env ]]; then
-  upsert_env /etc/ont/ont-domain.env ONT_WEB_PRIVATE_DEMO_BASE_PATH /ont-private
-  upsert_env /etc/ont/ont-domain.env ONT_WEB_PRIVATE_BATCH_SMOKE_STATUS_PATH /var/lib/ont/private-batch-smoke-summary.json
-  upsert_env /etc/ont/ont-domain.env ONT_WEB_PRIVATE_AUCTION_SMOKE_STATUS_PATH /var/lib/ont/private-auction-smoke-summary.json
+if [[ -f "$DOMAIN_ENV" ]]; then
+  upsert_env "$DOMAIN_ENV" ONT_WEB_PRIVATE_DEMO_BASE_PATH /ont-private
+  upsert_env "$DOMAIN_ENV" ONT_WEB_PRIVATE_AUCTION_SMOKE_STATUS_PATH "${DATA_DIR}/private-auction-smoke-summary.json"
 fi
 
-install -d /opt/ont/app
-rsync -a --delete "${RELEASE_DIR}/" /opt/ont/app/
-chown -R ont:ont /opt/ont/app
-su -s /bin/bash ont -c 'cd /opt/ont/app && npm ci --no-audit --no-fund'
+install -d "$APP_ROOT"
+rsync -a --delete "${RELEASE_DIR}/" "$APP_ROOT/"
+chown -R "${APP_USER}:${APP_USER}" "$APP_ROOT"
+su -s /bin/bash "$APP_USER" -c "cd '$APP_ROOT' && npm ci --no-audit --no-fund"
 
 if [[ -f /etc/bitcoin-private-signet.conf ]]; then
-  install -m 755 /opt/ont/app/scripts/private-signet-auto-mine.sh /usr/local/bin/ont-private-signet-auto-mine
-  cat >/etc/default/ont-private-signet-auto-mine <<'ENVFILE'
+  install -m 755 "${APP_ROOT}/scripts/private-signet-auto-mine.sh" "$AUTO_MINE_BIN"
+cat >"$AUTO_MINE_ENV" <<'ENVFILE'
 ONT_PRIVATE_SIGNET_AUTO_MINE_INTERVAL_SECONDS=30
+ONT_PRIVATE_SIGNET_AUTO_MINE_HEARTBEAT_SECONDS=600
 ENVFILE
-  chown root:root /etc/default/ont-private-signet-auto-mine
-  chmod 644 /etc/default/ont-private-signet-auto-mine
+  chown root:root "$AUTO_MINE_ENV"
+  chmod 644 "$AUTO_MINE_ENV"
 
-  cat >/etc/systemd/system/ont-private-signet-auto-mine.service <<'SERVICE'
+  cat >"/etc/systemd/system/${AUTO_MINE_SERVICE}" <<SERVICE
 [Unit]
 Description=Open Name Tags private signet auto-miner
 After=bitcoind-private-signet.service
@@ -153,8 +200,8 @@ Requires=bitcoind-private-signet.service
 [Service]
 User=bitcoin
 Group=bitcoin
-EnvironmentFile=-/etc/default/ont-private-signet-auto-mine
-ExecStart=/usr/local/bin/ont-private-signet-auto-mine
+EnvironmentFile=-${AUTO_MINE_ENV}
+ExecStart=${AUTO_MINE_BIN}
 Restart=always
 RestartSec=5
 NoNewPrivileges=true
@@ -166,16 +213,16 @@ WantedBy=multi-user.target
 SERVICE
 
   systemctl daemon-reload
-  systemctl enable --now ont-private-signet-auto-mine.service
-  systemctl restart ont-private-signet-auto-mine.service
+  systemctl enable --now "$AUTO_MINE_SERVICE"
+  systemctl restart "$AUTO_MINE_SERVICE"
 fi
 
 if [[ "${REFRESH_LAUNCH_HEIGHT:-0}" != "0" ]]; then
-  SOURCE_MODE=$(env_value ONT_SOURCE_MODE /etc/ont/ont.env)
-  RPC_URL=$(env_value ONT_BITCOIN_RPC_URL /etc/ont/ont.env)
-  RPC_USERNAME=$(env_value ONT_BITCOIN_RPC_USERNAME /etc/ont/ont.env)
-  RPC_PASSWORD=$(env_value ONT_BITCOIN_RPC_PASSWORD /etc/ont/ont.env)
-  SNAPSHOT_PATH=$(env_value ONT_SNAPSHOT_PATH /etc/ont/ont.env)
+  SOURCE_MODE=$(env_value ONT_SOURCE_MODE "$MAIN_ENV")
+  RPC_URL=$(env_value ONT_BITCOIN_RPC_URL "$MAIN_ENV")
+  RPC_USERNAME=$(env_value ONT_BITCOIN_RPC_USERNAME "$MAIN_ENV")
+  RPC_PASSWORD=$(env_value ONT_BITCOIN_RPC_PASSWORD "$MAIN_ENV")
+  SNAPSHOT_PATH=$(env_value ONT_SNAPSHOT_PATH "$MAIN_ENV")
 
   if [[ "$SOURCE_MODE" != "rpc" || -z "$RPC_URL" ]]; then
     echo "Refusing to refresh launch height without rpc mode and ONT_BITCOIN_RPC_URL" >&2
@@ -224,23 +271,23 @@ PY
       print "ONT_LAUNCH_HEIGHT=" h
     }
   }
-  ' /etc/ont/ont.env >/etc/ont/ont.env.new
-  mv /etc/ont/ont.env.new /etc/ont/ont.env
-  chown root:ont /etc/ont/ont.env
-  chmod 640 /etc/ont/ont.env
+  ' "$MAIN_ENV" >"${MAIN_ENV}.new"
+  mv "${MAIN_ENV}.new" "$MAIN_ENV"
+  chown "root:${APP_USER}" "$MAIN_ENV"
+  chmod 640 "$MAIN_ENV"
   if [[ -z "$SNAPSHOT_PATH" ]]; then
-    SNAPSHOT_PATH=/var/lib/ont/resolver-snapshot.json
+    SNAPSHOT_PATH="${DATA_DIR}/resolver-snapshot.json"
   fi
   rm -f "$SNAPSHOT_PATH"
 fi
-systemctl restart ont-resolver.service ont-web.service
-if systemctl list-unit-files ont-domain-web.service >/dev/null 2>&1; then
-  systemctl restart ont-domain-web.service
+systemctl restart "$RESOLVER_SERVICE" "$WEB_SERVICE"
+if systemctl list-unit-files "$DOMAIN_WEB_SERVICE" >/dev/null 2>&1; then
+  systemctl restart "$DOMAIN_WEB_SERVICE"
 fi
 
-RESOLVER_PORT=$(env_value ONT_RESOLVER_PORT /etc/ont/ont.env)
-WEB_PORT=$(env_value ONT_WEB_PORT /etc/ont/ont.env)
-WEB_BASE_PATH=$(env_value ONT_WEB_BASE_PATH /etc/ont/ont.env)
+RESOLVER_PORT=$(env_value ONT_RESOLVER_PORT "$MAIN_ENV")
+WEB_PORT=$(env_value ONT_WEB_PORT "$MAIN_ENV")
+WEB_BASE_PATH=$(env_value ONT_WEB_BASE_PATH "$MAIN_ENV")
 if [[ -z "$WEB_BASE_PATH" || "$WEB_BASE_PATH" == "/" ]]; then
   WEB_BASE_PATH=""
 fi
@@ -275,14 +322,14 @@ wait_for_http "http://127.0.0.1:${WEB_PORT}${WEB_BASE_PATH}/api/health" "web hea
 
 echo
 echo "[resolver service]"
-systemctl --no-pager --full status ont-resolver.service | sed -n '1,40p'
+systemctl --no-pager --full status "$RESOLVER_SERVICE" | sed -n '1,40p'
 echo
 echo "[web service]"
-systemctl --no-pager --full status ont-web.service | sed -n '1,40p'
-if systemctl list-unit-files ont-domain-web.service >/dev/null 2>&1; then
+systemctl --no-pager --full status "$WEB_SERVICE" | sed -n '1,40p'
+if systemctl list-unit-files "$DOMAIN_WEB_SERVICE" >/dev/null 2>&1; then
   echo
   echo "[domain web service]"
-  systemctl --no-pager --full status ont-domain-web.service | sed -n '1,40p'
+  systemctl --no-pager --full status "$DOMAIN_WEB_SERVICE" | sed -n '1,40p'
 fi
 EOF
 

@@ -1,42 +1,42 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  calculateReservedAuctionMinimumIncrementBidSats,
-  createDefaultReservedAuctionPolicy,
-  parseReservedAuctionPolicy,
-  parseReservedAuctionScenario,
-  serializeReservedAuctionPolicy,
-  serializeReservedAuctionScenario,
-  serializeReservedAuctionSimulationResult,
-  simulateReservedAuction
+  calculateLaunchAuctionMinimumIncrementBidSats,
+  createDefaultLaunchAuctionPolicy,
+  parseLaunchAuctionPolicy,
+  parseLaunchAuctionScenario,
+  serializeLaunchAuctionPolicy,
+  serializeLaunchAuctionScenario,
+  serializeLaunchAuctionSimulationResult,
+  simulateLaunchAuction
 } from "./index.js";
 
-describe("reserved auction policy", () => {
+describe("auction policy", () => {
   it("round-trips the default policy through a JSON-safe representation", () => {
-    const policy = createDefaultReservedAuctionPolicy();
-    const serialized = serializeReservedAuctionPolicy(policy);
-    const reparsed = parseReservedAuctionPolicy(JSON.parse(JSON.stringify(serialized)));
+    const policy = createDefaultLaunchAuctionPolicy();
+    const serialized = serializeLaunchAuctionPolicy(policy);
+    const reparsed = parseLaunchAuctionPolicy(JSON.parse(JSON.stringify(serialized)));
 
     expect(reparsed).toEqual(policy);
   });
 
   it("calculates the greater of the absolute and percentage minimum increment", () => {
-    const policy = createDefaultReservedAuctionPolicy();
+    const policy = createDefaultLaunchAuctionPolicy();
 
     expect(
-      calculateReservedAuctionMinimumIncrementBidSats({
+      calculateLaunchAuctionMinimumIncrementBidSats({
         currentBidSats: 1_000_000_000n,
         policy
       })
     ).toBe(1_050_000_000n);
     expect(
-      calculateReservedAuctionMinimumIncrementBidSats({
+      calculateLaunchAuctionMinimumIncrementBidSats({
         currentBidSats: 10_000_000n,
         policy
       })
     ).toBe(11_000_000n);
     expect(
-      calculateReservedAuctionMinimumIncrementBidSats({
+      calculateLaunchAuctionMinimumIncrementBidSats({
         currentBidSats: 1_100_000_000n,
         policy,
         useSoftCloseIncrement: true
@@ -45,14 +45,14 @@ describe("reserved auction policy", () => {
   });
 });
 
-describe("simulateReservedAuction", () => {
-  it("uses the class floor when it exceeds the ordinary lane floor", () => {
-    const policy = createDefaultReservedAuctionPolicy();
-    const result = simulateReservedAuction({
+describe("simulateLaunchAuction", () => {
+  it("uses the neutral length floor when it exceeds the launch auction floor", () => {
+    const policy = createDefaultLaunchAuctionPolicy();
+    const result = simulateLaunchAuction({
       policy,
       scenario: {
         name: "tylercowen",
-        reservedClassId: "public_identity",
+        auctionClassId: "launch_name",
         unlockBlock: 840_000,
         bidAttempts: [
           {
@@ -65,18 +65,18 @@ describe("simulateReservedAuction", () => {
     });
 
     expect(result.status).toBe("settled");
-    expect(result.openingMinimumBidSats).toBe(25_000_000n);
+    expect(result.openingMinimumBidSats).toBe(195_312n);
     expect(result.winner?.amountSats).toBe(25_000_000n);
-    expect(result.reservedLockBlocks).toBe(policy.reservedClasses.public_identity.lockBlocks);
+    expect(result.settlementLockBlocks).toBe(policy.auctionClasses.launch_name.lockBlocks);
   });
 
   it("rejects bids before unlock, rejects low increments, and extends on soft close", () => {
-    const policy = createDefaultReservedAuctionPolicy();
-    const result = simulateReservedAuction({
+    const policy = createDefaultLaunchAuctionPolicy();
+    const result = simulateLaunchAuction({
       policy,
       scenario: {
-        name: "google",
-        reservedClassId: "top_collision",
+        name: "nvidia",
+        auctionClassId: "launch_name",
         unlockBlock: 840_000,
         bidAttempts: [
           {
@@ -131,18 +131,18 @@ describe("simulateReservedAuction", () => {
   });
 
   it("returns no_valid_bids when every attempt stays below the opening minimum", () => {
-    const policy = createDefaultReservedAuctionPolicy();
-    const result = simulateReservedAuction({
+    const policy = createDefaultLaunchAuctionPolicy();
+    const result = simulateLaunchAuction({
       policy,
       scenario: {
         name: "openai",
-        reservedClassId: "major_existing_name",
+        auctionClassId: "launch_name",
         unlockBlock: 900_000,
         bidAttempts: [
           {
             bidderId: "speculator_a",
             blockHeight: 900_010,
-            amountSats: 150_000_000n
+            amountSats: 3_124_999n
           }
         ]
       }
@@ -154,13 +154,13 @@ describe("simulateReservedAuction", () => {
   });
 
   it("round-trips scenarios and results through JSON-safe forms", () => {
-    const policy = createDefaultReservedAuctionPolicy();
-    const scenario = parseReservedAuctionScenario(
+    const policy = createDefaultLaunchAuctionPolicy();
+    const scenario = parseLaunchAuctionScenario(
       JSON.parse(
         JSON.stringify(
-          serializeReservedAuctionScenario({
+          serializeLaunchAuctionScenario({
             name: "markzuckerberg",
-            reservedClassId: "public_identity",
+            auctionClassId: "launch_name",
             unlockBlock: 910_000,
             bidAttempts: [
               {
@@ -178,11 +178,11 @@ describe("simulateReservedAuction", () => {
         )
       )
     );
-    const result = simulateReservedAuction({
+    const result = simulateLaunchAuction({
       policy,
       scenario
     });
-    const serializedResult = serializeReservedAuctionSimulationResult(result);
+    const serializedResult = serializeLaunchAuctionSimulationResult(result);
 
     expect(serializedResult.winner?.amountSats).toBe("30000000");
     expect(serializedResult.bidOutcomes).toHaveLength(2);

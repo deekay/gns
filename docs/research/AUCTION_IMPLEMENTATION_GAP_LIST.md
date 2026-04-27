@@ -1,6 +1,6 @@
 # Auction Implementation Gap List
 
-This note is meant to keep the auction work honest.
+This note keeps the auction work honest.
 
 We now have enough auction implementation that it is easy to overstate where we
 are:
@@ -8,23 +8,22 @@ are:
 - policy defaults exist
 - simulators exist
 - fixture coverage exists
-- the website shows live auction states
-- CLI and website can now export an experimental bid package from those states
-- CLI can now turn that package into a signable experimental bid transaction
+- the website shows auction states
+- CLI and website can export an experimental bid package from those states
+- CLI can turn that package into a signable experimental bid transaction
 - the protocol has an explicit experimental `AUCTION_BID` payload shape
-- the resolver and website can now derive an experimental live auction feed
-  from observed `AUCTION_BID` transactions for catalog lots
-- settled winning bids can now materialize into real owned names in registry
-  state
+- the resolver and website can derive an experimental live auction feed from
+  observed `AUCTION_BID` transactions for catalog lots
+- settled winning bids can materialize into real owned names in registry state
 
-That is real progress, but it is still not the same thing as a live reserved
-auction protocol.
+That is real progress, but it is still not the same thing as a final universal
+auction launch engine.
 
 ## Current Baseline
 
 What exists today:
 
-- configurable reserved-class policy in `@ont/core`
+- configurable auction policy in `@ont/core`
 - single-auction and market-level simulators
 - fixture-backed expected outcomes
 - website-facing auction lab at `/auctions`
@@ -44,27 +43,20 @@ That means we now have:
 - state visualization
 - operator handoff artifacts
 - testable simulator behavior
-- a real offline operator round-trip for:
-  - simulator state -> bid package
-  - bid package -> unsigned bid artifacts
-  - unsigned bid artifacts -> signed bid transaction
-- a resolver-backed experimental auction feed that derives:
-  - current leader
-  - current minimum next bid
-  - pending / released / live / soft-close / settled phase
-  - stale observed-state rejection
-  - same-bidder replacement when the later bid spends the earlier bid bond
-  - derived accepted-bid bond status and bond spend / release summaries
-  - accepted and rejected observed bid outcomes
-  - an experimental settled winner becoming a real owned name in registry state
+- a real offline operator round-trip from simulator state to signed bid
+  transaction
+- a resolver-backed experimental auction feed that derives leader, next
+  minimum bid, phase, stale-state rejection, same-bidder replacement, bond
+  status, and settled-winner ownership
 
 What we do **not** yet have:
 
-- a final reserved-auction protocol we are ready to freeze
+- a final universal-auction protocol we are ready to freeze
 - strict chain-enforced consequences for every currently experimental derived
   rule
 - a full website/operator flow that carries bidders from live auction state all
   the way through broadcast and post-win management
+- enforcement of the `1-4` short-name second wave in the final launch path
 
 ## Gap Categories
 
@@ -81,21 +73,19 @@ We now have:
 
 What is still missing is the second half:
 
-- chain rules that give that transaction meaning inside the reserved lane
-- rebid and replacement semantics against prior auction state
-- settlement consequences once those bid transactions land on chain
+- final chain rules that give that transaction meaning in the launch auction
+  engine
+- final rebid and replacement semantics against prior auction state
+- final settlement consequences once those bid transactions land on chain
 
 ### 2. On-Chain Auction Event Model
 
-We still need the actual protocol shape for reserved-lane bids.
+We still need the final protocol shape for auction bids.
 
 Missing:
 
-- chain-verifiable state transitions for:
-  - opening bid
-  - higher bid
-  - soft-close extension
-  - auction settlement
+- chain-verifiable state transitions for opening bid, higher bid, soft-close
+  extension, and settlement
 - treatment for rejected or stale late bids
 - treatment for transactions that are Bitcoin-valid but auction-invalid at the
   observed state
@@ -105,8 +95,7 @@ This is the point where the simulator becomes a real protocol.
 
 ### 3. Auction-Aware Indexer / Resolver State
 
-Today the resolver now knows an **experimental** reserved-auction slice for
-catalog lots:
+Today the resolver knows an **experimental** auction slice for catalog lots:
 
 - observed `AUCTION_BID` transactions
 - current leading bidder commitment
@@ -116,29 +105,27 @@ catalog lots:
 - same-bidder replacement when the later bid spends the earlier bid bond
 - accepted-bid bond / release summaries
 - early-vs-allowed spend classification for observed bid bond outpoints
-- settled / soft-close / pending phase
+- settled / soft-close / pending / closed-without-winner phase
 - settled-winner ownership materialization for names that do not already exist
   in the registry state
 
 What it still does **not** know:
 
-- final launch semantics for reserved-lane settlement
+- final universal-auction settlement semantics
 - whether every currently derived consequence should be promoted to stricter
   chain-enforced behavior
-- a fully registry-backed reserved-auction market beyond the experimental lot
-  catalog
+- a fully registry-backed auction market beyond the experimental lot catalog
 
-### 4. Settlement / Release / Fallback Rules
+### 4. Settlement / Close / Transfer Rules
 
-Some of the most important reserved-lane rules are now executable in the
-experimental path, but not all of them are final protocol commitments.
+Some of the most important rules are now executable in the experimental path,
+but not all of them are final protocol commitments.
 
 Still open:
 
 - whether the current loser-release / winner-lock timing is the right final
   rule set
-- whether the current no-bid release window is the right default
-- how over-reserved names should tune that release valve
+- whether the current no-winner close window is the right default
 - whether transfers before maturity are allowed and under what constraints
 - whether any explicit post-win settlement or acknowledgement step is still
   desirable despite the current winner-owned-name materialization path
@@ -156,8 +143,8 @@ package.
 
 It cannot yet:
 
-- show a bidder’s current standing bid
-- show “you are leading” / “you were outbid”
+- show a bidder's current standing bid
+- show "you are leading" / "you were outbid"
 - broadcast bids
 - follow an auction through settlement from live resolver state
 
@@ -167,53 +154,6 @@ So the public website is now:
 - a partial bidder-prep surface
 - but still not a full live bidder surface
 
-### 6. End-to-End Auction Testing
-
-Current coverage is good for the simulator layer:
-
-- unit tests
-- fixture-backed expectations
-- market/budget tests
-- website rendering tests
-
-Missing higher-confidence layers:
-
-- negative-path on-chain auction tests
-- more bidder-state / rebid-path controlled-chain tests
-- additional hosted live auction sequences beyond the current smoke lots
-
-## What We Just Closed
-
-The first operator-facing gap we closed is:
-
-> there is now one shared artifact for “I want to bid on this reserved auction
-> state,” and both CLI and website can produce it.
-
-The second gap we just closed is:
-
-> that shared artifact can now be turned into a signable experimental bid
-> transaction offline, using the same CLI artifact/signer flow as the rest of
-> the repo.
-
-The third gap we just closed is:
-
-> resolver and website can now derive experimental lot-level auction state from
-> observed `AUCTION_BID` transactions instead of showing only simulator
-> fixtures.
-
-The fourth gap we just closed is:
-
-> a settled winning bid can now materialize into a real owned name record,
-> making reserved-auction settlement a genuine registry-state transition rather
-> than just an informational feed.
-
-That matters because it gives the next protocol step a stable boundary:
-
-- simulator state in
-- bidder intent in
-- portable artifact out
-- signable transaction out
-
 ## Recommended Build Order
 
 The next implementation order that still feels sane is:
@@ -221,8 +161,9 @@ The next implementation order that still feels sane is:
 1. keep the bid package as the stable operator boundary
 2. keep the experimental bid artifact / transaction builder stable long enough
    to learn from it
-3. deepen reserved-auction state transitions from those bid transactions
-4. only then wire the website past “download package” into a more active bidder
+3. deepen auction state transitions from those bid transactions
+4. enforce the `1-4` short-name wave gate
+5. only then wire the website past "download package" into a more active bidder
    flow
 
 That keeps the work staged and reviewable instead of jumping straight from

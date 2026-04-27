@@ -106,7 +106,7 @@ const elements = {
   ownerMatchNote: document.getElementById("valueOwnerMatchNote"),
   sequenceInput: document.getElementById("valueSequenceInput") as HTMLInputElement | null,
   sequenceHint: document.getElementById("valueSequenceHint"),
-  valueTypeInput: document.getElementById("valueTypeInput") as HTMLSelectElement | null,
+  valueTypeInput: document.getElementById("valueTypeInput") as HTMLInputElement | HTMLSelectElement | null,
   payloadField: document.getElementById("valuePayloadField"),
   payloadInput: document.getElementById("valuePayloadInput") as HTMLTextAreaElement | null,
   payloadHint: document.getElementById("valuePayloadHint"),
@@ -154,8 +154,8 @@ async function bootstrap(): Promise<void> {
   await loadConfig();
   updateResolverFanoutUi();
   syncWizard();
-  renderLookupMessage("Enter a claimed name to load the current owner and published value.");
-  renderSignMessage("Load a claimed name first, then sign the next value record locally.");
+  renderLookupMessage("Enter a claimed name to load the current owner and destinations.");
+  renderSignMessage("Load a claimed name first, then sign the destination update locally.");
   renderPublishMessage(getDefaultPublishMessage());
   updateValueEditorState();
 
@@ -184,20 +184,20 @@ async function bootstrap(): Promise<void> {
 
   elements.ownerPrivateKeyInput?.addEventListener("input", () => {
     updateDerivedOwnerState();
-    invalidateSignedRecord("Owner key changed. Sign again before publishing.", { keepSignStepOpen: true });
+    invalidateSignedRecord("Owner key changed. Sign the destination update again before publishing.", { keepSignStepOpen: true });
   });
 
   elements.sequenceInput?.addEventListener("input", () => {
-    invalidateSignedRecord("Sequence changed. Sign again before publishing.", { keepSignStepOpen: true });
+    invalidateSignedRecord("Name state changed. Sign the destination update again before publishing.", { keepSignStepOpen: true });
   });
 
   elements.valueTypeInput?.addEventListener("change", () => {
     updateValueEditorState();
-    invalidateSignedRecord("Value type changed. Sign again before publishing.", { keepSignStepOpen: true });
+    invalidateSignedRecord("Destination format changed. Sign the update again before publishing.", { keepSignStepOpen: true });
   });
 
   elements.payloadInput?.addEventListener("input", () => {
-    invalidateSignedRecord("Payload changed. Sign again before publishing.", { keepSignStepOpen: true });
+    invalidateSignedRecord("Destinations changed. Sign the update again before publishing.", { keepSignStepOpen: true });
   });
 
   elements.bundleRows?.addEventListener("input", (event) => {
@@ -207,7 +207,7 @@ async function bootstrap(): Promise<void> {
       (target.classList.contains("value-bundle-key-input")
         || target.classList.contains("value-bundle-value-input"))
     ) {
-      invalidateSignedRecord("Bundle changed. Sign again before publishing.", { keepSignStepOpen: true });
+      invalidateSignedRecord("Destinations changed. Sign the update again before publishing.", { keepSignStepOpen: true });
     }
   });
 
@@ -221,19 +221,19 @@ async function bootstrap(): Promise<void> {
       if (row instanceof HTMLElement) {
         row.remove();
         ensureBundleEditorHasRow();
-        invalidateSignedRecord("Bundle changed. Sign again before publishing.", { keepSignStepOpen: true });
+        invalidateSignedRecord("Destinations changed. Sign the update again before publishing.", { keepSignStepOpen: true });
       }
     }
   });
 
   elements.addBundleEntryButton?.addEventListener("click", () => {
     appendBundleRow({ key: "", value: "" });
-    invalidateSignedRecord("Bundle changed. Sign again before publishing.", { keepSignStepOpen: true });
+    invalidateSignedRecord("Destinations changed. Sign the update again before publishing.", { keepSignStepOpen: true });
   });
 
   elements.downloadSignedValueButton?.addEventListener("click", () => {
     if (state.signedRecord === null) {
-      renderSignMessage("Sign a value record before downloading it.");
+      renderSignMessage("Sign a destination update before downloading it.");
       return;
     }
 
@@ -311,7 +311,7 @@ async function loadName(rawName: string): Promise<void> {
     state.currentValueCompareError = null;
     state.lastSuggestedSequence = null;
     resetValueInputs();
-    invalidateSignedRecord("Load a claimed name first, then sign the next value record locally.");
+    invalidateSignedRecord("Load a claimed name first, then sign the destination update locally.");
     renderLookupMessage(error instanceof Error ? error.message : "Unable to load the requested name.");
     syncWizard();
   }
@@ -324,7 +324,7 @@ function signLocally(): void {
   }
 
   if (state.currentName.status === "invalid") {
-    renderSignMessage("Released names cannot publish new value records.");
+    renderSignMessage("Released names cannot publish new destinations.");
     return;
   }
 
@@ -332,7 +332,7 @@ function signLocally(): void {
     const name = requireInput(elements.nameInput, "Enter a claimed name first.").trim().toLowerCase();
     const ownerPrivateKeyHex = requireInput(
       elements.ownerPrivateKeyInput,
-      "Paste the owner private key in 32-byte hex form."
+      "Paste the owner private key saved for this name."
     );
     const derivedOwnerPubkey = deriveOwnerPubkey(ownerPrivateKeyHex);
 
@@ -358,17 +358,17 @@ function signLocally(): void {
     });
 
     if (!verifyBrowserValueRecord(signedRecord)) {
-      throw new Error("Local value record verification failed.");
+      throw new Error("Local destination update verification failed.");
     }
 
     state.signedRecord = signedRecord;
     renderSignedRecord(signedRecord);
-    renderPublishMessage("Signed record ready. Publish it to update the resolver's current value.");
+    renderPublishMessage("Signed update ready. Publish it to update the resolver's current destinations.");
     syncWizard();
   } catch (error) {
     state.signedRecord = null;
-    renderSignMessage(error instanceof Error ? error.message : "Unable to sign the value record.");
-    renderPublishMessage("Fix the value record first, then publish.");
+    renderSignMessage(error instanceof Error ? error.message : "Unable to sign the destination update.");
+    renderPublishMessage("Fix the destination update first, then publish.");
     syncWizard();
   }
 }
@@ -377,14 +377,14 @@ async function publishSignedRecord(options: {
   readonly fanout?: boolean;
 } = {}): Promise<void> {
   if (state.signedRecord === null) {
-    renderPublishMessage("Sign a value record before publishing it.");
+    renderPublishMessage("Sign a destination update before publishing it.");
     return;
   }
 
   renderPublishMessage(
     options.fanout
-      ? "Publishing the signed value record to the configured resolver set..."
-      : "Publishing the signed value record..."
+      ? "Publishing the signed destination update to the configured resolver set..."
+      : "Publishing the signed destination update..."
   );
 
   try {
@@ -395,7 +395,7 @@ async function publishSignedRecord(options: {
     renderPublishResult(result);
     await loadName(state.signedRecord.name);
   } catch (error) {
-    renderPublishMessage(error instanceof Error ? error.message : "Unable to publish the signed value record.");
+    renderPublishMessage(error instanceof Error ? error.message : "Unable to publish the signed destination update.");
   }
 }
 
@@ -461,6 +461,20 @@ function renderLookupRecord(
   }
 
   elements.lookupResult.classList.remove("empty");
+  const currentDestinations = valueRecord === null
+    ? '<p class="field-value">No destinations published yet.</p>'
+    : renderPayloadPreview(valueRecord.valueType, valueRecord.payloadHex);
+  const latestUpdate = valueRecord === null
+    ? "First destination update"
+    : `Update ${valueRecord.sequence} · ${new Date(valueRecord.issuedAt).toLocaleString()}`;
+  const technicalDetails = [
+    `<div class="result-item"><label>Next Sequence</label><p class="field-value">${escapeHtml(String(state.lastSuggestedSequence ?? 1))}</p></div>`,
+    `<div class="result-item"><label>Ownership Ref</label><p class="field-value">${escapeHtml(truncateMiddle(nameRecord.lastStateTxid, 12, 10))}</p></div>`,
+    `<div class="result-item"><label>Bond Requirement</label><p class="field-value">${escapeHtml(formatSats(nameRecord.requiredBondSats))}</p></div>`,
+    renderValueHistory(valueHistory),
+    renderResolverCompare(valueCompare, valueCompareError)
+  ].filter((entry) => entry.trim() !== "").join("");
+
   elements.lookupResult.innerHTML = `
     <div class="result-title">
       <h3>${escapeHtml(nameRecord.name)}</h3>
@@ -472,25 +486,19 @@ function renderLookupRecord(
         <label>Current Owner</label>
         <p class="field-value">${escapeHtml(nameRecord.currentOwnerPubkey)}</p>
       </div>
-      <div class="result-item">
-        <label>Current Value</label>
-        <p class="field-value">${escapeHtml(describeCurrentValue(valueRecord))}</p>
+      <div class="result-item result-item-wide">
+        <label>Current Destinations</label>
+        ${currentDestinations}
       </div>
       <div class="result-item">
-        <label>Next Sequence</label>
-        <p class="field-value">${escapeHtml(String(state.lastSuggestedSequence ?? 1))}</p>
-      </div>
-      <div class="result-item">
-        <label>Ownership Ref</label>
-        <p class="field-value">${escapeHtml(truncateMiddle(nameRecord.lastStateTxid, 12, 10))}</p>
-      </div>
-      <div class="result-item">
-        <label>Bond Requirement</label>
-        <p class="field-value">${escapeHtml(formatSats(nameRecord.requiredBondSats))}</p>
+        <label>Next Update</label>
+        <p class="field-value">${escapeHtml(latestUpdate)}</p>
       </div>
     </div>
-    ${renderValueHistory(valueHistory)}
-    ${renderResolverCompare(valueCompare, valueCompareError)}
+    <details class="detail-technical value-technical-details">
+      <summary>Show technical details</summary>
+      <div class="detail-technical-body result-grid">${technicalDetails}</div>
+    </details>
   `;
 }
 
@@ -498,7 +506,7 @@ function renderValueHistory(valueHistory: ValueHistory | null): string {
   if (valueHistory === null) {
     return `
       <div class="field-note">
-        No value history exists for this ownership interval yet. The next signed record will be sequence 1 with no predecessor.
+        No destination history exists for this ownership interval yet.
       </div>
     `;
   }
@@ -519,7 +527,7 @@ function renderValueHistory(valueHistory: ValueHistory | null): string {
   return `
     <div class="value-history-card">
       <div class="value-history-head">
-        <p class="step-list-label">Value History</p>
+        <p class="step-list-label">Recent Destination Updates</p>
         <p class="field-value">Complete sequences ${escapeHtml(String(valueHistory.completeFromSequence))}-${escapeHtml(String(valueHistory.completeToSequence))}${valueHistory.hasGaps ? " · gaps detected" : ""}${valueHistory.hasForks ? " · forks detected" : ""}</p>
       </div>
       <div class="value-history-rows">${rows}</div>
@@ -557,8 +565,8 @@ function renderResolverCompare(
       ? null
       : `<p><strong>Canonical resolver:</strong> ${escapeHtml(valueCompare.canonicalResolverUrl)}</p>`,
     valueCompare.currentSequence === null
-      ? `<p><strong>Current sequence:</strong> no resolver currently shows a published value.</p>`
-      : `<p><strong>Current sequence:</strong> ${escapeHtml(String(valueCompare.currentSequence))}</p>`,
+      ? `<p><strong>Current update:</strong> no resolver currently shows published destinations.</p>`
+      : `<p><strong>Current update:</strong> ${escapeHtml(String(valueCompare.currentSequence))}</p>`,
     valueCompare.laggingResolverUrls.length === 0
       ? null
       : `<p><strong>Lagging:</strong> ${escapeHtml(valueCompare.laggingResolverUrls.join(", "))}</p>`,
@@ -603,33 +611,40 @@ function renderSignedRecord(record: BrowserSignedValueRecord): void {
   elements.signResult.classList.remove("empty");
   elements.signResult.innerHTML = `
     <div class="result-title">
-      <h3>Signed Record Ready</h3>
+      <h3>Signed Update Ready</h3>
       <span class="status-pill mature">Local only</span>
     </div>
-    <p class="result-meta">Signed locally in this browser. Only this JSON will be uploaded if you publish.</p>
+    <p class="result-meta">Signed locally in this browser. Only the signed JSON update will be uploaded if you publish.</p>
     <div class="result-grid">
       <div class="result-item">
-        <label>Owner Pubkey</label>
+        <label>Owner</label>
         <p class="field-value">${escapeHtml(record.ownerPubkey)}</p>
       </div>
-      <div class="result-item">
-        <label>Sequence</label>
-        <p class="field-value">${escapeHtml(String(record.sequence))}</p>
-      </div>
-      <div class="result-item">
-        <label>Previous Record</label>
-        <p class="field-value">${escapeHtml(record.previousRecordHash === null ? "None (first in ownership interval)" : truncateMiddle(record.previousRecordHash, 12, 10))}</p>
-      </div>
-      <div class="result-item">
-        <label>Value Type</label>
-        <p class="field-value">${escapeHtml(formatValueType(record.valueType, record.payloadHex))}</p>
-      </div>
-      <div class="result-item">
-        <label>Payload</label>
+      <div class="result-item result-item-wide">
+        <label>Destinations</label>
         ${renderPayloadPreview(record.valueType, record.payloadHex)}
       </div>
     </div>
-    <pre class="value-json-preview">${escapeHtml(JSON.stringify(record, null, 2))}</pre>
+    <details class="detail-technical value-technical-details">
+      <summary>Show signed JSON</summary>
+      <div class="detail-technical-body">
+        <div class="result-grid">
+          <div class="result-item">
+            <label>Sequence</label>
+            <p class="field-value">${escapeHtml(String(record.sequence))}</p>
+          </div>
+          <div class="result-item">
+            <label>Previous Record</label>
+            <p class="field-value">${escapeHtml(record.previousRecordHash === null ? "None (first in ownership interval)" : truncateMiddle(record.previousRecordHash, 12, 10))}</p>
+          </div>
+          <div class="result-item">
+            <label>Value Type</label>
+            <p class="field-value">${escapeHtml(formatValueType(record.valueType, record.payloadHex))}</p>
+          </div>
+        </div>
+        <pre class="value-json-preview">${escapeHtml(JSON.stringify(record, null, 2))}</pre>
+      </div>
+    </details>
   `;
 }
 
@@ -651,11 +666,11 @@ function renderPublishResult(result: unknown): void {
     elements.publishResult.classList.remove("empty");
     elements.publishResult.innerHTML = `
       <div class="result-title">
-        <h3>Value Published To Resolver Set</h3>
+        <h3>Destinations Published To Resolver Set</h3>
         <span class="status-pill mature">${escapeHtml(String(summary.successCount))}/${escapeHtml(String(summary.resolverCount))} accepted</span>
       </div>
       <p class="result-meta">${escapeHtml(summary.name)} · sequence ${escapeHtml(String(summary.sequence))} · ${escapeHtml(formatValueType(valueType, payloadHex))}</p>
-      <p class="field-value">The same signed value record was sent to ${escapeHtml(String(summary.resolverCount))} configured resolvers. ${escapeHtml(String(summary.successCount))} accepted it and ${escapeHtml(String(summary.failureCount))} rejected or missed it.</p>
+      <p class="field-value">The same signed destination update was sent to ${escapeHtml(String(summary.resolverCount))} configured resolvers. ${escapeHtml(String(summary.successCount))} accepted it and ${escapeHtml(String(summary.failureCount))} rejected or missed it.</p>
       ${failures === "" ? "" : `<div class="resolver-compare-list">${failures}</div>`}
     `;
     return;
@@ -670,11 +685,11 @@ function renderPublishResult(result: unknown): void {
   elements.publishResult.classList.remove("empty");
   elements.publishResult.innerHTML = `
     <div class="result-title">
-      <h3>Value Published</h3>
+      <h3>Destinations Published</h3>
       <span class="status-pill mature">Resolver updated</span>
     </div>
     <p class="result-meta">${escapeHtml(name)} · sequence ${escapeHtml(String(sequence))} · ${escapeHtml(formatValueType(valueType, payloadHex))}</p>
-    <p class="field-value">The resolver accepted the signed value record and appended it to the current ownership interval${recordHash === "" ? "." : ` at ${escapeHtml(truncateMiddle(recordHash, 12, 10))}.`}</p>
+    <p class="field-value">The resolver accepted the signed destination update${recordHash === "" ? "." : ` at ${escapeHtml(truncateMiddle(recordHash, 12, 10))}.`}</p>
   `;
 }
 
@@ -700,15 +715,15 @@ function updateResolverFanoutUi(): void {
 
   if (elements.publishModeNote) {
     elements.publishModeNote.textContent = state.resolverFanoutAvailable
-      ? `The primary publish button updates the hosted resolver. The secondary button fans the same signed JSON out to ${state.resolverCandidates.length} configured resolvers. The owner private key never leaves the page.`
-      : "The publish request only sends the signed JSON record. The owner private key never leaves the page.";
+      ? `The primary publish button updates the hosted resolver. The secondary button sends the same signed JSON to ${state.resolverCandidates.length} configured resolvers. The owner private key never leaves the page.`
+      : "Publishing sends only the signed JSON update. The owner private key never leaves the page.";
   }
 }
 
 function getDefaultPublishMessage(): string {
   return state.resolverFanoutAvailable
-    ? "Sign a value record first. Then publish the signed JSON to the hosted resolver or fan it out to the configured resolver set."
-    : "Sign a value record first. Then publish the signed JSON to the resolver.";
+    ? "Sign the destination update first. Then publish the signed JSON to the hosted resolver or configured resolver set."
+    : "Sign the destination update first. Then publish the signed JSON to the resolver.";
 }
 
 function updateDerivedOwnerState(): void {
@@ -813,12 +828,12 @@ function applyValueDefaults(valueRecord: ValueRecord | null): void {
   }
 
   if (elements.valueTypeInput) {
-    elements.valueTypeInput.value = String(valueRecord.valueType);
+    elements.valueTypeInput.value = VALUE_MODE_PROFILE_BUNDLE;
   }
   if (elements.payloadInput) {
-    elements.payloadInput.value = decodeHexUtf8(valueRecord.payloadHex) ?? valueRecord.payloadHex;
+    elements.payloadInput.value = "";
   }
-  writeBundleDraft(emptyProfileBundleDraft());
+  writeBundleDraft(profileBundleDraftFromSingleValue(valueRecord));
   updateValueEditorState();
 }
 
@@ -886,22 +901,22 @@ function renderBundleRow(entry: ProfileBundleEntry, index: number): string {
   return `
     <div class="value-bundle-row" data-index="${index}">
       <label class="draft-field">
-        <span class="field-label">Key</span>
+        <span class="field-label">Destination Type</span>
         <input
           class="value-bundle-key-input"
           type="text"
-          placeholder="website"
+          placeholder="btc, lightning, email, website"
           autocomplete="off"
           spellcheck="false"
           value="${escapeHtmlAttribute(entry.key)}"
         />
       </label>
       <label class="draft-field">
-        <span class="field-label">Value</span>
+        <span class="field-label">Destination</span>
         <input
           class="value-bundle-value-input"
           type="text"
-          placeholder="https://example.com"
+          placeholder="bc1q..., lno1q..., alice@example.com"
           autocomplete="off"
           spellcheck="false"
           value="${escapeHtmlAttribute(entry.value)}"
@@ -912,6 +927,19 @@ function renderBundleRow(entry: ProfileBundleEntry, index: number): string {
       </div>
     </div>
   `;
+}
+
+function profileBundleDraftFromSingleValue(valueRecord: ValueRecord): ProfileBundleDraft {
+  const value = decodeHexUtf8(valueRecord.payloadHex) ?? valueRecord.payloadHex;
+  const key = valueRecord.valueType === 1
+    ? "btc"
+    : valueRecord.valueType === 2
+      ? "website"
+      : "custom";
+
+  return {
+    entries: [{ key, value }]
+  };
 }
 
 function applySuggestedSequence(nextSequence: number): void {

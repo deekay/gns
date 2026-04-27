@@ -10,7 +10,7 @@ Learn where a technically capable new user gets stuck when they:
 
 - land in the repo or website for the first time
 - set up the private demo wallet flow in Sparrow
-- try to claim one name
+- try the auction bid flow for one name
 - try to understand what to save and what to do next
 
 ## Suggested Tester
@@ -19,7 +19,7 @@ Best fit:
 
 - comfortable installing desktop software
 - comfortable running one terminal command
-- not already familiar with the ONT claim flow
+- not already familiar with the ONT auction flow
 
 Avoid:
 

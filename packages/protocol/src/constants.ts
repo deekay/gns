@@ -22,7 +22,6 @@ export const NAME_MIN_LENGTH = 1;
 export const NAME_MAX_LENGTH = 32;
 export const NAME_PATTERN = /^[a-z0-9]{1,32}$/;
 
-export const REVEAL_WINDOW_BLOCKS = 24;
 export const INITIAL_MATURITY_BLOCKS = readTestOverrideInteger(
   "ONT_TEST_OVERRIDE_INITIAL_MATURITY_BLOCKS",
   52_000
@@ -40,12 +39,7 @@ export const BOND_BASE_SATS = 100_000_000n;
 export const BOND_FLOOR_SATS = 50_000n;
 
 export enum OntEventType {
-  Commit = 0x01,
-  Reveal = 0x02,
   Transfer = 0x03,
-  BatchAnchor = 0x04,
-  BatchReveal = 0x05,
-  RevealProofChunk = 0x06,
   AuctionBid = 0x07
 }
 

@@ -44,12 +44,6 @@ Then open:
 npm run check
 ```
 
-### Run the exhaustive controlled-chain suite
-
-```bash
-npm run test:regtest-cli-suite
-```
-
 ### Use the private signet Sparrow helper
 
 From the repo:
@@ -64,10 +58,10 @@ From anywhere:
 /path/to/ont/scripts/start-private-signet-sparrow-session.sh
 ```
 
-### Seed or reset the private signet demo
+### Run or reset the private signet auction demo
 
 ```bash
-npm run test:private-signet-demo
+npm run test:private-signet-auction-smoke
 ```
 
 ```bash

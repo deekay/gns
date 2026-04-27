@@ -5,28 +5,28 @@ import {
   computeAuctionBidderCommitment
 } from "@ont/protocol";
 
-import { createDefaultReservedAuctionPolicy } from "./auction-policy.js";
+import { createDefaultLaunchAuctionPolicy } from "./auction-policy.js";
 import {
-  createExperimentalReservedAuctionCatalogEntry,
-  deriveExperimentalReservedAuctionState
+  createExperimentalLaunchAuctionCatalogEntry,
+  deriveExperimentalLaunchAuctionState
 } from "./experimental-auction.js";
 
-describe("experimental reserved auction derivation", () => {
+describe("experimental auction derivation", () => {
   it("derives leader, next minimum, and soft-close state from observed bids", () => {
-    const policy = createDefaultReservedAuctionPolicy();
-    const catalogEntry = createExperimentalReservedAuctionCatalogEntry(
+    const policy = createDefaultLaunchAuctionPolicy();
+    const catalogEntry = createExperimentalLaunchAuctionCatalogEntry(
       {
-        auctionId: "04-soft-close-google",
-        title: "Soft close · google",
+        auctionId: "04-soft-close-nvidia",
+        title: "Soft close · nvidia",
         description: "Experimental live test lot.",
-        name: "google",
-        reservedClassId: "top_collision",
+        name: "nvidia",
+        auctionClassId: "launch_name",
         unlockBlock: 840_000
       },
       policy
     );
 
-    const state = deriveExperimentalReservedAuctionState({
+    const state = deriveExperimentalLaunchAuctionState({
       policy,
       currentBlockHeight: 844_250,
       catalogEntry,
@@ -39,13 +39,13 @@ describe("experimental reserved auction derivation", () => {
           bondVout: 0,
           bidderCommitment: computeAuctionBidderCommitment("alpha"),
           bidAmountSats: 1_000_000_000n,
-          reservedLockBlocks: catalogEntry.reservedLockBlocks,
+          settlementLockBlocks: catalogEntry.settlementLockBlocks,
           auctionLotCommitment: catalogEntry.auctionLotCommitment,
           spentOutpoints: [],
           auctionCommitment: computeAuctionBidStateCommitment({
             auctionId: catalogEntry.auctionId,
             name: catalogEntry.normalizedName,
-            reservedClassId: catalogEntry.reservedClassId,
+            auctionClassId: catalogEntry.auctionClassId,
             currentBlockHeight: 840_010,
             phase: "awaiting_opening_bid",
             unlockBlock: catalogEntry.unlockBlock,
@@ -54,7 +54,7 @@ describe("experimental reserved auction derivation", () => {
             currentLeaderBidderCommitment: null,
             currentHighestBidSats: null,
             currentRequiredMinimumBidSats: catalogEntry.openingMinimumBidSats,
-            reservedLockBlocks: catalogEntry.reservedLockBlocks
+            settlementLockBlocks: catalogEntry.settlementLockBlocks
           })
         },
         {
@@ -65,13 +65,13 @@ describe("experimental reserved auction derivation", () => {
           bondVout: 0,
           bidderCommitment: computeAuctionBidderCommitment("beta"),
           bidAmountSats: 1_100_000_000n,
-          reservedLockBlocks: catalogEntry.reservedLockBlocks,
+          settlementLockBlocks: catalogEntry.settlementLockBlocks,
           auctionLotCommitment: catalogEntry.auctionLotCommitment,
           spentOutpoints: [],
           auctionCommitment: computeAuctionBidStateCommitment({
             auctionId: catalogEntry.auctionId,
             name: catalogEntry.normalizedName,
-            reservedClassId: catalogEntry.reservedClassId,
+            auctionClassId: catalogEntry.auctionClassId,
             currentBlockHeight: 844_210,
             phase: "soft_close",
             unlockBlock: catalogEntry.unlockBlock,
@@ -80,7 +80,7 @@ describe("experimental reserved auction derivation", () => {
             currentLeaderBidderCommitment: computeAuctionBidderCommitment("alpha"),
             currentHighestBidSats: 1_000_000_000n,
             currentRequiredMinimumBidSats: 1_100_000_000n,
-            reservedLockBlocks: catalogEntry.reservedLockBlocks
+            settlementLockBlocks: catalogEntry.settlementLockBlocks
           })
         },
         {
@@ -91,13 +91,13 @@ describe("experimental reserved auction derivation", () => {
           bondVout: 0,
           bidderCommitment: computeAuctionBidderCommitment("gamma"),
           bidAmountSats: 1_150_000_000n,
-          reservedLockBlocks: catalogEntry.reservedLockBlocks + 1,
+          settlementLockBlocks: catalogEntry.settlementLockBlocks + 1,
           auctionLotCommitment: catalogEntry.auctionLotCommitment,
           spentOutpoints: [],
           auctionCommitment: computeAuctionBidStateCommitment({
             auctionId: catalogEntry.auctionId,
             name: catalogEntry.normalizedName,
-            reservedClassId: catalogEntry.reservedClassId,
+            auctionClassId: catalogEntry.auctionClassId,
             currentBlockHeight: 844_211,
             phase: "soft_close",
             unlockBlock: catalogEntry.unlockBlock,
@@ -106,7 +106,7 @@ describe("experimental reserved auction derivation", () => {
             currentLeaderBidderCommitment: computeAuctionBidderCommitment("beta"),
             currentHighestBidSats: 1_100_000_000n,
             currentRequiredMinimumBidSats: 1_210_000_000n,
-            reservedLockBlocks: catalogEntry.reservedLockBlocks + 1
+            settlementLockBlocks: catalogEntry.settlementLockBlocks + 1
           })
         }
       ]
@@ -122,26 +122,26 @@ describe("experimental reserved auction derivation", () => {
     expect(state.currentlyLockedAcceptedBidAmountSats).toBe(2_100_000_000n);
     expect(state.visibleBidOutcomes[2]).toMatchObject({
       status: "rejected",
-      reason: "reserved_lock_mismatch",
+      reason: "settlement_lock_mismatch",
       bondStatus: "rejected_not_tracked"
     });
   });
 
   it("rejects bids whose auction state commitment no longer matches the observed pre-bid state", () => {
-    const policy = createDefaultReservedAuctionPolicy();
-    const catalogEntry = createExperimentalReservedAuctionCatalogEntry(
+    const policy = createDefaultLaunchAuctionPolicy();
+    const catalogEntry = createExperimentalLaunchAuctionCatalogEntry(
       {
-        auctionId: "04-soft-close-google",
-        title: "Soft close · google",
+        auctionId: "04-soft-close-nvidia",
+        title: "Soft close · nvidia",
         description: "Experimental live test lot.",
-        name: "google",
-        reservedClassId: "top_collision",
+        name: "nvidia",
+        auctionClassId: "launch_name",
         unlockBlock: 840_000
       },
       policy
     );
 
-    const state = deriveExperimentalReservedAuctionState({
+    const state = deriveExperimentalLaunchAuctionState({
       policy,
       currentBlockHeight: 844_250,
       catalogEntry,
@@ -154,13 +154,13 @@ describe("experimental reserved auction derivation", () => {
           bondVout: 0,
           bidderCommitment: computeAuctionBidderCommitment("alpha"),
           bidAmountSats: 1_000_000_000n,
-          reservedLockBlocks: catalogEntry.reservedLockBlocks,
+          settlementLockBlocks: catalogEntry.settlementLockBlocks,
           auctionLotCommitment: catalogEntry.auctionLotCommitment,
           spentOutpoints: [],
           auctionCommitment: computeAuctionBidStateCommitment({
             auctionId: catalogEntry.auctionId,
             name: catalogEntry.normalizedName,
-            reservedClassId: catalogEntry.reservedClassId,
+            auctionClassId: catalogEntry.auctionClassId,
             currentBlockHeight: 840_010,
             phase: "awaiting_opening_bid",
             unlockBlock: catalogEntry.unlockBlock,
@@ -169,7 +169,7 @@ describe("experimental reserved auction derivation", () => {
             currentLeaderBidderCommitment: null,
             currentHighestBidSats: null,
             currentRequiredMinimumBidSats: catalogEntry.openingMinimumBidSats,
-            reservedLockBlocks: catalogEntry.reservedLockBlocks
+            settlementLockBlocks: catalogEntry.settlementLockBlocks
           })
         },
         {
@@ -180,13 +180,13 @@ describe("experimental reserved auction derivation", () => {
           bondVout: 0,
           bidderCommitment: computeAuctionBidderCommitment("beta"),
           bidAmountSats: 1_100_000_000n,
-          reservedLockBlocks: catalogEntry.reservedLockBlocks,
+          settlementLockBlocks: catalogEntry.settlementLockBlocks,
           auctionLotCommitment: catalogEntry.auctionLotCommitment,
           spentOutpoints: [],
           auctionCommitment: computeAuctionBidStateCommitment({
             auctionId: catalogEntry.auctionId,
             name: catalogEntry.normalizedName,
-            reservedClassId: catalogEntry.reservedClassId,
+            auctionClassId: catalogEntry.auctionClassId,
             currentBlockHeight: 840_019,
             phase: "awaiting_opening_bid",
             unlockBlock: catalogEntry.unlockBlock,
@@ -195,7 +195,7 @@ describe("experimental reserved auction derivation", () => {
             currentLeaderBidderCommitment: null,
             currentHighestBidSats: null,
             currentRequiredMinimumBidSats: catalogEntry.openingMinimumBidSats,
-            reservedLockBlocks: catalogEntry.reservedLockBlocks
+            settlementLockBlocks: catalogEntry.settlementLockBlocks
           })
         }
       ]
@@ -212,21 +212,21 @@ describe("experimental reserved auction derivation", () => {
     });
   });
 
-  it("releases a no-bid lot to the ordinary lane and rejects later auction bids", () => {
-    const policy = createDefaultReservedAuctionPolicy();
-    const catalogEntry = createExperimentalReservedAuctionCatalogEntry(
+  it("releases a no-bid lot to the auction lane and rejects later auction bids", () => {
+    const policy = createDefaultLaunchAuctionPolicy();
+    const catalogEntry = createExperimentalLaunchAuctionCatalogEntry(
       {
-        auctionId: "02-awaiting-opening-sequoia",
-        title: "Awaiting opening bid · sequoia",
-        description: "Major existing name after unlock but before a valid opening bid.",
-        name: "sequoia",
-        reservedClassId: "major_existing_name",
+        auctionId: "02-awaiting-opening-nike",
+        title: "Awaiting opening bid · nike",
+        description: "Launch auction after unlock but before a valid opening bid.",
+        name: "nike",
+        auctionClassId: "launch_name",
         unlockBlock: 880_000
       },
       policy
     );
 
-    const state = deriveExperimentalReservedAuctionState({
+    const state = deriveExperimentalLaunchAuctionState({
       policy,
       currentBlockHeight: 884_321,
       catalogEntry,
@@ -238,14 +238,14 @@ describe("experimental reserved auction derivation", () => {
           vout: 1,
           bondVout: 0,
           bidderCommitment: computeAuctionBidderCommitment("speculator_a"),
-          bidAmountSats: 150_000_000n,
-          reservedLockBlocks: catalogEntry.reservedLockBlocks,
+          bidAmountSats: 10_000_000n,
+          settlementLockBlocks: catalogEntry.settlementLockBlocks,
           auctionLotCommitment: catalogEntry.auctionLotCommitment,
           spentOutpoints: [],
           auctionCommitment: computeAuctionBidStateCommitment({
             auctionId: catalogEntry.auctionId,
             name: catalogEntry.normalizedName,
-            reservedClassId: catalogEntry.reservedClassId,
+            auctionClassId: catalogEntry.auctionClassId,
             currentBlockHeight: 880_015,
             phase: "awaiting_opening_bid",
             unlockBlock: catalogEntry.unlockBlock,
@@ -254,7 +254,7 @@ describe("experimental reserved auction derivation", () => {
             currentLeaderBidderCommitment: null,
             currentHighestBidSats: null,
             currentRequiredMinimumBidSats: catalogEntry.openingMinimumBidSats,
-            reservedLockBlocks: catalogEntry.reservedLockBlocks
+            settlementLockBlocks: catalogEntry.settlementLockBlocks
           })
         },
         {
@@ -264,8 +264,8 @@ describe("experimental reserved auction derivation", () => {
           vout: 1,
           bondVout: 0,
           bidderCommitment: computeAuctionBidderCommitment("speculator_b"),
-          bidAmountSats: 250_000_000n,
-          reservedLockBlocks: catalogEntry.reservedLockBlocks,
+          bidAmountSats: 13_000_000n,
+          settlementLockBlocks: catalogEntry.settlementLockBlocks,
           auctionLotCommitment: catalogEntry.auctionLotCommitment,
           spentOutpoints: [],
           auctionCommitment: "00".repeat(32)
@@ -273,36 +273,36 @@ describe("experimental reserved auction derivation", () => {
       ]
     });
 
-    expect(state.phase).toBe("released_to_ordinary_lane");
+    expect(state.phase).toBe("closed_without_winner");
     expect(state.currentRequiredMinimumBidSats).toBeNull();
-    expect(state.ordinaryMinimumBidSats).toBe(1_562_500n);
+    expect(state.baseMinimumBidSats).toBe(12_500_000n);
     expect(state.noBidReleaseBlock).toBe(884_320);
     expect(state.blocksUntilNoBidRelease).toBe(0);
     expect(state.acceptedBidCount).toBe(0);
     expect(state.rejectedBidCount).toBe(2);
     expect(state.visibleBidOutcomes[1]).toMatchObject({
       status: "rejected",
-      reason: "released_to_ordinary_lane",
+      reason: "closed_without_winner",
       stateCommitmentMatched: false,
       bondStatus: "rejected_not_tracked"
     });
   });
 
   it("derives settlement and release status for accepted bids after close", () => {
-    const policy = createDefaultReservedAuctionPolicy();
-    const catalogEntry = createExperimentalReservedAuctionCatalogEntry(
+    const policy = createDefaultLaunchAuctionPolicy();
+    const catalogEntry = createExperimentalLaunchAuctionCatalogEntry(
       {
-        auctionId: "04-soft-close-google",
-        title: "Soft close · google",
+        auctionId: "04-soft-close-nvidia",
+        title: "Soft close · nvidia",
         description: "Experimental live test lot.",
-        name: "google",
-        reservedClassId: "top_collision",
+        name: "nvidia",
+        auctionClassId: "launch_name",
         unlockBlock: 840_000
       },
       policy
     );
 
-    const state = deriveExperimentalReservedAuctionState({
+    const state = deriveExperimentalLaunchAuctionState({
       policy,
       currentBlockHeight: 1_370_000,
       catalogEntry,
@@ -315,13 +315,13 @@ describe("experimental reserved auction derivation", () => {
           bondVout: 0,
           bidderCommitment: computeAuctionBidderCommitment("alpha"),
           bidAmountSats: 1_000_000_000n,
-          reservedLockBlocks: catalogEntry.reservedLockBlocks,
+          settlementLockBlocks: catalogEntry.settlementLockBlocks,
           auctionLotCommitment: catalogEntry.auctionLotCommitment,
           spentOutpoints: [],
           auctionCommitment: computeAuctionBidStateCommitment({
             auctionId: catalogEntry.auctionId,
             name: catalogEntry.normalizedName,
-            reservedClassId: catalogEntry.reservedClassId,
+            auctionClassId: catalogEntry.auctionClassId,
             currentBlockHeight: 840_010,
             phase: "awaiting_opening_bid",
             unlockBlock: catalogEntry.unlockBlock,
@@ -330,7 +330,7 @@ describe("experimental reserved auction derivation", () => {
             currentLeaderBidderCommitment: null,
             currentHighestBidSats: null,
             currentRequiredMinimumBidSats: catalogEntry.openingMinimumBidSats,
-            reservedLockBlocks: catalogEntry.reservedLockBlocks
+            settlementLockBlocks: catalogEntry.settlementLockBlocks
           })
         },
         {
@@ -341,13 +341,13 @@ describe("experimental reserved auction derivation", () => {
           bondVout: 0,
           bidderCommitment: computeAuctionBidderCommitment("beta"),
           bidAmountSats: 1_100_000_000n,
-          reservedLockBlocks: catalogEntry.reservedLockBlocks,
+          settlementLockBlocks: catalogEntry.settlementLockBlocks,
           auctionLotCommitment: catalogEntry.auctionLotCommitment,
           spentOutpoints: [],
           auctionCommitment: computeAuctionBidStateCommitment({
             auctionId: catalogEntry.auctionId,
             name: catalogEntry.normalizedName,
-            reservedClassId: catalogEntry.reservedClassId,
+            auctionClassId: catalogEntry.auctionClassId,
             currentBlockHeight: 844_210,
             phase: "soft_close",
             unlockBlock: catalogEntry.unlockBlock,
@@ -356,7 +356,7 @@ describe("experimental reserved auction derivation", () => {
             currentLeaderBidderCommitment: computeAuctionBidderCommitment("alpha"),
             currentHighestBidSats: 1_000_000_000n,
             currentRequiredMinimumBidSats: 1_100_000_000n,
-            reservedLockBlocks: catalogEntry.reservedLockBlocks
+            settlementLockBlocks: catalogEntry.settlementLockBlocks
           })
         }
       ]
@@ -365,7 +365,7 @@ describe("experimental reserved auction derivation", () => {
     expect(state.phase).toBe("settled");
     expect(state.winnerBidTxid).toBe("22".repeat(32));
     expect(state.winnerBidderCommitment).toBe(computeAuctionBidderCommitment("beta"));
-    expect(state.winnerBondReleaseBlock).toBe(844_210 + catalogEntry.reservedLockBlocks);
+    expect(state.winnerBondReleaseBlock).toBe(844_210 + catalogEntry.settlementLockBlocks);
     expect(state.currentlyLockedAcceptedBidCount).toBe(0);
     expect(state.releasableAcceptedBidCount).toBe(2);
     expect(state.releasableAcceptedBidAmountSats).toBe(2_100_000_000n);
@@ -378,20 +378,20 @@ describe("experimental reserved auction derivation", () => {
   });
 
   it("flags accepted bid bonds spent before their release point", () => {
-    const policy = createDefaultReservedAuctionPolicy();
-    const catalogEntry = createExperimentalReservedAuctionCatalogEntry(
+    const policy = createDefaultLaunchAuctionPolicy();
+    const catalogEntry = createExperimentalLaunchAuctionCatalogEntry(
       {
-        auctionId: "04-soft-close-google",
-        title: "Soft close · google",
+        auctionId: "04-soft-close-nvidia",
+        title: "Soft close · nvidia",
         description: "Experimental live test lot.",
-        name: "google",
-        reservedClassId: "top_collision",
+        name: "nvidia",
+        auctionClassId: "launch_name",
         unlockBlock: 840_000
       },
       policy
     );
 
-    const state = deriveExperimentalReservedAuctionState({
+    const state = deriveExperimentalLaunchAuctionState({
       policy,
       currentBlockHeight: 844_250,
       catalogEntry,
@@ -404,13 +404,13 @@ describe("experimental reserved auction derivation", () => {
           bondVout: 0,
           bidderCommitment: computeAuctionBidderCommitment("alpha"),
           bidAmountSats: 1_000_000_000n,
-          reservedLockBlocks: catalogEntry.reservedLockBlocks,
+          settlementLockBlocks: catalogEntry.settlementLockBlocks,
           auctionLotCommitment: catalogEntry.auctionLotCommitment,
           spentOutpoints: [],
           auctionCommitment: computeAuctionBidStateCommitment({
             auctionId: catalogEntry.auctionId,
             name: catalogEntry.normalizedName,
-            reservedClassId: catalogEntry.reservedClassId,
+            auctionClassId: catalogEntry.auctionClassId,
             currentBlockHeight: 840_010,
             phase: "awaiting_opening_bid",
             unlockBlock: catalogEntry.unlockBlock,
@@ -419,7 +419,7 @@ describe("experimental reserved auction derivation", () => {
             currentLeaderBidderCommitment: null,
             currentHighestBidSats: null,
             currentRequiredMinimumBidSats: catalogEntry.openingMinimumBidSats,
-            reservedLockBlocks: catalogEntry.reservedLockBlocks
+            settlementLockBlocks: catalogEntry.settlementLockBlocks
           })
         },
         {
@@ -430,13 +430,13 @@ describe("experimental reserved auction derivation", () => {
           bondVout: 0,
           bidderCommitment: computeAuctionBidderCommitment("beta"),
           bidAmountSats: 1_100_000_000n,
-          reservedLockBlocks: catalogEntry.reservedLockBlocks,
+          settlementLockBlocks: catalogEntry.settlementLockBlocks,
           auctionLotCommitment: catalogEntry.auctionLotCommitment,
           spentOutpoints: [],
           auctionCommitment: computeAuctionBidStateCommitment({
             auctionId: catalogEntry.auctionId,
             name: catalogEntry.normalizedName,
-            reservedClassId: catalogEntry.reservedClassId,
+            auctionClassId: catalogEntry.auctionClassId,
             currentBlockHeight: 844_210,
             phase: "soft_close",
             unlockBlock: catalogEntry.unlockBlock,
@@ -445,7 +445,7 @@ describe("experimental reserved auction derivation", () => {
             currentLeaderBidderCommitment: computeAuctionBidderCommitment("alpha"),
             currentHighestBidSats: 1_000_000_000n,
             currentRequiredMinimumBidSats: 1_100_000_000n,
-            reservedLockBlocks: catalogEntry.reservedLockBlocks
+            settlementLockBlocks: catalogEntry.settlementLockBlocks
           })
         }
       ],
@@ -486,22 +486,22 @@ describe("experimental reserved auction derivation", () => {
   });
 
   it("marks settled bid spends after their release point as allowed", () => {
-    const policy = createDefaultReservedAuctionPolicy();
-    const catalogEntry = createExperimentalReservedAuctionCatalogEntry(
+    const policy = createDefaultLaunchAuctionPolicy();
+    const catalogEntry = createExperimentalLaunchAuctionCatalogEntry(
       {
-        auctionId: "04-soft-close-google",
-        title: "Soft close · google",
+        auctionId: "04-soft-close-nvidia",
+        title: "Soft close · nvidia",
         description: "Experimental live test lot.",
-        name: "google",
-        reservedClassId: "top_collision",
+        name: "nvidia",
+        auctionClassId: "launch_name",
         unlockBlock: 840_000
       },
       policy
     );
-    const winnerReleaseBlock = 844_210 + catalogEntry.reservedLockBlocks;
+    const winnerReleaseBlock = 844_210 + catalogEntry.settlementLockBlocks;
     const losingReleaseBlock = 844_355;
 
-    const state = deriveExperimentalReservedAuctionState({
+    const state = deriveExperimentalLaunchAuctionState({
       policy,
       currentBlockHeight: winnerReleaseBlock + 10,
       catalogEntry,
@@ -514,13 +514,13 @@ describe("experimental reserved auction derivation", () => {
           bondVout: 0,
           bidderCommitment: computeAuctionBidderCommitment("alpha"),
           bidAmountSats: 1_000_000_000n,
-          reservedLockBlocks: catalogEntry.reservedLockBlocks,
+          settlementLockBlocks: catalogEntry.settlementLockBlocks,
           auctionLotCommitment: catalogEntry.auctionLotCommitment,
           spentOutpoints: [],
           auctionCommitment: computeAuctionBidStateCommitment({
             auctionId: catalogEntry.auctionId,
             name: catalogEntry.normalizedName,
-            reservedClassId: catalogEntry.reservedClassId,
+            auctionClassId: catalogEntry.auctionClassId,
             currentBlockHeight: 840_010,
             phase: "awaiting_opening_bid",
             unlockBlock: catalogEntry.unlockBlock,
@@ -529,7 +529,7 @@ describe("experimental reserved auction derivation", () => {
             currentLeaderBidderCommitment: null,
             currentHighestBidSats: null,
             currentRequiredMinimumBidSats: catalogEntry.openingMinimumBidSats,
-            reservedLockBlocks: catalogEntry.reservedLockBlocks
+            settlementLockBlocks: catalogEntry.settlementLockBlocks
           })
         },
         {
@@ -540,13 +540,13 @@ describe("experimental reserved auction derivation", () => {
           bondVout: 0,
           bidderCommitment: computeAuctionBidderCommitment("beta"),
           bidAmountSats: 1_100_000_000n,
-          reservedLockBlocks: catalogEntry.reservedLockBlocks,
+          settlementLockBlocks: catalogEntry.settlementLockBlocks,
           auctionLotCommitment: catalogEntry.auctionLotCommitment,
           spentOutpoints: [],
           auctionCommitment: computeAuctionBidStateCommitment({
             auctionId: catalogEntry.auctionId,
             name: catalogEntry.normalizedName,
-            reservedClassId: catalogEntry.reservedClassId,
+            auctionClassId: catalogEntry.auctionClassId,
             currentBlockHeight: 844_210,
             phase: "soft_close",
             unlockBlock: catalogEntry.unlockBlock,
@@ -555,7 +555,7 @@ describe("experimental reserved auction derivation", () => {
             currentLeaderBidderCommitment: computeAuctionBidderCommitment("alpha"),
             currentHighestBidSats: 1_000_000_000n,
             currentRequiredMinimumBidSats: 1_100_000_000n,
-            reservedLockBlocks: catalogEntry.reservedLockBlocks
+            settlementLockBlocks: catalogEntry.settlementLockBlocks
           })
         }
       ],
@@ -596,20 +596,20 @@ describe("experimental reserved auction derivation", () => {
   });
 
   it("treats a same-bidder rebid as a replacement only when it spends the prior bid bond", () => {
-    const policy = createDefaultReservedAuctionPolicy();
-    const catalogEntry = createExperimentalReservedAuctionCatalogEntry(
+    const policy = createDefaultLaunchAuctionPolicy();
+    const catalogEntry = createExperimentalLaunchAuctionCatalogEntry(
       {
-        auctionId: "04-soft-close-google",
-        title: "Soft close · google",
+        auctionId: "04-soft-close-nvidia",
+        title: "Soft close · nvidia",
         description: "Experimental live test lot.",
-        name: "google",
-        reservedClassId: "top_collision",
+        name: "nvidia",
+        auctionClassId: "launch_name",
         unlockBlock: 840_000
       },
       policy
     );
 
-    const state = deriveExperimentalReservedAuctionState({
+    const state = deriveExperimentalLaunchAuctionState({
       policy,
       currentBlockHeight: 844_250,
       catalogEntry,
@@ -622,13 +622,13 @@ describe("experimental reserved auction derivation", () => {
           bondVout: 0,
           bidderCommitment: computeAuctionBidderCommitment("alpha"),
           bidAmountSats: 1_000_000_000n,
-          reservedLockBlocks: catalogEntry.reservedLockBlocks,
+          settlementLockBlocks: catalogEntry.settlementLockBlocks,
           auctionLotCommitment: catalogEntry.auctionLotCommitment,
           spentOutpoints: [],
           auctionCommitment: computeAuctionBidStateCommitment({
             auctionId: catalogEntry.auctionId,
             name: catalogEntry.normalizedName,
-            reservedClassId: catalogEntry.reservedClassId,
+            auctionClassId: catalogEntry.auctionClassId,
             currentBlockHeight: 840_010,
             phase: "awaiting_opening_bid",
             unlockBlock: catalogEntry.unlockBlock,
@@ -637,7 +637,7 @@ describe("experimental reserved auction derivation", () => {
             currentLeaderBidderCommitment: null,
             currentHighestBidSats: null,
             currentRequiredMinimumBidSats: catalogEntry.openingMinimumBidSats,
-            reservedLockBlocks: catalogEntry.reservedLockBlocks
+            settlementLockBlocks: catalogEntry.settlementLockBlocks
           })
         },
         {
@@ -648,7 +648,7 @@ describe("experimental reserved auction derivation", () => {
           bondVout: 0,
           bidderCommitment: computeAuctionBidderCommitment("alpha"),
           bidAmountSats: 1_100_000_000n,
-          reservedLockBlocks: catalogEntry.reservedLockBlocks,
+          settlementLockBlocks: catalogEntry.settlementLockBlocks,
           auctionLotCommitment: catalogEntry.auctionLotCommitment,
           spentOutpoints: [
             {
@@ -659,7 +659,7 @@ describe("experimental reserved auction derivation", () => {
           auctionCommitment: computeAuctionBidStateCommitment({
             auctionId: catalogEntry.auctionId,
             name: catalogEntry.normalizedName,
-            reservedClassId: catalogEntry.reservedClassId,
+            auctionClassId: catalogEntry.auctionClassId,
             currentBlockHeight: 844_210,
             phase: "soft_close",
             unlockBlock: catalogEntry.unlockBlock,
@@ -668,7 +668,7 @@ describe("experimental reserved auction derivation", () => {
             currentLeaderBidderCommitment: computeAuctionBidderCommitment("alpha"),
             currentHighestBidSats: 1_000_000_000n,
             currentRequiredMinimumBidSats: 1_100_000_000n,
-            reservedLockBlocks: catalogEntry.reservedLockBlocks
+            settlementLockBlocks: catalogEntry.settlementLockBlocks
           })
         },
         {
@@ -679,13 +679,13 @@ describe("experimental reserved auction derivation", () => {
           bondVout: 0,
           bidderCommitment: computeAuctionBidderCommitment("alpha"),
           bidAmountSats: 1_200_000_000n,
-          reservedLockBlocks: catalogEntry.reservedLockBlocks,
+          settlementLockBlocks: catalogEntry.settlementLockBlocks,
           auctionLotCommitment: catalogEntry.auctionLotCommitment,
           spentOutpoints: [],
           auctionCommitment: computeAuctionBidStateCommitment({
             auctionId: catalogEntry.auctionId,
             name: catalogEntry.normalizedName,
-            reservedClassId: catalogEntry.reservedClassId,
+            auctionClassId: catalogEntry.auctionClassId,
             currentBlockHeight: 844_211,
             phase: "soft_close",
             unlockBlock: catalogEntry.unlockBlock,
@@ -694,7 +694,7 @@ describe("experimental reserved auction derivation", () => {
             currentLeaderBidderCommitment: computeAuctionBidderCommitment("alpha"),
             currentHighestBidSats: 1_100_000_000n,
             currentRequiredMinimumBidSats: 1_210_000_000n,
-            reservedLockBlocks: catalogEntry.reservedLockBlocks
+            settlementLockBlocks: catalogEntry.settlementLockBlocks
           })
         }
       ]

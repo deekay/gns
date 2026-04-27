@@ -1,6 +1,6 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { join, resolve } from "node:path";
 import { spawn } from "node:child_process";
 
 const ROOT = resolve(new URL("..", import.meta.url).pathname);
@@ -46,18 +46,9 @@ const LOCAL_RESOLVER_PORT = Number.parseInt(
 );
 const RPC_USERNAME =
   process.env.ONT_PRIVATE_SIGNET_RPC_USERNAME
-  ?? "gnsrpcprivate";
+  ?? "ontrpcprivate";
 
-export const COMMIT_FEE_SATS = 1_000n;
-export const REVEAL_FEE_SATS = 500n;
 export const TRANSFER_FEE_SATS = 1_000n;
-export const REQUIRED_BOND_SATS = 50_000n;
-export const FUNDING_SATS = 400_000n;
-export const MATURITY_BLOCKS = Number.parseInt(
-  process.env.ONT_PRIVATE_SIGNET_TEST_MATURITY_BLOCKS
-    ?? "12",
-  10
-);
 
 let cachedRpcPassword = null;
 
@@ -132,276 +123,6 @@ export async function publishScenarioSummary(name, remotePath) {
     localPath,
     `${SSH_TARGET}:${remotePath}`
   ]);
-}
-
-export async function claimName({ name, account, rpcPassword, outDir }) {
-  await mkdir(outDir, { recursive: true });
-  const claimPackage = await createClaimPackage({
-    name,
-    account,
-    writePath: join(outDir, `${name}-claim.json`)
-  });
-  const fundingUtxo = await fundAddress(account.fundingAddress, FUNDING_SATS);
-  const queuePath = join(outDir, `${name}-queue.json`);
-
-  const result = await cliJson([
-    "submit-claim",
-    claimPackage.path,
-    "--commit-input",
-    formatDescriptor(fundingUtxo),
-    "--commit-fee-sats",
-    COMMIT_FEE_SATS.toString(),
-    "--reveal-fee-sats",
-    REVEAL_FEE_SATS.toString(),
-    "--wif",
-    account.fundingWif,
-    "--network",
-    "signet",
-    "--expected-chain",
-    "signet",
-    "--rpc-url",
-    localRpcUrl(),
-    "--rpc-username",
-    RPC_USERNAME,
-    "--rpc-password",
-    rpcPassword,
-    "--bond-address",
-    account.fundingAddress,
-    "--commit-change-address",
-    account.fundingAddress,
-    "--reveal-change-address",
-    account.fundingAddress,
-    "--queue",
-    queuePath,
-    "--out-dir",
-    outDir
-  ]);
-
-  await mineBlocks(1);
-  await waitForResolverHeight(await getBlockCount());
-
-  const watcherResult = await cliJson([
-    "run-reveal-watcher",
-    "--queue",
-    queuePath,
-    "--rpc-url",
-    localRpcUrl(),
-    "--rpc-username",
-    RPC_USERNAME,
-    "--rpc-password",
-    rpcPassword,
-    "--expected-chain",
-    "signet",
-    "--once"
-  ]);
-
-  await mineBlocks(1);
-  await waitForResolverHeight(await getBlockCount());
-
-  const record = await cliJson(["get-name", name, "--resolver-url", resolverUrl()]);
-
-  return {
-    name,
-    claimPackagePath: claimPackage.path,
-    commitTxid: result.commitTxid,
-    revealTxid: result.revealTxid,
-    watcherResult,
-    record
-  };
-}
-
-export async function claimBatchNames({
-  payerAccount,
-  claimPackagePaths,
-  claimNames,
-  rpcPassword,
-  outDir
-}) {
-  if (!Array.isArray(claimPackagePaths) || claimPackagePaths.length === 0) {
-    throw new Error("claimBatchNames requires at least one claim package path");
-  }
-
-  if (!Array.isArray(claimNames) || claimNames.length !== claimPackagePaths.length) {
-    throw new Error("claimBatchNames requires one claim name per claim package path");
-  }
-
-  await mkdir(outDir, { recursive: true });
-  const queuePath = join(outDir, "batch-reveal-queue.json");
-  const batchPackagesDir = join(outDir, "batch-packages");
-  const batchCommitArtifactsPath = join(outDir, "batch-commit-artifacts.json");
-  const signedBatchCommitPath = join(outDir, "signed-batch-commit-artifacts.json");
-  await mkdir(batchPackagesDir, { recursive: true });
-
-  const totalRequiredBondSats = (
-    await Promise.all(claimPackagePaths.map(readClaimPackageRequiredBondSats))
-  ).reduce((sum, value) => sum + value, 0n);
-  const commitFunding = await fundAddress(
-    payerAccount.fundingAddress,
-    totalRequiredBondSats + COMMIT_FEE_SATS + 10_000n
-  );
-  const batchCommitArtifacts = await cliJson([
-    "build-batch-commit-artifacts",
-    ...claimPackagePaths,
-    "--input",
-    formatDescriptor(commitFunding),
-    "--fee-sats",
-    COMMIT_FEE_SATS.toString(),
-    "--network",
-    "signet",
-    "--change-address",
-    payerAccount.fundingAddress,
-    "--write",
-    batchCommitArtifactsPath,
-    "--write-packages-dir",
-    batchPackagesDir
-  ]);
-  const signedBatchCommit = await cliJson([
-    "sign-artifacts",
-    batchCommitArtifactsPath,
-    "--wif",
-    payerAccount.fundingWif,
-    "--write",
-    signedBatchCommitPath
-  ]);
-
-  if (signedBatchCommit.signedTransactionId !== batchCommitArtifacts.commitTxid) {
-    throw new Error("signed batch commit txid did not match the built batch commit txid");
-  }
-
-  const revealTxids = {};
-  const batchRevealArtifactPaths = {};
-
-  for (let index = 0; index < claimNames.length; index += 1) {
-    const name = claimNames[index];
-    const sequence = String(index + 1).padStart(2, "0");
-    const batchClaimPackagePath = join(batchPackagesDir, `${sequence}-${name}.json`);
-    const batchRevealArtifactsPath = join(outDir, `${sequence}-${name}-batch-reveal-artifacts.json`);
-    const signedBatchRevealPath = join(outDir, `${sequence}-${name}-signed-batch-reveal-artifacts.json`);
-    const revealFunding = await fundAddress(payerAccount.fundingAddress, 10_000n);
-
-    const batchRevealArtifacts = await cliJson([
-      "build-batch-reveal-artifacts",
-      batchClaimPackagePath,
-      "--input",
-      formatDescriptor(revealFunding),
-      "--fee-sats",
-      REVEAL_FEE_SATS.toString(),
-      "--network",
-      "signet",
-      "--change-address",
-      payerAccount.fundingAddress,
-      "--write",
-      batchRevealArtifactsPath
-    ]);
-    const signedBatchReveal = await cliJson([
-      "sign-artifacts",
-      batchRevealArtifactsPath,
-      "--wif",
-      payerAccount.fundingWif,
-      "--write",
-      signedBatchRevealPath
-    ]);
-
-    if (signedBatchReveal.signedTransactionId !== batchRevealArtifacts.revealTxid) {
-      throw new Error(`signed batch reveal txid did not match for ${name}`);
-    }
-
-    await cliJson([
-      "enqueue-reveal",
-      signedBatchRevealPath,
-      "--commit-txid",
-      batchCommitArtifacts.commitTxid,
-      "--queue",
-      queuePath,
-      "--expected-chain",
-      "signet"
-    ]);
-
-    revealTxids[name] = signedBatchReveal.signedTransactionId;
-    batchRevealArtifactPaths[name] = signedBatchRevealPath;
-  }
-
-  const preConfirmWatcher = await cliJson([
-    "run-reveal-watcher",
-    "--queue",
-    queuePath,
-    "--rpc-url",
-    localRpcUrl(),
-    "--rpc-username",
-    RPC_USERNAME,
-    "--rpc-password",
-    rpcPassword,
-    "--expected-chain",
-    "signet",
-    "--once"
-  ]);
-
-  if (preConfirmWatcher.broadcastedCount !== 0) {
-    throw new Error("batch reveal watcher should not broadcast before the commit confirms");
-  }
-
-  const batchCommitBroadcast = await cliJson([
-    "broadcast-transaction",
-    signedBatchCommitPath,
-    "--rpc-url",
-    localRpcUrl(),
-    "--rpc-username",
-    RPC_USERNAME,
-    "--rpc-password",
-    rpcPassword,
-    "--expected-chain",
-    "signet"
-  ]);
-
-  if (batchCommitBroadcast.broadcastedTxid !== batchCommitArtifacts.commitTxid) {
-    throw new Error("broadcast batch commit txid did not match the built batch commit txid");
-  }
-
-  await mineBlocks(1);
-  await waitForResolverHeight(await getBlockCount());
-
-  const postConfirmWatcher = await cliJson([
-    "run-reveal-watcher",
-    "--queue",
-    queuePath,
-    "--rpc-url",
-    localRpcUrl(),
-    "--rpc-username",
-    RPC_USERNAME,
-    "--rpc-password",
-    rpcPassword,
-    "--expected-chain",
-    "signet",
-    "--once"
-  ]);
-
-  if (postConfirmWatcher.broadcastedCount !== claimNames.length) {
-    throw new Error("batch reveal watcher did not broadcast every queued reveal after commit confirmation");
-  }
-
-  await mineBlocks(1);
-  await waitForResolverHeight(await getBlockCount());
-
-  const records = {};
-  for (const name of claimNames) {
-    const record = await cliJson(["get-name", name, "--resolver-url", resolverUrl()]);
-    records[name] = record;
-
-    if (record.currentBondTxid !== batchCommitArtifacts.commitTxid) {
-      throw new Error(`expected ${name} to retain the batch commit txid as its bond txid`);
-    }
-  }
-
-  return {
-    commitTxid: batchCommitArtifacts.commitTxid,
-    revealTxids,
-    records,
-    queuePath,
-    batchPackagesDir,
-    batchCommitArtifactsPath,
-    signedBatchCommitPath,
-    batchRevealArtifactPaths
-  };
 }
 
 export async function giftTransferName({
@@ -614,46 +335,11 @@ export async function ensureAccount(path) {
   }
 }
 
-async function readClaimPackageRequiredBondSats(path) {
-  const parsed = JSON.parse(await readFile(path, "utf8"));
-  if (!parsed || typeof parsed !== "object" || typeof parsed.requiredBondSats !== "string") {
-    throw new Error(`claim package at ${path} is missing requiredBondSats`);
-  }
-
-  return BigInt(parsed.requiredBondSats);
-}
-
-export async function createClaimPackage({
-  name,
-  account,
-  writePath,
-  ownerPubkey = account.ownerPubkey,
-  bondDestination = account.fundingAddress,
-  changeDestination = account.fundingAddress
-}) {
-  await mkdir(dirname(writePath), { recursive: true });
-  const result = await cliJson([
-    "create-claim-package",
-    name,
-    "--owner-pubkey",
-    ownerPubkey,
-    "--bond-destination",
-    bondDestination,
-    "--change-destination",
-    changeDestination,
-    "--write",
-    writePath
-  ]);
-
-  return {
-    ...result,
-    path: writePath
-  };
-}
-
 export async function fundAddress(address, sats) {
   const amountBtc = satsToBtcString(sats);
-  const txid = (await runRemote(`ont-private-signet-fund ${shellEscape(address)} ${shellEscape(amountBtc)}`)).trim();
+  const txid = (await runRemote(
+    `ont-private-signet-fund ${shellEscape(address)} ${shellEscape(amountBtc)}`
+  )).trim();
   if (!txid) {
     throw new Error(`private signet funding did not return a txid for ${address}`);
   }
@@ -663,7 +349,8 @@ export async function fundAddress(address, sats) {
 }
 
 export async function mineBlocks(blocks) {
-  await runRemote(`ont-private-signet-mine ${Number.parseInt(String(blocks), 10)}`);
+  const count = Number.parseInt(String(blocks), 10);
+  await runRemote(`ont-private-signet-mine ${count}`);
 }
 
 export async function waitForAddressUtxo(txid, address, attempts = 40) {
@@ -752,7 +439,9 @@ export async function getRemotePrivateRpcPassword() {
     return cachedRpcPassword;
   }
 
-  cachedRpcPassword = (await runRemote(`awk -F= '/^ONT_BITCOIN_RPC_PASSWORD=/{print $2}' /etc/ont/ont-private.env`)).trim();
+  cachedRpcPassword = (await runRemote(
+    `awk -F= '/^ONT_BITCOIN_RPC_PASSWORD=/{print $2; exit}' /etc/ont/ont-private.env`
+  )).trim();
   if (!cachedRpcPassword) {
     throw new Error("unable to read private signet RPC password from VPS");
   }

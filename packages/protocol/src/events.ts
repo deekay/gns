@@ -1,21 +1,8 @@
 import { createHash } from "node:crypto";
 import * as secp256k1 from "tiny-secp256k1";
 
-import { assertHexBytes, assertHexString, bytesToHex, hexToBytes } from "./bytes.js";
+import { assertHexBytes, bytesToHex, hexToBytes } from "./bytes.js";
 import { OntEventType } from "./constants.js";
-import { normalizeName } from "./names.js";
-
-export interface CommitEventPayload {
-  readonly bondVout: number;
-  readonly ownerPubkey: string;
-  readonly commitHash: string;
-}
-
-export interface RevealEventPayload {
-  readonly commitTxid: string;
-  readonly nonce: bigint;
-  readonly name: string;
-}
 
 export interface TransferEventPayload {
   readonly prevStateTxid: string;
@@ -25,31 +12,10 @@ export interface TransferEventPayload {
   readonly signature: string;
 }
 
-export interface BatchAnchorEventPayload {
-  readonly flags: number;
-  readonly leafCount: number;
-  readonly merkleRoot: string;
-}
-
-export interface BatchRevealEventPayload {
-  readonly anchorTxid: string;
-  readonly ownerPubkey: string;
-  readonly nonce: bigint;
-  readonly bondVout: number;
-  readonly proofBytesLength: number;
-  readonly proofChunkCount: number;
-  readonly name: string;
-}
-
-export interface RevealProofChunkEventPayload {
-  readonly chunkIndex: number;
-  readonly proofBytesHex: string;
-}
-
 export interface AuctionBidEventPayload {
   readonly flags: number;
   readonly bondVout: number;
-  readonly reservedLockBlocks: number;
+  readonly settlementLockBlocks: number;
   readonly bidAmountSats: bigint;
   readonly ownerPubkey: string;
   readonly auctionLotCommitment: string;
@@ -62,57 +28,6 @@ export interface TransferAuthorizationFields {
   readonly newOwnerPubkey: string;
   readonly flags: number;
   readonly successorBondVout: number;
-}
-
-export function computeCommitHash(input: { name: string; nonce: bigint; ownerPubkey: string }): string {
-  const name = normalizeName(input.name);
-  const ownerPubkey = assertHexBytes(input.ownerPubkey, 32, "ownerPubkey");
-
-  if (input.nonce < 0n) {
-    throw new Error("nonce must be non-negative");
-  }
-
-  const nameBytes = Buffer.from(name, "utf8");
-  const ownerBytes = hexToBytes(ownerPubkey);
-  const nonceBytes = bigIntToUint64Bytes(input.nonce);
-
-  const hasher = createHash("sha256");
-  hasher.update(Buffer.from([nameBytes.length]));
-  hasher.update(nameBytes);
-  hasher.update(ownerBytes);
-  hasher.update(nonceBytes);
-
-  return hasher.digest("hex");
-}
-
-export function createCommitPayload(input: {
-  bondVout?: number;
-  ownerPubkey: string;
-  commitHash: string;
-}): CommitEventPayload {
-  const bondVout = input.bondVout ?? 0;
-
-  if (!Number.isInteger(bondVout) || bondVout < 0 || bondVout > 0xff) {
-    throw new Error("bondVout must fit in one byte");
-  }
-
-  return {
-    bondVout,
-    ownerPubkey: assertHexBytes(input.ownerPubkey, 32, "ownerPubkey"),
-    commitHash: assertHexBytes(input.commitHash, 32, "commitHash")
-  };
-}
-
-export function createRevealPayload(input: {
-  commitTxid: string;
-  nonce: bigint;
-  name: string;
-}): RevealEventPayload {
-  return {
-    commitTxid: assertHexBytes(input.commitTxid, 32, "commitTxid"),
-    nonce: input.nonce,
-    name: normalizeName(input.name)
-  };
 }
 
 export function createTransferPayload(input: {
@@ -143,92 +58,10 @@ export function createTransferPayload(input: {
   };
 }
 
-export function createBatchAnchorPayload(input: {
-  readonly flags?: number;
-  readonly leafCount: number;
-  readonly merkleRoot: string;
-}): BatchAnchorEventPayload {
-  const flags = input.flags ?? 0;
-
-  if (!Number.isInteger(flags) || flags < 0 || flags > 0xff) {
-    throw new Error("flags must fit in one byte");
-  }
-
-  if (!Number.isInteger(input.leafCount) || input.leafCount < 0 || input.leafCount > 0xff) {
-    throw new Error("leafCount must fit in one byte");
-  }
-
-  return {
-    flags,
-    leafCount: input.leafCount,
-    merkleRoot: assertHexBytes(input.merkleRoot, 32, "merkleRoot")
-  };
-}
-
-export function createBatchRevealPayload(input: {
-  readonly anchorTxid: string;
-  readonly ownerPubkey: string;
-  readonly nonce: bigint;
-  readonly bondVout: number;
-  readonly proofBytesLength: number;
-  readonly proofChunkCount: number;
-  readonly name: string;
-}): BatchRevealEventPayload {
-  if (
-    !Number.isInteger(input.bondVout) ||
-    input.bondVout < 0 ||
-    input.bondVout > 0xff
-  ) {
-    throw new Error("bondVout must fit in one byte");
-  }
-
-  if (
-    !Number.isInteger(input.proofBytesLength) ||
-    input.proofBytesLength < 0 ||
-    input.proofBytesLength > 0xffff
-  ) {
-    throw new Error("proofBytesLength must fit in two bytes");
-  }
-
-  if (
-    !Number.isInteger(input.proofChunkCount) ||
-    input.proofChunkCount < 0 ||
-    input.proofChunkCount > 0xff
-  ) {
-    throw new Error("proofChunkCount must fit in one byte");
-  }
-
-  return {
-    anchorTxid: assertHexBytes(input.anchorTxid, 32, "anchorTxid"),
-    ownerPubkey: assertHexBytes(input.ownerPubkey, 32, "ownerPubkey"),
-    nonce: input.nonce,
-    bondVout: input.bondVout,
-    proofBytesLength: input.proofBytesLength,
-    proofChunkCount: input.proofChunkCount,
-    name: normalizeName(input.name)
-  };
-}
-
-export function createRevealProofChunkPayload(input: {
-  readonly chunkIndex: number;
-  readonly proofBytesHex: string;
-}): RevealProofChunkEventPayload {
-  if (!Number.isInteger(input.chunkIndex) || input.chunkIndex < 0 || input.chunkIndex > 0xff) {
-    throw new Error("chunkIndex must fit in one byte");
-  }
-
-  const proofBytesHex = assertHexString(input.proofBytesHex, "proofBytesHex");
-
-  return {
-    chunkIndex: input.chunkIndex,
-    proofBytesHex
-  };
-}
-
 export function createAuctionBidPayload(input: {
   readonly flags?: number;
   readonly bondVout: number;
-  readonly reservedLockBlocks: number;
+  readonly settlementLockBlocks: number;
   readonly bidAmountSats: bigint;
   readonly ownerPubkey: string;
   readonly auctionLotCommitment: string;
@@ -245,8 +78,8 @@ export function createAuctionBidPayload(input: {
     throw new Error("bondVout must fit in one byte");
   }
 
-  if (!Number.isInteger(input.reservedLockBlocks) || input.reservedLockBlocks < 0 || input.reservedLockBlocks > 0xffff_ffff) {
-    throw new Error("reservedLockBlocks must fit in an unsigned 32-bit integer");
+  if (!Number.isInteger(input.settlementLockBlocks) || input.settlementLockBlocks < 0 || input.settlementLockBlocks > 0xffff_ffff) {
+    throw new Error("settlementLockBlocks must fit in an unsigned 32-bit integer");
   }
 
   if (input.bidAmountSats < 0n || input.bidAmountSats > 0xffff_ffff_ffff_ffffn) {
@@ -256,7 +89,7 @@ export function createAuctionBidPayload(input: {
   return {
     flags,
     bondVout: input.bondVout,
-    reservedLockBlocks: input.reservedLockBlocks,
+    settlementLockBlocks: input.settlementLockBlocks,
     bidAmountSats: input.bidAmountSats,
     ownerPubkey: assertHexBytes(input.ownerPubkey, 32, "ownerPubkey"),
     auctionLotCommitment: assertHexBytes(input.auctionLotCommitment, 16, "auctionLotCommitment"),
@@ -306,45 +139,14 @@ export function computeTransferAuthorizationHash(input: TransferAuthorizationFie
 export function getEventTypeName(
   type: OntEventType
 ):
-  | "COMMIT"
-  | "REVEAL"
   | "TRANSFER"
-  | "BATCH_ANCHOR"
-  | "BATCH_REVEAL"
-  | "REVEAL_PROOF_CHUNK"
   | "AUCTION_BID" {
   switch (type) {
-    case OntEventType.Commit:
-      return "COMMIT";
-    case OntEventType.Reveal:
-      return "REVEAL";
     case OntEventType.Transfer:
       return "TRANSFER";
-    case OntEventType.BatchAnchor:
-      return "BATCH_ANCHOR";
-    case OntEventType.BatchReveal:
-      return "BATCH_REVEAL";
-    case OntEventType.RevealProofChunk:
-      return "REVEAL_PROOF_CHUNK";
     case OntEventType.AuctionBid:
       return "AUCTION_BID";
   }
-}
-
-function bigIntToUint64Bytes(value: bigint): Uint8Array {
-  if (value > 0xffff_ffff_ffff_ffffn) {
-    throw new Error("nonce must fit in 8 bytes");
-  }
-
-  const bytes = new Uint8Array(8);
-  let remaining = value;
-
-  for (let index = 7; index >= 0; index -= 1) {
-    bytes[index] = Number(remaining & 0xffn);
-    remaining >>= 8n;
-  }
-
-  return bytes;
 }
 
 export function serializeUint8ArrayToHex(bytes: Uint8Array): string {

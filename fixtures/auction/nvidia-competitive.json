@@ -1,0 +1,54 @@
+{
+  "scenario": {
+    "name": "nvidia",
+    "auctionClassId": "launch_name",
+    "unlockBlock": 840000,
+    "bidAttempts": [
+      {
+        "bidderId": "early_bidder",
+        "blockHeight": 839999,
+        "amountSats": "1000000000"
+      },
+      {
+        "bidderId": "alpha",
+        "blockHeight": 840010,
+        "amountSats": "1000000000"
+      },
+      {
+        "bidderId": "beta",
+        "blockHeight": 844200,
+        "amountSats": "1020000000"
+      },
+      {
+        "bidderId": "beta",
+        "blockHeight": 844210,
+        "amountSats": "1100000000"
+      },
+      {
+        "bidderId": "gamma",
+        "blockHeight": 844353,
+        "amountSats": "1210000000"
+      },
+      {
+        "bidderId": "late",
+        "blockHeight": 844500,
+        "amountSats": "1300000000"
+      }
+    ]
+  },
+  "expected": {
+    "status": "settled",
+    "winnerBidderId": "gamma",
+    "winnerAmountSats": "1210000000",
+    "initialAuctionCloseBlock": 844330,
+    "finalAuctionCloseBlock": 844497,
+    "reasons": [
+      "before_unlock",
+      "opening_bid",
+      "below_minimum_increment",
+      "higher_bid_soft_close_extended",
+      "higher_bid_soft_close_extended",
+      "auction_closed"
+    ]
+  }
+}

@@ -27,12 +27,12 @@ A name can point to:
 
 ## Core Design
 
-ONT claims use a **commit / reveal** flow plus a **bitcoin bond**.
+The current launch direction is **universal auctions plus bitcoin bonds**.
 
-1. `COMMIT` hides the intended name while establishing the claim attempt.
-2. `REVEAL` publishes the plaintext name and must confirm within **24 blocks** after the commit confirms.
-3. Once the reveal confirms, the name is claimed and usable, but it enters a settlement period.
-4. The current lead launch direction is to simplify this into a fixed ordinary-lane settlement period of about **1 year** rather than the older epoch-and-halving schedule. During settlement, bond continuity still matters. After maturity, the name remains valid without ongoing bond continuity.
+1. A launch-eligible name opens through the auction flow.
+2. A valid bid commits the bidder, owner key, bid amount, and auction state.
+3. The winning bid establishes ownership and starts settlement.
+4. During settlement, bond continuity still matters. After maturity, the name remains valid without ongoing bond continuity.
 
 Transfers move ownership from one pubkey to another. Off-chain value updates are only valid if signed by the name's **current owner key**.
 
@@ -55,15 +55,19 @@ The bond is:
 
 It is bitcoin the claimer still owns, temporarily locked as economic commitment during settlement.
 
-### Bond Curve
+### Auction And Bond Model
 
-The current launch curve is:
+The current launch direction is:
 
-- `₿100,000,000 (1 BTC)` for a 1-character name
-- each additional character halves the required bond
-- the bond floors at `₿50,000 (0.0005 BTC)` for names of length 12 and longer
+- every launch-eligible name is allocated by auction
+- `1-4` character names are held for a later short-name auction wave
+- `5-32` character names are eligible at launch
+- winning bids are bonded bitcoin, not payments to ONT
 
-Examples:
+Length may still set an objective opening-bond floor, but the auction discovers
+the actual market price.
+
+Illustrative legacy floor curve:
 
 | Name length | Required bond |
 | --- | --- |
@@ -73,7 +77,9 @@ Examples:
 | `6` | `₿3,125,000 (0.03125 BTC)` |
 | `12+` | `₿50,000 (0.0005 BTC)` |
 
-This is meant to make short premium names expensive to monopolize while keeping the long tail accessible. The current lead launch direction also layers a separate reserved deferred-auction lane on top for salient existing names, rather than treating every name as the same launch-day ordinary claim.
+The old lead design layered a separate reserved deferred-auction lane on top of
+this floor. The current lead design is simpler: one auction rule for eligible
+names, with the shortest names delayed to a later objective wave.
 
 ### Why The Namespace Remains Open
 
@@ -89,31 +95,25 @@ That does not make allocation perfectly neutral. Early participants, wealthy cla
 
 After settlement, names remain valid without ongoing bond continuity.
 
-This is intentional. The fairness mechanism is the opportunity cost of locking capital through settlement, not perpetual rent. Once a claimer has committed bitcoin for the full maturity period, the protocol has already observed a meaningful economic signal that they value the name and gave up the chance to use that capital elsewhere. Requiring the bond to remain parked indefinitely would add ongoing carrying cost without materially improving initial allocation fairness, while also increasing permanent UTXO pressure.
+This is intentional. The fairness mechanism is the opportunity cost of locking capital through settlement, not perpetual rent. Once an auction winner has committed bitcoin for the full maturity period, the protocol has already observed a meaningful economic signal that they value the name and gave up the chance to use that capital elsewhere. Requiring the bond to remain parked indefinitely would add ongoing carrying cost without materially improving initial allocation fairness, while also increasing permanent UTXO pressure.
 
 ### Launch Fairness
 
 The fairness story is not only about the bond curve. It is also about how launch happens.
 
-A mainnet launch should only happen once the signet and private-demo paths are well tested and the activation block height is widely announced in advance. The goal is that everyone knows the exact starting rules, the exact starting height, and the exact claim mechanics before names open, so access is as open and simultaneous as possible on day one.
+A mainnet launch should only happen once the signet and private-demo paths are well tested and the activation block height is widely announced in advance. The goal is that everyone knows the exact starting rules, the exact starting height, the auction mechanics, and the short-name wave boundary before names open, so access is as open and simultaneous as possible on day one.
 
 ## Blockspace Footprint
 
-ONT keeps its pure naming payload relatively small, but it still consumes real Bitcoin blockspace because each successful claim is a pair of ordinary Bitcoin transactions.
+ONT keeps its pure naming payload relatively small, but it still consumes real Bitcoin blockspace because bids, settlement, transfers, and releases are ordinary Bitcoin transactions.
 
 Current implementation summary:
 
-- pure naming payload per completed claim: about `117–148 bytes`
-- observed full claim footprint: about `404 vbytes`
-- observed full serialized footprint: about `566 raw bytes`
+- auction bid payloads are compact, but total vbytes depend on the signer and funding inputs
+- settlement and transfer footprint should be measured against the current auction transaction templates
+- final mainnet fee examples should be recalculated after the auction path is frozen
 
 So ONT is compact as protocol data, but it still competes in the normal fee market like any other transaction.
-
-At the current transaction shape:
-
-- a full block could theoretically fit about **2,475** completed claims
-- that is about **356,000 claims per day** at the extreme upper bound
-- at `50 sat/vB`, one completed claim costs about `₿20,200 (0.000202 BTC)` in transaction fees alone
 
 In practice, usage is constrained by:
 
@@ -173,9 +173,8 @@ ONT is an active prototype, not a mainnet-ready production system.
 
 Today:
 
-- hosted private demo claim flow: working
-- hosted private demo batch-claim smoke: working
-- hosted private demo experimental auction smoke: working
+- hosted private demo auction smoke: working
+- hosted private demo auction phase gallery: working
 - browser value publishing: working
 - self-hosted website + resolver stack: working
 - transfers: prototype

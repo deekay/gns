@@ -1,34 +1,34 @@
 import {
-  calculateReservedAuctionMinimumIncrementBidSats,
-  getReservedAuctionNoBidReleaseBlock,
-  isReservedAuctionSoftCloseWindow,
-  type ReservedAuctionPolicy
+  calculateLaunchAuctionMinimumIncrementBidSats,
+  getLaunchAuctionNoBidReleaseBlock,
+  isLaunchAuctionSoftCloseWindow,
+  type LaunchAuctionPolicy
 } from "./auction-policy.js";
 import {
-  simulateReservedAuction,
-  type ReservedAuctionBidOutcome,
-  type ReservedAuctionScenario
+  simulateLaunchAuction,
+  type LaunchAuctionBidOutcome,
+  type LaunchAuctionScenario
 } from "./auction-sim.js";
 
-export type ReservedAuctionPhase =
+export type LaunchAuctionPhase =
   | "pending_unlock"
   | "awaiting_opening_bid"
-  | "released_to_ordinary_lane"
+  | "closed_without_winner"
   | "live_bidding"
   | "soft_close"
   | "settled";
 
-export interface ReservedAuctionStateAtBlock {
+export interface LaunchAuctionStateAtBlock {
   readonly currentBlockHeight: number;
-  readonly phase: ReservedAuctionPhase;
+  readonly phase: LaunchAuctionPhase;
   readonly phaseLabel: string;
   readonly normalizedName: string;
-  readonly reservedClassId: ReservedAuctionScenario["reservedClassId"];
+  readonly auctionClassId: LaunchAuctionScenario["auctionClassId"];
   readonly classLabel: string;
   readonly unlockBlock: number;
-  readonly ordinaryMinimumBidSats: bigint;
+  readonly baseMinimumBidSats: bigint;
   readonly openingMinimumBidSats: bigint;
-  readonly reservedLockBlocks: number;
+  readonly settlementLockBlocks: number;
   readonly noBidReleaseBlock: number | null;
   readonly auctionStartBlock: number | null;
   readonly auctionCloseBlockAfter: number | null;
@@ -40,20 +40,20 @@ export interface ReservedAuctionStateAtBlock {
   readonly currentRequiredMinimumBidSats: bigint | null;
   readonly acceptedBidCount: number;
   readonly rejectedBidCount: number;
-  readonly visibleBidOutcomes: ReadonlyArray<ReservedAuctionBidOutcome>;
+  readonly visibleBidOutcomes: ReadonlyArray<LaunchAuctionBidOutcome>;
 }
 
-export interface SerializedReservedAuctionStateAtBlock {
+export interface SerializedLaunchAuctionStateAtBlock {
   readonly currentBlockHeight: number;
-  readonly phase: ReservedAuctionPhase;
+  readonly phase: LaunchAuctionPhase;
   readonly phaseLabel: string;
   readonly normalizedName: string;
-  readonly reservedClassId: ReservedAuctionScenario["reservedClassId"];
+  readonly auctionClassId: LaunchAuctionScenario["auctionClassId"];
   readonly classLabel: string;
   readonly unlockBlock: number;
-  readonly ordinaryMinimumBidSats: string;
+  readonly baseMinimumBidSats: string;
   readonly openingMinimumBidSats: string;
-  readonly reservedLockBlocks: number;
+  readonly settlementLockBlocks: number;
   readonly noBidReleaseBlock: number | null;
   readonly auctionStartBlock: number | null;
   readonly auctionCloseBlockAfter: number | null;
@@ -71,23 +71,23 @@ export interface SerializedReservedAuctionStateAtBlock {
     readonly blockHeight: number;
     readonly amountSats: string;
     readonly status: "accepted" | "rejected";
-    readonly reason: ReservedAuctionBidOutcome["reason"];
+    readonly reason: LaunchAuctionBidOutcome["reason"];
     readonly requiredMinimumBidSats: string;
     readonly auctionCloseBlockAfter: number | null;
     readonly highestBidSatsAfter: string | null;
   }>;
 }
 
-export function simulateReservedAuctionStateAtBlock(input: {
-  readonly policy: ReservedAuctionPolicy;
-  readonly scenario: ReservedAuctionScenario;
+export function simulateLaunchAuctionStateAtBlock(input: {
+  readonly policy: LaunchAuctionPolicy;
+  readonly scenario: LaunchAuctionScenario;
   readonly currentBlockHeight: number;
-}): ReservedAuctionStateAtBlock {
-  const visibleScenario: ReservedAuctionScenario = {
+}): LaunchAuctionStateAtBlock {
+  const visibleScenario: LaunchAuctionScenario = {
     ...input.scenario,
     bidAttempts: input.scenario.bidAttempts.filter((attempt) => attempt.blockHeight <= input.currentBlockHeight)
   };
-  const partialResult = simulateReservedAuction({
+  const partialResult = simulateLaunchAuction({
     policy: input.policy,
     scenario: visibleScenario
   });
@@ -95,13 +95,13 @@ export function simulateReservedAuctionStateAtBlock(input: {
   const rejectedBidCount = partialResult.bidOutcomes.length - acceptedBidCount;
   const noBidReleaseBlock =
     partialResult.winner === null
-      ? getReservedAuctionNoBidReleaseBlock({
+      ? getLaunchAuctionNoBidReleaseBlock({
           unlockBlock: partialResult.unlockBlock,
           policy: input.policy
         })
       : null;
 
-  const phase = deriveReservedAuctionPhase({
+  const phase = deriveLaunchAuctionPhase({
     currentBlockHeight: input.currentBlockHeight,
     unlockBlock: input.scenario.unlockBlock,
     noBidReleaseBlock,
@@ -114,14 +114,14 @@ export function simulateReservedAuctionStateAtBlock(input: {
       ? partialResult.finalAuctionCloseBlock
       : null;
   const currentRequiredMinimumBidSats =
-    phase === "settled" || phase === "released_to_ordinary_lane"
+    phase === "settled" || phase === "closed_without_winner"
       ? null
       : partialResult.winner === null
         ? partialResult.openingMinimumBidSats
-        : calculateReservedAuctionMinimumIncrementBidSats({
+        : calculateLaunchAuctionMinimumIncrementBidSats({
             currentBidSats: partialResult.winner.amountSats,
             policy: input.policy,
-            useSoftCloseIncrement: isReservedAuctionSoftCloseWindow({
+            useSoftCloseIncrement: isLaunchAuctionSoftCloseWindow({
               currentBlockHeight: input.currentBlockHeight,
               auctionCloseBlockAfter: partialResult.finalAuctionCloseBlock,
               policy: input.policy
@@ -131,14 +131,14 @@ export function simulateReservedAuctionStateAtBlock(input: {
   return {
     currentBlockHeight: input.currentBlockHeight,
     phase,
-    phaseLabel: formatReservedAuctionPhaseLabel(phase),
+    phaseLabel: formatLaunchAuctionPhaseLabel(phase),
     normalizedName: partialResult.normalizedName,
-    reservedClassId: partialResult.reservedClassId,
+    auctionClassId: partialResult.auctionClassId,
     classLabel: partialResult.classLabel,
     unlockBlock: partialResult.unlockBlock,
-    ordinaryMinimumBidSats: partialResult.ordinaryMinimumBidSats,
+    baseMinimumBidSats: partialResult.baseMinimumBidSats,
     openingMinimumBidSats: partialResult.openingMinimumBidSats,
-    reservedLockBlocks: partialResult.reservedLockBlocks,
+    settlementLockBlocks: partialResult.settlementLockBlocks,
     noBidReleaseBlock,
     auctionStartBlock: partialResult.auctionStartBlock,
     auctionCloseBlockAfter,
@@ -156,20 +156,20 @@ export function simulateReservedAuctionStateAtBlock(input: {
   };
 }
 
-export function serializeReservedAuctionStateAtBlock(
-  state: ReservedAuctionStateAtBlock
-): SerializedReservedAuctionStateAtBlock {
+export function serializeLaunchAuctionStateAtBlock(
+  state: LaunchAuctionStateAtBlock
+): SerializedLaunchAuctionStateAtBlock {
   return {
     currentBlockHeight: state.currentBlockHeight,
     phase: state.phase,
     phaseLabel: state.phaseLabel,
     normalizedName: state.normalizedName,
-    reservedClassId: state.reservedClassId,
+    auctionClassId: state.auctionClassId,
     classLabel: state.classLabel,
     unlockBlock: state.unlockBlock,
-    ordinaryMinimumBidSats: state.ordinaryMinimumBidSats.toString(),
+    baseMinimumBidSats: state.baseMinimumBidSats.toString(),
     openingMinimumBidSats: state.openingMinimumBidSats.toString(),
-    reservedLockBlocks: state.reservedLockBlocks,
+    settlementLockBlocks: state.settlementLockBlocks,
     noBidReleaseBlock: state.noBidReleaseBlock,
     auctionStartBlock: state.auctionStartBlock,
     auctionCloseBlockAfter: state.auctionCloseBlockAfter,
@@ -195,21 +195,21 @@ export function serializeReservedAuctionStateAtBlock(
   };
 }
 
-function deriveReservedAuctionPhase(input: {
+function deriveLaunchAuctionPhase(input: {
   readonly currentBlockHeight: number;
   readonly unlockBlock: number;
   readonly noBidReleaseBlock: number | null;
   readonly auctionCloseBlockAfter: number | null;
   readonly softCloseExtensionBlocks: number;
   readonly winnerPresent: boolean;
-}): ReservedAuctionPhase {
+}): LaunchAuctionPhase {
   if (input.currentBlockHeight < input.unlockBlock) {
     return "pending_unlock";
   }
 
   if (!input.winnerPresent) {
     if (input.noBidReleaseBlock !== null && input.currentBlockHeight > input.noBidReleaseBlock) {
-      return "released_to_ordinary_lane";
+      return "closed_without_winner";
     }
 
     return "awaiting_opening_bid";
@@ -235,14 +235,14 @@ function deriveReservedAuctionPhase(input: {
   return "live_bidding";
 }
 
-export function formatReservedAuctionPhaseLabel(phase: ReservedAuctionPhase): string {
+export function formatLaunchAuctionPhaseLabel(phase: LaunchAuctionPhase): string {
   switch (phase) {
     case "pending_unlock":
       return "Pending unlock";
     case "awaiting_opening_bid":
       return "Awaiting opening bid";
-    case "released_to_ordinary_lane":
-      return "Released to ordinary lane";
+    case "closed_without_winner":
+      return "Closed without winner";
     case "live_bidding":
       return "Live bidding";
     case "soft_close":

@@ -1,0 +1,22 @@
+{
+  "title": "Private demo lot · nvidia (soft close)",
+  "description": "Private signet lot kept around specifically so the curated auction lab still shows a soft-close phase even though the live chain is much shorter.",
+  "currentBlockHeight": 4450,
+  "scenario": {
+    "name": "nvidia",
+    "auctionClassId": "launch_name",
+    "unlockBlock": 110,
+    "bidAttempts": [
+      {
+        "bidderId": "private_alpha",
+        "blockHeight": 111,
+        "amountSats": "1000000000"
+      },
+      {
+        "bidderId": "private_beta",
+        "blockHeight": 4311,
+        "amountSats": "1100000000"
+      }
+    ]
+  }
+}

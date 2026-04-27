@@ -4,7 +4,7 @@
   "currentBlockHeight": 128,
   "scenario": {
     "name": "openai",
-    "reservedClassId": "major_existing_name",
+    "auctionClassId": "launch_name",
     "unlockBlock": 110,
     "bidAttempts": [
       {

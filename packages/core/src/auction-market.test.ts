@@ -3,12 +3,12 @@ import { readFile } from "node:fs/promises";
 import { describe, expect, it } from "vitest";
 
 import {
-  parseReservedAuctionMarketScenario,
-  serializeReservedAuctionMarketScenario,
-  serializeReservedAuctionMarketSimulationResult,
-  simulateReservedAuctionMarket
+  parseLaunchAuctionMarketScenario,
+  serializeLaunchAuctionMarketScenario,
+  serializeLaunchAuctionMarketSimulationResult,
+  simulateLaunchAuctionMarket
 } from "./index.js";
-import { createDefaultReservedAuctionPolicy } from "./auction-policy.js";
+import { createDefaultLaunchAuctionPolicy } from "./auction-policy.js";
 
 interface MarketFixtureExpectation {
   readonly auctionWinners: Readonly<Record<string, string | null>>;
@@ -36,9 +36,9 @@ const MARKET_FIXTURE_FILES = [
   "market-self-raise-delta.json"
 ] as const;
 
-describe("reserved auction market simulator", () => {
+describe("auction market simulator", () => {
   it("round-trips market scenarios and results through JSON-safe forms", () => {
-    const scenario = parseReservedAuctionMarketScenario({
+    const scenario = parseLaunchAuctionMarketScenario({
       bidderBudgetsSats: {
         alpha: "255000000",
         beta: "300000000"
@@ -47,7 +47,7 @@ describe("reserved auction market simulator", () => {
         {
           auctionId: "openai-main",
           name: "openai",
-          reservedClassId: "major_existing_name",
+          auctionClassId: "launch_name",
           unlockBlock: 920000,
           bidAttempts: [
             {
@@ -59,14 +59,14 @@ describe("reserved auction market simulator", () => {
         }
       ]
     });
-    const reparsed = parseReservedAuctionMarketScenario(
-      JSON.parse(JSON.stringify(serializeReservedAuctionMarketScenario(scenario)))
+    const reparsed = parseLaunchAuctionMarketScenario(
+      JSON.parse(JSON.stringify(serializeLaunchAuctionMarketScenario(scenario)))
     );
-    const result = simulateReservedAuctionMarket({
-      policy: createDefaultReservedAuctionPolicy(),
+    const result = simulateLaunchAuctionMarket({
+      policy: createDefaultLaunchAuctionPolicy(),
       scenario: reparsed
     });
-    const serialized = serializeReservedAuctionMarketSimulationResult(result);
+    const serialized = serializeLaunchAuctionMarketSimulationResult(result);
 
     expect(reparsed).toEqual(scenario);
     expect(serialized.auctionResults[0]?.winner?.amountSats).toBe("200000000");
@@ -76,9 +76,9 @@ describe("reserved auction market simulator", () => {
   for (const fixtureFile of MARKET_FIXTURE_FILES) {
     it(`matches expected market outcome for ${fixtureFile}`, async () => {
       const fixture = await loadMarketFixture(fixtureFile);
-      const result = simulateReservedAuctionMarket({
-        policy: createDefaultReservedAuctionPolicy(),
-        scenario: parseReservedAuctionMarketScenario(fixture.scenario)
+      const result = simulateLaunchAuctionMarket({
+        policy: createDefaultLaunchAuctionPolicy(),
+        scenario: parseLaunchAuctionMarketScenario(fixture.scenario)
       });
 
       expect(

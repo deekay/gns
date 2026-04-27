@@ -7,29 +7,19 @@ import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 
 import {
-  assertHexBytes,
-  bytesToHex,
-  CLAIM_PACKAGE_FORMAT,
-  CLAIM_PACKAGE_VERSION,
-  createClaimPackage,
-  encodeCommitPayload,
-  getBondSats,
   normalizeName,
   parseSignedValueRecord,
   PRODUCT_NAME,
-  PROTOCOL_NAME,
-  REVEAL_WINDOW_BLOCKS
+  PROTOCOL_NAME
 } from "@ont/protocol";
 import {
   createExperimentalAuctionFeedBidPackage,
-  createReservedAuctionLabBidPackage,
-  loadReservedAuctionLab
+  createLaunchAuctionLabBidPackage,
+  loadLaunchAuctionLab
 } from "./auction-lab.js";
 import { renderClientScript } from "./client-script.js";
-import { getOfflineClaimClientBundle } from "./offline-claim-bundle.js";
-import { renderOfflineClaimPageHtml } from "./offline-claim-page.js";
+import { getKeyToolsClientBundle } from "./key-tools-bundle.js";
 import { renderPageHtml } from "./page-shell.js";
-import { buildPrivateSignetClaimPsbtBundle } from "./private-signet-claim.js";
 import {
   fetchNameValueHistoryFromResolvers,
   publishValueRecordToResolvers,
@@ -60,10 +50,6 @@ const basePath = normalizeBasePath(process.env.ONT_WEB_BASE_PATH ?? "");
 const networkLabel =
   normalizeOptionalText(process.env.ONT_WEB_NETWORK_LABEL)
   ?? "Private Signet Demo";
-const showPrivateBatchSmoke = parseBoolean(
-  process.env.ONT_WEB_SHOW_PRIVATE_BATCH_SMOKE,
-  networkLabel.toLowerCase().includes("private signet")
-);
 const showPrivateAuctionSmoke = parseBoolean(
   process.env.ONT_WEB_SHOW_PRIVATE_AUCTION_SMOKE,
   networkLabel.toLowerCase().includes("private signet")
@@ -71,15 +57,6 @@ const showPrivateAuctionSmoke = parseBoolean(
 const privateSignetFundingCommand =
   normalizeOptionalText(process.env.ONT_WEB_PRIVATE_SIGNET_FUNDING_COMMAND) ??
   "/usr/local/bin/ont-private-signet-fund";
-const privateSignetBitcoinCliPath =
-  normalizeOptionalText(process.env.ONT_WEB_PRIVATE_SIGNET_BITCOIN_CLI) ??
-  "/usr/local/bin/bitcoin-cli";
-const privateSignetBitcoinConfPath =
-  normalizeOptionalText(process.env.ONT_WEB_PRIVATE_SIGNET_BITCOIN_CONF) ??
-  "/etc/bitcoin-private-signet.conf";
-const privateSignetBitcoinDataDir =
-  normalizeOptionalText(process.env.ONT_WEB_PRIVATE_SIGNET_BITCOIN_DATADIR) ??
-  "/var/lib/bitcoind-private-signet";
 const privateSignetFundingAmountSats = parseSatsValue(
   process.env.ONT_WEB_PRIVATE_SIGNET_FUNDING_AMOUNT_SATS
     ?? "1000000",
@@ -103,8 +80,6 @@ const privateDemoBasePath = normalizeBasePath(
   process.env.ONT_WEB_PRIVATE_DEMO_BASE_PATH
     ?? (networkLabel.toLowerCase().includes("private signet") ? basePath : "/ont-private")
 );
-const privateSignetClaimPsbtBuilderEnabled =
-  networkLabel.toLowerCase().includes("private signet") && existsSync(privateSignetBitcoinCliPath);
 const privateSignetFundingRequestTimes = new Map<string, number>();
 const faviconDataUrl =
   "data:image/svg+xml," +
@@ -117,9 +92,6 @@ const faviconDataUrl =
       .replace(/\s+/g, " ")
       .trim()
   );
-const privateBatchSmokeStatusPath =
-  normalizeOptionalText(process.env.ONT_WEB_PRIVATE_BATCH_SMOKE_STATUS_PATH) ??
-  fileURLToPath(new URL("../../../.data/private-signet-demo/batch-smoke-summary.json", import.meta.url));
 const privateAuctionSmokeStatusPath =
   normalizeOptionalText(process.env.ONT_WEB_PRIVATE_AUCTION_SMOKE_STATUS_PATH) ??
   fileURLToPath(new URL("../../../.data/private-signet-demo/auction-smoke-summary.json", import.meta.url));
@@ -174,77 +146,6 @@ const server = createServer(async (request, response) => {
       return writeJson(response, 502, {
         error: "private_signet_funding_failed",
         message: error instanceof Error ? error.message : "Unable to fund the requested address."
-      });
-    }
-  }
-
-  if (pathname === "/api/private-signet-claim-psbts") {
-    if (method !== "POST") {
-      return writeJson(response, 405, {
-        error: "method_not_allowed",
-        message: "Use POST for private signet claim PSBT generation."
-      });
-    }
-
-    if (!privateSignetClaimPsbtBuilderEnabled) {
-      return writeJson(response, 404, {
-        error: "not_found",
-        message: "Private signet claim PSBT generation is not enabled for this deployment."
-      });
-    }
-
-    try {
-      const body = await readJsonBody(request);
-
-      if (!body || typeof body !== "object") {
-        return writeJson(response, 400, {
-          error: "invalid_body",
-          message: "Claim PSBT generation requires a JSON body."
-        });
-      }
-
-      const record = body as Record<string, unknown>;
-      const name = getRequiredWebBodyString(record, "name");
-      const ownerPubkey = getRequiredWebBodyString(record, "ownerPubkey");
-      const nonceHex = getRequiredWebBodyString(record, "nonceHex");
-      const bondVout = getRequiredWebBodyInteger(record, "bondVout");
-      const bondDestination = getRequiredWebBodyString(record, "bondDestination");
-      const walletMasterFingerprint = getRequiredWebBodyString(record, "walletMasterFingerprint");
-      const walletAccountXpub = getRequiredWebBodyString(record, "walletAccountXpub");
-      const walletAccountPath = getRequiredWebBodyString(record, "walletAccountPath");
-      const walletScanLimit = getOptionalWebBodyInteger(record, "walletScanLimit");
-      const commitFeeSats = getOptionalWebBodySats(record, "commitFeeSats");
-      const revealFeeSats = getOptionalWebBodySats(record, "revealFeeSats");
-      const changeDestination = getOptionalWebBodyString(record, "changeDestination");
-
-      const bundle = await buildPrivateSignetClaimPsbtBundle(
-        {
-          name,
-          ownerPubkey,
-          nonceHex,
-          bondVout,
-          bondDestination,
-          ...(changeDestination === undefined ? {} : { changeDestination }),
-          walletMasterFingerprint,
-          walletAccountXpub,
-          walletAccountPath,
-          ...(walletScanLimit === undefined ? {} : { walletScanLimit }),
-          ...(commitFeeSats === undefined ? {} : { commitFeeSats }),
-          ...(revealFeeSats === undefined ? {} : { revealFeeSats })
-        },
-        {
-          bitcoinCliPath: privateSignetBitcoinCliPath,
-          bitcoinConfPath: privateSignetBitcoinConfPath,
-          bitcoinDataDir: privateSignetBitcoinDataDir
-        }
-      );
-
-      return writeJson(response, 200, bundle);
-    } catch (error) {
-      return writeJson(response, 400, {
-        error: "private_signet_claim_psbt_failed",
-        message:
-          error instanceof Error ? error.message : "Unable to build Sparrow-native claim PSBTs."
       });
     }
   }
@@ -333,7 +234,7 @@ const server = createServer(async (request, response) => {
       const ownerPubkey = getRequiredWebBodyString(record, "ownerPubkey");
       const bidAmountSats = getRequiredWebBodySats(record, "bidAmountSats");
       const noBidReleaseBlocks = getOptionalWebBodyInteger(record, "noBidReleaseBlocks");
-      const pkg = await createReservedAuctionLabBidPackage({
+      const pkg = await createLaunchAuctionLabBidPackage({
         caseId,
         bidderId,
         ownerPubkey,
@@ -442,36 +343,12 @@ const server = createServer(async (request, response) => {
     });
   }
 
-  if (pathname === "/claim/offline" || pathname === "/claim/offline/" || pathname === "/claim/offline/download") {
-    try {
-      const offlineHtml = renderOfflineClaimPageHtml(await getOfflineClaimClientBundle());
-
-      if (pathname === "/claim/offline/download") {
-        return writeHtmlAttachment(
-          response,
-          offlineHtml,
-          "ont-offline-claim-architect.html"
-        );
-      }
-
-      return writeHtml(response, offlineHtml);
-    } catch (error) {
-      return writeJson(response, 500, {
-        error: "offline_claim_unavailable",
-        message:
-          error instanceof Error
-            ? error.message
-            : "Unable to generate the offline claim architect."
-      });
-    }
-  }
-
   if (
     pathname === "/"
     || isExplorePath(pathname)
+    || isAdvancedPath(pathname)
     || isAuctionsPath(pathname)
     || isNameDetailPath(pathname)
-    || isClaimPath(pathname)
     || isValuesPath(pathname)
     || isTransferPath(pathname)
     || isSetupPath(pathname)
@@ -482,16 +359,14 @@ const server = createServer(async (request, response) => {
       renderPageHtml({
         basePath,
         faviconDataUrl,
-        includeLiveSmoke: false,
-        includePrivateBatchSmoke: showPrivateBatchSmoke,
         includePrivateAuctionSmoke: showPrivateAuctionSmoke,
         networkLabel,
         pageKind: pathname === "/"
           ? "home"
+          : isAdvancedPath(pathname)
+          ? "advanced"
           : isAuctionsPath(pathname)
           ? "auctions"
-          : isClaimPath(pathname)
-          ? "claim"
           : isValuesPath(pathname)
             ? "values"
           : isTransferPath(pathname)
@@ -508,12 +383,35 @@ const server = createServer(async (request, response) => {
     );
   }
 
+  if (isClaimPath(pathname)) {
+    return writeRedirect(response, `${basePath}/auctions`);
+  }
+
   if (pathname === "/styles.css") {
     return writeText(response, 200, STYLESHEET, "text/css; charset=utf-8");
   }
 
   if (pathname === "/app.js") {
     return writeText(response, 200, renderClientScript(basePath), "application/javascript; charset=utf-8");
+  }
+
+  if (pathname === "/key-tools.js") {
+    try {
+      return writeText(
+        response,
+        200,
+        await getKeyToolsClientBundle(),
+        "application/javascript; charset=utf-8"
+      );
+    } catch (error) {
+      return writeJson(response, 500, {
+        error: "key_tools_unavailable",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Unable to generate the browser key tools bundle."
+      });
+    }
   }
 
   if (pathname === "/value-tools.js") {
@@ -544,7 +442,6 @@ const server = createServer(async (request, response) => {
       resolverFanoutAvailable: resolverCandidateUrls.length > 1,
       basePath,
       networkLabel,
-      showPrivateBatchSmoke,
       showPrivateAuctionSmoke,
       showAuctionLab: true,
       privateDemoBasePath,
@@ -552,18 +449,13 @@ const server = createServer(async (request, response) => {
         enabled: privateSignetFundingEnabled,
         amountSats: privateSignetFundingAmountSats.toString(),
         amountBtc: privateSignetFundingAmountBtc,
-        electrumEndpoint: privateSignetElectrumEndpoint,
-        claimPsbtBuilderEnabled: privateSignetClaimPsbtBuilderEnabled
+        electrumEndpoint: privateSignetElectrumEndpoint
       }
     });
   }
 
   if (pathname === "/api/health") {
     return proxyJson(response, `${resolverUrl}/health`);
-  }
-
-  if (pathname === "/api/private-batch-smoke-status") {
-    return writeJson(response, 200, await readPrivateBatchSmokeStatus());
   }
 
   if (pathname === "/api/private-auction-smoke-status") {
@@ -577,7 +469,7 @@ const server = createServer(async (request, response) => {
       return writeJson(
         response,
         200,
-        await loadReservedAuctionLab({
+        await loadLaunchAuctionLab({
           ...(noBidReleaseBlocks === undefined
             ? {}
             : {
@@ -603,10 +495,6 @@ const server = createServer(async (request, response) => {
     return proxyJson(response, `${resolverUrl}/names`);
   }
 
-  if (pathname === "/api/pending-commits") {
-    return proxyJson(response, `${resolverUrl}/pending-commits`);
-  }
-
   if (pathname === "/api/activity") {
     const query = url.searchParams.toString();
     return proxyJson(response, `${resolverUrl}/activity${query === "" ? "" : `?${query}`}`);
@@ -619,42 +507,6 @@ const server = createServer(async (request, response) => {
 
   if (pathname === "/api/dev-owner-key") {
     return writeJson(response, 200, generatePrototypeOwnerKey());
-  }
-
-  if (pathname.startsWith("/api/claim-draft/")) {
-    const rawName = decodeURIComponent(pathname.slice("/api/claim-draft/".length));
-
-    try {
-      return writeJson(
-        response,
-        200,
-        buildClaimDraft({
-          name: rawName,
-          ownerPubkey: url.searchParams.get("ownerPubkey") ?? "",
-          nonceHex: url.searchParams.get("nonceHex") ?? "",
-          ...(url.searchParams.get("bondVout") === null ? {} : { bondVout: url.searchParams.get("bondVout") ?? "" }),
-          ...(url.searchParams.get("bondDestination") === null
-            ? {}
-            : { bondDestination: url.searchParams.get("bondDestination") ?? "" }),
-          ...(url.searchParams.get("changeDestination") === null
-            ? {}
-            : { changeDestination: url.searchParams.get("changeDestination") ?? "" }),
-          ...(url.searchParams.get("commitTxid") === null
-            ? {}
-            : { commitTxid: url.searchParams.get("commitTxid") ?? "" })
-        })
-      );
-    } catch (error) {
-      return writeJson(response, 400, {
-        error: "invalid_claim_draft",
-        message: error instanceof Error ? error.message : "Invalid claim draft input"
-      });
-    }
-  }
-
-  if (pathname.startsWith("/api/claim-plan/")) {
-    const name = pathname.slice("/api/claim-plan/".length);
-    return proxyJson(response, `${resolverUrl}/claim-plan/${name}`);
   }
 
   if (pathname.startsWith("/api/name/")) {
@@ -709,8 +561,8 @@ const server = createServer(async (request, response) => {
   return writeJson(response, 404, {
     error: "not_found",
     message:
-      "Supported paths: /, /explore, /auctions, /claim, /values, /transfer, /setup, /explainer, /api/config, /api/health, /api/names, /api/pending-commits, /api/activity, /api/tx/{txid}, /api/dev-owner-key, /api/private-signet-fund, /api/claim-draft/{name}, /api/claim-plan/{name}, /api/name/{name}, /api/name/{name}/activity, /api/name/{name}/value, /api/name/{name}/value/history, /api/name/{name}/value/compare, /api/private-batch-smoke-status, /api/auctions"
-      + ", /api/private-auction-smoke-status, /api/experimental-auctions, /api/auction-bid-package, /api/experimental-auction-bid-package, /api/private-signet-claim-psbts, /api/values, /api/values/fanout, /claim/offline, /claim/offline/download"
+      "Supported paths: /, /explore, /advanced, /auctions, /values, /transfer, /setup, /explainer, /api/config, /api/health, /api/names, /api/activity, /api/tx/{txid}, /api/dev-owner-key, /api/private-signet-fund, /api/name/{name}, /api/name/{name}/activity, /api/name/{name}/value, /api/name/{name}/value/history, /api/name/{name}/value/compare, /api/auctions"
+      + ", /api/private-auction-smoke-status, /api/experimental-auctions, /api/auction-bid-package, /api/experimental-auction-bid-package, /api/values, /api/values/fanout"
   });
 });
 
@@ -741,6 +593,10 @@ function isNameDetailPath(pathname: string): boolean {
 
 function isExplorePath(pathname: string): boolean {
   return pathname === "/explore" || pathname === "/explore/";
+}
+
+function isAdvancedPath(pathname: string): boolean {
+  return pathname === "/advanced" || pathname === "/advanced/";
 }
 
 function isAuctionsPath(pathname: string): boolean {
@@ -788,28 +644,6 @@ async function proxyJson(
   }
 }
 
-async function readPrivateBatchSmokeStatus(): Promise<unknown> {
-  try {
-    return JSON.parse(await readFile(privateBatchSmokeStatusPath, "utf8"));
-  } catch (error) {
-    if (
-      error instanceof Error &&
-      "code" in error &&
-      (error as NodeJS.ErrnoException).code === "ENOENT"
-    ) {
-      return {
-        status: "unavailable",
-        message: "No private signet batch smoke summary has been published yet."
-      };
-    }
-
-    return {
-      status: "error",
-      message: error instanceof Error ? error.message : "Unable to read private signet batch smoke summary."
-    };
-  }
-}
-
 async function readPrivateAuctionSmokeStatus(): Promise<unknown> {
   try {
     return JSON.parse(await readFile(privateAuctionSmokeStatusPath, "utf8"));
@@ -836,16 +670,11 @@ function writeHtml(response: import("node:http").ServerResponse, html: string): 
   writeText(response, 200, html, "text/html; charset=utf-8");
 }
 
-function writeHtmlAttachment(
-  response: import("node:http").ServerResponse,
-  html: string,
-  filename: string
-): void {
-  response.writeHead(200, {
-    "content-type": "text/html; charset=utf-8",
-    "content-disposition": `attachment; filename="${filename}"`
+function writeRedirect(response: import("node:http").ServerResponse, location: string): void {
+  response.writeHead(302, {
+    location
   });
-  response.end(html);
+  response.end();
 }
 
 function writeText(
@@ -903,16 +732,6 @@ function parseSatsValue(value: string, envName: string): bigint {
   }
 }
 
-function parseBondVout(value: string): number {
-  const parsed = Number.parseInt(value, 10);
-
-  if (!Number.isInteger(parsed) || parsed < 0 || parsed > 0xff) {
-    throw new Error(`invalid bondVout value: ${value}`);
-  }
-
-  return parsed;
-}
-
 function getRequiredWebBodyString(record: Record<string, unknown>, key: string): string {
   const value = record[key];
   if (typeof value !== "string" || value.trim() === "") {
@@ -920,32 +739,6 @@ function getRequiredWebBodyString(record: Record<string, unknown>, key: string):
   }
 
   return value.trim();
-}
-
-function getOptionalWebBodyString(
-  record: Record<string, unknown>,
-  key: string
-): string | undefined {
-  const value = record[key];
-  if (value === undefined || value === null || value === "") {
-    return undefined;
-  }
-
-  if (typeof value !== "string") {
-    throw new Error(`${key} must be a string`);
-  }
-
-  const trimmed = value.trim();
-  return trimmed === "" ? undefined : trimmed;
-}
-
-function getRequiredWebBodyInteger(record: Record<string, unknown>, key: string): number {
-  const value = record[key];
-  if (typeof value !== "number" || !Number.isSafeInteger(value) || value < 0) {
-    throw new Error(`${key} must be a non-negative integer`);
-  }
-
-  return value;
 }
 
 function getOptionalWebBodyInteger(
@@ -1133,10 +926,6 @@ function satsToBitcoinString(sats: bigint): string {
   return fractional === "" ? `${whole}.0` : `${whole}.${fractional}`;
 }
 
-function formatBitcoinUnits(value: bigint | string | number): string {
-  return `₿${BigInt(value).toLocaleString("en-US")}`;
-}
-
 class HttpRequestError extends Error {
   readonly statusCode: number;
   readonly code: string;
@@ -1184,288 +973,6 @@ function withBasePath(pathname: string, configuredBasePath: string): string {
   }
 
   return `${configuredBasePath}${pathname}`;
-}
-
-function buildClaimDraft(input: {
-  name: string;
-  ownerPubkey: string;
-  nonceHex: string;
-  bondVout?: string;
-  bondDestination?: string;
-  changeDestination?: string;
-  commitTxid?: string;
-}) {
-  const name = normalizeName(input.name);
-  const ownerPubkey = assertHexBytes(input.ownerPubkey, 32, "ownerPubkey");
-  const nonceHex = assertHexBytes(input.nonceHex, 8, "nonceHex");
-  const bondVout = parseBondVout(input.bondVout ?? "0");
-  const bondDestination = normalizeOptionalText(input.bondDestination);
-  const changeDestination = normalizeOptionalText(input.changeDestination);
-  const claimPackage = createClaimPackage({
-    name,
-    ownerPubkey,
-    nonceHex,
-    bondVout,
-    bondDestination,
-    changeDestination,
-    commitTxid: normalizeOptionalText(input.commitTxid)
-  });
-  const commitPayload = encodeCommitPayload({
-    bondVout: claimPackage.bondVout,
-    ownerPubkey: claimPackage.ownerPubkey,
-    commitHash: claimPackage.commitHash
-  });
-  const suggestedOpReturnVout = bondVout === 0 ? 1 : bondVout === 1 ? 0 : null;
-
-  const result: {
-    readonly format: typeof CLAIM_PACKAGE_FORMAT;
-    readonly packageVersion: typeof CLAIM_PACKAGE_VERSION;
-    readonly protocol: typeof PROTOCOL_NAME;
-    readonly exportedAt: string;
-    readonly name: string;
-    readonly ownerPubkey: string;
-    readonly nonceHex: string;
-    readonly nonceDecimal: string;
-    readonly requiredBondSats: string;
-    readonly bondVout: number;
-    readonly bondDestination: string | null;
-    readonly changeDestination: string | null;
-    readonly commitHash: string;
-    readonly commitPayloadHex: string;
-    readonly commitPayloadBytes: number;
-    readonly commitTemplate: {
-      readonly bondVout: number;
-      readonly suggestedOpReturnVout: number | null;
-      readonly outputs: ReadonlyArray<{
-        readonly vout: number | null;
-        readonly role: string;
-        readonly scriptType: "payment" | "op_return";
-        readonly valueSats: string;
-        readonly dataHex?: string;
-        readonly destinationHint?: string;
-      }>;
-      readonly notes: readonly string[];
-    };
-    readonly walletHandoff: {
-      readonly commit: {
-        readonly summary: string;
-        readonly unsignedTransactionSkeleton: {
-          readonly fundingInputs: string;
-          readonly outputs: ReadonlyArray<{
-            readonly role: string;
-            readonly required: boolean;
-            readonly fixedVout: number | null;
-            readonly scriptType: "payment" | "op_return";
-            readonly valueSats: string;
-            readonly destination: string | null;
-            readonly dataHex: string | null;
-          }>;
-        };
-        readonly signerChecklist: readonly string[];
-      };
-      readonly reveal: {
-        readonly ready: boolean;
-        readonly summary: string;
-        readonly unsignedTransactionSkeleton: {
-          readonly fundingInputs: string;
-          readonly outputs: ReadonlyArray<{
-            readonly role: string;
-            readonly required: boolean;
-            readonly fixedVout: number | null;
-            readonly scriptType: "payment" | "op_return";
-            readonly valueSats: string;
-            readonly destination: string | null;
-            readonly dataHex: string | null;
-          }>;
-        };
-        readonly signerChecklist: readonly string[];
-      };
-    };
-    readonly revealPlan: {
-      readonly commitTxidKnown: boolean;
-      readonly canPreSignReveal: boolean;
-      readonly autoBroadcastConcept: readonly string[];
-    };
-    readonly revealReady: boolean;
-    readonly commitTxid: string | null;
-    readonly revealPayloadHex: string | null;
-    readonly revealPayloadBytes: number | null;
-  } = {
-    format: CLAIM_PACKAGE_FORMAT,
-    packageVersion: CLAIM_PACKAGE_VERSION,
-    protocol: PROTOCOL_NAME,
-    exportedAt: claimPackage.exportedAt,
-    name: claimPackage.name,
-    ownerPubkey: claimPackage.ownerPubkey,
-    nonceHex: claimPackage.nonceHex,
-    nonceDecimal: claimPackage.nonceDecimal,
-    requiredBondSats: claimPackage.requiredBondSats,
-    bondVout: claimPackage.bondVout,
-    bondDestination: claimPackage.bondDestination,
-    changeDestination: claimPackage.changeDestination,
-    commitHash: claimPackage.commitHash,
-    commitPayloadHex: claimPackage.commitPayloadHex,
-    commitPayloadBytes: claimPackage.commitPayloadBytes,
-    commitTemplate: {
-      bondVout,
-      suggestedOpReturnVout,
-      outputs: [
-        {
-          vout: bondVout,
-          role: "bond",
-          scriptType: "payment",
-          valueSats: claimPackage.requiredBondSats,
-          destinationHint: bondDestination ?? "Send to a self-custody address or script you control."
-        },
-        {
-          vout: suggestedOpReturnVout,
-          role: "ont_commit",
-          scriptType: "op_return",
-          valueSats: "0",
-          dataHex: bytesToHex(commitPayload)
-        }
-      ],
-      notes: [
-        "Do not let fees reduce the bond output below the required amount.",
-        "Keep the bond output at the declared vout index so indexers can pair it with the claim.",
-        "If your wallet adds a change output, place it after the bond and OP_RETURN outputs whenever possible."
-      ]
-    },
-    walletHandoff: {
-      commit: {
-        summary:
-          "Build one commit transaction with a dedicated bond output plus one OP_RETURN output carrying the commit payload.",
-        unsignedTransactionSkeleton: {
-          fundingInputs: "Wallet-selected funding inputs and separate fee/change handling.",
-          outputs: [
-            {
-              role: "bond",
-              required: true,
-              fixedVout: bondVout,
-              scriptType: "payment",
-              valueSats: claimPackage.requiredBondSats,
-              destination: bondDestination,
-              dataHex: null
-            },
-            {
-              role: "ont_commit",
-              required: true,
-              fixedVout: suggestedOpReturnVout,
-              scriptType: "op_return",
-              valueSats: "0",
-              destination: null,
-              dataHex: bytesToHex(commitPayload)
-            },
-            {
-              role: "change",
-              required: false,
-              fixedVout: null,
-              scriptType: "payment",
-              valueSats: "wallet-calculated",
-              destination: changeDestination,
-              dataHex: null
-            }
-          ]
-        },
-        signerChecklist: [
-          `Preserve the bond at vout ${bondVout} with at least ${formatBitcoinUnits(claimPackage.requiredBondSats)}.`,
-          "Fund miner fees from separate inputs or change rather than shrinking the bond output.",
-          "Include the OP_RETURN output with the exact commit payload bytes shown below.",
-          "Record the final commit txid so the reveal payload can be derived and broadcast on time."
-        ]
-      },
-      reveal: {
-        ready: false,
-        summary:
-          "Build a separate reveal transaction after the commit exists. It carries one OP_RETURN reveal payload and can use ordinary wallet funding for fees.",
-        unsignedTransactionSkeleton: {
-          fundingInputs: "Wallet-selected funding input for the reveal fee.",
-          outputs: [
-            {
-              role: "ont_reveal",
-              required: true,
-              fixedVout: 0,
-              scriptType: "op_return",
-              valueSats: "0",
-              destination: null,
-              dataHex: null
-            },
-            {
-              role: "change",
-              required: false,
-              fixedVout: null,
-              scriptType: "payment",
-              valueSats: "wallet-calculated",
-              destination: changeDestination,
-              dataHex: null
-            }
-          ]
-        },
-        signerChecklist: [
-          "Wait until the commit txid is known, then derive the reveal payload.",
-          `Broadcast only after the commit confirms and before the ${REVEAL_WINDOW_BLOCKS}-block reveal window closes.`,
-          "Keep a local copy of the signed reveal so an auto-broadcast service is not your only path."
-        ]
-      }
-    },
-    revealPlan: {
-      commitTxidKnown: false,
-      canPreSignReveal: false,
-      autoBroadcastConcept: [
-        "The website can prepare the reveal transaction as soon as the commit txid is known.",
-        "A future signer flow can have the user sign the reveal up front and hand only the signed transaction to a watcher service.",
-        "That watcher can wait for the commit confirmation and broadcast the reveal automatically within the allowed window."
-      ]
-    },
-    revealReady: claimPackage.revealReady,
-    commitTxid: claimPackage.commitTxid,
-    revealPayloadHex: claimPackage.revealPayloadHex,
-    revealPayloadBytes: claimPackage.revealPayloadBytes
-  };
-
-  if (claimPackage.revealReady && claimPackage.commitTxid && claimPackage.revealPayloadHex) {
-    return {
-      ...result,
-      walletHandoff: {
-        ...result.walletHandoff,
-        reveal: {
-          ...result.walletHandoff.reveal,
-          ready: true,
-          unsignedTransactionSkeleton: {
-            ...result.walletHandoff.reveal.unsignedTransactionSkeleton,
-            outputs: result.walletHandoff.reveal.unsignedTransactionSkeleton.outputs.map((output) =>
-              output.role === "ont_reveal"
-                ? {
-                    ...output,
-                    dataHex: claimPackage.revealPayloadHex
-                  }
-                : output
-            )
-          },
-          signerChecklist: [
-            `Use the reveal payload tied to commit txid ${claimPackage.commitTxid}.`,
-            "Broadcast after the commit confirms and before the reveal deadline.",
-            "If you pre-sign the reveal, keep a backup copy in case the watcher service fails."
-          ]
-        }
-      },
-      revealPlan: {
-        commitTxidKnown: true,
-        canPreSignReveal: true,
-        autoBroadcastConcept: [
-          `Commit txid ${claimPackage.commitTxid} is now known, so the reveal can be fully assembled and pre-signed.`,
-          "A watcher service can hold only the signed reveal transaction and broadcast it after the commit confirms.",
-          `If the service fails, you can still broadcast the same signed reveal yourself before the ${REVEAL_WINDOW_BLOCKS}-block window closes.`
-        ]
-      },
-      revealReady: true,
-      commitTxid: claimPackage.commitTxid,
-      revealPayloadHex: claimPackage.revealPayloadHex,
-      revealPayloadBytes: claimPackage.revealPayloadBytes
-    };
-  }
-
-  return result;
 }
 
 function generatePrototypeOwnerKey() {

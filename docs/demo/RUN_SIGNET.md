@@ -1,15 +1,18 @@
 # Run Against Signet
 
-This repo defaults to the local fixture chain. You now have two remote signet paths:
+This repo defaults to the local fixture chain. You now have two remote signet
+paths:
 
 - `rpc` mode for a real Bitcoin Core JSON-RPC node you control
-- `esplora` mode for a public read-only signet backend such as [mempool.space signet API](https://mempool.space/signet/api)
+- `esplora` mode for a public read-only signet backend such as
+  [mempool.space signet API](https://mempool.space/signet/api)
 
-Use `esplora` when you want to validate the live read path without running your own node.
-Use `rpc` when you want the most complete and controllable write path for claim broadcast, reveal broadcast, and transfer execution.
-The prototype CLI now also accepts `--base-url <esplora-url>` for transport commands, but that public write path has not yet been exercised with a funded end-to-end claim.
+Use `esplora` when you want to validate the live read path without running your
+own node. Use `rpc` when you want the most complete and controllable write path
+for auction bids, transfers, and value updates.
 
-If you want to run the current prototype on your own VPS, use [VPS_SETUP.md](../operators/VPS_SETUP.md).
+If you want to run the current prototype on your own VPS, use
+[VPS_SETUP.md](../operators/VPS_SETUP.md).
 
 ## Terminal-Only Live Flow
 
@@ -17,22 +20,22 @@ For live testing, the cleanest prototype loop is now:
 
 ```bash
 npm run dev:cli -- generate-live-account --network signet --write /path/to/live-account.json
-npm run dev:cli -- create-claim-package <name> \
+npm run dev:cli -- create-auction-bid-package /path/to/auction-lot.json \
+  --bidder-id <local-bidder-id> \
   --owner-pubkey <owner-pubkey-hex> \
-  --bond-destination <funding-address> \
-  --change-destination <funding-address> \
-  --write /path/to/claim-package.json
+  --bid-amount-sats <amount-sats> \
+  --write /path/to/bid-package.json
 ```
 
 That gives you:
 
 - one owner key for ONT ownership and off-chain value updates
 - one funding WIF/address for signet transaction inputs
-- one claim package ready for `build-commit-artifacts` or `submit-claim`
+- one auction bid package ready for the signer flow
 
 ## Fastest Remote Signet Check
 
-This is the exact public endpoint used to validate the prototype:
+This is the exact public endpoint used to validate the read path:
 
 ```bash
 export ONT_ESPLORA_BASE_URL="https://mempool.space/signet/api"
@@ -45,167 +48,7 @@ export ONT_RPC_END_HEIGHT="$TIP"
 Then run:
 
 ```bash
-npm run dev:cli -- check-esplora --base-url https://mempool.space/signet/api --expected-chain signet
-npm run dev:cli -- check-address --address <signet-address> --base-url https://mempool.space/signet/api
 npm run dev:indexer
 ```
 
-The address check is useful when you are waiting on faucet funds and want to see whether a signet UTXO is visible yet.
-
-Expected output includes:
-
-- `source: "esplora"`
-- `syncMode: "esplora-oneshot"`
-- `descriptor: "https://mempool.space/signet/api"`
-
-Or run the resolver:
-
-```bash
-ONT_RESOLVER_PORT=8790 npm run dev:resolver
-curl -s http://127.0.0.1:8790/health
-```
-
-Expected health fields include:
-
-- `source: "esplora"`
-- `syncMode: "esplora-polling"` or `esplora-oneshot`
-- `descriptor: "https://mempool.space/signet/api"`
-
-That node can be:
-
-- local on your machine
-- remote on a VPS you control
-- remote on a hosted service, as long as it exposes Bitcoin Core-compatible JSON-RPC
-
-## Prerequisites
-
-- A running `bitcoind` with signet enabled
-- RPC enabled for the current user or a dedicated service user
-- The signet node should be synced at least past your chosen `ONT_LAUNCH_HEIGHT`
-
-## Environment
-
-Example environment for a remote signet node:
-
-```bash
-export ONT_SOURCE_MODE="rpc"
-export ONT_BITCOIN_RPC_URL="https://your-remote-signet-node.example/rpc"
-export ONT_BITCOIN_RPC_USERNAME="bitcoinrpc"
-export ONT_BITCOIN_RPC_PASSWORD="your-rpc-password"
-export ONT_ESPLORA_BASE_URL=""
-export ONT_EXPECT_CHAIN="signet"
-export ONT_LAUNCH_HEIGHT="100"
-export ONT_RPC_POLL_INTERVAL_MS="10000"
-export ONT_RESOLVER_PORT="8787"
-export ONT_WEB_PORT="3000"
-```
-
-Notes:
-
-- `ONT_SOURCE_MODE` can be `auto`, `fixture`, `rpc`, or `esplora`. For remote signet work, setting it explicitly avoids ambiguity.
-- `ONT_EXPECT_CHAIN` defaults to `signet` in the apps, but setting it explicitly makes intent obvious.
-- `ONT_LAUNCH_HEIGHT` is required in RPC mode if no snapshot exists yet.
-- `ONT_LAUNCH_HEIGHT` is also required in Esplora mode if no snapshot exists yet.
-- `ONT_SNAPSHOT_PATH` is optional. If unset, each app uses a default file under `.data/`.
-- Only set one remote source at a time. If `ONT_BITCOIN_RPC_URL` and `ONT_ESPLORA_BASE_URL` are both set, startup will fail.
-
-## Check The Remote RPC First
-
-Before starting the resolver or trying claims, sanity-check the remote endpoint:
-
-```bash
-npm run dev:cli -- check-rpc --expected-chain signet
-```
-
-Or pass credentials explicitly:
-
-```bash
-npm run dev:cli -- check-rpc \
-  --rpc-url https://your-remote-signet-node.example/rpc \
-  --rpc-username bitcoinrpc \
-  --rpc-password your-rpc-password \
-  --expected-chain signet
-```
-
-Expected output includes:
-
-- `kind: "ont-rpc-check-result"`
-- `chain: "signet"`
-- `blocks`
-- `headers`
-- `bestblockhash`
-
-If this fails, fix the RPC endpoint first before moving on to resolver sync or transaction broadcast.
-
-## Start The Indexer Snapshot Pass
-
-```bash
-npm run dev:indexer
-```
-
-Expected output includes:
-
-- `source: "rpc"`
-- `syncMode: "rpc-oneshot"`
-- `expectedChain: "signet"`
-- `rpcChainInfo.chain: "signet"`
-
-If the RPC endpoint points to the wrong network, startup will fail fast with a chain-mismatch error.
-
-## Start The Resolver
-
-```bash
-npm run dev:resolver
-```
-
-Resolver health:
-
-```bash
-curl -s http://127.0.0.1:8787/health
-```
-
-If you override `ONT_RESOLVER_PORT`, use that port in the health URL instead.
-
-Expected health fields in RPC mode:
-
-- `source: "rpc"`
-- `syncMode: "rpc-polling"` or `rpc-oneshot`
-- `expectedChain: "signet"`
-- `rpcChainInfo.chain: "signet"`
-- `rpcStatus.nextHeight`
-
-## Snapshot Behavior
-
-In RPC mode:
-
-- the app saves an index snapshot to disk
-- on restart it attempts to restore from that snapshot
-- it verifies the saved head block hash against Bitcoin Core
-- if the saved head is no longer on the active chain, it discards the snapshot state and rebuilds from `ONT_LAUNCH_HEIGHT`
-
-Current prototype limitation:
-
-- reorg handling is `detect and rebuild`, not selective rollback
-
-## Useful Overrides
-
-You can cap the sync range for debugging:
-
-```bash
-export ONT_RPC_END_HEIGHT="200"
-```
-
-`ONT_RPC_END_HEIGHT` currently caps both RPC and Esplora sync windows in the prototype.
-
-You can change the resolver polling cadence:
-
-```bash
-export ONT_RPC_POLL_INTERVAL_MS="5000"
-```
-
-If `3000` or `8787` is already taken on your machine, move both apps together:
-
-```bash
-export ONT_RESOLVER_PORT="8788"
-export ONT_WEB_PORT="3001"
-```
+This checks that the indexer can read signet through the configured backend.

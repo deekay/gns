@@ -182,7 +182,7 @@ We should call this done only when a new tester can:
 1. open the hosted setup page
 2. connect Sparrow without SSH or operator-provided shell access
 3. request demo coins
-4. sign and broadcast the claim flow
+4. sign and broadcast the auction bid flow
 5. see the demo confirm automatically
 
 At that point the hosted demo becomes meaningfully closer to a real stranger-safe walkthrough.

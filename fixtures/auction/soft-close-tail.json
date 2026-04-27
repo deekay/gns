@@ -1,7 +1,7 @@
 {
   "scenario": {
     "name": "xai",
-    "reservedClassId": "major_existing_name",
+    "auctionClassId": "launch_name",
     "unlockBlock": 875000,
     "bidAttempts": [
       {

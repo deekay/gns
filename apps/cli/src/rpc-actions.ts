@@ -30,14 +30,6 @@ export interface RpcConnectionOptions {
   readonly expectedChain: "main" | "signet" | "testnet" | "regtest";
 }
 
-export interface RevealWatcherResult {
-  readonly kind: "ont-reveal-watch-result";
-  readonly commitTxid: string;
-  readonly commitConfirmations: number;
-  readonly revealTxid: string;
-  readonly broadcastedRevealTxid: string;
-}
-
 export interface TransactionConfirmationInfo {
   readonly confirmations: number;
   readonly found: boolean;
@@ -311,49 +303,6 @@ export async function broadcastSignedTransactionHex(options: {
   };
 }
 
-export async function waitForCommitAndBroadcastReveal(options: {
-  readonly rpc: BitcoinRpcConfig | undefined;
-  readonly esplora: BitcoinEsploraConfig | undefined;
-  readonly expectedChain: RpcConnectionOptions["expectedChain"];
-  readonly commitTxid: string;
-  readonly signedRevealArtifacts: SignedArtifactsEnvelope;
-  readonly pollIntervalMs: number;
-  readonly timeoutMs: number;
-}): Promise<RevealWatcherResult> {
-  await assertRemoteTargetChain(options);
-
-  const deadline = Date.now() + options.timeoutMs;
-
-  while (Date.now() < deadline) {
-    const confirmation = await getTransactionConfirmationInfo({
-      rpc: options.rpc,
-      esplora: options.esplora,
-      txid: options.commitTxid
-    });
-    const confirmations = confirmation.confirmations;
-
-    if (confirmations > 0) {
-      const { broadcastedTxid: broadcastedRevealTxid } = await broadcastSignedTransactionHex({
-        rpc: options.rpc,
-        esplora: options.esplora,
-        transactionHex: options.signedRevealArtifacts.signedTransactionHex
-      });
-
-      return {
-        kind: "ont-reveal-watch-result",
-        commitTxid: options.commitTxid,
-        commitConfirmations: confirmations,
-        revealTxid: options.signedRevealArtifacts.signedTransactionId,
-        broadcastedRevealTxid
-      };
-    }
-
-    await sleep(options.pollIntervalMs);
-  }
-
-  throw new Error("timed out waiting for commit confirmation before broadcasting reveal");
-}
-
 export function parseSignedArtifactsFile(input: unknown): SignedArtifactsEnvelope {
   return parseSignedArtifactsEnvelope(input);
 }
@@ -392,27 +341,6 @@ async function tryGetEsploraTransactionStatus(
   }
 }
 
-async function assertRemoteTargetChain(options: {
-  readonly rpc: BitcoinRpcConfig | undefined;
-  readonly esplora: BitcoinEsploraConfig | undefined;
-  readonly expectedChain: RpcConnectionOptions["expectedChain"];
-}): Promise<void> {
-  if (options.rpc !== undefined) {
-    await assertBitcoinRpcChain(options.rpc, toBitcoinRpcChain(options.expectedChain));
-    return;
-  }
-
-  if (options.esplora !== undefined) {
-    if (options.expectedChain !== "signet") {
-      throw new Error("prototype esplora mode currently only supports signet");
-    }
-
-    return;
-  }
-
-  throw new Error("either rpc or esplora config is required");
-}
-
 function toBitcoinRpcChain(chain: RpcConnectionOptions["expectedChain"]) {
   switch (chain) {
     case "main":
@@ -440,12 +368,6 @@ function summarizeAddressStats(stats: {
     spentSats: stats.spent_txo_sum,
     txCount: stats.tx_count
   };
-}
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms);
-  });
 }
 
 async function maybeInspectTransferRelayCompatibility(options: {

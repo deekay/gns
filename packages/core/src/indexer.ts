@@ -6,13 +6,8 @@ import {
 } from "@ont/bitcoin";
 import {
   type AuctionBidEventPayload,
-  type BatchAnchorEventPayload,
-  type BatchRevealEventPayload,
   OntEventType,
   normalizeName,
-  type CommitEventPayload,
-  type RevealEventPayload,
-  type RevealProofChunkEventPayload,
   type TransferEventPayload
 } from "@ont/protocol";
 
@@ -21,34 +16,31 @@ import {
   createEmptyState,
   type OntState,
   type NameRecord,
-  type PendingBatchAnchorRecord,
-  type PendingCommitRecord,
   type ProvenanceEventRecord,
   refreshDerivedState
 } from "./engine.js";
 import { getClaimedNameStatus } from "./state.js";
 import {
-  deriveExperimentalReservedAuctionStates,
+  deriveExperimentalLaunchAuctionStates,
   type ExperimentalSpentOutpointObservation,
-  serializeExperimentalReservedAuctionState,
-  type ExperimentalReservedAuctionBidObservation,
-  type ExperimentalReservedAuctionCatalogEntry,
-  type SerializedExperimentalReservedAuctionState
+  serializeExperimentalLaunchAuctionState,
+  type ExperimentalLaunchAuctionBidObservation,
+  type ExperimentalLaunchAuctionCatalogEntry,
+  type SerializedExperimentalLaunchAuctionState
 } from "./experimental-auction.js";
-import { createDefaultReservedAuctionPolicy, type ReservedAuctionPolicy } from "./auction-policy.js";
+import { createDefaultLaunchAuctionPolicy, type LaunchAuctionPolicy } from "./auction-policy.js";
 
 export interface IndexerStats {
   readonly currentHeight: number | null;
   readonly currentBlockHash: string | null;
   readonly processedBlocks: number;
   readonly trackedNames: number;
-  readonly pendingCommits: number;
 }
 
 export interface ExperimentalAuctionBidPayloadSnapshot {
   readonly flags: number;
   readonly bondVout: number;
-  readonly reservedLockBlocks: number;
+  readonly settlementLockBlocks: number;
   readonly bidAmountSats: string;
   readonly ownerPubkey: string;
   readonly auctionLotCommitment: string;
@@ -62,17 +54,6 @@ export interface InMemoryOntIndexerPersistedState {
   readonly currentBlockHash: string | null;
   readonly processedBlocks: number;
   readonly names: readonly NameRecordSnapshot[];
-  readonly pendingCommits: ReadonlyArray<
-    Omit<PendingCommitRecord, "bondValueSats"> & { readonly bondValueSats: string | null }
-  >;
-  readonly pendingBatchAnchors: ReadonlyArray<
-    Omit<PendingBatchAnchorRecord, "bondOutputs"> & {
-      readonly bondOutputs: ReadonlyArray<{
-        readonly vout: number;
-        readonly bondValueSats: string | null;
-      }>;
-    }
-  >;
   readonly spentOutpoints?: readonly ExperimentalSpentOutpointObservation[];
   readonly transactionProvenance: readonly TransactionProvenanceSnapshot[];
 }
@@ -92,36 +73,14 @@ export interface TransactionOutputSnapshot extends Omit<BitcoinTransactionOutput
 }
 
 export type TransactionProvenanceEventPayloadSnapshot =
-  | CommitEventPayload
-  | {
-      readonly commitTxid: string;
-      readonly nonce: string;
-      readonly name: string;
-    }
-  | {
-      readonly anchorTxid: string;
-      readonly ownerPubkey: string;
-      readonly nonce: string;
-      readonly bondVout: number;
-      readonly proofBytesLength: number;
-      readonly proofChunkCount: number;
-      readonly name: string;
-    }
   | TransferEventPayload
-  | BatchAnchorEventPayload
-  | RevealProofChunkEventPayload
   | ExperimentalAuctionBidPayloadSnapshot;
 
 export interface TransactionProvenanceEventSnapshot {
   readonly vout: number;
   readonly type: OntEventType;
   readonly typeName:
-    | "COMMIT"
-    | "REVEAL"
     | "TRANSFER"
-    | "BATCH_ANCHOR"
-    | "BATCH_REVEAL"
-    | "REVEAL_PROOF_CHUNK"
     | "AUCTION_BID";
   readonly payload: TransactionProvenanceEventPayloadSnapshot;
   readonly validationStatus: "applied" | "ignored";
@@ -142,8 +101,8 @@ export interface TransactionProvenanceSnapshot {
 export class InMemoryOntIndexer {
   private readonly launchHeight: number;
   private readonly recentCheckpointLimit: number;
-  private readonly experimentalReservedAuctionCatalog: readonly ExperimentalReservedAuctionCatalogEntry[];
-  private readonly experimentalReservedAuctionPolicy: ReservedAuctionPolicy;
+  private readonly experimentalLaunchAuctionCatalog: readonly ExperimentalLaunchAuctionCatalogEntry[];
+  private readonly experimentalLaunchAuctionPolicy: LaunchAuctionPolicy;
   private readonly state: OntState;
   private readonly spentOutpoints: Map<string, ExperimentalSpentOutpointObservation>;
   private readonly transactionProvenance: Map<string, TransactionProvenanceSnapshot>;
@@ -155,14 +114,14 @@ export class InMemoryOntIndexer {
   public constructor(input: {
     launchHeight: number;
     recentCheckpointLimit?: number;
-    experimentalReservedAuctionCatalog?: readonly ExperimentalReservedAuctionCatalogEntry[];
-    experimentalReservedAuctionPolicy?: ReservedAuctionPolicy;
+    experimentalLaunchAuctionCatalog?: readonly ExperimentalLaunchAuctionCatalogEntry[];
+    experimentalLaunchAuctionPolicy?: LaunchAuctionPolicy;
   }) {
     this.launchHeight = input.launchHeight;
     this.recentCheckpointLimit = Math.max(1, input.recentCheckpointLimit ?? 100);
-    this.experimentalReservedAuctionCatalog = [...(input.experimentalReservedAuctionCatalog ?? [])];
-    this.experimentalReservedAuctionPolicy =
-      input.experimentalReservedAuctionPolicy ?? createDefaultReservedAuctionPolicy();
+    this.experimentalLaunchAuctionCatalog = [...(input.experimentalLaunchAuctionCatalog ?? [])];
+    this.experimentalLaunchAuctionPolicy =
+      input.experimentalLaunchAuctionPolicy ?? createDefaultLaunchAuctionPolicy();
     this.state = createEmptyState();
     this.spentOutpoints = new Map();
     this.transactionProvenance = new Map();
@@ -175,19 +134,19 @@ export class InMemoryOntIndexer {
   public static fromSnapshot(
     snapshot: InMemoryOntIndexerSnapshot,
     options?: {
-      readonly experimentalReservedAuctionCatalog?: readonly ExperimentalReservedAuctionCatalogEntry[];
-      readonly experimentalReservedAuctionPolicy?: ReservedAuctionPolicy;
+      readonly experimentalLaunchAuctionCatalog?: readonly ExperimentalLaunchAuctionCatalogEntry[];
+      readonly experimentalLaunchAuctionPolicy?: LaunchAuctionPolicy;
     }
   ): InMemoryOntIndexer {
     const indexer = new InMemoryOntIndexer({
       launchHeight: snapshot.launchHeight,
       recentCheckpointLimit: Math.max(1, snapshot.recentCheckpoints?.length ?? 100),
-      ...(options?.experimentalReservedAuctionCatalog === undefined
+      ...(options?.experimentalLaunchAuctionCatalog === undefined
         ? {}
-        : { experimentalReservedAuctionCatalog: options.experimentalReservedAuctionCatalog }),
-      ...(options?.experimentalReservedAuctionPolicy === undefined
+        : { experimentalLaunchAuctionCatalog: options.experimentalLaunchAuctionCatalog }),
+      ...(options?.experimentalLaunchAuctionPolicy === undefined
         ? {}
-        : { experimentalReservedAuctionPolicy: options.experimentalReservedAuctionPolicy })
+        : { experimentalLaunchAuctionPolicy: options.experimentalLaunchAuctionPolicy })
     });
     indexer.hydrate(snapshot);
 
@@ -234,37 +193,18 @@ export class InMemoryOntIndexer {
     return [...this.state.names.values()].sort((left, right) => left.name.localeCompare(right.name));
   }
 
-  public listPendingCommits(): PendingCommitRecord[] {
-    return [...this.state.pendingCommits.values()].sort((left, right) => {
-      if (left.blockHeight !== right.blockHeight) {
-        return left.blockHeight - right.blockHeight;
-      }
-
-      if (left.txIndex !== right.txIndex) {
-        return left.txIndex - right.txIndex;
-      }
-
-      return left.txid.localeCompare(right.txid);
-    });
-  }
-
-  public getPendingCommit(txid: string): PendingCommitRecord | null {
-    const pending = this.state.pendingCommits.get(txid);
-    return pending ?? null;
-  }
-
   public getTransactionProvenance(txid: string): TransactionProvenanceSnapshot | null {
     return this.transactionProvenance.get(txid) ?? null;
   }
 
-  public listExperimentalAuctions(): SerializedExperimentalReservedAuctionState[] {
+  public listExperimentalAuctions(): SerializedExperimentalLaunchAuctionState[] {
     const currentBlockHeight = this.currentHeight ?? (this.launchHeight - 1);
 
     return this.deriveExperimentalAuctionStatesAtHeight(currentBlockHeight)
-      .map((state) => serializeExperimentalReservedAuctionState(state));
+      .map((state) => serializeExperimentalLaunchAuctionState(state));
   }
 
-  public getExperimentalAuction(auctionId: string): SerializedExperimentalReservedAuctionState | null {
+  public getExperimentalAuction(auctionId: string): SerializedExperimentalLaunchAuctionState | null {
     return this.listExperimentalAuctions().find((auction) => auction.auctionId === auctionId) ?? null;
   }
 
@@ -371,18 +311,7 @@ export class InMemoryOntIndexer {
       currentHeight: this.currentHeight,
       currentBlockHash: this.currentBlockHash,
       processedBlocks: this.processedBlocks,
-      trackedNames: this.state.names.size,
-      pendingCommits:
-        this.state.pendingCommits.size +
-        [...this.state.pendingBatchAnchors.values()].reduce(
-          (sum, anchor) =>
-            sum +
-            anchor.bondOutputs.filter(
-              (output) =>
-                output.vout > 0 && !anchor.revealedBondVouts.includes(output.vout)
-            ).length,
-          0
-        )
+      trackedNames: this.state.names.size
     };
   }
 
@@ -399,8 +328,6 @@ export class InMemoryOntIndexer {
 
   private hydrate(snapshot: InMemoryOntIndexerSnapshot | InMemoryOntIndexerPersistedState): void {
     this.state.names.clear();
-    this.state.pendingCommits.clear();
-    this.state.pendingBatchAnchors.clear();
     this.spentOutpoints.clear();
     this.transactionProvenance.clear();
 
@@ -413,23 +340,6 @@ export class InMemoryOntIndexer {
             : record.claimHeight,
         requiredBondSats: BigInt(record.requiredBondSats),
         currentBondValueSats: BigInt(record.currentBondValueSats)
-      });
-    }
-
-    for (const pending of snapshot.pendingCommits) {
-      this.state.pendingCommits.set(pending.txid, {
-        ...pending,
-        bondValueSats: pending.bondValueSats === null ? null : BigInt(pending.bondValueSats)
-      });
-    }
-
-    for (const pending of snapshot.pendingBatchAnchors) {
-      this.state.pendingBatchAnchors.set(pending.txid, {
-        ...pending,
-        bondOutputs: pending.bondOutputs.map((output) => ({
-          ...output,
-          bondValueSats: output.bondValueSats === null ? null : BigInt(output.bondValueSats)
-        }))
       });
     }
 
@@ -468,30 +378,6 @@ export class InMemoryOntIndexer {
         requiredBondSats: record.requiredBondSats.toString(),
         currentBondValueSats: record.currentBondValueSats.toString()
       })),
-      pendingCommits: this.listPendingCommits()
-        .map((pending) => ({
-          ...pending,
-          bondValueSats: pending.bondValueSats === null ? null : pending.bondValueSats.toString()
-        })),
-      pendingBatchAnchors: [...this.state.pendingBatchAnchors.values()]
-        .sort((left, right) => {
-          if (left.blockHeight !== right.blockHeight) {
-            return left.blockHeight - right.blockHeight;
-          }
-
-          if (left.txIndex !== right.txIndex) {
-            return left.txIndex - right.txIndex;
-          }
-
-          return left.txid.localeCompare(right.txid);
-        })
-        .map((pending) => ({
-          ...pending,
-          bondOutputs: pending.bondOutputs.map((output) => ({
-            ...output,
-            bondValueSats: output.bondValueSats === null ? null : output.bondValueSats.toString()
-          }))
-        })),
       spentOutpoints: [...this.spentOutpoints.values()].sort((left, right) => {
         if (left.spentBlockHeight !== right.spentBlockHeight) {
           return left.spentBlockHeight - right.spentBlockHeight;
@@ -564,7 +450,7 @@ export class InMemoryOntIndexer {
     }
   }
 
-  private listAppliedAuctionBidObservations(): ExperimentalReservedAuctionBidObservation[] {
+  private listAppliedAuctionBidObservations(): ExperimentalLaunchAuctionBidObservation[] {
     return [...this.transactionProvenance.values()]
       .flatMap((transaction) =>
         transaction.events
@@ -584,7 +470,7 @@ export class InMemoryOntIndexer {
             bidderCommitment: event.payload.bidderCommitment,
             ownerPubkey: event.payload.ownerPubkey,
             bidAmountSats: BigInt(event.payload.bidAmountSats),
-            reservedLockBlocks: event.payload.reservedLockBlocks,
+            settlementLockBlocks: event.payload.settlementLockBlocks,
             auctionLotCommitment: event.payload.auctionLotCommitment,
             auctionCommitment: event.payload.auctionCommitment,
             spentOutpoints: transaction.inputs
@@ -616,10 +502,10 @@ export class InMemoryOntIndexer {
   }
 
   private deriveExperimentalAuctionStatesAtHeight(currentBlockHeight: number) {
-    return deriveExperimentalReservedAuctionStates({
-      policy: this.experimentalReservedAuctionPolicy,
+    return deriveExperimentalLaunchAuctionStates({
+      policy: this.experimentalLaunchAuctionPolicy,
       currentBlockHeight,
-      catalog: this.experimentalReservedAuctionCatalog,
+      catalog: this.experimentalLaunchAuctionCatalog,
       bidObservations: this.listAppliedAuctionBidObservations(),
       spentOutpoints: [...this.spentOutpoints.values()]
     });
@@ -717,28 +603,9 @@ function serializeTransactionProvenanceRecord(input: {
 
 function serializeProvenancePayload(
   payload:
-    | CommitEventPayload
-    | RevealEventPayload
     | TransferEventPayload
-    | BatchAnchorEventPayload
-    | BatchRevealEventPayload
-    | RevealProofChunkEventPayload
     | AuctionBidEventPayload
 ): TransactionProvenanceEventPayloadSnapshot {
-  if ("anchorTxid" in payload) {
-    return {
-      ...payload,
-      nonce: payload.nonce.toString()
-    };
-  }
-
-  if ("commitTxid" in payload) {
-    return {
-      ...payload,
-      nonce: payload.nonce.toString()
-    };
-  }
-
   if ("auctionCommitment" in payload) {
     return {
       ...payload,

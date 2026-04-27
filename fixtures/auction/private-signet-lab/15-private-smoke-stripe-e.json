@@ -1,10 +1,10 @@
 {
   "title": "Private smoke lot · stripe E",
-  "description": "Private signet experimental reserved-auction lot reserved for hosted smoke runs with real AUCTION_BID transactions.",
+  "description": "Private signet experimental auction lot dedicated to hosted smoke runs with real AUCTION_BID transactions.",
   "currentBlockHeight": 128,
   "scenario": {
     "name": "stripe",
-    "reservedClassId": "major_existing_name",
+    "auctionClassId": "launch_name",
     "unlockBlock": 260,
     "bidAttempts": []
   }

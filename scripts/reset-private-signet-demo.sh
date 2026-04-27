@@ -82,8 +82,80 @@ wait_for_http() {
   exit 1
 }
 
+wait_for_any_http() {
+  local label="$1"
+  local attempts="$2"
+  shift 2
+  local urls=("$@")
+
+  echo
+  echo "[$label]"
+  for _ in $(seq 1 "$attempts"); do
+    for url in "${urls[@]}"; do
+      if curl -fsS "$url"; then
+        echo
+        return 0
+      fi
+    done
+    sleep 2
+  done
+
+  echo "$label did not become healthy in time" >&2
+  printf 'Tried:\n' >&2
+  printf '  %s\n' "${urls[@]}" >&2
+  exit 1
+}
+
+service_exists() {
+  systemctl list-unit-files "$1" >/dev/null 2>&1
+}
+
+stop_if_exists() {
+  if service_exists "$1"; then
+    systemctl stop "$1" || true
+  fi
+}
+
+restart_if_exists() {
+  if service_exists "$1"; then
+    systemctl restart "$1"
+  fi
+}
+
+first_existing_file() {
+  for path in "$@"; do
+    if [[ -f "$path" ]]; then
+      printf '%s\n' "$path"
+      return 0
+    fi
+  done
+}
+
+first_existing_dir() {
+  for path in "$@"; do
+    if [[ -d "$path" ]]; then
+      printf '%s\n' "$path"
+      return 0
+    fi
+  done
+}
+
+first_existing_command() {
+  for path in "$@"; do
+    if [[ -x "$path" ]]; then
+      printf '%s\n' "$path"
+      return 0
+    fi
+  done
+}
+
 echo "[stop services]"
-systemctl stop ont-domain-web.service ont-web.service ont-resolver.service ont-private-web.service ont-private-resolver.service || true
+for service in \
+  ont-domain-web.service ont-web.service ont-resolver.service ont-private-web.service ont-private-resolver.service \
+  ont-private-signet-auto-mine.service
+do
+  stop_if_exists "$service"
+done
 systemctl stop bitcoind-private-signet.service || true
 
 echo
@@ -93,18 +165,24 @@ rm -f /var/lib/bitcoind-private-signet/miner-address.txt
 rm -f /var/lib/ont/ont-prod-demo-snapshot.json
 rm -f /var/lib/ont/private-signet-resolver-snapshot.json
 rm -f /var/lib/ont/private-signet-value-records.json
+rm -f /var/lib/ont/private-auction-smoke-summary.json
 
 echo
 echo "[wipe database-backed resolver docs]"
-if [[ -f /etc/ont/ont.env ]]; then
-  ONT_DATABASE_URL=$(awk -F= '/^ONT_DATABASE_URL=/{sub(/^[^=]*=/,""); print; exit}' /etc/ont/ont.env)
-  ONT_DATABASE_SCHEMA=$(awk -F= '/^ONT_DATABASE_SCHEMA=/{print $2; exit}' /etc/ont/ont.env)
+APP_ENV_FILE="$(first_existing_file /etc/ont/ont.env || true)"
+APP_DIR="$(first_existing_dir /opt/ont/app || true)"
+APP_USER=ont
+
+if [[ -n "$APP_ENV_FILE" && -n "$APP_DIR" ]]; then
+  ONT_DATABASE_URL=$(awk -F= '/^ONT_DATABASE_URL=/{sub(/^[^=]*=/,""); print; exit}' "$APP_ENV_FILE")
+  ONT_DATABASE_SCHEMA=$(awk -F= '/^ONT_DATABASE_SCHEMA=/{print $2; exit}' "$APP_ENV_FILE")
 
   if [[ -n "${ONT_DATABASE_URL:-}" ]]; then
-    runuser -u ont -- env \
+    runuser -u "$APP_USER" -- env \
       ONT_DATABASE_URL="${ONT_DATABASE_URL}" \
       ONT_DATABASE_SCHEMA="${ONT_DATABASE_SCHEMA:-public}" \
-      bash -lc 'cd /opt/ont/app && node <<'"'"'NODE'"'"'
+      NODE_PATH="$APP_DIR/node_modules" \
+      node <<'NODE'
 const { Client } = require("pg");
 
 const schema = process.env.ONT_DATABASE_SCHEMA || "public";
@@ -125,7 +203,7 @@ if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(schema)) {
   console.error(error);
   process.exit(1);
 });
-NODE'
+NODE
   fi
 fi
 
@@ -139,22 +217,33 @@ for _ in $(seq 1 60); do
   sleep 2
 done
 
-/usr/local/bin/ont-private-signet-ensure-wallet >/dev/null
+ENSURE_WALLET_CMD="$(first_existing_command /usr/local/bin/ont-private-signet-ensure-wallet)"
+MINE_CMD="$(first_existing_command /usr/local/bin/ont-private-signet-mine)"
+
+"$ENSURE_WALLET_CMD" >/dev/null
 CURRENT_BLOCKS=$(/usr/local/bin/bitcoin-cli -conf=/etc/bitcoin-private-signet.conf -datadir=/var/lib/bitcoind-private-signet getblockcount)
 if [[ "$CURRENT_BLOCKS" -lt "${BOOTSTRAP_BLOCKS}" ]]; then
   echo
   echo "[mine bootstrap blocks]"
-  /usr/local/bin/ont-private-signet-mine "$((BOOTSTRAP_BLOCKS - CURRENT_BLOCKS))"
+  "$MINE_CMD" "$((BOOTSTRAP_BLOCKS - CURRENT_BLOCKS))"
 fi
 
 echo
 echo "[restart ont services]"
-systemctl restart ont-private-resolver.service ont-private-web.service ont-resolver.service ont-web.service ont-domain-web.service
+for service in \
+  ont-private-resolver.service ont-private-web.service ont-resolver.service ont-web.service ont-domain-web.service \
+  ont-private-signet-auto-mine.service
+do
+  restart_if_exists "$service"
+done
 
 wait_for_http "http://127.0.0.1:8788/health" "private resolver health" 45
-wait_for_http "http://127.0.0.1:3001/ont-private/api/health" "private web health" 30
+wait_for_any_http "private web health" 30 \
+  "http://127.0.0.1:3001/ont-private/api/health"
 wait_for_http "http://127.0.0.1:8787/health" "main resolver health" 45
-wait_for_http "http://127.0.0.1:3000/ont/api/health" "main web health" 30
+wait_for_any_http "main web health" 30 \
+  "http://127.0.0.1:3000/ont/api/health" \
+  "http://127.0.0.1:3000/api/health"
 wait_for_http "http://127.0.0.1:3002/api/health" "root domain web health" 30
 EOF
 
@@ -164,7 +253,6 @@ if [[ "$DELETE_LOCAL" == "1" ]]; then
   osascript -e 'tell application "Sparrow" to quit' >/dev/null 2>&1 || true
   pkill -x Sparrow >/dev/null 2>&1 || true
   rm -rf "$HOME/Downloads/ont-demo"
-  rm -f "$HOME/Downloads/ont-claim-moneyball-signer-notes.txt"
   rm -rf "$ROOT_DIR/.data/private-signet-demo"
   rm -f "$HOME/.sparrow/signet/wallets/ont-demo.mv.db"
   rm -f "$HOME/.sparrow/signet/wallets/ont-demo-2.mv.db"

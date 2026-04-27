@@ -10,28 +10,18 @@ const ECPair = ECPairFactory(tinysecp);
 
 export interface BuiltArtifactsEnvelope {
   readonly kind:
-    | "ont-commit-artifacts"
-    | "ont-reveal-artifacts"
     | "ont-transfer-artifacts"
-    | "ont-auction-bid-artifacts"
-    | "ont-batch-commit-artifacts"
-    | "ont-batch-reveal-artifacts";
+    | "ont-auction-bid-artifacts";
   readonly network: OntCliNetwork;
   readonly psbtBase64: string;
-  readonly commitTxid?: string;
-  readonly revealTxid?: string;
   readonly transferTxid?: string;
   readonly bidTxid?: string;
 }
 
 export interface SignedArtifacts {
   readonly kind:
-    | "ont-signed-commit-artifacts"
-    | "ont-signed-reveal-artifacts"
     | "ont-signed-transfer-artifacts"
-    | "ont-signed-auction-bid-artifacts"
-    | "ont-signed-batch-commit-artifacts"
-    | "ont-signed-batch-reveal-artifacts";
+    | "ont-signed-auction-bid-artifacts";
   readonly network: OntCliNetwork;
   readonly signedTransactionHex: string;
   readonly signedTransactionId: string;
@@ -41,12 +31,8 @@ export interface SignedArtifacts {
 
 export interface SignedArtifactsEnvelope {
   readonly kind:
-    | "ont-signed-commit-artifacts"
-    | "ont-signed-reveal-artifacts"
     | "ont-signed-transfer-artifacts"
-    | "ont-signed-auction-bid-artifacts"
-    | "ont-signed-batch-commit-artifacts"
-    | "ont-signed-batch-reveal-artifacts";
+    | "ont-signed-auction-bid-artifacts";
   readonly network: OntCliNetwork;
   readonly signedTransactionHex: string;
   readonly signedTransactionId: string;
@@ -59,15 +45,11 @@ export function parseBuiltArtifactsEnvelope(input: unknown): BuiltArtifactsEnvel
   const kind = assertString(record.kind, "kind");
 
   if (
-    kind !== "ont-commit-artifacts" &&
-    kind !== "ont-reveal-artifacts" &&
     kind !== "ont-transfer-artifacts" &&
-    kind !== "ont-auction-bid-artifacts" &&
-    kind !== "ont-batch-commit-artifacts" &&
-    kind !== "ont-batch-reveal-artifacts"
+    kind !== "ont-auction-bid-artifacts"
   ) {
     throw new Error(
-      "artifacts kind must be ont-commit-artifacts, ont-reveal-artifacts, ont-transfer-artifacts, ont-auction-bid-artifacts, ont-batch-commit-artifacts, or ont-batch-reveal-artifacts"
+      "artifacts kind must be ont-transfer-artifacts or ont-auction-bid-artifacts"
     );
   }
 
@@ -78,8 +60,6 @@ export function parseBuiltArtifactsEnvelope(input: unknown): BuiltArtifactsEnvel
     kind,
     network,
     psbtBase64,
-    ...(typeof record.commitTxid === "string" ? { commitTxid: record.commitTxid } : {}),
-    ...(typeof record.revealTxid === "string" ? { revealTxid: record.revealTxid } : {}),
     ...(typeof record.transferTxid === "string" ? { transferTxid: record.transferTxid } : {}),
     ...(typeof record.bidTxid === "string" ? { bidTxid: record.bidTxid } : {})
   };
@@ -130,38 +110,6 @@ export function signArtifacts(options: {
   const signedTransactionId = transaction.getId();
 
   if (
-    options.artifacts.kind === "ont-commit-artifacts" &&
-    options.artifacts.commitTxid &&
-    options.artifacts.commitTxid !== signedTransactionId
-  ) {
-    throw new Error("signed commit txid does not match the unsigned commit artifact");
-  }
-
-  if (
-    options.artifacts.kind === "ont-batch-commit-artifacts" &&
-    options.artifacts.commitTxid &&
-    options.artifacts.commitTxid !== signedTransactionId
-  ) {
-    throw new Error("signed batch commit txid does not match the unsigned batch commit artifact");
-  }
-
-  if (
-    options.artifacts.kind === "ont-reveal-artifacts" &&
-    options.artifacts.revealTxid &&
-    options.artifacts.revealTxid !== signedTransactionId
-  ) {
-    throw new Error("signed reveal txid does not match the unsigned reveal artifact");
-  }
-
-  if (
-    options.artifacts.kind === "ont-batch-reveal-artifacts" &&
-    options.artifacts.revealTxid &&
-    options.artifacts.revealTxid !== signedTransactionId
-  ) {
-    throw new Error("signed batch reveal txid does not match the unsigned batch reveal artifact");
-  }
-
-  if (
     options.artifacts.kind === "ont-transfer-artifacts" &&
     options.artifacts.transferTxid &&
     options.artifacts.transferTxid !== signedTransactionId
@@ -178,19 +126,9 @@ export function signArtifacts(options: {
   }
 
   return {
-    kind: (
-      options.artifacts.kind === "ont-commit-artifacts"
-        ? "ont-signed-commit-artifacts"
-        : options.artifacts.kind === "ont-batch-commit-artifacts"
-          ? "ont-signed-batch-commit-artifacts"
-        : options.artifacts.kind === "ont-reveal-artifacts"
-          ? "ont-signed-reveal-artifacts"
-          : options.artifacts.kind === "ont-batch-reveal-artifacts"
-            ? "ont-signed-batch-reveal-artifacts"
-          : options.artifacts.kind === "ont-auction-bid-artifacts"
-            ? "ont-signed-auction-bid-artifacts"
-          : "ont-signed-transfer-artifacts"
-    ),
+    kind: options.artifacts.kind === "ont-auction-bid-artifacts"
+      ? "ont-signed-auction-bid-artifacts"
+      : "ont-signed-transfer-artifacts",
     network: options.artifacts.network,
     signedTransactionHex: transaction.toHex(),
     signedTransactionId,
@@ -204,15 +142,11 @@ export function parseSignedArtifactsEnvelope(input: unknown): SignedArtifactsEnv
   const kind = assertString(record.kind, "kind");
 
   if (
-    kind !== "ont-signed-commit-artifacts" &&
-    kind !== "ont-signed-reveal-artifacts" &&
     kind !== "ont-signed-transfer-artifacts" &&
-    kind !== "ont-signed-auction-bid-artifacts" &&
-    kind !== "ont-signed-batch-commit-artifacts" &&
-    kind !== "ont-signed-batch-reveal-artifacts"
+    kind !== "ont-signed-auction-bid-artifacts"
   ) {
     throw new Error(
-      "signed artifacts kind must be ont-signed-commit-artifacts, ont-signed-reveal-artifacts, ont-signed-transfer-artifacts, ont-signed-auction-bid-artifacts, ont-signed-batch-commit-artifacts, or ont-signed-batch-reveal-artifacts"
+      "signed artifacts kind must be ont-signed-transfer-artifacts or ont-signed-auction-bid-artifacts"
     );
   }
 

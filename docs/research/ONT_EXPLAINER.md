@@ -2,47 +2,48 @@
 
 Status note:
 
-- for the cleanest current intro, start with [ONT_FROM_ZERO.md](../core/ONT_FROM_ZERO.md)
-- for what is actually implemented and validated, use [ONT_IMPLEMENTATION_AND_VALIDATION.md](./ONT_IMPLEMENTATION_AND_VALIDATION.md)
-- for the current launch direction, use [LAUNCH_SPEC_V0.md](./LAUNCH_SPEC_V0.md)
-
-This explainer still describes the core model accurately, but the launch-allocation
-story has evolved since some of the older “no special cases at launch” wording.
+- for the cleanest current intro, start with
+  [ONT_FROM_ZERO.md](../core/ONT_FROM_ZERO.md)
+- for what is implemented and validated, use
+  [ONT_IMPLEMENTATION_AND_VALIDATION.md](./ONT_IMPLEMENTATION_AND_VALIDATION.md)
+- for the current launch direction, use
+  [UNIVERSAL_AUCTION_LAUNCH_MODEL.md](./UNIVERSAL_AUCTION_LAUNCH_MODEL.md)
 
 ## The Problem With Payment Handles Today
 
 Bitcoin addresses are not a human interface.
 
-If you want to pay the right person or merchant, raw addresses and opaque account strings are a poor final interface. A good payment handle should let a wallet answer a simple question before money moves:
+If you want to pay the right person or merchant, raw addresses and opaque
+account strings are a poor final interface. A good payment handle should let a
+wallet answer a simple question before money moves:
 
 > who gets paid?
 
-Readable payment handles exist, but they usually depend on a service, account, domain, or operator between the payer and the recipient. That can be useful, especially during transition, but it also means availability and correctness inherit someone else's infrastructure and policies.
-
-ONT is a different approach. A name like `satoshi` is not a subscription. It is something you own outright, in the same way you own a private key. The record of ownership is public, permanent, and verifiable by anyone without asking anyone's permission.
-
-Human-facing amounts in ONT use integer bitcoin notation alongside the conventional BTC equivalent. Example: `₿50,000 (0.0005 BTC)`.
-
----
+Readable payment handles exist, but they usually depend on a service, account,
+domain, or operator between the payer and the recipient. ONT is a different
+approach: a name like `satoshi` is something controlled by a key, with ownership
+anchored to Bitcoin and verifiable by anyone.
 
 ## Why Bonds Instead Of Fees
 
-Naming is never free. The real question is where the cost goes and what kind of cost it is.
+Naming is never free. The real question is where the cost goes and what kind of
+cost it is.
 
-Most naming systems charge you by routing payment to a gatekeeper:
+Most naming systems charge by routing payment to a gatekeeper:
 
 - a registrar
 - a platform
 - a DAO treasury
 - or some other operator with the power to change terms later
 
-ONT uses pricing too, but a different kind. It uses a **bond**. A bond still has a real financial cost because capital has time value and opportunity cost. But the cost does not have to be paid to a third party. You lock bitcoin you still own instead of spending it forever to a provider.
+ONT uses pricing too, but a different kind. It uses a **bond**. A bond still
+has a real financial cost because capital has time value and opportunity cost.
+But the cost does not have to be paid to a third party. You lock bitcoin you
+still own instead of spending it forever to a provider.
 
-That distinction matters both economically and psychologically. For many people, especially retail users who may simply hold bitcoin in cold storage anyway, locking capital can feel very different from losing it permanently. For larger institutions and brands, the distinction may matter less in practice because both fees and bonds are just balance-sheet decisions. But the protocol stays consistent for everyone: the claimant bears a cost, yet no central operator collects tribute.
-
-ONT claims still pay normal Bitcoin transaction fees. The point is not that naming becomes free. The point is that the protocol's own pricing mechanism is self-sovereign rather than gatekeeper-controlled.
-
----
+Normal Bitcoin transaction fees still apply. The point is not that naming
+becomes free. The point is that the protocol's own scarcity mechanism is
+self-sovereign rather than gatekeeper-controlled.
 
 ## What ONT Names Are For
 
@@ -54,120 +55,69 @@ The first question ONT is trying to solve is:
 
 From there, the same structure can support other records too:
 
-- **Payment endpoints** — a Lightning address, an on-chain address, a payment URI
-- **Anything clients support later** — the protocol uses owner-signed key/value records, but broad publishing should be treated as expansion, not as the first thing new readers have to believe
+- **Payment endpoints**: a Lightning address, an on-chain address, or a payment
+  URI
+- **Owner-signed records**: web, professional, messaging, and other destinations
+  if clients support them later
 
-The name is the stable layer. What it points to can change. The ownership cannot be taken from you.
-
-This matters increasingly as software acts on behalf of people. When software routes a payment or resolves an address without a human inspecting every character, the final payment target should not rest on a probabilistic guess or an unverifiable alias. ONT names carry cryptographic ownership guarantees at the protocol level — not because a company promises to honor them, but because the record of ownership is anchored to an immutable public ledger that no single party controls.
-
----
+The name is the stable layer. What it points to can change. The ownership cannot
+be taken from you by a protocol operator.
 
 ## How Ownership Works
 
-ONT uses a **capital bond** rather than an annual fee to establish and protect name ownership. To claim a name, you lock a required amount of bitcoin in a dedicated output you control. The bond is not a payment to anyone — it is capital you retain, locked temporarily as a commitment to the name.
+ONT separates two concerns:
 
-- **The Bond:** Shorter names require larger bonds. A 1-character name requires `₿100,000,000 (1 BTC)`; names of 12 characters and longer floor at `₿50,000 (0.0005 BTC)`. This ensures high-value names are backed by real economic commitment.
-- **Settlement:** A newly claimed name is in a settlement period for approximately one year (52,000 blocks). During this time the bond must remain parked. If it is spent or broken before settlement completes, the name is immediately released back to the public pool.
-- **After Settlement:** The name is fully yours. The bond can be freed. Ownership persists as a permanent on-chain record.
+- Bitcoin anchors who owns the name
+- the records it points to are kept off-chain and signed by the owner
 
-Scarcity comes from locked capital and time, not from fees paid to a registrar or burned into nothing. You keep your bitcoin.
+At launch, the current direction is a single auction lane:
 
-That said, an ONT claim is not costless. In addition to posting the bond, the claimant also pays ordinary on-chain transaction fees for the commit and reveal transactions. At low fee levels those costs may be small relative to the bond. At higher fee levels they may become comparable to, or even exceed, the smallest bond tiers. That is not a payment to a centralized operator or registry. It is payment into Bitcoin's normal fee market, which is consistent with the system's decentralization story even if it makes claiming more expensive in absolute terms.
+- every launch-eligible name is allocated by auction
+- `5-32` character names are eligible at launch
+- `1-4` character names are held for a later short-name auction wave
+- there is no semantic reserved-name list
+- there is no pre-launch reservation system
 
----
-
-## Claiming A Name
-
-ONT uses a two-step commit/reveal process to prevent front-running by bots or miners.
-
-1. **Commit:** You post a hash of your intended name. This hides your intent while establishing your place in the queue.
-2. **Reveal:** You reveal the plaintext name within a short window. If no valid reveal arrives in time, the claim expires and the bitcoin stays with you.
-
-The two-step process means no one can copy your claim from the mempool and beat you to it.
-
----
+This keeps allocation neutral. ONT does not have to decide which brands, people,
+companies, or generic words are important. If a name matters to multiple
+bidders, the auction discovers the bonded BTC amount.
 
 ## No Suffixes, No Hierarchy
 
-ONT uses a flat namespace. A name is just `satoshi` — not `satoshi.ont` or `satoshi.btc`. There is no root authority, no TLD, no hierarchy to maintain. Every name of the same length is treated identically by the protocol.
-
----
+ONT uses a flat namespace. A name is just `satoshi`, not `satoshi.ont` or
+`satoshi.btc`. There is no root authority, no TLD, and no hierarchy to
+maintain.
 
 ## Fairness
 
-The fairness goal is still:
+The fairness goal is:
 
-- No founder allocation
-- No discounted claims
-- No whitelist or identity-based quotas
+- no founder allocation
+- no discounted claims
+- no whitelist or identity-based quotas
+- no hand-built reserved list
 
-But the current lead launch direction is no longer “every name opens the same
-way on day one.”
+Fairness should come from public rules and public on-chain outcomes, not private
+approvals.
 
-Instead, the working launch direction is:
-
-- an ordinary public commit/reveal lane for ordinary names
-- a reserved deferred-auction lane for salient existing names
-
-The point of that split is not to create insider allocation. It is to avoid
-giving obviously salient existing names away at the ordinary floor while still
-keeping the ordinary namespace easy to access. Fairness remains auditable from
-public rules and public on-chain outcomes rather than private approvals.
-
----
-
-## Comparison to Rented Handles
+## Comparison To Rented Handles
 
 | Feature | ONT | Typical service-controlled handle |
 | :--- | :--- | :--- |
-| **Cost model** | Bonded capital the claimant still owns | Fees, rent, or account dependence |
+| **Cost model** | Bonded capital the owner still owns | Fees, rent, or account dependence |
 | **Control** | Current owner key signs updates | Provider account or operator controls availability |
 | **Revocability** | No protocol operator can revoke ownership | Provider policy or infrastructure can remove access |
 | **Value storage** | Off-chain, owner-signed | Provider-hosted records |
 
----
-
 ## Data Availability: An Honest Assessment
 
-ONT separates two concerns with different trust profiles, and it is worth being explicit about both.
+Ownership state is recorded on Bitcoin-compatible chain data. The canonical
+registry is recoverable from that record alone.
 
-**Ownership state** is recorded on an immutable public ledger. Every claim, reveal, and transfer is a permanent on-chain event. The canonical registry is always recoverable from that record alone — if every ONT resolver disappeared tonight, any operator could reconstruct the entire namespace from scratch. Ownership truth does not depend on any resolver being available, honest, or even aware that ONT exists.
+Off-chain value records are a separate matter. These are stored and served by
+resolvers. They are signed by the name's current owner key, so authenticity is
+verifiable without trusting the resolver, but availability depends on at least
+one resolver having a copy.
 
-**Off-chain value records** — what a name actually points to — are a separate matter. These are stored and served by resolvers. They are signed by the name's current owner key, so their authenticity is always verifiable without trusting anyone. But their availability depends on at least one resolver having a copy.
-
-This is a deliberate trade-off. Storing value records on-chain would impose a cost for every routine update and is inconsistent with using a public ledger as a notary rather than a database. The trade-off is the right one — but it means the long-term health of the system depends on a healthy resolver ecosystem.
-
-### What the Design Gets for Free
-
-Because the full name set is derivable from the public ledger, any client can objectively score a resolver: query it for names known to exist, compare the answers against the ground truth, measure what percentage it gets right. A resolver cannot fake completeness. This turns resolver trust into a verifiable metric rather than an assumption.
-
-### The Mitigation Approach
-
-The resolver layer is designed to be decentralized and self-sustaining:
-
-1. **Hardcoded defaults and DNS seeds** handle bootstrapping, the same way nodes discover peers at startup.
-2. **Resolver gossip** makes the network self-propagating — resolvers share peer lists with connecting clients.
-3. **Completeness scoring** lets clients deprioritize low-quality resolvers using only locally verifiable data.
-4. **On-chain resolver announcements** let any resolver make itself permanently discoverable to anyone syncing from the launch height.
-
-For value records, owners retain full control: a name owner can self-host their signed record and register a fetch hint with resolvers. If a resolver disappears, the record survives at the owner's endpoint. Multiple resolvers can replicate records. The current prototype uses owner-signed sequence numbers plus predecessor hashes, scoped to the current ownership interval, so clients can compare verified value-history heads rather than trusting a resolver's latest-value summary.
-
-No single operator needs to be trusted. A hosted resolver at launch is a convenience, not a requirement.
-
----
-
-## How the Guarantee Holds
-
-The properties ONT provides — that your name cannot be revoked, forged, or censored — hold because ownership is anchored to a public ledger with no administrator. This is not a promise made by a company. It is a property of the record itself.
-
-Anyone can verify ownership. Anyone can run a resolver. Anyone can audit the full history of every name from the first block. The system does not ask you to trust it; it asks you to verify it.
-
----
-
-## Future Directions
-
-- **Silent Payments:** Generating unique, one-time payment addresses directly from an ONT name, so senders never reuse an address.
-- **Taproot integration:** Hiding ownership commitments inside standard key material for zero visible on-chain footprint.
-
-More speculative directions are documented separately in [FUTURE_EXPLORATIONS.md](./FUTURE_EXPLORATIONS.md).
+This is a deliberate trade-off. Storing routine value updates on-chain would
+turn Bitcoin into a database rather than an ownership notary.

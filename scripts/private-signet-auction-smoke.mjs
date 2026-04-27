@@ -45,7 +45,7 @@ async function main() {
   const summary = {
     kind: "ont-private-signet-auction-smoke-summary",
     status: "running",
-    message: "Starting private signet experimental reserved-auction smoke flow.",
+    message: "Starting private signet experimental auction smoke flow.",
     startedAt: new Date().toISOString()
   };
 
@@ -293,7 +293,7 @@ async function main() {
         selectReleaseSmokeAuction(beforeFeed.auctions)
       );
 
-      logStep(releaseTargetBefore.auctionId, "building a late bid before the no-bid release window closes");
+      logStep(releaseTargetBefore.auctionId, "building a late bid before the no-bid close window closes");
       const releaseBidderId = `${releaseTargetBefore.normalizedName}-late`;
       const releaseBidAmountSats = BigInt(
         releaseTargetBefore.currentRequiredMinimumBidSats ?? releaseTargetBefore.openingMinimumBidSats
@@ -332,13 +332,13 @@ async function main() {
       const lateBidOutcome =
         releaseFinalState.visibleBidOutcomes.find((outcome) => outcome.txid === lateBidTxid) ?? null;
 
-      if (!lateBidOutcome || lateBidOutcome.reason !== "released_to_ordinary_lane") {
+      if (!lateBidOutcome || lateBidOutcome.reason !== "closed_without_winner") {
         throw new Error(`expected ${releasedState.auctionId} to reject the late bid after release`);
       }
 
       summary.status = "complete";
       summary.message =
-        "Private signet experimental auction smoke succeeded with live bidding, settlement, winner value publication, post-release transfer, and no-bid release-valve rejection.";
+        "Private signet experimental auction smoke succeeded with live bidding, settlement, winner value publication, post-release transfer, and no-bid no-winner close rejection.";
       summary.completedAt = new Date().toISOString();
       summary.resolverUrl = privateResolverUrl;
       summary.rpcUrl = rpcUrl;
@@ -346,7 +346,7 @@ async function main() {
         auctionId: targetAuction.auctionId,
         title: targetAuction.title,
         normalizedName: targetAuction.normalizedName,
-        reservedClassId: targetAuction.reservedClassId,
+        auctionClassId: targetAuction.auctionClassId,
         unlockBlock: targetAuction.unlockBlock
       };
       summary.alphaBid = alphaBid;
@@ -506,7 +506,7 @@ async function ensureAuctionReadyForOpeningBid(auctionState) {
 }
 
 async function ensureAuctionReadyForRelease(auctionState) {
-  if (auctionState.phase === "released_to_ordinary_lane") {
+  if (auctionState.phase === "closed_without_winner") {
     return auctionState;
   }
 
@@ -514,26 +514,26 @@ async function ensureAuctionReadyForRelease(auctionState) {
 }
 
 async function ensureAuctionReleasedToOrdinaryLane(auctionState) {
-  if (auctionState.phase === "released_to_ordinary_lane") {
+  if (auctionState.phase === "closed_without_winner") {
     return auctionState;
   }
 
   if (auctionState.noBidReleaseBlock === null) {
-    throw new Error(`expected ${auctionState.auctionId} to expose a no-bid release block`);
+    throw new Error(`expected ${auctionState.auctionId} to expose a no-bid close block`);
   }
 
   const blocksToMine = Math.max(1, auctionState.noBidReleaseBlock - auctionState.currentBlockHeight + 1);
   logStep(
     auctionState.auctionId,
-    `mining ${blocksToMine} block${blocksToMine === 1 ? "" : "s"} to cross the no-bid release window`
+    `mining ${blocksToMine} block${blocksToMine === 1 ? "" : "s"} to cross the no-bid close window`
   );
   const currentHeight = await getBlockCount();
   await mineBlocks(blocksToMine);
   await waitForResolverHeight(currentHeight + blocksToMine);
 
   const refreshed = await fetchExperimentalAuctionById(auctionState.auctionId);
-  if (!refreshed || refreshed.phase !== "released_to_ordinary_lane") {
-    throw new Error(`expected ${auctionState.auctionId} to release to the ordinary lane`);
+  if (!refreshed || refreshed.phase !== "closed_without_winner") {
+    throw new Error(`expected ${auctionState.auctionId} to release to the auction lane`);
   }
 
   return refreshed;
@@ -595,7 +595,7 @@ async function buildAndMaybeBroadcastAuctionBid({
   const bidPackage = createAuctionBidPackage({
     auctionId: auctionState.auctionId,
     name: auctionState.normalizedName,
-    reservedClassId: auctionState.reservedClassId,
+    auctionClassId: auctionState.auctionClassId,
     classLabel: auctionState.classLabel,
     currentBlockHeight: auctionState.currentBlockHeight,
     phase: auctionState.phase,
@@ -605,7 +605,7 @@ async function buildAndMaybeBroadcastAuctionBid({
     currentLeaderBidderCommitment: auctionState.currentLeaderBidderCommitment,
     currentHighestBidSats: auctionState.currentHighestBidSats,
     currentRequiredMinimumBidSats: auctionState.currentRequiredMinimumBidSats,
-    reservedLockBlocks: auctionState.reservedLockBlocks,
+    settlementLockBlocks: auctionState.settlementLockBlocks,
     blocksUntilUnlock: auctionState.blocksUntilUnlock,
     blocksUntilClose: auctionState.blocksUntilClose,
     bidderId,
@@ -679,7 +679,7 @@ async function broadcastSignedAuctionBid({
     "--rpc-url",
     localRpcUrl(),
     "--rpc-username",
-    "gnsrpcprivate",
+    "ontrpcprivate",
     "--rpc-password",
     rpcPassword,
     "--expected-chain",

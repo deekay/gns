@@ -1,10 +1,10 @@
 {
   "title": "Live bidding · openai",
-  "description": "Major existing name with a valid opening bid and a higher follow-up bid, but still well before the soft-close window.",
+  "description": "Launch auction with a valid opening bid and a higher follow-up bid, but still well before the soft-close window.",
   "currentBlockHeight": 851600,
   "scenario": {
     "name": "openai",
-    "reservedClassId": "major_existing_name",
+    "auctionClassId": "launch_name",
     "unlockBlock": 850000,
     "bidAttempts": [
       {

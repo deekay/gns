@@ -2,9 +2,6 @@
 
 This note explains why the current `TRANSFER` event is still awkward for broad relay compatibility, and which directions are actually available if we want to change it.
 
-For a separate assessment of whether transfer batching itself is worth pursuing
-soon, see [TRANSFER_BATCHING_EVALUATION.md](./TRANSFER_BATCHING_EVALUATION.md).
-
 ## Current shape
 
 The current transfer payload is:
@@ -184,3 +181,34 @@ If we want materially smaller transfers later, the real strategic decision is no
 > are we willing to weaken owner-key separation, or are we willing to make the indexer witness-aware?
 
 Those are the two serious compression paths. Everything else is mostly cosmetic.
+
+## Website And PSBT Wizard Status
+
+The current website transfer page is intentionally a handoff surface, not the
+final trust-minimized buyer/seller wallet flow.
+
+Today it can:
+
+- identify the current name state
+- collect the recipient pubkey
+- recommend the gift, immature-sale, or mature-sale CLI path
+- export role-specific buyer and seller packages from the same transfer plan
+
+It does not yet:
+
+- coordinate a full two-party PSBT round trip in the browser
+- guarantee that both parties are signing the final same transaction from the
+  website alone
+- replace the CLI and external signer review path
+
+The recommended next implementation step, when we choose to invest in transfer
+UX rather than protocol consolidation, is a dedicated buyer/seller PSBT wizard:
+
+- buyer creates or imports the recipient owner key
+- seller imports current owner authority and payout address
+- both parties review one canonical transaction summary
+- each side signs only after the shared PSBT binds payment, ownership transfer,
+  and any successor bond output together
+
+Until that exists, the public website should keep calling transfer support a
+prototype handoff and direct serious sale flows to the CLI plus signer review.

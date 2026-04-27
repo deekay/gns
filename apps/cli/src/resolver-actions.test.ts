@@ -1,7 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
-  fetchClaimPlan,
   fetchNameActivity,
   fetchRecentActivity,
   fetchNameRecord,
@@ -17,45 +16,6 @@ describe("resolver actions", () => {
   afterEach(() => {
     globalThis.fetch = ORIGINAL_FETCH;
     vi.restoreAllMocks();
-  });
-
-  it("fetches claim plans from the resolver", async () => {
-    globalThis.fetch = vi.fn(async () =>
-      new Response(
-        JSON.stringify({
-          name: "example123456",
-          appearsAvailable: true,
-          availabilityNote: "No revealed claim is visible right now.",
-          currentResolverHeight: 123,
-          launchHeight: 0,
-          plannedCommitHeight: 124,
-          recommendedBondVout: 0,
-          revealWindowBlocks: 6,
-          revealDeadlineHeight: 130,
-          epochIndex: 4,
-          maturityBlocks: 4000,
-          maturityHeight: 4124,
-          requiredBondSats: "50000",
-          existingClaim: null,
-          nextSteps: []
-        }),
-        {
-          status: 200,
-          headers: {
-            "content-type": "application/json"
-          }
-        }
-      )
-    ) as typeof fetch;
-
-    const result = await fetchClaimPlan({
-      name: "Example123456",
-      resolverUrl: "http://127.0.0.1:8787"
-    });
-
-    expect(result.name).toBe("example123456");
-    expect(result.appearsAvailable).toBe(true);
-    expect(globalThis.fetch).toHaveBeenCalledWith("http://127.0.0.1:8787/claim-plan/example123456");
   });
 
   it("fetches name records from the resolver", async () => {
@@ -141,16 +101,21 @@ describe("resolver actions", () => {
           events: [
             {
               vout: 1,
-              type: 1,
-              typeName: "COMMIT",
+              type: 7,
+              typeName: "AUCTION_BID",
               payload: {
+                flags: 0,
                 bondVout: 0,
                 ownerPubkey: "11".repeat(32),
-                commitHash: "22".repeat(32)
+                settlementLockBlocks: 525600,
+                bidAmountSats: "100000000",
+                auctionLotCommitment: "22".repeat(32),
+                auctionCommitment: "33".repeat(32),
+                bidderCommitment: "44".repeat(32)
               },
               validationStatus: "applied",
-              reason: "commit_registered",
-              affectedName: null
+              reason: "auction_bid_recorded",
+              affectedName: "example123456"
             }
           ],
           invalidatedNames: []
@@ -170,7 +135,7 @@ describe("resolver actions", () => {
     });
 
     expect(result.txid).toBe("aa".repeat(32));
-    expect(result.events[0]?.typeName).toBe("COMMIT");
+    expect(result.events[0]?.typeName).toBe("AUCTION_BID");
     expect(globalThis.fetch).toHaveBeenCalledWith(`http://127.0.0.1:8787/tx/${"aa".repeat(32)}`);
   });
 

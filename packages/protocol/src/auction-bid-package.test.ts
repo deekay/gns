@@ -13,10 +13,10 @@ import {
 describe("auction bid packages", () => {
   it("builds a preview for pending unlock states", () => {
     const pkg = createAuctionBidPackage({
-      auctionId: "01-pending-unlock-google",
-      name: "google",
-      reservedClassId: "top_collision",
-      classLabel: "Top collision / ultra-scarce",
+      auctionId: "01-pending-unlock-nvidia",
+      name: "nvidia",
+      auctionClassId: "launch_name",
+      classLabel: "Launch auction",
       currentBlockHeight: 95_000,
       phase: "pending_unlock",
       unlockBlock: 95_144,
@@ -25,7 +25,7 @@ describe("auction bid packages", () => {
       currentLeaderBidderId: null,
       currentHighestBidSats: null,
       currentRequiredMinimumBidSats: 1_000_000_000n,
-      reservedLockBlocks: 525_600,
+      settlementLockBlocks: 525_600,
       bidderId: "operator_a",
       ownerPubkey: "11".repeat(32),
       bidAmountSats: 1_000_000_000n,
@@ -43,9 +43,9 @@ describe("auction bid packages", () => {
     expect(pkg.currentLeaderBidderCommitment).toBeNull();
     expect(pkg.auctionLotCommitment).toBe(
       computeAuctionLotCommitment({
-        auctionId: "01-pending-unlock-google",
-        name: "google",
-        reservedClassId: "top_collision",
+        auctionId: "01-pending-unlock-nvidia",
+        name: "nvidia",
+        auctionClassId: "launch_name",
         unlockBlock: 95_144
       })
     );
@@ -54,10 +54,10 @@ describe("auction bid packages", () => {
 
   it("builds a valid soft-close preview when the amount clears the next minimum", () => {
     const pkg = createAuctionBidPackage({
-      auctionId: "04-soft-close-google",
-      name: "google",
-      reservedClassId: "top_collision",
-      classLabel: "Top collision / ultra-scarce",
+      auctionId: "04-soft-close-nvidia",
+      name: "nvidia",
+      auctionClassId: "launch_name",
+      classLabel: "Launch auction",
       currentBlockHeight: 100_288,
       phase: "soft_close",
       unlockBlock: 96_000,
@@ -66,7 +66,7 @@ describe("auction bid packages", () => {
       currentLeaderBidderId: "speculator_d",
       currentHighestBidSats: 1_600_000_000n,
       currentRequiredMinimumBidSats: 1_760_000_000n,
-      reservedLockBlocks: 525_600,
+      settlementLockBlocks: 525_600,
       bidderId: "operator_b",
       ownerPubkey: "22".repeat(32),
       bidAmountSats: 1_800_000_000n,
@@ -88,8 +88,8 @@ describe("auction bid packages", () => {
     const pkg = createAuctionBidPackage({
       auctionId: "03-live-openai",
       name: "openai",
-      reservedClassId: "major_existing_name",
-      classLabel: "Major existing name",
+      auctionClassId: "launch_name",
+      classLabel: "Launch auction",
       currentBlockHeight: 128,
       phase: "live_bidding",
       unlockBlock: 110,
@@ -99,7 +99,7 @@ describe("auction bid packages", () => {
       currentLeaderBidderCommitment: computeAuctionBidderCommitment("unknown_live_leader"),
       currentHighestBidSats: 220_000_000n,
       currentRequiredMinimumBidSats: 231_000_000n,
-      reservedLockBlocks: 262_800,
+      settlementLockBlocks: 262_800,
       bidderId: "operator_from_live_feed",
       ownerPubkey: "33".repeat(32),
       bidAmountSats: 231_000_000n,
@@ -117,9 +117,9 @@ describe("auction bid packages", () => {
   it("rejects packages whose preview fields no longer match the observed state", () => {
     const pkg = createAuctionBidPackage({
       auctionId: "02-awaiting-opening",
-      name: "sequoia",
-      reservedClassId: "major_existing_name",
-      classLabel: "Major existing name",
+      name: "nike",
+      auctionClassId: "launch_name",
+      classLabel: "Launch auction",
       currentBlockHeight: 99_000,
       phase: "awaiting_opening_bid",
       unlockBlock: 99_000,
@@ -128,7 +128,7 @@ describe("auction bid packages", () => {
       currentLeaderBidderId: null,
       currentHighestBidSats: null,
       currentRequiredMinimumBidSats: 200_000_000n,
-      reservedLockBlocks: 262_800,
+      settlementLockBlocks: 262_800,
       bidderId: "operator_c",
       ownerPubkey: "44".repeat(32),
       bidAmountSats: 150_000_000n,

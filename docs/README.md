@@ -10,7 +10,7 @@ These are the best places to start if you want to understand the current prototy
 - [SELF_HOSTING.md](./core/SELF_HOSTING.md): easiest path for running your own ONT website + resolver stack
 - [ARCHITECTURE.md](./core/ARCHITECTURE.md): system structure, trust boundaries, and runtime modes
 - [DECISIONS.md](./core/DECISIONS.md): protocol decisions and tradeoffs that are already explicit
-- [TESTING.md](./core/TESTING.md): fixture, regtest, public signet, and private signet testing paths
+- [TESTING.md](./core/TESTING.md): fixture, regtest, and private signet testing paths
 
 ## Demo
 
@@ -33,6 +33,8 @@ These are mainly useful if you are self-hosting or running the prototype infrast
 
 These documents are useful, but they are more speculative, essay-like, or draft-oriented than the core docs above.
 
+- [UNIVERSAL_AUCTION_LAUNCH_MODEL.md](./research/UNIVERSAL_AUCTION_LAUNCH_MODEL.md): current lead launch model; one auction lane, no reserved list, `1-4` character names in a later wave
+- [AUCTION_SIMULATOR.md](./research/AUCTION_SIMULATOR.md): current simulator and CLI commands for auction policy, single-auction cases, and market scenarios
 - [ONT_VS_PUBKY_PKARR.md](./research/ONT_VS_PUBKY_PKARR.md)
 - [ONT_AND_PRIVATE_MESSAGING_BOOTSTRAP.md](./research/ONT_AND_PRIVATE_MESSAGING_BOOTSTRAP.md)
 - [VALUE_RECORD_HISTORY_AND_KEYBASE_NOTES.md](./research/VALUE_RECORD_HISTORY_AND_KEYBASE_NOTES.md)
@@ -41,27 +43,6 @@ These documents are useful, but they are more speculative, essay-like, or draft-
 - [PRIVATE_RELATIONSHIP_GRAPH_AND_NOSTR.md](./research/PRIVATE_RELATIONSHIP_GRAPH_AND_NOSTR.md)
 - [USE_CASE_SCENES.md](./research/USE_CASE_SCENES.md)
 - [REVIEW_FEEDBACK_BACKLOG.md](./research/REVIEW_FEEDBACK_BACKLOG.md)
-- [CLAIM_ALLOCATION_AND_BATCHING_OPTIONS.md](./research/CLAIM_ALLOCATION_AND_BATCHING_OPTIONS.md)
-- [MERKLE_BATCHING_V0.md](./research/MERKLE_BATCHING_V0.md)
-- [MERKLE_BATCHING_FOOTPRINT.md](./research/MERKLE_BATCHING_FOOTPRINT.md)
-- [MERKLE_BATCHING_REVEAL_CARRIER_OPTIONS.md](./research/MERKLE_BATCHING_REVEAL_CARRIER_OPTIONS.md)
-- [MERKLE_BATCHING_TAPROOT_ANNEX_SKETCH.md](./research/MERKLE_BATCHING_TAPROOT_ANNEX_SKETCH.md)
-- [MERKLE_BATCHING_WALLET_COMPATIBILITY.md](./research/MERKLE_BATCHING_WALLET_COMPATIBILITY.md)
-- [MERKLE_BATCHING_V0_DECISIONS.md](./research/MERKLE_BATCHING_V0_DECISIONS.md)
-- [MERKLE_BATCHING_WORK_BREAKDOWN.md](./research/MERKLE_BATCHING_WORK_BREAKDOWN.md)
-- [RESERVED_NAME_AUCTION_LANE.md](./research/RESERVED_NAME_AUCTION_LANE.md)
-- [TWO_LANE_LAUNCH_ONE_PAGER.md](./research/TWO_LANE_LAUNCH_ONE_PAGER.md)
-- [LAUNCH_PREMIUM_OVERLAY_PIPELINE.md](./research/LAUNCH_PREMIUM_OVERLAY_PIPELINE.md)
-- [PREMIUM_NAME_CALIBRATION.md](./research/PREMIUM_NAME_CALIBRATION.md)
-- [SALIENCE_OVERLAY_RATIONALE.md](./research/SALIENCE_OVERLAY_RATIONALE.md)
-- [INITIAL_SALIENCE_TIERING_EXERCISE.md](./research/INITIAL_SALIENCE_TIERING_EXERCISE.md)
-- [SALIENCE_BOUNDARY_CHALLENGE_SET.md](./research/SALIENCE_BOUNDARY_CHALLENGE_SET.md)
-- [SALIENCE_INSTITUTIONAL_NATURAL_BUYER_SET.md](./research/SALIENCE_INSTITUTIONAL_NATURAL_BUYER_SET.md)
-- [SALIENCE_METEORIC_NAME_SET.md](./research/SALIENCE_METEORIC_NAME_SET.md)
-- [SALIENCE_PUBLIC_FIGURE_SET.md](./research/SALIENCE_PUBLIC_FIGURE_SET.md)
-- [SALIENCE_PUBLIC_OPERATOR_SET.md](./research/SALIENCE_PUBLIC_OPERATOR_SET.md)
-- [SALIENCE_DATA_BUILD_PLAN.md](./research/SALIENCE_DATA_BUILD_PLAN.md)
-- [SALIENCE_SOURCE_REGISTRY.md](./research/SALIENCE_SOURCE_REGISTRY.md)
 - [POST_QUANTUM_AND_SIGNATURE_AGILITY.md](./research/POST_QUANTUM_AND_SIGNATURE_AGILITY.md)
 - [HYPE_VIDEO_SCRIPT.md](./research/HYPE_VIDEO_SCRIPT.md)
 - [HANDSOFF_DEMO_WALLET_PLAN.md](./research/HANDSOFF_DEMO_WALLET_PLAN.md)
@@ -71,3 +52,7 @@ These documents are useful, but they are more speculative, essay-like, or draft-
 - [TRANSFER_RELAY_OPTIONS.md](./research/TRANSFER_RELAY_OPTIONS.md)
 - [FUTURE_EXPLORATIONS.md](./research/FUTURE_EXPLORATIONS.md)
 - [NOSTR_STRATEGY.md](./research/NOSTR_STRATEGY.md)
+
+Superseded launch-list and two-lane notes are intentionally removed from this
+index. The current launch model does not use a reserved-word list, salience
+spreadsheet, pre-launch reservation system, or separate ordinary lane.

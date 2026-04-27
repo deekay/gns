@@ -24,6 +24,10 @@ npm run deploy:vps -- root@<server-ip> ~/.ssh/<your-key>
 npm run bootstrap:ont-domain:vps -- root@<server-ip> ~/.ssh/<your-key> opennametags.org
 ```
 
+The deploy script refuses to deploy a dirty working tree by default. Commit and
+push first so the running VPS can be tied back to a known Git SHA. For an
+intentional prototype-only deploy, set `ONT_DEPLOY_ALLOW_DIRTY=1` explicitly.
+
 That will:
 
 - deploy the latest app code

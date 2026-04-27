@@ -6,6 +6,7 @@ This repository is close to publishable, but a few decisions are still worth mak
 
 - product naming is standardized around `Open Name Tags` / `ONT`
 - top-level docs now explain architecture, contribution flow, testing, and Sparrow setup
+- CI runs typecheck, workspace tests, private-signet auto-mine script tests, and browser fixture smoke on `main` and pull requests
 - local scripts can be run directly with full paths
 - the private signet Sparrow setup is documented and automated
 - private strategy files can live under `private/` or match the ignored planning-list patterns in `.gitignore`
@@ -38,7 +39,6 @@ Note: the repo is already moving toward explicit env vars and placeholders, whic
 
 Good next additions:
 
-- CI workflow
 - screenshots in the README
 
 ### 3. Decide what should stay demo-only
@@ -78,4 +78,6 @@ If you want a clean split between public protocol work and private planning, use
 
 ## Suggested Next Step
 
-Pick how opinionated you want the infra defaults to be in public scripts, then add CI.
+Pick how opinionated you want the infra defaults to be in public scripts, then
+keep the README screenshots and hosted demo state current with the latest
+review-ready flow.

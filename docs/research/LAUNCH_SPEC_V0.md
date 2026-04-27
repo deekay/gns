@@ -1,398 +1,185 @@
 # ONT Launch Spec v0
 
-This note is the current best attempt to turn recent launch research into one
-provisional specification.
+This note is the current best attempt to turn launch research into a provisional
+specification.
 
 It is not a final protocol freeze. It is a **working launch spec** for the
 direction we are most likely to pursue unless new evidence changes the choice.
 
-The main job of this note is to separate:
-
-- what we are currently leaning toward strongly enough to build around
-- what is still intentionally open
-
 Related notes:
 
-- [BITCOIN_EXPERT_REVIEW_PACKET.md](/Users/davidking/dev/gns/docs/research/BITCOIN_EXPERT_REVIEW_PACKET.md)
-- [BITCOIN_REVIEW_CLOSURE_MATRIX.md](/Users/davidking/dev/gns/docs/research/BITCOIN_REVIEW_CLOSURE_MATRIX.md)
-- [RESERVED_LIST_GENERATION_METHOD.md](/Users/davidking/dev/gns/docs/research/RESERVED_LIST_GENERATION_METHOD.md)
-- [RESERVED_NAME_AUCTION_LANE.md](./RESERVED_NAME_AUCTION_LANE.md)
-- [RESERVED_CLASS_OPTIONS.md](./RESERVED_CLASS_OPTIONS.md)
-- [RESERVED_AUCTION_SIMULATOR.md](./RESERVED_AUCTION_SIMULATOR.md)
+- [UNIVERSAL_AUCTION_LAUNCH_MODEL.md](./UNIVERSAL_AUCTION_LAUNCH_MODEL.md)
+- [LAUNCH_DIRECTION_STATUS.md](./LAUNCH_DIRECTION_STATUS.md)
+- [BITCOIN_EXPERT_REVIEW_PACKET.md](./BITCOIN_EXPERT_REVIEW_PACKET.md)
+- [BITCOIN_REVIEW_CLOSURE_MATRIX.md](./BITCOIN_REVIEW_CLOSURE_MATRIX.md)
 - [AUCTION_IMPLEMENTATION_GAP_LIST.md](./AUCTION_IMPLEMENTATION_GAP_LIST.md)
-- [ONE_LANE_VS_TWO_LANE_AUCTION_COMPARISON.md](./ONE_LANE_VS_TWO_LANE_AUCTION_COMPARISON.md)
-- [CLAIM_ALLOCATION_AND_BATCHING_OPTIONS.md](./CLAIM_ALLOCATION_AND_BATCHING_OPTIONS.md)
-- [SALIENCE_OVERLAY_RATIONALE.md](./SALIENCE_OVERLAY_RATIONALE.md)
-- [TWO_LANE_LAUNCH_ONE_PAGER.md](./TWO_LANE_LAUNCH_ONE_PAGER.md)
 
 ## Current Lead Direction
 
-The leading launch candidate is now a **two-lane model**:
+The leading launch candidate is now a **single auction lane**.
 
-- `ordinary lane`
-- `reserved lane`
+The intended rule is:
 
-The intended split is:
+> every launch-eligible name is allocated by auction.
 
-- keep ordinary names easy and legible
-- do not give obviously salient existing names away at the ordinary base curve
-- let markets discover BTC amounts for reserved names instead of asking the
-  protocol to hand-price thousands of them
+That means:
+
+- no ordinary claim lane
+- no reserved-name lane
+- no semantic reserved-name list
+- no pre-launch reservation system
+- no editorial distinction between brands, public figures, generic words, and
+  ordinary names
+- `1-4` character names held for a later short-name wave
 
 ## Primary Objectives
 
 The launch design should try to satisfy all of these at once:
 
-1. keep the ordinary namespace easy to understand and use
-2. reduce obvious launch windfalls on salient existing names
-3. avoid turning every ordinary self-claim into a bidding contest
-4. keep the protocol explainable to new users and reviewers
-5. remain credible on blockspace and implementation complexity
+1. make allocation neutral and easy to explain
+2. avoid subjective reserved-list governance
+3. let markets price names when more than one party cares
+4. keep normal long-tail claims from feeling intimidating when uncontested
+5. preserve the bonded-bitcoin model: cost without rent or protocol sales
+6. remain credible on blockspace and implementation complexity
 
-## Provisional Defaults
+## Eligibility At Launch
 
-These are the defaults we should currently treat as the working spec.
+The launch split is objective:
 
-### 1. Two-lane launch
+| Name length | Launch treatment |
+| --- | --- |
+| `1-4` characters | held for a later short-name auction wave |
+| `5-32` characters | eligible for the launch auction lane |
 
-We should now assume:
+This is not a reserved list.
 
-- launch uses an ordinary lane and a reserved lane
+It is a structural scarcity rule. Very short names are uniquely scarce, so they
+should not clear before ONT has enough public attention.
 
-This is no longer just one option among many. It is the current lead
-architecture.
+## Auction Flow
 
-### 2. Ordinary lane uses commit / reveal
+For names eligible at launch:
 
-For names outside the reserved list:
+1. a participant opens an auction with a bonded bid
+2. that opening bid sets the initial leader
+3. the auction remains open through the public window
+4. later bids must clear the minimum increment
+5. bids near the end extend the soft close
+6. the highest valid bidder wins
+7. the winner owns the name and enters settlement
+8. if no valid bid exists, the name remains unclaimed
 
-- standard commit / reveal claim flow
-- objective floor table
-- predictable first-claim experience
+The product should frame an uncontested auction simply:
 
-This lane should preserve the normal intuition:
-
-> I found an available name and I can try to claim it now.
-
-### 3. Ordinary lane uses a simple fixed lock
-
-The current leading simplification is:
-
-- fixed ordinary settlement lock of about `1 year`
-
-And:
-
-- drop the current epoch / maturity-halving logic from the lead launch design
-
-This makes the ordinary lane materially easier to explain.
-
-### 4. Reserved names do not open in the ordinary lane
-
-Names on the reserved list should:
-
-- not be claimable on launch day through the ordinary path
-- unlock later at known pre-announced block heights
-
-The reserved list decides:
-
-- which names are deferred
-- when they unlock
-
-It does **not** try to assign exact bespoke pricing per name.
-
-### 5. Reserved lane uses auctions
-
-Reserved names should enter:
-
-- an on-chain auction lane
-
-The current leading auction family is:
-
-- open ascending auction
-- soft close
-- real on-chain bonded bids
-
-Current implementation note:
-
-- simulator-backed policy/state tooling is real
-- experimental bid-package and bid-artifact tooling is real
-- the actual reserved-lane on-chain auction state machine is still not
-  implemented
-
-### 6. Reserved auctions bid on BTC amount only
-
-The protocol should fix the time dimension.
-
-Bidders should compete on:
-
-- BTC amount
-
-They should **not** compete on arbitrary BTC-time pairs.
-
-This avoids forcing hidden discount-rate assumptions into consensus.
-
-### 7. Reserved lock duration is protocol-set
-
-The reserved lane should use:
-
-- a fixed long lock duration set by protocol or reserved class
-
-This is doing much of the fairness work. It is what makes the auction more than
-just a cheap option on future resale value.
-
-### 8. Reserved auction floor inherits the ordinary floor
-
-The working floor formula is:
-
-`reserved_minimum_bid(name, class) = max(ordinary_floor_amount(name), reserved_class_floor_amount(class))`
-
-That means:
-
-- the ordinary base table remains the global scarcity floor
-- reserved treatment only adds stronger minimums where launch fairness seems to
-  require them
-
-### 9. Reserved list can be broad
-
-Because the protocol is no longer trying to custom-price each reserved name,
-the list can be much broader than a traditional premium-pricing table.
-
-The current bias is:
-
-- reserve broadly where cheap launch capture would feel visibly wrong or
-  create obvious hostage dynamics
-
-not:
-
-- reserve only a tiny prestige list
-
-### 10. Ordinary-lane Merkle batching remains compatible
-
-The current ordinary-lane implementation work stays useful under this launch
-spec.
-
-That means:
-
-- commit / reveal remains the ordinary claim path
-- explicit ordinary-lane Merkle batching remains the lead chain-footprint
-  optimization for that path
-
-The two-lane launch spec does not replace that work.
-
-## Ordinary Lane v0
-
-The ordinary lane should currently be understood as:
-
-- names not on the reserved list
-- commit / reveal
-- objective base floor table
-- fixed ordinary lock of about one year
-- no auction
-
-What this is trying to preserve:
-
-- good first-claim UX
-- simple mental model
-- open access to the long tail
-
-## Reserved Lane v0
-
-The reserved lane should currently be understood as:
-
-- names from a broad pre-announced reserved list
-- unavailable during the initial ordinary-name launch window
-- later unlocked at known block heights
-- allocated by auction rather than ordinary commit / reveal
-- lock duration fixed by protocol or reserved class
-- bids compete on BTC amount only
-- the winning bid carries the eventual owner key, so a separate settlement-only
-  ownership transaction is not required in the current experimental model
-
-## Reserved List Scope
-
-The current direction is to be fairly broad, using the salience work to feed the
-list.
-
-The current candidate categories include:
-
-- globally salient brands
-- regionally obvious brands with strong coordination value
-- institutions with dominant natural buyers
-- full-name public identities with strong dominant referents
-- public operators and founders
-- meteoric company names that create obvious capture-risk
-- ultra-scarce structural names that also have dominant existing buyers
-
-The current philosophy is:
-
-> if a name clearly has a dominant existing buyer or dominant real-world
-> referent, it should usually be selected for special launch treatment unless
-> the token is too ambiguous or structurally special to privilege cleanly.
+> Start a claim. If nobody else bids during the window, you win at your opening
+> bid. If others care, the auction discovers the price.
 
 ## Auction Defaults
 
-The current leading auction defaults are:
+Current preferred defaults:
 
-### Open ascending auction
+| Parameter | Current lean |
+| --- | --- |
+| default auction window | about `7 days` |
+| soft-close extension | about `24 hours` |
+| minimum increment | absolute floor plus percentage increment |
+| soft-close increment | stronger than normal mid-auction increment |
+| max extension cap | open, likely needed |
+| initial launch period | may use longer windows if awareness is uneven |
+| short-name wave | later, widely announced, same auction mechanics |
 
-- bids are visible on chain
-- highest valid bonded bid leads
+These are launch parameters, not final protocol constants yet.
 
-### Soft close
+## Pricing And Bonds
 
-- late higher bids extend the auction window
-- no brittle single final block
-- bids that would extend the auction should probably face a stronger increment
-  rule than ordinary mid-auction bidding
+The auction discovers the price.
 
-### One active bid per bidder per auction
+Length should not be treated as a value oracle. A short random string can be
+less valuable than a longer obvious name.
 
-- a bidder should be able to roll their own earlier bid upward
-- their existing bid capital stays auction-bound
-- they cannot freely withdraw and recycle it elsewhere mid-auction
+Length may still be useful as an objective opening-bond / anti-spam floor.
 
-### Meaningful minimum increment
+Working direction:
 
-The current bias is:
+- winning bids are bonded bitcoin, not fees paid to ONT
+- the winner keeps the bitcoin in self-custody during settlement
+- the real cost is liquidity, time, and opportunity cost
+- normal Bitcoin transaction fees still apply
+- ONT does not sell names, burn bids, or collect annual rent
 
-- require an increment that is economically meaningful
-- likely some combination of absolute floor plus percentage increment
-- and likely a stronger increment for bids that actually extend soft close
+## Settlement
 
-This is how we prevent cheap endless extensions.
+Winning an auction should produce normal ONT ownership:
 
-## Timing Defaults
+- the winning bid carries the owner key that should control the name
+- the name becomes usable after settlement requirements are met
+- off-chain value records are signed by the current owner key
+- transfers move owner authority later
 
-The current timing direction is:
+The exact settlement duration is still a launch parameter.
 
-- ordinary lane opens at launch
-- reserved lane does **not** open at launch
+The current bias is to avoid decade-scale Bitcoin-native locks at launch. The
+universal auction model gets much of its fairness from public price discovery,
+so it does not need to rely as heavily on very long lock durations.
 
-What remains open is the exact reserved unlock structure, but the current bias
-is:
+## Short-Name Second Wave
 
-- a small `pilot reserved wave`
-- followed by a larger `main reserved wave`
+Names of length `1-4` are held out of the initial launch.
 
-rather than:
+The later wave should be:
 
-- everything on day one
-- or many tiny editorial waves
+- public
+- pre-announced
+- objective
+- open to all bidders
+- using the same auction mechanics as the launch lane unless a specific
+  objective short-name parameter is announced in advance
 
-## Reserved Class Bias
+The current preferred boundary is `1-4`, not `1-5`.
 
-The current bias is **not** to create many bespoke classes.
+Reason:
 
-The most likely good outcome is:
+- `1-4` captures structural scarcity
+- `5` starts including many normal names, first names, brands, and handles
 
-- `2-3` reserved classes maximum
+## What The Spec Drops
 
-The current recommendation after comparing the options is:
+This launch model drops:
 
-- prefer `3` coarse reserved classes over one universal reserved duration
+- semantic reserved-name lists
+- source-generated auction lists as protocol-critical artifacts
+- pre-launch proof/reservation systems
+- ordinary-vs-reserved claim treatment
+- no-bid fallback from auction into a separate ordinary lane
+- bespoke reserved classes for brands, identities, and generics
 
-See [RESERVED_CLASS_OPTIONS.md](./RESERVED_CLASS_OPTIONS.md).
+The previous source-list work can remain useful for research and examples, but
+it is no longer the allocation mechanism.
 
-Possible class shapes worth exploring:
+## Implementation Gap List
 
-- ultra-scarce structural / top-collision names
-- major existing brands and institutions
-- public-identity / operator names
+The main implementation work now is:
 
-The main goal is coarse, defensible buckets, not per-name tailoring.
+- keep retiring old direct-claim code paths in favor of auction-opening-first flows
+- update auction policy defaults toward the launch timing above
+- enforce the `1-4` short-name wave gate
+- add or decide a max soft-close extension cap
+- decide final settlement duration after winning auction
+- update batch/footprint analysis for auction openings and bids
+- remove old list-based launch language from user-facing docs and tools
+- remove remaining legacy direct-claim implementation details that are no longer
+  needed for auction-opening-first flows
 
-## Intentionally Open Questions
+## Current Status
 
-These are the main unresolved items that should stay explicit.
+The repo still contains a few legacy internal type names in code and fixtures.
 
-### 1. One reserved duration or a few reserved classes?
+Those should now be read as implementation history unless a document explicitly
+points back to this launch spec.
 
-This is probably the most important remaining economic choice.
+The current lead launch sentence is:
 
-The current recommended direction is:
-
-- use a few coarse reserved classes rather than one universal reserved duration
-
-The remaining question is narrower:
-
-- what exact `2-3` class structure and burdens should those classes use?
-
-### 2. Exact reserved duration
-
-The live range still looks like:
-
-- `5 years`
-- `10 years`
-
-The strongest current intuition is:
-
-- top names can bear very long commitments
-- public-identity names may need lighter treatment than the very top brand
-  bucket
-
-### 3. Transfer / early-exit policy for reserved winners
-
-The principle is clear:
-
-- early exit should not make the long lock meaningless
-
-But the precise rule is still open.
-
-### 4. Reserved unlock timing
-
-We still need to finalize:
-
-- how long after launch reserved auctions begin
-- whether the best structure is `pilot + main`
-- the exact release-valve policy if over-reserved names attract no bids
-
-Current implementation note:
-
-- the experimental auction prototype now models one explicit no-bid release
-  valve, where a reserved lot can fall back to the ordinary lane after a
-  configurable window with no valid opening bid
-- that policy shape is now implemented for testing, but the timing remains
-  provisional
-
-### 5. Final reserved-list breadth
-
-The bias is broad reservation, but the exact practical boundary is still open.
-
-We still need to answer:
-
-- how broad is broad enough to build trust
-- without making launch feel artificially withheld
-
-## Not In This Spec Yet
-
-This note does **not** yet finalize:
-
-- the final reserved salience dataset
-- the exact auction script mechanics
-- transfer script details for reserved winners
-- whether annex-based reveal carriage should ever become production path
-- browser UX beyond the current prototype
-
-## What We Can Build Against Now
-
-Even with open questions, the following are stable enough to use as working
-assumptions:
-
-1. two-lane launch
-2. ordinary commit / reveal lane
-3. fixed ordinary lock around one year
-4. reserved deferred-auction lane
-5. reserved bids on BTC amount only
-6. long fixed reserved lock set by protocol or a very small number of classes
-7. broad reserve-list philosophy
-
-## Short Practical Takeaway
-
-If someone asks what we are currently converging toward, the shortest accurate
-answer is:
-
-> ONT is currently converging toward a two-lane launch. Ordinary names keep a
-> simple commit/reveal path with an objective floor table and a fixed ordinary
-> lock. Salient existing names go to a broad reserved lane, unlock later, and
-> are priced by deferred on-chain auctions where the protocol fixes the time
-> commitment and the market discovers the BTC amount.
+> ONT uses one market rule for names: eligible names are auctioned, short names
+> launch later in an objective second wave, and no semantic reserved list
+> decides who deserves special treatment.

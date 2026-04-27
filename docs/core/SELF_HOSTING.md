@@ -67,7 +67,7 @@ This is the long-running read API and embedded indexer.
 It serves:
 
 - name lookup
-- pending commits
+- auction state
 - recent activity
 - provenance detail
 - signed value records
@@ -80,9 +80,9 @@ It serves:
 
 - lookup
 - explore
-- claim prep
+- auction bid prep
 - transfer prep
-- offline architect download
+- setup and key tools
 
 ### `indexer`
 
@@ -104,7 +104,7 @@ Edit `.env` and replace the fixture settings with:
 ONT_SOURCE_MODE=rpc
 ONT_EXPECT_CHAIN=signet
 ONT_BITCOIN_RPC_URL=http://host.docker.internal:38332
-ONT_BITCOIN_RPC_USERNAME=gnsrpc
+ONT_BITCOIN_RPC_USERNAME=ontrpc
 ONT_BITCOIN_RPC_PASSWORD=replace-me
 ONT_WEB_NETWORK_LABEL=Self-Hosted Signet
 ```
@@ -165,7 +165,8 @@ Running your own stack changes the trust story:
 - you no longer depend on the hosted resolver for ownership state
 - if you also use your own Bitcoin backend, the entire read path becomes yours
 
-For high-value claim preparation, the strongest path is still the offline architect plus your own signer.
+For high-value auction or transfer preparation, the strongest path is your own
+resolver, local tooling, and your own signer.
 
 ## What This Does Not Package Yet
 

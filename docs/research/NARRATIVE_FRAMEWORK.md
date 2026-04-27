@@ -227,11 +227,11 @@ The tone should be:
 - humble about the exact mechanics
 - concrete about why names matter
 
-## Two-Lane Moral Intuition
+## Universal Auction Moral Intuition
 
-The two-lane story strengthens the philosophy rather than weakening it.
+The universal-auction story strengthens the philosophy rather than weakening it.
 
-The old pure story said all names should be treated the same. The stronger updated story is that not all names create the same coordination pressure, and pretending otherwise does not produce fairness.
+The old two-lane story tried to protect the long tail with a simple claim lane and send salient names to auction. The stronger updated story is simpler: if ONT is allocating scarce human-readable names, every launch-eligible name should face the same market rule.
 
 The moral center should be:
 
@@ -246,18 +246,20 @@ That order matters.
 
 If bootstrapping comes first, the mechanism can sound extractive. If legitimacy comes first, the market structure sounds principled:
 
-- some names are socially salient
-- giving them away cheaply is not neutral
+- names differ wildly in demand, salience, and griefing value
+- giving scarce names away cheaply is not neutral
 - insider allocation is not acceptable
 - protocol operators should not hand-price the whole world
 - open competition with visible rules is the more credible answer
 
-So the two-lane launch says:
+So the launch story says:
 
-- ordinary names stay simple
-- salient names go through a more explicit market
+- launch-eligible names are auctioned under one rule
+- there is no reserved-word list
+- there is no ordinary claim lane
+- `1-4` character names wait for a later short-name wave
 
-This is not a retreat from fairness. It is a better market-based account of fairness.
+This is not a retreat from fairness. It is a cleaner market-based account of fairness.
 
 ## Relationship To Human Bitcoin Addressing
 

@@ -57,10 +57,10 @@ Pubky / PKARR avoids the scarcity problem by avoiding global shared names.
 
 ONT leans into the scarcity problem directly:
 
-- commit / reveal claims
+- universal launch auctions
 - bitcoin bond economics
 - explicit transfer rules
-- a two-lane launch direction for salient names
+- a later short-name wave for `1-4` character names
 
 ### 3. Base trust anchor
 

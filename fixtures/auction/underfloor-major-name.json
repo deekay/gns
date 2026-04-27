@@ -1,23 +1,23 @@
 {
   "scenario": {
-    "name": "sequoia",
-    "reservedClassId": "major_existing_name",
+    "name": "nike",
+    "auctionClassId": "launch_name",
     "unlockBlock": 880000,
     "bidAttempts": [
       {
         "bidderId": "speculator_a",
         "blockHeight": 880015,
-        "amountSats": "150000000"
+        "amountSats": "10000000"
       },
       {
         "bidderId": "speculator_b",
         "blockHeight": 880020,
-        "amountSats": "180000000"
+        "amountSats": "11000000"
       },
       {
         "bidderId": "speculator_c",
         "blockHeight": 880030,
-        "amountSats": "199999999"
+        "amountSats": "12499999"
       }
     ]
   },

@@ -95,23 +95,18 @@ This is currently the most serious challenge to the fairness story.
 
 ### Current Status
 
-Active design paths now exist.
+The current working direction is now simpler:
 
-Current working direction:
+- use one auction allocation rule for every launch-eligible name
+- keep `1-4` character names out of launch and send them to a later objective
+  short-name wave
+- remove semantic reserved lists and pre-launch reservation systems from the
+  launch design
+- let markets reveal which names have real demand instead of asking ONT to
+  classify names ahead of time
 
-- keep the objective base curve
-- add a bounded, frozen, launch-only premium overlay for already-salient names
-- score that overlay from public salience and coordination evidence
-- allow a second inclusion path for clear natural-buyer capture-risk cases
-
-Parallel alternative now under active exploration:
-
-- keep a simple ordinary commit / reveal lane for non-reserved names
-- prepare a broad reserved list of salient existing names
-- defer those names to a later auction lane
-- let the market set BTC amount under a fixed long lock instead of protocol-side pricing
-
-Still open, but no longer structurally vague.
+Still open, but no longer structurally vague: final windows, increments, caps,
+floors, and settlement-lock details need real parameter work.
 
 ## 5. Bond Curve Justification
 
@@ -238,16 +233,15 @@ This is a core Bitcoin-cultural question, not just an engineering optimization.
 
 Open. Current footprint is measured, but the future minimization story is not settled.
 
-## 11. Batching, Merkle Anchoring, And "Scriptless" Directions
+## 11. Footprint And Future Compactness
 
 ### Concern
 
 Reviewers want us to revisit smaller-footprint alternatives such as:
 
-- Merkle batching
 - OpenTimestamps-style anchoring
 - Taproot tweaks
-- signature-embedded reveals
+- multi-bid or multi-transfer packaging
 
 The key question is whether some version of this should be part of launch rather than treated only as future work.
 
@@ -257,19 +251,19 @@ This is the main candidate answer to "respect blockspace more aggressively befor
 
 ### Current Status
 
-Open, but more concrete than before. Current direction is to treat Merkle batching as the leading launch-plausible footprint improvement if batching becomes part of v1, while treating Taproot / scriptless directions as deeper future research unless a much stronger implementation case emerges. A first implementation-facing design note now exists in `MERKLE_BATCHING_V0.md`.
+Open. The current launch direction no longer depends on the retired direct-allocation batching work. Footprint review should focus first on auction openings, auction bids, transfers, and owner-signed value publication.
 
-## 12. Auction Dynamics Versus Fixed Bonds
+## 12. Auction Dynamics
 
 ### Concern
 
-The current design uses fixed length-based bonds plus commit/reveal rather than an on-chain auction.
+The current launch direction uses auctions for every launch-eligible name.
+Reviewers are now explicitly asking whether:
 
-That avoids one class of contest, but reviewers are now explicitly asking whether:
-
-- auctions should be reconsidered
-- fixed bonds are enough
-- or some hybrid design is needed
+- auction windows are long enough
+- opening floors are high enough
+- settlement locks are too long given quantum concerns
+- the later short-name wave should be `1-4` characters or broader
 
 ### Why It Matters
 
@@ -277,7 +271,7 @@ This is the central design question behind premium-name squatting and fairness a
 
 ### Current Status
 
-Open. Needs explicit comparison of allocation mechanics and their trade-offs.
+Open. Needs explicit comparison of auction parameters and their trade-offs.
 
 ## 13. Transaction-Level Technical Transparency
 
@@ -288,7 +282,7 @@ Reviewers asked for clearer technical detail on:
 - payload shapes
 - script types
 - signatures
-- commit/reveal contents
+- auction bid contents
 - transfer contents
 
 ### Why It Matters

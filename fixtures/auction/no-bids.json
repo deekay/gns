@@ -1,7 +1,7 @@
 {
   "scenario": {
     "name": "citadel",
-    "reservedClassId": "major_existing_name",
+    "auctionClassId": "launch_name",
     "unlockBlock": 870000,
     "bidAttempts": []
   },

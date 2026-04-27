@@ -4,7 +4,7 @@
   "currentBlockHeight": 176,
   "scenario": {
     "name": "phasesoftclose",
-    "reservedClassId": "public_identity",
+    "auctionClassId": "launch_name",
     "unlockBlock": 170,
     "bidAttempts": []
   }

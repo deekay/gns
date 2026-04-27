@@ -1,10 +1,10 @@
 {
   "title": "Private smoke lot · release D",
-  "description": "Private signet experimental reserved-auction lot reserved for no-bid release-valve smoke coverage and late-bid rejection after release.",
+  "description": "Private signet experimental auction lot dedicated to no-winner close smoke coverage and late-bid rejection after release.",
   "currentBlockHeight": 128,
   "scenario": {
     "name": "notion",
-    "reservedClassId": "major_existing_name",
+    "auctionClassId": "launch_name",
     "unlockBlock": 120,
     "bidAttempts": []
   }

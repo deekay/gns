@@ -31,7 +31,7 @@ Not for this hosted private demo. The official Electrum app reaches the endpoint
 
 Other PSBT-capable wallets may be compatible, but they are not yet validated end to end for this private demo flow.
 
-### Why doesn’t a normal public signet server show my demo coins?
+### Why do I need the hosted demo endpoint?
 
 Because the hosted demo uses a private signet, not the shared public signet. Public signet servers do not know about this chain, so they will never show balances or transactions from the private demo.
 
@@ -112,15 +112,14 @@ Once Sparrow is connected:
 2. Copy a fresh Sparrow receive address
 3. Use `Get Demo Coins First`
 4. Refresh Sparrow and confirm the UTXO appears
-5. Prepare the claim draft
+5. Open the auction page and prepare a bid package
 6. Paste:
    - master fingerprint
    - account xpub / tpub / vpub
    - account derivation path
 7. Click `Build Sparrow PSBTs`
-8. Download and sign the commit and reveal PSBTs in Sparrow
-9. After you broadcast the commit, the hosted private demo should confirm it automatically
-10. Broadcast the reveal after the commit confirms; the hosted demo should confirm that automatically too
+8. Download and sign the auction bid PSBT in Sparrow
+9. Broadcast the bid transaction and confirm it in the hosted private demo
 
 ## Troubleshooting
 

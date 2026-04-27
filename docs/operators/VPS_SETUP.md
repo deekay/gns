@@ -135,15 +135,14 @@ Routine code deploys for the private demo use:
 To seed the private demo with visible names and lifecycle states, run from the local repo:
 
 ```bash
-npm run test:private-signet-demo
+npm run test:private-signet-auction-smoke
 ```
 
 For smaller, easier-to-debug checks, run:
 
 ```bash
-npm run test:private-signet-claim-smoke
-npm run test:private-signet-transfer-smoke
-npm run test:private-signet-value-handoff-smoke
+npm run test:private-signet-auction-smoke
+npm run test:private-signet-auction-phase-gallery
 ```
 
 ## Public URL
@@ -298,4 +297,4 @@ The next improvements I would make are:
 1. add a reverse proxy in front of the web app
 2. add TLS with a real domain
 3. move the resolver/indexer to a more durable backend
-4. run a real signet claim flow against this node
+4. run a real signet auction bid flow against this node
