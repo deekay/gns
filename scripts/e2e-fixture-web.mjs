@@ -135,15 +135,15 @@ async function assertAuctionsPage(page) {
   });
   const bodyText = await page.locator("body").textContent();
   assert(
-    (bodyText ?? "").includes("Current interface for the auction flow"),
+    (bodyText ?? "").includes("Advanced auction prototype surface"),
     "auction page should expose the current auction framing"
   );
   assert(
-    (bodyText ?? "").includes("Resolver-backed auction state derived from observed AUCTION_BID transactions."),
+    (bodyText ?? "").includes("Advanced resolver-backed view derived from observed AUCTION_BID transactions."),
     "auction page should expose the chain-derived experimental bid feed"
   );
   assert(
-    (bodyText ?? "").includes("Loading the current auction policy and state fixtures."),
+    (bodyText ?? "").includes("Auction Reference Cases"),
     "auction page should render the simulator-backed state surface"
   );
 }
