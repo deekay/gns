@@ -116,12 +116,16 @@ async function assertHomePage(page) {
 }
 
 async function assertRetiredClaimPage(page) {
-  await page.goto(`${webUrl}/claim`, {
+  const response = await page.goto(`${webUrl}/claim`, {
     waitUntil: "domcontentloaded"
   });
+  const bodyText = await page.locator("body").textContent();
 
-  await waitForVisibleText(page, "Use The Auction Flow");
-  await waitForVisibleText(page, "Open Auctions");
+  assert(response?.status() === 404, "retired claim page should return 404");
+  assert(
+    (bodyText ?? "").includes("Supported paths"),
+    "retired claim page should show the supported-paths error"
+  );
 }
 
 async function assertAuctionsPage(page) {
