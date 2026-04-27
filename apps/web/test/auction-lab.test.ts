@@ -21,6 +21,9 @@ describe("loadLaunchAuctionLab", () => {
     expect(payload.cases[0]?.state.currentRequiredMinimumBidSats).toBe("6250000");
     expect(payload.cases[3]?.state.currentLeaderBidderId).toBe("speculator_d");
     expect(payload.cases.map((entry) => entry.state.phase)).not.toContain("pending_unlock");
+
+    const names = payload.cases.map((entry) => entry.state.normalizedName);
+    expect(new Set(names).size).toBe(names.length);
   });
 
   it("can derive a shared auction bid package from a website-facing case", async () => {

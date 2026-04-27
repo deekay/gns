@@ -1,9 +1,9 @@
 {
-  "title": "Settled · meadow",
+  "title": "Settled · harbor",
   "description": "Launch auction after the full auction window and soft-close extension have passed. This is the final winner state the protocol would carry forward.",
   "currentBlockHeight": 854700,
   "scenario": {
-    "name": "meadow",
+    "name": "harbor",
     "auctionClassId": "launch_name",
     "unlockBlock": 850000,
     "bidAttempts": [
