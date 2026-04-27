@@ -656,9 +656,7 @@ async function proxyExperimentalAuctionsJson(
       const record = payload as { auctions: unknown[] };
       writeJson(response, upstream.status, {
         ...record,
-        auctions: record.auctions.filter((entry) => {
-          return !(entry && typeof entry === "object" && (entry as { phase?: unknown }).phase === "closed_without_winner");
-        })
+        auctions: record.auctions.filter((entry) => !isLegacyNoBidAuctionEntry(entry))
       });
       return;
     }
@@ -670,6 +668,32 @@ async function proxyExperimentalAuctionsJson(
       message: error instanceof Error ? error.message : "Resolver request failed"
     });
   }
+}
+
+function isLegacyNoBidAuctionEntry(entry: unknown): boolean {
+  if (!entry || typeof entry !== "object") {
+    return false;
+  }
+
+  const record = entry as {
+    auctionId?: unknown;
+    title?: unknown;
+    description?: unknown;
+    phase?: unknown;
+  };
+
+  if (record.phase === "closed_without_winner") {
+    return true;
+  }
+
+  const text = [record.auctionId, record.title, record.description]
+    .filter((value): value is string => typeof value === "string")
+    .join(" ")
+    .toLowerCase();
+
+  return text.includes("legacy no-bid")
+    || text.includes("no-bid close")
+    || text.includes("no-winner");
 }
 
 async function readPrivateAuctionSmokeStatus(): Promise<unknown> {

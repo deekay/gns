@@ -4648,7 +4648,7 @@ function renderExperimentalAuctionFeed() {
   }
 
   elements.experimentalAuctionList.classList.remove("empty");
-  const visibleAuctions = payload.auctions.filter((auction) => auction.phase !== "closed_without_winner");
+  const visibleAuctions = payload.auctions.filter((auction) => !isLegacyNoBidAuctionEntry(auction));
   setText(
     elements.experimentalAuctionMeta,
     [
@@ -4660,6 +4660,25 @@ function renderExperimentalAuctionFeed() {
   elements.experimentalAuctionList.innerHTML = visibleAuctions
     .map((auction) => renderExperimentalAuctionCard(auction))
     .join("");
+}
+
+function isLegacyNoBidAuctionEntry(entry) {
+  if (!entry || typeof entry !== "object") {
+    return false;
+  }
+
+  if (entry.phase === "closed_without_winner") {
+    return true;
+  }
+
+  const text = [entry.auctionId, entry.title, entry.description]
+    .filter((value) => typeof value === "string")
+    .join(" ")
+    .toLowerCase();
+
+  return text.includes("legacy no-bid")
+    || text.includes("no-bid close")
+    || text.includes("no-winner");
 }
 
 function renderAuctionPolicySummary(policy) {
