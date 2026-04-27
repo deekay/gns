@@ -25,7 +25,7 @@ The overview flow is:
 alice
   -> Bitcoin anchor
      owner key: 8f3c...12ab
-     bond: self-custodied bitcoin
+     bond: 50,000 sats
 
   -> signed off-chain bundle
      btc: bc1qxy...0wlh

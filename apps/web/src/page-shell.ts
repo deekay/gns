@@ -636,7 +636,7 @@ function renderHomeModelSection(): string {
           <p><span>name</span><strong class="mono">alice</strong></p>
           <p><span>auction</span><strong>won</strong></p>
           <p><span>owner</span><strong class="mono">8f3c...12ab</strong></p>
-          <p><span>bond</span><strong>self-custody</strong></p>
+          <p><span>bond</span><strong>50,000 sats</strong></p>
         </div>
       </article>
       <div class="protocol-flow-arrow" aria-hidden="true"></div>

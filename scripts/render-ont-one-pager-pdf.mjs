@@ -279,7 +279,7 @@ function renderAliceFlow() {
       x,
       title: "Bitcoin anchor",
       meta: "alice",
-      body: ["owner key: 8f3c...12ab", "bond: self-custodied bitcoin"]
+      body: ["owner key: 8f3c...12ab", "bond: 50,000 sats"]
     },
     {
       x: x + width + gap,

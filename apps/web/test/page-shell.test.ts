@@ -83,6 +83,7 @@ describe("renderPageHtml", () => {
     expect(html).toContain("protocol-flow");
     expect(html).toContain("Win At Auction");
     expect(html).toContain("Bitcoin establishes that <span class=\"mono\">alice</span> is controlled by an owner key");
+    expect(html).toContain("50,000 sats");
     expect(html).toContain("Publish Off-Chain");
     expect(html).toContain("Resolvers store that signed record.");
     expect(html).toContain("<strong class=\"mono\">bc1qxy...0wlh</strong>");
