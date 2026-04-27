@@ -5,14 +5,14 @@ This document captures speculative technical directions and brainstorming for th
 ## 1. Zero-Knowledge (ZK) Enhancements
 
 ### ZK-Rollups for Scalability
-- **The Idea:** An aggregator collects 1,000 name claims and posts a single ZK-proof to Bitcoin.
-- **Benefit:** Reduces the cost of a name claim by 99% while maintaining cryptographic validity.
+- **The Idea:** An aggregator collects 1,000 name-acquisition proofs and posts a single ZK-proof to Bitcoin.
+- **Benefit:** Reduces the per-name verification footprint by 99% while maintaining cryptographic validity.
 - **Risk:** Introduces a dependency on a "Prover" (though non-custodial).
 
 ### Blinded Ownership (Privacy)
 - **The Idea:** Instead of revealing the plaintext name on-chain, the user reveals a ZK-proof of a valid commit.
 - **Benefit:** "Stealth Names" where the public doesn't know which name you own until you choose to resolve it.
-- **Collision Warning:** Full blindness can lead to "Bait-and-Switch" collisions where two users claim the same name unknowingly.
+- **Collision Warning:** Full blindness can lead to "Bait-and-Switch" collisions where two users pursue the same name unknowingly.
 - **The Solution:** Use a **Deterministic Occupancy Signal** (e.g., a Sparse Merkle Tree where the leaf position is `hash(name)`). This proves a "slot" is taken without revealing the name, though common names can still be brute-forced.
 
 ### Succinct State Proofs
@@ -59,7 +59,7 @@ These are ideas for addressing that without introducing a central registry or a 
 
 ### Completeness Scoring via Chain-Derived Ground Truth
 
-- **The Idea:** Because every name event is on Bitcoin, any client that has synced the chain knows the ground truth: the exact set of names that exist, their owners, and their claim heights. A client can sample random names from its local index, query a resolver for each, and score it: `correct_answers / queries`. Resolvers that score below a threshold get dropped; high-scoring resolvers get preferred.
+- **The Idea:** Because every name event is on Bitcoin, any client that has synced the chain knows the ground truth: the exact set of names that exist, their owners, and their acquisition heights. A client can sample random names from its local index, query a resolver for each, and score it: `correct_answers / queries`. Resolvers that score below a threshold get dropped; high-scoring resolvers get preferred.
 - **Benefit:** Resolver trust becomes objectively measurable with zero external dependencies. A resolver cannot fake completeness — it either watched the chain or it didn't. This is a property unique to Bitcoin-anchored systems and worth exploiting.
 - **Extension:** Resolvers could publish a signed **completeness certificate** — a Merkle root over their full name index at a given block height. Clients spot-check it. Multiple resolvers compete on completeness, giving the ecosystem a trust signal derived entirely from chain data.
 

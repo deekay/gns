@@ -1,183 +1,105 @@
-# ONT One-Pager
+# Open Name Tags (ONT) One-Pager
 
-Status note:
+Open Name Tags is a Bitcoin-anchored naming system for human-readable names you can actually own.
 
-- for the current framing, start with [ONT_FROM_ZERO.md](./ONT_FROM_ZERO.md)
-- for the current implementation status, use [ONT_IMPLEMENTATION_AND_VALIDATION.md](../research/ONT_IMPLEMENTATION_AND_VALIDATION.md)
-- for the current launch direction, use [LAUNCH_SPEC_V0.md](../research/LAUNCH_SPEC_V0.md)
+An ONT name is a flat label like `alice`, `bob`, or a brand name. Ownership is public, auditable, and derived from Bitcoin. The owner can publish signed off-chain records that say where the name points: payment destinations, websites, profiles, messaging endpoints, or other application-specific records.
 
-This one-pager still captures the core model, but some older launch details below
-should not be treated as the settled launch spec.
+The goal is simple: make names human-readable without asking a company, registry, resolver, or protocol operator to be the trusted source of truth.
 
-Open Name Tags (ONT) is a payment-handle system anchored to Bitcoin. An ONT name is a flat string like `satoshi` that the owner can control directly. The first use case is simple: help humans say who should get paid before money moves, without copying raw addresses or depending on a gatekeeper-controlled alias.
+## The Core Model
 
-## What The System Does
+ONT separates ownership from records.
 
-ONT separates two things:
+- Bitcoin anchors who owns the name.
+- The records it points to stay off-chain.
+- Off-chain records are signed by the current owner key.
+- Resolvers can help distribute records, but they cannot invent ownership.
 
-- **ownership**, which is recorded on-chain
-- **what the name points to**, which is signed off-chain by the current owner
+That split is the heart of ONT. Bitcoin is used for scarce ownership and state transitions, not as a general-purpose data store. Records stay lightweight, updateable, and portable across resolvers.
 
-That means Bitcoin is used as a notary for ownership and state transitions, not as a general-purpose data store.
+## Bonds, Not Rent
 
-A name can point to:
+ONT uses bonded bitcoin to create real cost without paying a third party to allocate scarcity.
 
-- payment destinations
-- broader ordered key/value pairs later if clients and applications decide to support them
+A winning bidder does not pay ONT, burn bitcoin, or rent the name annually. The bitcoin remains the owner’s bitcoin in self-custody, but it is committed during settlement. The cost is liquidity, time, and opportunity cost.
 
-## Core Design
+That makes name allocation costly enough to discourage careless hoarding, while avoiding the usual model where a registry sells or rents names as a central issuer.
 
-The current launch direction is **universal auctions plus bitcoin bonds**.
+## Launch Allocation
 
-1. A launch-eligible name opens through the auction flow.
-2. A valid bid commits the bidder, owner key, bid amount, and auction state.
-3. The winning bid establishes ownership and starts settlement.
-4. During settlement, bond continuity still matters. After maturity, the name remains valid without ongoing bond continuity.
+The current launch model is a single auction lane.
 
-Transfers move ownership from one pubkey to another. Off-chain value updates are only valid if signed by the name's **current owner key**.
+- Every launch-eligible name is allocated by auction.
+- There is no ordinary direct-allocation lane.
+- There is no reserved-name lane.
+- There is no pre-launch reservation system.
+- There is no hand-built list of brands, public figures, companies, or generic words.
 
-Two key distinctions matter:
+This is the biggest recent simplification. Earlier designs explored special handling for famous people, brands, generic words, and other high-salience names. That created hard governance questions: who decides what belongs on the list, how boundary cases are defended, and how to avoid insider favoritism.
 
-- the **wallet key** signs Bitcoin transactions
-- the **owner key** controls later updates and transfers
+The current rule is cleaner:
 
-In v1, losing the owner key means losing update and transfer authority for that name.
+> If a launch-eligible name matters to more than one participant, the auction discovers that.
 
-## Economic Model
+For most long-tail names, the experience can still be simple. Start an auction. If nobody else bids during the public window, you win at your opening bid. If others care, the price is discovered in the open.
 
-ONT tries to allocate names through **bonded capital**, not through rent, private allocation, or protocol sales.
+## Short Names
 
-The bond is:
+Names of length `1-4` are held for a later short-name auction wave.
 
-- **not** a payment to ONT
-- **not** burned
-- **not** annual rent
+Names of length `5-32` are eligible at launch.
 
-It is bitcoin the claimer still owns, temporarily locked as economic commitment during settlement.
+This is not a reserved list. It is an objective scarcity rule. Very short names are structurally scarce, so they should not clear before ONT has enough public attention. The boundary is easy to verify and does not require judging whether a person, brand, company, or word is important enough for special treatment.
 
-### Auction And Bond Model
+## What Ownership Lets You Do
 
-The current launch direction is:
+The owner key controls the name after acquisition.
 
-- every launch-eligible name is allocated by auction
-- `1-4` character names are held for a later short-name auction wave
-- `5-32` character names are eligible at launch
-- winning bids are bonded bitcoin, not payments to ONT
+- Publish or update signed destination records.
+- Map a name to payment destinations.
+- Point to web, professional, messaging, or other records.
+- Transfer the name to a new owner key.
 
-Length may still set an objective opening-bond floor, but the auction discovers
-the actual market price.
+Two key roles matter:
 
-Illustrative legacy floor curve:
+- The wallet key signs Bitcoin transactions.
+- The owner key signs records and controls future updates or transfers.
 
-| Name length | Required bond |
-| --- | --- |
-| `1` | `₿100,000,000 (1 BTC)` |
-| `2` | `₿50,000,000 (0.5 BTC)` |
-| `3` | `₿25,000,000 (0.25 BTC)` |
-| `6` | `₿3,125,000 (0.03125 BTC)` |
-| `12+` | `₿50,000 (0.0005 BTC)` |
+In the current prototype model, losing the owner key means losing update and transfer authority for that name.
 
-The old lead design layered a separate reserved deferred-auction lane on top of
-this floor. The current lead design is simpler: one auction rule for eligible
-names, with the shortest names delayed to a later objective wave.
+## What ONT Is Not
 
-### Why The Namespace Remains Open
+ONT is not a protocol sale, rent system, or editorial naming authority.
 
-Using the current v1 alphabet (`a-z0-9`), there are about **2.18 billion** possible 6-character names.
+- ONT does not sell names to users.
+- ONT does not collect annual rent.
+- ONT does not maintain a special-case reserved list.
+- ONT does not rely on one resolver to define who owns a name.
+- ONT does not put routine destination updates on-chain.
 
-At the current 6-character bond of `₿3,125,000 (0.03125 BTC)`, claiming all possible 6-character names would require about **68 million BTC**, which is more than three times Bitcoin's total **21 million BTC** supply.
+The system is intentionally narrow at the base layer: Bitcoin anchors ownership, and owner-signed off-chain records make names useful.
 
-Even if every bitcoin in existence were somehow devoted to 6-character claims, it would only be enough to bond about **672 million names** out of roughly **2.18 billion** possible 6-character names. The majority of that namespace would still remain open.
+## Current Launch Shape
 
-That does not make allocation perfectly neutral. Early participants, wealthy claimants, and fee conditions will matter. But under the current v1 alphabet and bond curve, it does mean that from 6-character names onward, fully cornering the namespace becomes economically impossible: combinatorial supply outgrows the total capital that can exist.
+The current working launch direction is:
 
-### Why The Bond Ends At Maturity
+- one auction rule for all launch-eligible names
+- `5-32` character names eligible at launch
+- `1-4` character names delayed to a later short-name wave
+- auction windows measured in days, with a soft close for late bidding
+- winning bids treated as bonded bitcoin, not payments to ONT
+- settlement duration and exact auction parameters still to be finalized
 
-After settlement, names remain valid without ongoing bond continuity.
+The current bias is to avoid decade-scale Bitcoin-native locks at launch. Long timelocks raise bootstrapping and quantum-risk concerns, and the single-lane auction model gets much of its fairness from public price discovery rather than relying on extremely long lock duration.
 
-This is intentional. The fairness mechanism is the opportunity cost of locking capital through settlement, not perpetual rent. Once an auction winner has committed bitcoin for the full maturity period, the protocol has already observed a meaningful economic signal that they value the name and gave up the chance to use that capital elsewhere. Requiring the bond to remain parked indefinitely would add ongoing carrying cost without materially improving initial allocation fairness, while also increasing permanent UTXO pressure.
-
-### Launch Fairness
-
-The fairness story is not only about the bond curve. It is also about how launch happens.
-
-A mainnet launch should only happen once the signet and private-demo paths are well tested and the activation block height is widely announced in advance. The goal is that everyone knows the exact starting rules, the exact starting height, the auction mechanics, and the short-name wave boundary before names open, so access is as open and simultaneous as possible on day one.
-
-## Blockspace Footprint
-
-ONT keeps its pure naming payload relatively small, but it still consumes real Bitcoin blockspace because bids, settlement, transfers, and releases are ordinary Bitcoin transactions.
-
-Current implementation summary:
-
-- auction bid payloads are compact, but total vbytes depend on the signer and funding inputs
-- settlement and transfer footprint should be measured against the current auction transaction templates
-- final mainnet fee examples should be recalculated after the auction path is frozen
-
-So ONT is compact as protocol data, but it still competes in the normal fee market like any other transaction.
-
-In practice, usage is constrained by:
-
-- fee pressure
-- bond capital lockup
-- temporary UTXO pressure during settlement
-
-So the main economic brakes are not protocol throttles; they are normal Bitcoin fee-market pressure plus the capital required to hold names through settlement.
-
-## Trust Model
-
-ONT has two different trust and availability stories.
-
-### Ownership
-
-Ownership is chain-derived.
-
-- any operator with chain data can reconstruct the canonical name set
-- a resolver does not get to invent ownership
-- a resolver going offline does not destroy the registry
-
-### Values
-
-What a name points to is intentionally off-chain.
-
-- values are signed by the current owner
-- authenticity is cryptographic
-- availability depends on one or more resolvers retaining a copy
-
-That means ONT is decentralized for ownership, but only partly decentralized for value availability in v1. The intended direction is stronger distribution and better resolver availability, not moving normal value updates on-chain.
-
-### Why Resolver Decentralization Is Still Strong
-
-Resolvers do not get to invent ownership, and they cannot fake completeness against a client that knows the chain. Because the canonical name set is derivable from Bitcoin, any client can sample names that should exist, query a resolver, and score how complete and up to date it is against ground truth.
-
-That creates a decentralized path forward that is stronger than a generic off-chain directory. Resolver quality is auditable. Multi-resolver publish and multi-resolver read can improve availability over time, while the chain remains the authority for which names exist and who owns them.
-
-## The Vision For ONT
-
-The first claim is narrow and useful:
-
-- pay the right person
-- express that choice in words you control instead of raw addresses
-- let clients verify the current owner-signed payment record before sending
-
-From that payment-handle base, ONT can grow into a broader owner-signed record layer if useful clients emerge. The key/value model allows additional records without putting routine updates on Bitcoin or changing the ownership model.
-
-As we hand more decision-making to software, human-readable names become more important, not less. Software can interpret intent flexibly, but the final payment target should not rest on a probabilistic guess about which account is the right one. ONT is designed to make payment handles human-readable while keeping ownership cryptographically grounded, so both people and software acting on their behalf can resolve them with much higher confidence.
-
-The system is designed so that the ownership record is public, auditable, and difficult to revoke or forge, while the mutable destination layer stays lightweight and easy to update.
-
-Adjacent systems are useful to keep in mind here too. Pubky / PKARR, which the older Slashtags effort now points toward, takes a different approach: public keys are the durable identity layer, and the base system intentionally avoids trying to allocate a scarce global human-readable namespace. ONT is trying to solve that extra layer for the Bitcoin ecosystem by adding Bitcoin-anchored ownership for shared human-readable payment handles. See [../research/ONT_VS_PUBKY_PKARR.md](../research/ONT_VS_PUBKY_PKARR.md) for a short comparison note.
-
-## Current Status
+## Status
 
 ONT is an active prototype, not a mainnet-ready production system.
 
-Today:
+Working pieces include private signet demos, auction state, bid packages, value publishing, resolver tooling, and transfer prototypes. Remaining work includes finalizing launch parameters, cleaning up older direct-claim assumptions, hardening the auction flow, improving wallet UX, and validating the system with more outside review.
 
-- hosted private demo auction smoke: working
-- hosted private demo auction phase gallery: working
-- browser value publishing: working
-- self-hosted website + resolver stack: working
-- transfers: prototype
-- mainnet readiness: not yet
+The product surface is [opennametags.org](https://opennametags.org). The public repository is [github.com/deekay/ont](https://github.com/deekay/ont).
 
-The current product surface is available at [https://opennametags.org](https://opennametags.org), and the public repository is at [https://github.com/deekay/ont](https://github.com/deekay/ont).
+## One-Sentence Summary
+
+ONT uses Bitcoin to anchor ownership of human-readable names, owner-signed off-chain records to keep destinations updateable, and one auction rule to allocate scarce names without reserved lists, rent, or issuer-controlled sales.

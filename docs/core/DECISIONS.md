@@ -29,7 +29,7 @@ This file now uses three buckets:
 
 1. Ownership model
 
-ONT is pubkey-controlled. A name is owned by a specific public key, and valid claim, update, and transfer operations must be authorized by signatures from the corresponding private key.
+ONT is pubkey-controlled. A name is owned by a specific public key, and valid acquisition, update, and transfer operations must be authorized by signatures from the corresponding private key.
 
 Implications:
 - No xpub is required.
@@ -54,7 +54,7 @@ Each name has:
 The value may be null.
 
 Implications:
-- Claim does not need to set a value.
+- Initial acquisition does not need to set a value.
 - Value-setting can be a separate action.
 - Names can exist as scarce property before they point anywhere.
 
@@ -75,9 +75,9 @@ Rules:
 - Every pre-maturity transfer must spend the current bond outpoint.
 - The same transaction must create a successor bond output for that name.
 - The successor bond output must contain at least the required bond amount.
-- The original claim height remains the maturity anchor.
-- If bond continuity breaks before maturity, the name is immediately released back to the unclaimed pool.
-- No two live names or pending claims may reference the same bond outpoint at the same time.
+- The original acquisition height remains the maturity anchor.
+- If bond continuity breaks before maturity, the name immediately loses active ownership.
+- No two live names or pending acquisitions may reference the same bond outpoint at the same time.
 
 Notes:
 - The successor bond amount may be topped up with extra inputs.
@@ -127,17 +127,17 @@ Formula under consideration:
 
 12. Maturity duration binding
 
-Every claim receives a deterministic maturity duration from the launch rules in
+Every auction-acquired name receives a deterministic maturity duration from the launch rules in
 effect when its commit confirms.
 
 Rules:
 - The maturity clock starts at the commit block height.
-- The maturity duration for a claim must be computable from pre-announced
+- The maturity duration for an acquired name must be computable from pre-announced
   objective protocol parameters.
-- The duration cannot be adjusted discretionarily after the claim is committed.
+- The duration cannot be adjusted discretionarily after the acquisition is committed.
 
 Implications:
-- A claimant should know the maturity burden before committing.
+- A bidder should know the maturity burden before committing capital.
 - An indexer should not need subjective context to decide when a name is mature.
 - The exact launch duration is a launch-parameter choice, not a reason to keep
   the maturity rule itself vague.
@@ -177,7 +177,7 @@ Pre-launch note:
 
 Testing recommendation:
 - use regtest, signet, testnet, or a clearly labeled experimental mainnet namespace/version for iteration
-- avoid creating ambiguity that experimental claims are part of the final canonical namespace
+- avoid creating ambiguity that experimental acquisitions are part of the final canonical namespace
 
 15. Name syntax
 
@@ -437,7 +437,7 @@ The current lead launch architecture is a **single auction lane**.
 Current shape:
 - every launch-eligible name is allocated by auction
 - there is no semantic reserved-name list
-- there is no ordinary claim lane in the launch model
+- there is no ordinary direct-allocation lane in the launch model
 - names of length `1-4` are held for a later short-name auction wave
 - names of length `5-32` are eligible at launch
 - old direct-claim tooling should be removed from public surfaces rather than
@@ -456,7 +456,7 @@ The current auction family is:
 - soft close
 - meaningful minimum increments
 - stronger minimum increments for bids that would extend the auction
-- no valid bid means the name remains unclaimed, not redirected into another
+- no valid bid means the name remains without an owner, not redirected into another
   allocation path
 
 Implications:
@@ -482,10 +482,10 @@ Implications:
 
 The rewritten launch draft should explicitly state:
 - No founder allocation
-- No discounted insider claims
+- No discounted insider allocations
 - No whitelist
 - No identity-based quotas
-- Every immature claim requires dedicated bonded BTC
+- Every immature auction-acquired name requires dedicated bonded BTC
 - Bond and maturity rules are fixed at launch
 - Short-name wave timing must be pre-announced and auditable
 - Auction rules and release conditions must be objective enough that outcomes

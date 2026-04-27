@@ -74,7 +74,7 @@ Pubky / PKARR is centered on current signed state and DHT distribution.
 
 ONT is centered on chain-derived ownership history:
 
-- who claimed the name
+- who acquired the name
 - who transferred it
 - who owns it now
 

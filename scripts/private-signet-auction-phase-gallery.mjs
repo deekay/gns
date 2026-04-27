@@ -40,7 +40,7 @@ async function main() {
     await mkdir(outDir, { recursive: true });
 
     const initialHeight = await getBlockCount();
-    await preparePhaseFixtureUnlocks(initialHeight);
+    await preparePhaseFixtureOpenings(initialHeight);
 
     const beforeFeed = await fetchExperimentalAuctionFeed();
     const pendingLot = requireAuction(beforeFeed.auctions, PHASE_GALLERY_IDS.pending);
@@ -92,7 +92,7 @@ async function main() {
   });
 }
 
-async function preparePhaseFixtureUnlocks(currentHeight) {
+async function preparePhaseFixtureOpenings(currentHeight) {
   const schedule = {
     "19-private-phase-pending.json": currentHeight + 80,
     "20-private-phase-awaiting.json": currentHeight + 5,
@@ -108,11 +108,11 @@ const appRoot = "/opt/ont/app";
 const fixtureDir = join(appRoot, "fixtures/auction/private-signet-lab");
 const schedule = ${JSON.stringify(schedule)};
 
-for (const [fileName, unlockBlock] of Object.entries(schedule)) {
+for (const [fileName, openingBlock] of Object.entries(schedule)) {
   const fixturePath = join(fixtureDir, fileName);
   const fixture = JSON.parse(readFileSync(fixturePath, "utf8"));
-  fixture.currentBlockHeight = Math.max(0, unlockBlock - 1);
-  fixture.scenario.unlockBlock = unlockBlock;
+  fixture.currentBlockHeight = Math.max(0, openingBlock - 1);
+  fixture.scenario.unlockBlock = openingBlock;
   fixture.scenario.bidAttempts = [];
   writeFileSync(fixturePath, JSON.stringify(fixture, null, 2) + "\\n");
 }
@@ -171,7 +171,7 @@ function summarizeAuction(auction) {
 async function ensurePendingPhase(auctionState) {
   if (auctionState.phase !== "pending_unlock") {
     throw new Error(
-      `expected ${auctionState.auctionId} to remain pending_unlock; current phase is ${auctionState.phase}`
+      `expected ${auctionState.auctionId} to remain pending opening; current phase is ${auctionState.phase}`
     );
   }
 }
@@ -287,7 +287,7 @@ async function ensureAuctionReadyForOpeningBid(auctionState) {
   }
 
   throw new Error(
-    `expected ${auctionState.auctionId} to be pending_unlock or awaiting_opening_bid; current phase is ${auctionState.phase}`
+    `expected ${auctionState.auctionId} to be pending opening or awaiting_opening_bid; current phase is ${auctionState.phase}`
   );
 }
 

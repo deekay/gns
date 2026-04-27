@@ -131,7 +131,7 @@ Open. Existing spreadsheets and reasoning are helpful but do not yet answer the 
 
 ### Concern
 
-A permissionless, identity-free namespace may allow names like `nike` or `starbucks` to be claimed by someone other than the real-world brand holder.
+A permissionless, identity-free namespace may allow names like `nike` or `starbucks` to be won at auction by someone other than the real-world brand holder.
 
 That creates a challenge:
 
@@ -220,7 +220,7 @@ The remaining gap is turning that into a tighter reviewer-facing position.
 Reviewers want a stronger answer to:
 
 - how much blockspace does this consume?
-- how many claims or transfers fit at realistic fee levels?
+- how many auction acquisitions or transfers fit at realistic fee levels?
 - does this compete too much with Bitcoin's monetary use case?
 
 The concern sharpened into a request for stronger footprint minimization and a more concrete scaling path.

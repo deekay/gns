@@ -93,7 +93,7 @@ maintain.
 The fairness goal is:
 
 - no founder allocation
-- no discounted claims
+- no discounted allocations
 - no whitelist or identity-based quotas
 - no hand-built reserved list
 

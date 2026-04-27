@@ -112,7 +112,7 @@ and trust gained from using markets everywhere.
 | launch-eligible names | `5-32` characters |
 | short-name wave | `1-4` characters, later and pre-announced |
 | allocation | open auction for every eligible name |
-| opening experience | user opens with bonded bid; uncontested names should feel like simple claims |
+| opening experience | user opens with bonded bid; uncontested names should feel like simple auctions |
 | pricing | auction-discovered BTC amount |
 | minimum floor | objective opening-bond floor, still to finalize |
 | auction window | about `7 days` by default |
@@ -128,7 +128,7 @@ The following are no longer the current lead launch direction:
 - a source-generated reserved list
 - source-generated auction list as protocol-critical launch input
 - reserved classes for brands, public identities, and generics
-- no-bid fallback into an ordinary claim lane
+- no-bid fallback into an ordinary direct-allocation lane
 - pre-launch reservations by domain, handle, or social proof
 
 Older docs may still mention those ideas. Treat them as historical research
@@ -146,8 +146,8 @@ The new model leaves a better set of open questions:
 - settlement duration for auction winners
 - how to replace retired direct-claim tooling with auction-opening tooling
 - how auction openings and bids should be batched for blockspace efficiency
-- how to present uncontested auctions so normal users do not feel like every
-  small name is a high-drama public sale
+- how to present uncontested auctions so normal users understand the low-drama
+  path without implying a separate direct-allocation lane
 
 ## Current Best Summary
 

@@ -311,7 +311,7 @@ async function main() {
         broadcastNow: false
       });
 
-      const releasedState = await ensureAuctionReleasedToOrdinaryLane(releaseTargetBefore);
+      const releasedState = await ensureAuctionClosedWithoutWinner(releaseTargetBefore);
 
       logStep(releasedState.auctionId, "broadcasting the prebuilt late bid after the lot has released");
       const lateBidTxid = await broadcastSignedAuctionBid({
@@ -513,7 +513,7 @@ async function ensureAuctionReadyForRelease(auctionState) {
   return await ensureAuctionReadyForOpeningBid(auctionState);
 }
 
-async function ensureAuctionReleasedToOrdinaryLane(auctionState) {
+async function ensureAuctionClosedWithoutWinner(auctionState) {
   if (auctionState.phase === "closed_without_winner") {
     return auctionState;
   }
@@ -533,7 +533,7 @@ async function ensureAuctionReleasedToOrdinaryLane(auctionState) {
 
   const refreshed = await fetchExperimentalAuctionById(auctionState.auctionId);
   if (!refreshed || refreshed.phase !== "closed_without_winner") {
-    throw new Error(`expected ${auctionState.auctionId} to release to the auction lane`);
+    throw new Error(`expected ${auctionState.auctionId} to close without a winner`);
   }
 
   return refreshed;

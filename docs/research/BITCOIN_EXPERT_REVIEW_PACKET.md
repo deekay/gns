@@ -71,9 +71,9 @@ The current auction prototype uses:
 3. settlement / continuity rules
 4. later transfer and owner-signed value updates
 
-Claims use bonded capital rather than protocol rent:
+Auction acquisition uses bonded capital rather than protocol rent:
 
-- the claimant locks bitcoin they still own
+- the bidder locks bitcoin they still own
 - the scarcity signal comes from capital commitment and time
 - the protocol is not trying to sell names directly
 

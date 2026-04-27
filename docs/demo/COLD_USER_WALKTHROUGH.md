@@ -42,21 +42,21 @@ Keep the session as cold as possible.
 
 Ask the tester to do this:
 
-> Claim a demo name from scratch using the hosted private demo and Sparrow.
+> Acquire a demo name through auction using the hosted private demo and Sparrow.
 
 What success looks like:
 
 - they get Sparrow connected
 - they receive demo coins
-- they prepare the claim
-- they sign and broadcast commit + reveal
-- they can find the claimed name afterward
+- they prepare an auction bid package
+- they sign and broadcast the bid
+- they can find the auction-acquired name afterward
 
 ## Optional Follow-Up Task
 
 If the first task succeeds without much help:
 
-> Tell me which key matters after the claim, and how you think you would update or transfer the name later.
+> Tell me which key matters after the auction, and how you think you would update or transfer the name later.
 
 This is useful because it reveals whether the difference between:
 
@@ -76,8 +76,8 @@ Capture the first point where they hesitate on each of these:
 - requesting demo coins
 - understanding what to save
 - understanding which files belong in Sparrow
-- understanding commit vs reveal timing
-- finding the claimed name afterward
+- understanding auction bid, settlement, and post-auction lock timing
+- finding the auction-acquired name afterward
 
 Also capture:
 
@@ -103,7 +103,7 @@ Starting point:
 
 ## Outcome
 
-- [ ] Completed the hosted demo claim
+- [ ] Completed the hosted demo auction flow
 - [ ] Needed help
 - [ ] Stopped before completion
 

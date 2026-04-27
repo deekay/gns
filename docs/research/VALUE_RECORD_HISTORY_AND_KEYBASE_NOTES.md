@@ -53,7 +53,7 @@ A timestamp is useful context, but it is not enough to define canonical history.
 
 If the owner signs the timestamp:
 
-- the timestamp says what time the owner claimed
+- the timestamp says when the owner says they acquired control
 - the owner can backdate or forward-date it
 - two valid records can still disagree about ordering unless the signed data
   includes a sequence and predecessor pointer
@@ -92,7 +92,7 @@ Recommended signed fields:
 - `issuedAt`
 
 `ownershipRef` should identify the current ownership interval, not just the
-owner key. Good candidates are the canonical claim, auction-settlement, or
+owner key. Good candidates are the canonical acquisition, auction-settlement, or
 transfer event id that created the current owner state.
 
 That matters because `name + ownerPubkey` is not enough. If a name transfers

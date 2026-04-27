@@ -30,7 +30,7 @@ describe("renderPageHtml", () => {
     expect(html).toContain("Eligible names use one auction lane. Names with 1-4 characters wait for a later short-name wave.");
     expect(html).toContain("Choose A Path");
     expect(html).toContain("Understand ONT");
-    expect(html).toContain("Try The Website");
+    expect(html).toContain("Try The Prototype");
     expect(html).toContain("Explore The Registry");
     expect(html).toContain("Walk Through");
     expect(html).toContain("From Zero");
@@ -125,10 +125,13 @@ describe("renderPageHtml", () => {
     });
 
     expect(html).toContain("Auctions");
+    expect(html).toContain(">Auctions<");
     expect(html).toContain(">Advanced<");
     expect(html).toContain("Auction Reference Cases");
     expect(html).toContain("auctionLabList");
     expect(html).not.toContain("auctionPolicyControls");
+    expect(html).toContain("Auction bid prep and reference states");
+    expect(html).toContain("Auction flow surface");
     expect(html).toContain("Current website defaults");
     expect(html).toContain("read-only on purpose");
     expect(html).toContain("use the CLI instead of the website");
@@ -139,7 +142,7 @@ describe("renderPageHtml", () => {
     expect(html).toContain("Auction bid-package handoffs");
     expect(html).toContain("Same-bidder replacement");
     expect(html).toContain("no-winner close");
-    expect(html).toContain("auction lane");
+    expect(html).toContain("single-lane launch model");
     expect(html).toContain("stronger soft-close increment rule");
     expect(html).toContain("bond spend/release summaries");
     expect(html).toContain("working defaults");

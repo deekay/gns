@@ -1,6 +1,6 @@
 # Website UX Audit - April 24, 2026
 
-This pass reviewed the main Open Name Tags website surfaces as a first-time user would encounter them: Home, Overview, Explore, Setup, Claim, Values, Transfer, Advanced, and Auctions.
+This historical pass reviewed the main Open Name Tags website surfaces as a first-time user would have encountered them before the auction-first cleanup: Home, Overview, Explore, Setup, the retired Claim page, Values, Transfer, Advanced, and Auctions.
 
 The browser DOM snapshots were captured under `/tmp/ont-visual-audit-20260424/`. Image screenshots were attempted through the in-app browser and headless Chromium, but both visual capture paths were blocked by the local macOS sandbox. The audit therefore combines DOM snapshots, existing user-provided screenshots, and source-level layout review.
 
@@ -16,11 +16,11 @@ Advanced protocol details should stay available, but they should not be visually
 
 ## Changes Made In This Pass
 
-- The Overview "How It Works" section was redesigned from three essay-like cards into a connected flow: Bitcoin claim, resolver record, client verification.
+- The Overview "How It Works" section was redesigned from three essay-like cards into the then-current connected flow: Bitcoin acquisition, resolver record, client verification.
 - The "One Name, Many Destinations" section was redesigned as a layered diagram: Bitcoin anchor, off-chain resolver record, then clients using the destinations they understand.
 - Overview hero sizing was reduced so the page gets to explanatory content faster.
 - The Overview jump links were reframed as a compact section index instead of loose floating pills.
-- The Claim page headline changed from "Prepare A Claim" to "Claim A Name" with a more direct first-time explanation.
+- The retired Claim page headline changed from "Prepare A Claim" to "Claim A Name" with a more direct first-time explanation for that older surface.
 
 ## Page-By-Page Notes
 

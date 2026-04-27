@@ -42,7 +42,7 @@ That is Open Name Tags.
 
 - Lead first with payment handles, not with generic naming ambition.
 - Lead with the idea that bonds are still pricing, but a special form of pricing.
-- Emphasize that ONT does not make naming free; it changes who gets paid and what the claimant retains.
+- Emphasize that ONT does not make naming free; it changes who gets paid and what the winning bidder retains.
 - Keep the difference between:
   - ordinary Bitcoin fee-market costs
   - and the protocol's own bond pricing

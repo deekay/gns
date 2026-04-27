@@ -24,11 +24,11 @@ This is the right script for:
 Send exactly these two links first:
 
 - [https://opennametags.org/setup](https://opennametags.org/setup)
-- [https://opennametags.org/claim](https://opennametags.org/claim)
+- [https://opennametags.org/auctions](https://opennametags.org/auctions)
 
 If you want one sentence of framing, use:
 
-> ONT lets you claim a human-readable name, then point it at ordered key/value pairs you control.
+> ONT lets you acquire a human-readable name through auction, then point it at ordered key/value pairs you control.
 
 ## What They Need
 
@@ -58,20 +58,20 @@ Success looks like:
 - Sparrow shows a confirmed demo balance
 - the setup page reports successful funding
 
-### 2. Claim A Name
+### 2. Bid For A Name
 
-Open [claim](https://opennametags.org/claim).
+Open [auctions](https://opennametags.org/auctions).
 
 Use:
 
 - the same funded Sparrow wallet from setup
-- a fresh test name that is likely unclaimed
-- a saved owner key and backup package
+- a visible auction lot from the hosted demo
+- a saved owner key and bid package
 
 Then:
 
-- prepare the draft
-- build the signer files
+- preview or download the bid package
+- build the signer files from that package
 - sign and broadcast an auction bid in Sparrow
 
 Success looks like:

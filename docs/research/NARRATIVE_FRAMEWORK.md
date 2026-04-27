@@ -231,7 +231,7 @@ The tone should be:
 
 The universal-auction story strengthens the philosophy rather than weakening it.
 
-The old two-lane story tried to protect the long tail with a simple claim lane and send salient names to auction. The stronger updated story is simpler: if ONT is allocating scarce human-readable names, every launch-eligible name should face the same market rule.
+The old two-lane story tried to protect the long tail with a simple direct-allocation lane and send salient names to auction. The stronger updated story is simpler: if ONT is allocating scarce human-readable names, every launch-eligible name should face the same market rule.
 
 The moral center should be:
 
@@ -256,7 +256,7 @@ So the launch story says:
 
 - launch-eligible names are auctioned under one rule
 - there is no reserved-word list
-- there is no ordinary claim lane
+- there is no ordinary direct-allocation lane
 - `1-4` character names wait for a later short-name wave
 
 This is not a retreat from fairness. It is a cleaner market-based account of fairness.

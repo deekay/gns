@@ -64,7 +64,7 @@ try {
 
   await assertHomePage(page);
   await assertAuctionsPage(page);
-  await assertRetiredClaimPage(page);
+  await assertRetiredDirectClaimRedirect(page);
 
   await context.close();
 
@@ -79,7 +79,7 @@ try {
         checkedFlows: [
           "home-docs-surface",
           "auction-lab-browser-flow",
-          "retired-claim-page"
+          "retired-direct-claim-redirect"
         ]
       },
       null,
@@ -115,14 +115,14 @@ async function assertHomePage(page) {
   );
 }
 
-async function assertRetiredClaimPage(page) {
+async function assertRetiredDirectClaimRedirect(page) {
   await page.goto(`${webUrl}/claim`, {
     waitUntil: "domcontentloaded"
   });
 
   assert(
     new URL(page.url()).pathname === "/auctions",
-    "retired claim page should redirect to auctions"
+    "retired direct-acquisition page should redirect to auctions"
   );
   await waitForVisibleText(page, "Auction Reference Cases");
 }
@@ -138,11 +138,11 @@ async function assertAuctionsPage(page) {
   });
   const bodyText = await page.locator("body").textContent();
   assert(
-    (bodyText ?? "").includes("Advanced auction prototype surface"),
+    (bodyText ?? "").includes("Auction bid prep and reference states"),
     "auction page should expose the current auction framing"
   );
   assert(
-    (bodyText ?? "").includes("Advanced resolver-backed view derived from observed AUCTION_BID transactions."),
+    (bodyText ?? "").includes("Resolver-backed view derived from observed AUCTION_BID transactions."),
     "auction page should expose the chain-derived experimental bid feed"
   );
   assert(

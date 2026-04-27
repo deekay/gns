@@ -115,7 +115,7 @@ phases in one place.
 
 At the time of this audit, the public lab API includes explicit cases for:
 
-- `pending_unlock`
+- `pending_opening` (internal phase id: `pending_unlock`)
 - `awaiting_opening_bid`
 - `live_bidding`
 - `soft_close`
@@ -149,7 +149,8 @@ The private feed is now maintained in two ways:
 - the private auction smoke leaves behind real `settled` and
   `closed_without_winner` outcomes
 - a dedicated private phase-gallery refresh script parks real lots in
-  `pending_unlock`, `awaiting_opening_bid`, `live_bidding`, and `soft_close`
+  `pending_opening` (internal phase id: `pending_unlock`),
+  `awaiting_opening_bid`, `live_bidding`, and `soft_close`
 
 That means the private live feed can now show all major phases at once, but it
 is still worth being honest about how that happens:

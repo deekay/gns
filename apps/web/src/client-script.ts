@@ -1735,7 +1735,7 @@ function renderTransferDraftError(error, name) {
 
   if (error && typeof error === "object" && "status" in error && error.status === 404) {
     renderTransferDraftMessage(
-      'This name is not currently claimed in the resolver view. Search it first, then use auctions if you want to bid for "' +
+      'This name is not currently owned in the resolver view. Search it first, then use auctions if you want to bid for "' +
         String(name) +
         '".'
     );
@@ -2055,13 +2055,13 @@ function formatLiveSmokeStatus(value) {
     case "awaiting_funds":
       return "Awaiting Funds";
     case "claimed":
-      return "Claimed";
+      return "Auction Settled";
     case "value_published":
       return "Destinations Published";
     case "transferred":
       return "Transferred";
     case "name_unavailable":
-      return "Name Unavailable";
+      return "Name Not Owned";
     case "unavailable":
       return "Unavailable";
     case "error":
@@ -2401,7 +2401,7 @@ function recentNameEventLabel(record, kind) {
     return "Transferred";
   }
 
-  return String(record.status) === "mature" ? "Claimed" : "Claimed";
+  return String(record.status) === "mature" ? "Acquired" : "Acquired";
 }
 
 function searchOutcomeSummary(record) {
@@ -2422,9 +2422,9 @@ function searchOutcomeSummary(record) {
 
   switch (status) {
     case "immature":
-      return "This name is already claimed and is still in settlement.";
+      return "This name is already owned and is still in settlement.";
     case "mature":
-      return "This name is already claimed and active.";
+      return "This name is already owned and active.";
     case "invalid":
       return "This name was released because bond continuity was broken before settlement finished.";
     default:
@@ -5004,7 +5004,7 @@ function renderAuctionBidPackageComposer(input) {
       '<details class="detail-technical">',
       "  <summary>Auction bid packages unavailable</summary>",
       '  <div class="detail-technical-body">',
-      '    <p class="tx-panel-note">This lot attracted no valid opening bid before the close window ended, so it closed without a winner. The name remains unclaimed.</p>',
+      '    <p class="tx-panel-note">This lot attracted no valid opening bid before the close window ended, so it closed without a winner. The name remains without an owner.</p>',
       "  </div>",
       "</details>"
     ].join("");

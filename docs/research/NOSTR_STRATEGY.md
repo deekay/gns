@@ -24,7 +24,7 @@ Instead of an ONT-run "Marketplace Database," name owners can list their names f
 ## 3. P2P Bond Liquidity (Bond-as-a-Service)
 Nostr can act as the "Bidding Floor" for name-bond liquidity.
 - **The Concept:** A user who wants a high-value name but lacks the 1 BTC bond can post a **"Request for Bond"** event on Nostr.
-- **The Workflow:** Liquidity providers respond with **Offers**, including a signed PSBT that provides the bond. The user selects the best "Interest Rate" and completes the claim.
+- **The Workflow:** Liquidity providers respond with **Offers**, including a signed PSBT that provides the bond. The user selects the best "Interest Rate" and completes the auction-backed acquisition.
 - **The Benefit:** Turns "Bond-as-a-Service" into a decentralized financial market, removing regulatory and custodial risk for ONT developers.
 
 ## 4. Real-Time "Guardian" Notifications

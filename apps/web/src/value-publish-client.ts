@@ -154,8 +154,8 @@ async function bootstrap(): Promise<void> {
   await loadConfig();
   updateResolverFanoutUi();
   syncWizard();
-  renderLookupMessage("Enter a claimed name to load the current owner and destinations.");
-  renderSignMessage("Load a claimed name first, then sign the destination update locally.");
+  renderLookupMessage("Enter an owned name to load the current owner and destinations.");
+  renderSignMessage("Load an owned name first, then sign the destination update locally.");
   renderPublishMessage(getDefaultPublishMessage());
   updateValueEditorState();
 
@@ -171,7 +171,7 @@ async function bootstrap(): Promise<void> {
     event.preventDefault();
     const rawName = elements.nameInput?.value?.trim().toLowerCase() ?? "";
     if (rawName === "") {
-      renderLookupMessage("Enter a claimed name first.");
+      renderLookupMessage("Enter an owned name first.");
       return;
     }
     await loadName(rawName);
@@ -311,7 +311,7 @@ async function loadName(rawName: string): Promise<void> {
     state.currentValueCompareError = null;
     state.lastSuggestedSequence = null;
     resetValueInputs();
-    invalidateSignedRecord("Load a claimed name first, then sign the destination update locally.");
+    invalidateSignedRecord("Load an owned name first, then sign the destination update locally.");
     renderLookupMessage(error instanceof Error ? error.message : "Unable to load the requested name.");
     syncWizard();
   }
@@ -319,7 +319,7 @@ async function loadName(rawName: string): Promise<void> {
 
 function signLocally(): void {
   if (state.currentName === null) {
-    renderSignMessage("Load a claimed name first.");
+    renderSignMessage("Load an owned name first.");
     return;
   }
 
@@ -329,7 +329,7 @@ function signLocally(): void {
   }
 
   try {
-    const name = requireInput(elements.nameInput, "Enter a claimed name first.").trim().toLowerCase();
+    const name = requireInput(elements.nameInput, "Enter an owned name first.").trim().toLowerCase();
     const ownerPrivateKeyHex = requireInput(
       elements.ownerPrivateKeyInput,
       "Paste the owner private key saved for this name."
@@ -746,7 +746,7 @@ function updateDerivedOwnerState(): void {
     if (elements.ownerMatchNote) {
       elements.ownerMatchNote.textContent =
         state.currentName === null
-          ? "Owner pubkey derived locally. Load the claimed name to compare it against the resolver's current owner."
+          ? "Owner pubkey derived locally. Load the owned name to compare it against the resolver's current owner."
           : derived === state.currentName.currentOwnerPubkey
             ? "Derived owner matches the resolver's current owner."
             : "Derived owner does not match the resolver's current owner.";

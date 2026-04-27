@@ -4,7 +4,7 @@ This note turns the current wallet limitation into a concrete implementation tar
 
 ## Goal
 
-Let a new person discover the hosted private-signet demo, connect a wallet, request demo coins, and complete a claim **without needing SSH access from the operator**.
+Let a new person discover the hosted private-signet demo, connect a wallet, request demo coins, and complete an auction bid flow **without needing SSH access from the operator**.
 
 The current hosted flow does not meet that bar. It works, but it still depends on:
 
@@ -124,7 +124,7 @@ The setup page should then become:
 2. choose Electrum
 3. enter the public demo endpoint
 4. request demo coins
-5. continue to claim
+5. continue to auctions
 
 ### Phase 3: Keep SSH For Operators Only
 

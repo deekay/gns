@@ -50,13 +50,13 @@ export function renderPageHtml(options: PageShellOptions): string {
           : `${PRODUCT_NAME} Explorer`;
   const description =
     pageKind === "home"
-      ? "Search a name, inspect ownership, and choose whether to explore, bid, or review the current Open Name Tags prototype."
+      ? "Search a name, inspect ownership, and choose whether to bid, explore, or review the current Open Name Tags prototype."
       : pageKind === "advanced"
-      ? "Advanced Open Name Tags surfaces for auctions, CLI-heavy workflows, and review docs."
+      ? "Advanced Open Name Tags surfaces for CLI-heavy workflows and review docs."
       : pageKind === "auctions"
-      ? "Advanced auction view, including reference cases and chain-derived bid activity."
+      ? "Auction bid prep, reference cases, and chain-derived bid activity."
       : pageKind === "values"
-        ? "Update the destinations for a claimed Open Name Tags name by signing locally and publishing the signed update."
+        ? "Update the destinations for an owned Open Name Tags name by signing locally and publishing the signed update."
       : pageKind === "transfer"
         ? "Prepare an Open Name Tags transfer handoff, then finish the gift or sale flow in the CLI and your signer."
       : pageKind === "setup"
@@ -192,7 +192,7 @@ function renderHeroSection(
       <div class="hero-copy">
         <h1>Advanced Tools</h1>
         <p class="lede">
-          Reference surfaces for auctions, CLI-heavy workflows, and protocol review. Most first-time users can stay on Setup, Auctions, Destinations, Transfer, and Explore.
+          CLI-heavy workflows, implementation notes, and protocol review. Most first-time users can stay on Setup, Auctions, Destinations, Transfer, and Explore.
         </p>
         <p class="hero-status">
           Advanced / optional surface · use when you need deeper protocol context or expert tooling.
@@ -206,10 +206,10 @@ function renderHeroSection(
       <div class="hero-copy">
         <h1>Auctions</h1>
         <p class="lede">
-          Advanced auction prototype surface. ONT's lead launch model is one auction lane, with 1-4 character names saved for a later wave.
+          Auction bid prep and reference states for the single-lane launch model. Eligible names auction at launch; 1-4 character names wait for a later short-name wave.
         </p>
         <p class="hero-status">
-          Advanced / optional surface · reference cases plus observed AUCTION_BID activity.
+          Auction flow surface · bid packages, reference cases, and observed AUCTION_BID activity.
         </p>
       </div>
     </header>`;
@@ -259,11 +259,12 @@ function renderPrimaryNav(configuredBasePath: string, pageKind: PageKind, favico
   const links = [
     { href: withBasePath("/", configuredBasePath), label: "Home", active: pageKind === "home" },
     { href: withBasePath("/explainer", configuredBasePath), label: "Overview", active: pageKind === "explainer" },
+    { href: withBasePath("/auctions", configuredBasePath), label: "Auctions", active: pageKind === "auctions" },
     { href: withBasePath("/explore", configuredBasePath), label: "Explore", active: pageKind === "explore" },
     { href: withBasePath("/setup", configuredBasePath), label: "Setup", active: pageKind === "setup" },
     { href: withBasePath("/values", configuredBasePath), label: "Destinations", active: pageKind === "values" },
     { href: withBasePath("/transfer", configuredBasePath), label: "Transfer", active: pageKind === "transfer" },
-    { href: withBasePath("/advanced", configuredBasePath), label: "Advanced", active: pageKind === "advanced" || pageKind === "auctions" }
+    { href: withBasePath("/advanced", configuredBasePath), label: "Advanced", active: pageKind === "advanced" }
   ];
 
   return `<nav class="site-nav" aria-label="Primary">
@@ -374,7 +375,7 @@ function renderAdvancedGuideSection(configuredBasePath: string): string {
       <article class="guide-card">
         <h3>Most People Can Ignore This</h3>
         <ul class="guide-list">
-          <li>Use Setup, Auctions, Destinations, Transfer, and Explore for the normal website walkthrough.</li>
+          <li>Use Auctions, Setup, Destinations, Transfer, and Explore for the normal website walkthrough.</li>
           <li>The website already hides most expert knobs from those pages on purpose.</li>
           <li>If you are learning the system for the first time, start there instead.</li>
         </ul>
@@ -382,7 +383,7 @@ function renderAdvancedGuideSection(configuredBasePath: string): string {
       <article class="guide-card">
         <h3>What Belongs Here</h3>
         <ul class="guide-list">
-          <li>Auction reference views</li>
+          <li>Auction implementation notes and review links</li>
           <li>CLI-heavy workflows and custom protocol experiments</li>
           <li>Reviewer-facing docs and implementation notes</li>
         </ul>
@@ -413,8 +414,8 @@ function renderAdvancedReferencesSection(configuredBasePath: string): string {
     )}
     <div class="guide-grid guide-grid-balanced">
       <article class="guide-card">
-        <h3>Auctions</h3>
-        <p>Auction reference cases plus observed bid activity. This is still an advanced prototype surface while the website migrates toward the universal-auction launch model.</p>
+        <h3>Auction Implementation</h3>
+        <p>Auction reference cases plus observed bid activity. The public auction page is now a primary acquisition surface; this area keeps deeper implementation and review context nearby.</p>
         <div class="guide-card-actions">
           <a class="action-link secondary" href="${withBasePath("/auctions", configuredBasePath)}">Open auctions</a>
         </div>
@@ -474,7 +475,7 @@ function renderAuctionLabSection(): string {
   return `<section id="auction-lab" class="panel panel-list">
     ${renderPanelHead(
       "Auction Reference Cases",
-      "Advanced reference view of sample auction states.",
+      "Reference view of sample auction states.",
       `<p>This page shows how the current auction model behaves in a few representative cases.</p>
       <ul>
         <li>The website shows the current read-only defaults for the reference cases below.</li>
@@ -498,7 +499,7 @@ function renderExperimentalAuctionFeedSection(): string {
   return `<section id="experimental-auction-feed" class="panel panel-list">
     ${renderPanelHead(
       "Observed Auction Activity",
-      "Advanced resolver-backed view derived from observed AUCTION_BID transactions.",
+      "Resolver-backed view derived from observed AUCTION_BID transactions.",
       `<p>This sits closer to observed chain behavior than the reference states above.</p>
       <ul>
         <li>Lots still come from the current prototype auction catalog while universal auction-opening tooling is being built.</li>
@@ -506,7 +507,7 @@ function renderExperimentalAuctionFeedSection(): string {
         <li>Lots that attract no valid opening bid through the close window are marked as closed without a winner.</li>
         <li>Bids that merely clear the normal increment are not enough during soft close if they would extend the auction. Late extension bids use the stronger soft-close increment rule.</li>
         <li>Same-bidder replacement is only recognized when the later bid spends the prior bid bond outpoint.</li>
-        <li>This feed is still a derived view, not yet a full universal-auction settlement engine.</li>
+        <li>This feed is a prototype view; final launch settlement rules are not frozen yet.</li>
       </ul>`
     )}
     <p id="experimentalAuctionMeta" class="helper-text">Loading observed bid activity.</p>
@@ -532,8 +533,8 @@ function renderAuctionLabNotesSection(collapsible = false): string {
       <article class="guide-card">
         <h3>Still In Progress</h3>
         <ul class="guide-list">
-          <li>No full universal-auction settlement engine yet.</li>
-          <li>The chain-derived feed is still a derived view, not final settlement truth.</li>
+          <li>Settlement is implemented for the experimental path, but final launch settlement rules are not frozen yet.</li>
+          <li>The chain-derived feed is still a prototype view, not a mainnet launch commitment.</li>
           <li>The values here are working defaults, not yet locked protocol parameters.</li>
           <li>For deeper policy experiments or custom bid flows, use the CLI rather than the website.</li>
         </ul>
@@ -579,10 +580,11 @@ function renderHomeActionsSection(configuredBasePath: string): string {
       </article>
       <article class="path-card">
         <p class="path-card-kicker">Walk Through</p>
-        <h3>Try The Website</h3>
-        <p>Set up Sparrow, prepare an auction bid, and walk through the hosted signet flow with the same wallet you will use to sign.</p>
+        <h3>Try The Prototype</h3>
+        <p>Set up Sparrow, then open Auctions to prepare a bid package with the same wallet you will use to sign.</p>
         <div class="path-card-actions">
           <a class="action-link secondary" href="${withBasePath("/setup", configuredBasePath)}">Open setup</a>
+          <a class="action-link secondary" href="${withBasePath("/auctions", configuredBasePath)}">Open auctions</a>
         </div>
       </article>
       <article class="path-card">
@@ -735,7 +737,7 @@ function renderHomeDocsSection(): string {
         <ul class="guide-list">
           <li>Transfers still rely on external signer and CLI steps.</li>
           <li>Resolver availability is only partly decentralized in v1.</li>
-          <li>The universal-auction launch flow is still in progress.</li>
+          <li>The universal-auction launch flow is implemented as a prototype and still not mainnet-ready.</li>
           <li>Mainnet-ready usage is not ready yet.</li>
         </ul>
       </article>
@@ -1096,7 +1098,7 @@ function renderValuesToolSection(): string {
               <span id="valueStepSignState" class="summary-chip wizard-step-state">After step 1</span>
             </summary>
             <div class="wizard-step-body">
-          <p class="field-note">Use the owner key for this name. This is the control key you saved when you claimed or received the name, not the Sparrow funding wallet key unless you intentionally made them the same.</p>
+          <p class="field-note">Use the owner key for this name. This is the control key you saved when you won the auction or received the name, not the Sparrow funding wallet key unless you intentionally made them the same.</p>
           <form id="valueSignForm" class="tool-draft-form">
             <div class="draft-grid">
               <label class="draft-field">

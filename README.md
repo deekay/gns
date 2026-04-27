@@ -7,7 +7,7 @@ An ONT name is a human-readable handle you can actually own. Its first job is si
 The hosted website is mainly a tool surface:
 
 - browse names
-- check availability
+- check ownership and auction state
 - inspect auction lots
 - prepare prototype auction bid packages
 - prepare transfers
@@ -210,7 +210,7 @@ Transfers move owner authority from one pubkey to another.
 - active names no longer require that continuity
 - the owner key, not a resolver, is what authorizes future value updates
 - after a transfer, the old owner can no longer publish new value records for that name
-- if the owner key is lost, v1 has no built-in protocol recovery path even if the user still controls the wallet that funded the claim
+- if the owner key is lost, v1 has no built-in protocol recovery path even if the user still controls the wallet that funded the auction bid
 
 ### Values
 
@@ -263,7 +263,7 @@ At the current 6-character bond of `₿3,125,000 (0.03125 BTC)`, bonding all pos
 
 Even if every bitcoin in existence were somehow devoted to 6-character bonds, it would only be enough to bond about `672 million` names out of roughly `2.18 billion` possible 6-character names. The majority of that namespace would still remain open.
 
-That does not make allocation perfectly neutral. Early participants, wealthy claimants, and fee conditions will matter. But under the current v1 alphabet and bond curve, it does mean that from 6-character names onward, fully cornering the namespace becomes economically impossible: combinatorial supply outgrows the total capital that can exist.
+That does not make allocation perfectly neutral. Early participants, wealthy bidders, and fee conditions will matter. But under the current v1 alphabet and bond curve, it does mean that from 6-character names onward, fully cornering the namespace becomes economically impossible: combinatorial supply outgrows the total capital that can exist.
 
 ### Why The Bond Ends At Maturity
 

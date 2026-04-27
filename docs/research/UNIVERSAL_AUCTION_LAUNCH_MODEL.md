@@ -21,7 +21,7 @@ ONT should not maintain a semantic reserved-name list.
 The launch model should be:
 
 - one auction lane
-- no ordinary claim lane
+- no ordinary direct-allocation lane
 - no reserved-name lane
 - no pre-launch reservation system
 - no editorial list of brands, public figures, companies, or generic words
@@ -60,11 +60,11 @@ For launch-eligible names:
 4. bids near the end extend the soft close
 5. the highest valid bidder wins
 6. the winner owns the name and enters settlement
-7. if no valid bid exists, the name remains unclaimed
+7. if no valid bid exists, the name remains without an owner
 
 The user-facing version can still feel simple:
 
-> Start a claim. If nobody else bids during the window, you win at your opening
+> Start an auction. If nobody else bids during the window, you win at your opening
 > bid. If others care, the auction discovers the price.
 
 ## Short-Name Second Wave

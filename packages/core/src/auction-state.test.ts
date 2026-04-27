@@ -48,7 +48,7 @@ describe("simulateLaunchAuctionStateAtBlock", () => {
     expect(state.currentRequiredMinimumBidSats?.toString()).toBe("12500000");
   });
 
-  it("releases a no-bid lot back to the auction lane after the close window passes", () => {
+  it("closes a no-bid lot without a winner after the close window passes", () => {
     const state = simulateLaunchAuctionStateAtBlock({
       policy,
       currentBlockHeight: 884_321,

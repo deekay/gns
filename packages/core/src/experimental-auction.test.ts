@@ -212,7 +212,7 @@ describe("experimental auction derivation", () => {
     });
   });
 
-  it("releases a no-bid lot to the auction lane and rejects later auction bids", () => {
+  it("closes a no-bid lot without a winner and rejects later auction bids", () => {
     const policy = createDefaultLaunchAuctionPolicy();
     const catalogEntry = createExperimentalLaunchAuctionCatalogEntry(
       {

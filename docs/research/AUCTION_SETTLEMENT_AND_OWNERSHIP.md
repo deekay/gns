@@ -44,7 +44,7 @@ materialized as a real `NameRecord` in the registry state.
 
 The main benefits are:
 
-- fewer transactions than a separate "win then claim/settle" step
+- fewer transactions than a separate "win then settle into ownership" step
 - simpler operator flow
 - simpler website explanation
 - easier indexer materialization
@@ -96,7 +96,7 @@ bid:
 
 - it moves to `closed_without_winner`
 - no auction-owned name is materialized
-- the name remains unclaimed until a future objective path reopens it
+- the name remains without an owner until a future objective path reopens it
 
 Settlement materialization only happens for lots with an actual settled winning
 bid.

@@ -24,7 +24,7 @@ The intended rule is:
 
 That means:
 
-- no ordinary claim lane
+- no ordinary direct-allocation lane
 - no reserved-name lane
 - no semantic reserved-name list
 - no pre-launch reservation system
@@ -39,7 +39,7 @@ The launch design should try to satisfy all of these at once:
 1. make allocation neutral and easy to explain
 2. avoid subjective reserved-list governance
 3. let markets price names when more than one party cares
-4. keep normal long-tail claims from feeling intimidating when uncontested
+4. keep normal long-tail acquisition from feeling intimidating when uncontested
 5. preserve the bonded-bitcoin model: cost without rent or protocol sales
 6. remain credible on blockspace and implementation complexity
 
@@ -68,11 +68,11 @@ For names eligible at launch:
 5. bids near the end extend the soft close
 6. the highest valid bidder wins
 7. the winner owns the name and enters settlement
-8. if no valid bid exists, the name remains unclaimed
+8. if no valid bid exists, the name remains without an owner
 
 The product should frame an uncontested auction simply:
 
-> Start a claim. If nobody else bids during the window, you win at your opening
+> Start an auction. If nobody else bids during the window, you win at your opening
 > bid. If others care, the auction discovers the price.
 
 ## Auction Defaults
@@ -150,8 +150,8 @@ This launch model drops:
 - semantic reserved-name lists
 - source-generated auction lists as protocol-critical artifacts
 - pre-launch proof/reservation systems
-- ordinary-vs-reserved claim treatment
-- no-bid fallback from auction into a separate ordinary lane
+- ordinary-vs-reserved allocation treatment
+- no-bid fallback from auction into a separate ordinary direct-allocation lane
 - bespoke reserved classes for brands, identities, and generics
 
 The previous source-list work can remain useful for research and examples, but

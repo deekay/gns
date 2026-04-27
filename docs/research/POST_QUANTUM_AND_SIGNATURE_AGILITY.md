@@ -9,7 +9,7 @@ It is not a claim that ONT has already solved post-quantum migration. It is a st
 The current prototype uses ordinary Bitcoin/secp256k1 assumptions:
 
 - owner control is tied to a secp256k1 key
-- claim and transfer authorization are tied to that key
+- acquisition and transfer authorization are tied to that key
 - off-chain value records are signed by that key
 
 That is fine for today's Bitcoin environment.
@@ -72,7 +72,7 @@ For ordinary short-lived prototype activity, quantum risk is easy to postpone co
 For a premium-name design that says:
 
 - `google` may require a `10-year` lock
-- or a claimant's bond may remain timelocked for many years even after an early sale
+- or a winner's bond may remain timelocked for many years even after an early sale
 
 the time horizon becomes long enough that "we'll think about it later" is no longer a satisfying stance.
 
@@ -179,7 +179,7 @@ This is another reason to avoid making decade-long lockups feel trivial from a p
 For current design work, the most reasonable working stance is:
 
 - ONT v1 should be treated as **not post-quantum secure**
-- any mainnet design with very long-lived claims should have a documented **signature-agility and migration story**
+- any mainnet design with very long-lived ownership commitments should have a documented **signature-agility and migration story**
 - if no credible Bitcoin-level migration path exists by launch time, that should weigh against making premium-name commitments excessively long or claiming durable long-horizon security
 
 That is not defeatist. It is just intellectually honest.
@@ -198,4 +198,3 @@ A concise way to say this later might be:
    - name ownership
    - and bonded capital
 4. Is there any launch horizon at which decade-long premium locks become unreasonable without a clearer Bitcoin-level post-quantum path?
-

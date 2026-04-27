@@ -153,7 +153,7 @@ The operator and power-user surface:
 - build artifacts
 - inspect artifacts
 - sign and publish value records
-- claim / transfer support flows
+- auction, transfer, and value-record support flows
 - smoke and demo support
 
 ### `packages/protocol`
