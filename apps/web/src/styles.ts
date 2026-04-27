@@ -204,7 +204,7 @@ body {
   margin-right: auto;
   grid-template-columns: minmax(0, 1.08fr) minmax(340px, 0.72fr);
   gap: 18px;
-  align-items: stretch;
+  align-items: start;
 }
 
 .hero-home-product {
@@ -223,11 +223,11 @@ body {
 }
 
 .hero-home-copy {
-  padding: 38px 40px;
+  padding: 32px 36px;
   border-radius: 18px;
   display: grid;
-  gap: 18px;
-  align-content: center;
+  gap: 16px;
+  align-content: start;
   background:
     linear-gradient(135deg, rgba(31, 122, 101, 0.13), transparent 42%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(247, 250, 245, 0.88)),
@@ -245,9 +245,9 @@ body {
 
 .hero-home-copy h1 {
   margin: 0;
-  max-width: 13ch;
-  font-size: clamp(2.55rem, 5.2vw, 4.45rem);
-  line-height: 0.98;
+  max-width: 15ch;
+  font-size: clamp(2.25rem, 4.1vw, 3.45rem);
+  line-height: 1.02;
   letter-spacing: 0;
   color: var(--ink);
   text-wrap: balance;
@@ -257,7 +257,7 @@ body {
   margin: 0;
   max-width: 56ch;
   color: var(--muted);
-  font-size: clamp(1.02rem, 1.45vw, 1.2rem);
+  font-size: clamp(1rem, 1.2vw, 1.12rem);
   line-height: 1.56;
   text-wrap: pretty;
 }
@@ -287,6 +287,11 @@ body {
   display: grid;
   gap: 18px;
   align-content: start;
+}
+
+.hero-home-lookup.has-search-result .hero-lookup-status-grid,
+.hero-home-lookup.has-search-result .hero-lookup-actions {
+  display: none;
 }
 
 .hero-home-lookup-head {
@@ -351,6 +356,58 @@ body {
 
 .hero-search-result {
   margin-top: 0;
+}
+
+.hero-search-result.empty {
+  padding: 14px 0 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--muted);
+}
+
+.lookup-availability-result {
+  display: grid;
+  gap: 8px;
+}
+
+.lookup-result-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.lookup-result-title-row .search-state-label {
+  flex: 1 1 auto;
+}
+
+.lookup-result-name {
+  margin: 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", serif;
+  font-size: clamp(1.8rem, 3vw, 2.45rem);
+  line-height: 1.05;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.lookup-result-summary {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.lookup-next-step {
+  display: grid;
+  gap: 6px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.lookup-next-step p:last-child {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.52;
 }
 
 .hero-home-launch-strip {

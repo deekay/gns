@@ -1513,6 +1513,7 @@ function renderSearchRecord(record, valueRecord) {
 
   const panelId = "searchTxPanel";
   elements.searchResult.hidden = false;
+  setHomeLookupHasResult(true);
   setSearchResultVariant(record.status);
   if (isNameDetailPage()) {
     elements.searchResult.innerHTML = renderNameDetailRecord(record, valueRecord, panelId);
@@ -1665,6 +1666,7 @@ function renderSearchMessage(message) {
   }
 
   elements.searchResult.hidden = false;
+  setHomeLookupHasResult(true);
   setSearchResultVariant(null);
   elements.searchResult.classList.add("empty");
   elements.searchResult.textContent = message;
@@ -1681,6 +1683,7 @@ function hideSearchResult() {
   elements.searchResult.classList.add("empty");
   elements.searchResult.textContent = "";
   elements.searchResult.hidden = true;
+  setHomeLookupHasResult(false);
 }
 
 function renderPrivateFundingMessage(message) {
@@ -3040,23 +3043,35 @@ function renderAuctionFirstNameNotFound(name) {
   }
 
   elements.searchResult.hidden = false;
+  setHomeLookupHasResult(true);
   setSearchResultVariant("available");
   elements.searchResult.innerHTML = \`
-    <div class="search-state-banner available">
-      <p class="search-state-label">Current State</p>
-      <h4 class="search-state-title">No Current Owner Found</h4>
-      <p class="search-state-copy">This resolver does not show an active owner for this name. In the current launch model, eligible names start from the auction flow.</p>
+    <div class="lookup-availability-result">
+      <div class="lookup-result-title-row">
+        <p class="search-state-label">Search result</p>
+        <span class="status-pill available">not owned here</span>
+      </div>
+      <h3 class="lookup-result-name">\${escapeHtml(name)}</h3>
+      <p class="lookup-result-summary">No current owner found in this resolver.</p>
     </div>
-    <div class="result-title">
-      <h3>\${escapeHtml(name)}</h3>
-      <span class="status-pill available">not owned here</span>
+    <div class="lookup-next-step">
+      <p class="search-state-label">Next step</p>
+      <p>Eligible names can be opened by a valid bonded bid. A name is not an auction until that opening bid confirms.</p>
     </div>
-    <p class="lookup-note">Open Auctions to review eligible names, active auctions, or bid-package prep.</p>
     <div class="hero-cta-row lookup-result-actions">
-      <a class="action-link" href="\${escapeHtml(withBasePath("/auctions"))}">Open auctions</a>
-      <a class="action-link secondary" href="\${escapeHtml(withBasePath("/explainer"))}">Open overview</a>
+      <a class="action-link" href="\${escapeHtml(withBasePath("/auctions"))}">Open auction for \${escapeHtml(name)}</a>
+      <a class="action-link secondary" href="\${escapeHtml(withBasePath("/auctions"))}">View auction rules</a>
     </div>
   \`;
+}
+
+function setHomeLookupHasResult(hasResult) {
+  const lookupPanel = elements.searchResult?.closest?.(".hero-home-lookup");
+  if (!lookupPanel) {
+    return;
+  }
+
+  lookupPanel.classList.toggle("has-search-result", Boolean(hasResult));
 }
 
 function setSearchResultVariant(status) {

@@ -237,10 +237,11 @@ function renderHeroSection(
       <form id="searchForm" class="search-form hero-search-form">
         <label class="field-label" for="nameInput">Name</label>
         <div class="search-row">
-          <input id="nameInput" name="name" type="text" maxlength="32" placeholder="alice" autocomplete="off" />
+          <input id="nameInput" name="name" type="text" maxlength="32" placeholder="alice" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" />
           <button type="submit">Check</button>
         </div>
       </form>
+      <div id="searchResult" class="result-card empty hero-search-result" hidden></div>
       <div class="hero-lookup-status-grid" aria-label="Auction opening rule">
         <article>
           <span>Before a bid</span>
@@ -255,7 +256,6 @@ function renderHeroSection(
         <a class="action-link secondary" href="${withBasePath("/auctions", configuredBasePath)}">Open auctions</a>
         <a class="action-link secondary" href="${withBasePath("/setup", configuredBasePath)}">Set up signing</a>
       </div>
-      <div id="searchResult" class="result-card empty hero-search-result" hidden></div>
     </section>
     <section class="hero-home-launch-strip" aria-label="Launch rules">
       <article>
