@@ -91,7 +91,7 @@ Responsibilities:
 - resolve names to current state
 - return latest valid off-chain value record
 - return provenance for events and names
-- return auction lot and bid state
+- return auction eligibility and bid state
 
 4. `ont-cli`
 
@@ -120,7 +120,7 @@ should also be possible with the CLI.
 The CLI should support:
 
 - lookup and resolver inspection
-- auction policy and lot inspection
+- auction policy and bid-state inspection
 - auction bid package creation
 - auction bid artifact creation
 - transfer package creation

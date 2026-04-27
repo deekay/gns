@@ -97,8 +97,8 @@ It currently proves:
 - winner value publication
 - post-release transfer
 - recipient value publication
-- a separate no-bid lot closing without a winner
-- a deliberately late bid rejected as `closed_without_winner`
+- legacy scheduled-catalog no-bid close compatibility is still covered in the
+  smoke data, but should not be presented as a current launch outcome
 
 This is the strongest live demo evidence we currently have.
 
@@ -110,21 +110,21 @@ The public auction lab at:
 
 uses curated fixture cases from `/api/auctions`.
 
-That surface is designed to guarantee visible examples of all major auction
-phases in one place.
+That surface is designed to guarantee visible examples of the current
+user-facing auction states in one place.
 
 At the time of this audit, the public lab API includes explicit cases for:
 
-- `pending_opening` (internal phase id: `pending_unlock`)
-- `awaiting_opening_bid`
+- `not_eligible_yet` (internal phase id: `pending_unlock`)
+- `eligible_to_open` (internal phase id: `awaiting_opening_bid`)
 - `live_bidding`
 - `soft_close`
 - `settled`
-- `closed_without_winner`
 
 This is the right place to say:
 
-> the website visibly demonstrates all major auction phases
+> the website visibly demonstrates eligibility, opening-bid prep, live bidding,
+> soft close, and settlement
 
 because that claim is stable and fixture-backed.
 
@@ -141,31 +141,31 @@ It is not a curated full-state gallery. It is a real observed-state feed.
 That means the set of visible phases depends on:
 
 - current private chain height
-- current dedicated smoke lots
-- whether a lot has already been used, settled, or closed
+- current dedicated smoke entries
+- whether an entry has already been used or settled
 
 The private feed is now maintained in two ways:
 
-- the private auction smoke leaves behind real `settled` and
-  `closed_without_winner` outcomes
-- a dedicated private phase-gallery refresh script parks real lots in
-  `pending_opening` (internal phase id: `pending_unlock`),
-  `awaiting_opening_bid`, `live_bidding`, and `soft_close`
+- the private auction smoke leaves behind real `settled` outcomes
+- a dedicated private phase-gallery refresh script parks real prototype entries in
+  `not_eligible_yet` (internal phase id: `pending_unlock`),
+  `eligible_to_open` (internal phase id: `awaiting_opening_bid`),
+  `live_bidding`, and `soft_close`
 
 That means the private live feed can now show all major phases at once, but it
 is still worth being honest about how that happens:
 
 - it is a real chain-derived feed
-- some states are maintained by dedicated parked lots rather than arising
+- some states are maintained by dedicated parked entries rather than arising
   spontaneously from one smoke run
-- those parked lots drift over time as the private chain keeps advancing, so
+- those parked entries drift over time as the private chain keeps advancing, so
   they need periodic refresh
 
 So the right statement is:
 
 > the private live feed now shows all major auction phases with real
-> chain-derived lots, but part of that presentation depends on periodically
-> refreshing dedicated parked phase lots.
+> chain-derived entries, but part of that presentation depends on periodically
+> refreshing dedicated parked phase entries.
 
 ## What The Private Auction Smoke Summary Adds
 
@@ -185,27 +185,28 @@ It gives a real observed end-to-end lifecycle record with:
 - winner value record
 - post-release transfer
 - post-transfer value record
-- no-winner late-bid rejection
+- legacy no-bid close compatibility remains in the smoke JSON but is not part
+  of the current public auction story
 
-So even if the parked lots drift and need refreshing, the smoke summary still
+So even if the parked entries drift and need refreshing, the smoke summary still
 proves the key live transitions.
 
 ## The Honest Public Claim
 
 The clearest accurate wording today is:
 
-> ONT auctions are tested across simulator, package, regtest, and
-> hosted private-signet layers. The public auction lab shows all major phases
-> through curated fixture cases, while the private signet live feed and smoke
-> summary show real chain-derived examples across the same major phases on the
-> hosted demo chain.
+> ONT auctions are tested across simulator, package, regtest, and hosted
+> private-signet layers. The public auction lab shows eligibility, opening-bid
+> prep, live bidding, soft close, and settlement through curated fixtures,
+> while the private signet live feed and smoke summary show real chain-derived
+> examples across the active auction lifecycle on the hosted demo chain.
 
 ## Remaining Gap
 
 This is no longer a pure gap, but it is still an operational maintenance item.
 Keeping the private live feed phase-complete requires:
 
-- dedicated parked lots
+- dedicated parked entries
 - the refresh script `npm run test:private-signet-auction-phase-gallery`
 - or a full canonical private-signet reseed
 

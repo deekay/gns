@@ -475,12 +475,12 @@ function renderAuctionLabSection(): string {
   return `<section id="auction-lab" class="panel panel-list">
     ${renderPanelHead(
       "Auction Reference Cases",
-      "Reference view of sample auction states.",
-      `<p>This page shows how the current auction model behaves in a few representative cases.</p>
+      "Reference view for eligible names and active auction states.",
+      `<p>This page shows how the current auction model behaves once a name is eligible and a bidder opens the auction.</p>
       <ul>
         <li>The website shows the current read-only defaults for the reference cases below.</li>
         <li>The cards underneath are simulator-backed examples, not live protocol changes.</li>
-        <li>Use this surface to inspect waiting, closed-without-winner, bidding, soft close, and settled outcomes.</li>
+        <li>A real auction starts with a valid bonded opening bid; before that, a name is only eligible or not eligible.</li>
       </ul>`
     )}
     <details class="detail-technical">
@@ -502,9 +502,9 @@ function renderExperimentalAuctionFeedSection(): string {
       "Resolver-backed view derived from observed AUCTION_BID transactions.",
       `<p>This sits closer to observed chain behavior than the reference states above.</p>
       <ul>
-        <li>Lots still come from the current prototype auction catalog while universal auction-opening tooling is being built.</li>
+        <li>The feed still uses prototype catalog entries while fully on-demand auction-opening tooling is being built.</li>
         <li>Leaders, minimum next bids, stale-state rejection, and bond spend/release summaries are derived from observed AUCTION_BID transactions.</li>
-        <li>Lots that attract no valid opening bid through the close window are marked as closed without a winner.</li>
+        <li>A real auction begins when a valid bonded opening bid confirms; names with no opening bid should not be described as failed auctions.</li>
         <li>Bids that merely clear the normal increment are not enough during soft close if they would extend the auction. Late extension bids use the stronger soft-close increment rule.</li>
         <li>Same-bidder replacement is only recognized when the later bid spends the prior bid bond outpoint.</li>
         <li>This feed is a prototype view; final launch settlement rules are not frozen yet.</li>
@@ -521,7 +521,7 @@ function renderAuctionLabNotesSection(collapsible = false): string {
         <h3>Implemented</h3>
         <ul class="guide-list">
           <li>The current auction classes, opening floors, soft close, and minimum increments are modeled here.</li>
-          <li>An explicit no-winner close so lots do not stay open forever when no valid bid appears.</li>
+          <li>Opening-bid packages that bind the name, bidder, owner key, bonded amount, and observed state.</li>
           <li>A stronger soft-close increment rule so bids that extend the clock must escalate more than normal mid-auction bids.</li>
           <li>Single-auction and market-level simulators with bidder budget pressure.</li>
           <li>CLI commands, fixture scenarios, and this website-facing auction state view.</li>
@@ -924,9 +924,9 @@ function renderPrivateAuctionSmokeSection(collapsible = false): string {
       "Latest status from the hosted private-signet auction walkthrough.",
       `<p>This is the current live-chain proof for the auction slice.</p>
       <ul>
-        <li>It starts with an empty dedicated smoke lot from the private auction catalog.</li>
-        <li>It submits an opening bid, then a higher bid, settles the lot into a live owned name, publishes winner destinations, and later transfers that name after the winner lock clears.</li>
-        <li>It still spends the losing bond early to prove the chain-derived feed flags that violation, and it separately proves the no-winner close path on a dedicated lot.</li>
+        <li>It starts from a dedicated prototype catalog entry, then opens the auction with a real bonded bid.</li>
+        <li>It submits an opening bid, then a higher bid, settles the auction into a live owned name, publishes winner destinations, and later transfers that name after the winner lock clears.</li>
+        <li>It still spends the losing bond early to prove the chain-derived feed flags that violation.</li>
         <li>The resulting website feed shows accepted bid history, settlement state, post-settlement handoff, and bond spend / release consequences.</li>
       </ul>`
     )}

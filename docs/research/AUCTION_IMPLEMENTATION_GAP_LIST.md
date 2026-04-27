@@ -13,7 +13,7 @@ are:
 - CLI can turn that package into a signable experimental bid transaction
 - the protocol has an explicit experimental `AUCTION_BID` payload shape
 - the resolver and website can derive an experimental live auction feed from
-  observed `AUCTION_BID` transactions for catalog lots
+  observed `AUCTION_BID` transactions for prototype catalog entries
 - settled winning bids can materialize into real owned names in registry state
 
 That is real progress, but it is still not the same thing as a final universal
@@ -33,7 +33,7 @@ What exists today:
 - an experimental `AUCTION_BID` event payload in `@ont/protocol`
 - an experimental unsigned/signed auction bid artifact flow in CLI + architect
 - core/indexer support for recording structurally valid `AUCTION_BID`
-  transactions and deriving lot-level experimental auction state from them
+  transactions and deriving experimental auction state from them
 - experimental settled-winner materialization into a real owned name record,
   using the winning bid's owner key and bond outpoint
 - resolver/web exposure of that chain-derived experimental auction state
@@ -89,13 +89,15 @@ Missing:
 - treatment for rejected or stale late bids
 - treatment for transactions that are Bitcoin-valid but auction-invalid at the
   observed state
-- clear definition of how the bond output and payload relate to an auction lot
+- clear definition of how the bond output and payload identify the auctioned
+  name and observed state
 
 This is the point where the simulator becomes a real protocol.
 
 ### 3. Auction-Aware Indexer / Resolver State
 
-Today the resolver knows an **experimental** auction slice for catalog lots:
+Today the resolver knows an **experimental** auction slice for prototype catalog
+entries:
 
 - observed `AUCTION_BID` transactions
 - current leading bidder commitment
@@ -105,7 +107,7 @@ Today the resolver knows an **experimental** auction slice for catalog lots:
 - same-bidder replacement when the later bid spends the earlier bid bond
 - accepted-bid bond / release summaries
 - early-vs-allowed spend classification for observed bid bond outpoints
-- settled / soft-close / pending / closed-without-winner phase
+- settled / soft-close / eligible / legacy scheduled-catalog close phase
 - settled-winner ownership materialization for names that do not already exist
   in the registry state
 
@@ -114,7 +116,8 @@ What it still does **not** know:
 - final universal-auction settlement semantics
 - whether every currently derived consequence should be promoted to stricter
   chain-enforced behavior
-- a fully registry-backed auction market beyond the experimental lot catalog
+- a fully registry-backed auction market beyond the experimental prototype
+  catalog
 
 ### 4. Settlement / Close / Transfer Rules
 
@@ -125,7 +128,8 @@ Still open:
 
 - whether the current loser-release / winner-lock timing is the right final
   rule set
-- whether the current no-winner close window is the right default
+- whether the legacy scheduled-catalog no-bid close path should be removed
+  entirely or kept only for compatibility tests
 - whether transfers before maturity are allowed and under what constraints
 - whether any explicit post-win settlement or acknowledgement step is still
   desirable despite the current winner-owned-name materialization path

@@ -38,7 +38,7 @@ An immature name remains valid only while its dedicated bond outpoint remains un
 ONT v1 standardizes auction and transfer events via `OP_RETURN`.
 
 ### 4.1 AUCTION_BID
-Publishes a bonded bid against a specific auction lot and auction-state commitment.
+Publishes a bonded bid against a specific name and auction-state commitment.
 - **Payload:** `magic(3) | version(1) | type(1) | flags(1) | bond_vout(1) | lock_blocks(4) | bid_sats(8) | owner_pubkey(32) | lot_commitment(16) | auction_commitment(32) | bidder_commitment(16)`
 - **Rule:** Must be in the same transaction as the bid bond UTXO.
 

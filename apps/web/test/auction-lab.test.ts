@@ -11,19 +11,17 @@ describe("loadLaunchAuctionLab", () => {
     const payload = await loadLaunchAuctionLab();
 
     expect(payload.kind).toBe("auction_lab");
-    expect(payload.cases.length).toBeGreaterThanOrEqual(6);
+    expect(payload.cases.length).toBeGreaterThanOrEqual(5);
     expect(payload.cases.map((entry) => entry.state.phase)).toEqual([
       "pending_unlock",
       "awaiting_opening_bid",
       "live_bidding",
       "soft_close",
-      "settled",
-      "closed_without_winner"
+      "settled"
     ]);
     expect(payload.cases[0]?.state.currentRequiredMinimumBidSats).toBe("3125000");
     expect(payload.cases[4]?.state.currentLeaderBidderId).toBe("speculator_d");
-    expect(payload.cases[5]?.state.currentRequiredMinimumBidSats).toBeNull();
-    expect(payload.cases[5]?.state.noBidReleaseBlock).toBe(884320);
+    expect(payload.cases.map((entry) => entry.state.phase)).not.toContain("closed_without_winner");
   });
 
   it("can derive a shared auction bid package from a website-facing case", async () => {
@@ -39,16 +37,6 @@ describe("loadLaunchAuctionLab", () => {
     expect(pkg.previewStatus).toBe("currently_valid");
     expect(pkg.wouldExtendSoftClose).toBe(true);
     expect(pkg.previewRequiredMinimumBidSats).toBe("1331000000");
-  });
-
-  it("refuses to create auction bid packages once a lot closed without a winner", async () => {
-    await expect(
-      createLaunchAuctionLabBidPackage({
-        caseId: "06-released-nike",
-        bidderId: "operator_alpha",
-        bidAmountSats: "250000000"
-      })
-    ).rejects.toThrow(/closed without a winner/i);
   });
 
   it("can derive a bid package from resolver-derived experimental auction state", () => {
@@ -107,7 +95,7 @@ describe("loadLaunchAuctionLab", () => {
     ).toThrow(/already settled/i);
   });
 
-  it("can re-simulate the lab with a custom no-bid close window", async () => {
+  it("keeps legacy no-bid close states out of the public lab payload", async () => {
     const payload = await loadLaunchAuctionLab({
       policyOverrides: {
         noBidReleaseBlocks: 10_000
@@ -115,9 +103,7 @@ describe("loadLaunchAuctionLab", () => {
     });
 
     expect(payload.policy.auction.noBidReleaseBlocks).toBe(10_000);
-    expect(payload.cases[5]?.id).toBe("06-released-nike");
-    expect(payload.cases[5]?.state.phase).toBe("awaiting_opening_bid");
-    expect(payload.cases[5]?.state.noBidReleaseBlock).toBe(890000);
-    expect(payload.cases[5]?.state.currentRequiredMinimumBidSats).toBe("12500000");
+    expect(payload.cases.map((entry) => entry.id)).not.toContain("06-released-nike");
+    expect(payload.cases.map((entry) => entry.state.phase)).not.toContain("closed_without_winner");
   });
 });

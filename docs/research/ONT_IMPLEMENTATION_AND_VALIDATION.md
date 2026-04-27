@@ -62,9 +62,9 @@ Today the repo has:
 - CLI commands for policy printing, scenario execution, and bid-package
   creation / inspection
 - bid transaction builder and signer paths built on top of those bid packages
-- a website-facing `/auctions` page that renders pending opening,
-  awaiting-opening, live bidding, soft-close, settled, and no-winner states
-- a resolver-backed chain-derived auction feed for catalog lots, derived from
+- a website-facing `/auctions` page that renders eligibility, opening-bid prep,
+  live bidding, soft-close, and settled states
+- a resolver-backed chain-derived auction feed for prototype catalog entries, derived from
   observed `AUCTION_BID` transactions
 - same-bidder rebid classification when the later bid spends the prior bid bond
   outpoint

@@ -23,8 +23,8 @@ still technically provisional:
 - auctions should have soft close rather than hard-end sniping
 - bids that extend an auction during soft close should face a stronger minimum
   increment than ordinary mid-auction bids
-- lots with no valid opening bid should close without a winner rather than
-  stay open forever
+- the current user-started launch story should not describe no-bid names as
+  failed auctions; a valid bonded opening bid is what creates the auction
 - same-bidder rebids should replace earlier bids by spending the earlier bond
   outpoint
 - winning bids should carry the eventual owner key
@@ -40,7 +40,8 @@ These are still temporary and should not be treated as frozen:
 - exact opening-bond floors
 - exact winner settlement duration
 - exact auction window length
-- exact no-winner close window length
+- whether to remove the legacy scheduled-catalog no-bid close path entirely or
+  keep it only as compatibility coverage
 - exact absolute increment floor
 - exact percentage increment floor
 - exact soft-close increment strength

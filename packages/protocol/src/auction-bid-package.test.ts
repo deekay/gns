@@ -38,7 +38,7 @@ describe("auction bid packages", () => {
     expect(pkg.previewStatus).toBe("too_early");
     expect(pkg.previewRequiredMinimumBidSats).toBe("1000000000");
     expect(pkg.wouldBecomeLeader).toBe(false);
-    expect(pkg.previewSummary).toContain("not opened yet");
+    expect(pkg.previewSummary).toContain("not eligible to open yet");
     expect(pkg.bidderCommitment).toBe(computeAuctionBidderCommitment("operator_a"));
     expect(pkg.currentLeaderBidderCommitment).toBeNull();
     expect(pkg.auctionLotCommitment).toBe(

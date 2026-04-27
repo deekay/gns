@@ -488,7 +488,7 @@ const server = createServer(async (request, response) => {
   }
 
   if (pathname === "/api/experimental-auctions") {
-    return proxyJson(response, `${resolverUrl}/experimental-auctions`);
+    return proxyExperimentalAuctionsJson(response, `${resolverUrl}/experimental-auctions`);
   }
 
   if (pathname === "/api/names") {
@@ -644,9 +644,39 @@ async function proxyJson(
   }
 }
 
+async function proxyExperimentalAuctionsJson(
+  response: import("node:http").ServerResponse,
+  targetUrl: string
+): Promise<void> {
+  try {
+    const upstream = await fetch(targetUrl);
+    const payload = await upstream.json() as unknown;
+
+    if (payload && typeof payload === "object" && Array.isArray((payload as { auctions?: unknown }).auctions)) {
+      const record = payload as { auctions: unknown[] };
+      writeJson(response, upstream.status, {
+        ...record,
+        auctions: record.auctions.filter((entry) => {
+          return !(entry && typeof entry === "object" && (entry as { phase?: unknown }).phase === "closed_without_winner");
+        })
+      });
+      return;
+    }
+
+    writeJson(response, upstream.status, payload);
+  } catch (error) {
+    writeJson(response, 502, {
+      error: "resolver_unavailable",
+      message: error instanceof Error ? error.message : "Resolver request failed"
+    });
+  }
+}
+
 async function readPrivateAuctionSmokeStatus(): Promise<unknown> {
   try {
-    return JSON.parse(await readFile(privateAuctionSmokeStatusPath, "utf8"));
+    return sanitizePrivateAuctionSmokeStatus(
+      JSON.parse(await readFile(privateAuctionSmokeStatusPath, "utf8")) as unknown
+    );
   } catch (error) {
     if (
       error instanceof Error &&
@@ -664,6 +694,20 @@ async function readPrivateAuctionSmokeStatus(): Promise<unknown> {
       message: error instanceof Error ? error.message : "Unable to read private signet auction smoke summary."
     };
   }
+}
+
+function sanitizePrivateAuctionSmokeStatus(payload: unknown): unknown {
+  if (!payload || typeof payload !== "object") {
+    return payload;
+  }
+
+  const rest = { ...(payload as Record<string, unknown>) };
+  delete rest.releaseCheck;
+  return {
+    ...rest,
+    message:
+      "Private signet auction smoke covers opening bid, higher bid, settlement, value publication, transfer, and losing-bond violation checks."
+  };
 }
 
 function writeHtml(response: import("node:http").ServerResponse, html: string): void {

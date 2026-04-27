@@ -60,7 +60,9 @@ For launch-eligible names:
 4. bids near the end extend the soft close
 5. the highest valid bidder wins
 6. the winner owns the name and enters settlement
-7. if no valid bid exists, the name remains without an owner
+
+If nobody submits a valid bonded opening bid, no auction has opened and no
+ownership changes.
 
 The user-facing version can still feel simple:
 

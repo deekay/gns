@@ -382,8 +382,8 @@ async function bootstrap() {
       await reloadAuctionLab();
       setAuctionPolicyControlsMessage(
         overrides.noBidReleaseBlocks == null
-          ? "Using the current default no-winner close window."
-          : "Preview updated. Unbid lots now close without a winner after " + String(overrides.noBidReleaseBlocks) + " blocks in this reference view."
+          ? "Using the current prototype timing defaults."
+          : "Preview updated. Legacy scheduled-lot no-bid timing is set to " + String(overrides.noBidReleaseBlocks) + " blocks for compatibility fixtures."
       );
     } catch (error) {
       setAuctionPolicyControlsMessage(describeError(error));
@@ -401,7 +401,7 @@ async function bootstrap() {
 
     try {
       await reloadAuctionLab();
-      setAuctionPolicyControlsMessage("Preview reset to the current default no-winner close window.");
+      setAuctionPolicyControlsMessage("Preview reset to the current prototype timing defaults.");
     } catch (error) {
       setAuctionPolicyControlsMessage(describeError(error));
     }
@@ -823,14 +823,14 @@ async function bootstrap() {
       if (action === "download") {
         const generated = state.auctionGeneratedOwnerKeys.get(domKey);
         if (!generated) {
-          setAuctionOwnerKeyHelperMessage(domKey, "Generate an owner key for this lot before downloading it.");
+          setAuctionOwnerKeyHelperMessage(domKey, "Generate an owner key for this bid before downloading it.");
           return;
         }
 
         const normalizedName = typeof name === "string" && name.trim().length > 0 ? name.trim().toLowerCase() : null;
         downloadTextFile(
           buildGeneratedOwnerKeyText(generated, normalizedName),
-          "ont-" + String(normalizedName ?? "auction-lot") + "-auction-owner-key.txt"
+          "ont-" + String(normalizedName ?? "auction-bid") + "-auction-owner-key.txt"
         );
         return;
       }
@@ -3051,7 +3051,7 @@ function renderAuctionFirstNameNotFound(name) {
       <h3>\${escapeHtml(name)}</h3>
       <span class="status-pill available">not owned here</span>
     </div>
-    <p class="lookup-note">Open Auctions to review active lots, prepare a bid package, or inspect the current auction policy.</p>
+    <p class="lookup-note">Open Auctions to review eligible names, active auctions, or bid-package prep.</p>
     <div class="hero-cta-row lookup-result-actions">
       <a class="action-link" href="\${escapeHtml(withBasePath("/auctions"))}">Open auctions</a>
       <a class="action-link secondary" href="\${escapeHtml(withBasePath("/explainer"))}">Open overview</a>
@@ -3168,7 +3168,7 @@ function renderPrivateFundingResult(result) {
       <ol>
         <li>Refresh Sparrow so the new confirmed UTXO appears.</li>
         <li>Keep using that same wallet when you prepare auction bid transactions.</li>
-        <li>Use Auctions to inspect lots, create an owner key, and build bid-package handoffs.</li>
+        <li>Use Auctions to inspect eligible names and active auctions, create an owner key, and build bid-package handoffs.</li>
         <li>Use the CLI for custom bid construction until the website auction flow is fully settled.</li>
       </ol>
     </div>
@@ -4408,7 +4408,7 @@ function renderTxEventPayload(payload) {
     rows.push('<div class="result-item"><label>Bidder Commitment</label>' + renderCopyableCode(payload.bidderCommitment) + "</div>");
   }
   if (payload.auctionLotCommitment) {
-    rows.push('<div class="result-item"><label>Auction Lot Commitment</label>' + renderCopyableCode(payload.auctionLotCommitment) + "</div>");
+    rows.push('<div class="result-item"><label>Name commitment</label>' + renderCopyableCode(payload.auctionLotCommitment) + "</div>");
   }
   if (payload.auctionCommitment) {
     rows.push('<div class="result-item"><label>Auction State Commitment</label>' + renderCopyableCode(payload.auctionCommitment) + "</div>");
@@ -4623,7 +4623,7 @@ function renderAuctionLab() {
       String(auctionLab.cases.length) + " sample auction state" + (auctionLab.cases.length === 1 ? "" : "s"),
       activeOverrides.noBidReleaseBlocks == null
         ? "showing current simulator defaults"
-        : "previewing a custom no-winner close window"
+        : "legacy no-bid timing override active"
     ].join(" · ")
   );
   elements.auctionLabList.innerHTML = auctionLab.cases
@@ -4648,15 +4648,16 @@ function renderExperimentalAuctionFeed() {
   }
 
   elements.experimentalAuctionList.classList.remove("empty");
+  const visibleAuctions = payload.auctions.filter((auction) => auction.phase !== "closed_without_winner");
   setText(
     elements.experimentalAuctionMeta,
     [
-      String(payload.auctions.length) + " catalog lot" + (payload.auctions.length === 1 ? "" : "s"),
+      String(visibleAuctions.length) + " prototype auction state" + (visibleAuctions.length === 1 ? "" : "s"),
       payload.currentBlockHeight == null ? "resolver has not reached a current block yet" : "derived at block " + String(payload.currentBlockHeight),
       "leaders, stale bid rejection, and settlement summaries come from observed AUCTION_BID transactions"
     ].join(" · ")
   );
-  elements.experimentalAuctionList.innerHTML = payload.auctions
+  elements.experimentalAuctionList.innerHTML = visibleAuctions
     .map((auction) => renderExperimentalAuctionCard(auction))
     .join("");
 }
@@ -4671,12 +4672,8 @@ function renderAuctionPolicySummary(policy) {
     : [];
   const topRow = [
     {
-      title: "Wait for opening bid",
+      title: "Auction window",
       value: formatBlockWindow(policy.auction?.baseWindowBlocks)
-    },
-    {
-      title: "Closes with no bids",
-      value: formatBlockWindow(policy.auction?.noBidReleaseBlocks)
     },
     {
       title: "Late bid extends close",
@@ -4703,7 +4700,7 @@ function renderAuctionPolicySummary(policy) {
   return [
     '<article class="guide-card">',
     "  <h3>Current defaults</h3>",
-    '  <p class="result-meta">Plain English: an auction waits for an opening bid, closes without a winner if nobody opens, and extends the close when a late bid lands.</p>',
+    '  <p class="result-meta">Plain English: a valid bonded opening bid starts the auction clock; late bids can extend the close.</p>',
     '  <div class="result-grid">',
     topRow
       .map((row) => {
@@ -4765,16 +4762,18 @@ function renderAuctionCaseCard(auctionCase) {
   const leaderLabel = phase === "settled" ? "Winner" : "Current leader";
   const nextBidLabel =
     phase === "closed_without_winner"
-      ? "Opening floor"
+      ? "Legacy opening floor"
+      : phase === "pending_unlock" || phase === "awaiting_opening_bid"
+        ? "Opening bid minimum"
       : phase === "soft_close"
         ? "Next valid bid (extends close)"
         : "Next valid bid";
   const closeLabel = phase === "pending_unlock"
-    ? "Auction opens"
+    ? "Eligible at block"
     : phase === "closed_without_winner"
-      ? "Closed at block"
+      ? "Legacy close block"
     : phase === "awaiting_opening_bid"
-      ? "No-bid close"
+      ? "Auction status"
       : "Auction close";
   const closeValue =
     phase === "pending_unlock"
@@ -4782,7 +4781,7 @@ function renderAuctionCaseCard(auctionCase) {
       : phase === "closed_without_winner"
         ? String(stateView.noBidReleaseBlock ?? "-")
       : phase === "awaiting_opening_bid"
-        ? String(stateView.noBidReleaseBlock ?? "-")
+        ? "Not opened yet"
         : stateView.auctionCloseBlockAfter == null
           ? "-"
           : String(stateView.auctionCloseBlockAfter);
@@ -4793,13 +4792,21 @@ function renderAuctionCaseCard(auctionCase) {
         ? formatSats(stateView.currentRequiredMinimumBidSats)
         : "Auction settled";
   const secondaryTimingLabel =
-    phase === "awaiting_opening_bid" || phase === "closed_without_winner"
-      ? "Blocks to close"
-      : "Blocks to close";
+    phase === "pending_unlock"
+      ? "Blocks until eligible"
+      : phase === "awaiting_opening_bid"
+        ? "Auction clock"
+        : phase === "closed_without_winner"
+          ? "Legacy state"
+          : "Blocks to close";
   const secondaryTimingValue =
-    phase === "awaiting_opening_bid" || phase === "closed_without_winner"
-      ? (stateView.blocksUntilNoBidRelease == null ? "-" : String(stateView.blocksUntilNoBidRelease))
-      : (stateView.blocksUntilClose == null ? "-" : String(stateView.blocksUntilClose));
+    phase === "pending_unlock"
+      ? String(stateView.blocksUntilUnlock ?? 0)
+      : phase === "awaiting_opening_bid"
+        ? "Starts with a valid opening bid"
+        : phase === "closed_without_winner"
+          ? "Legacy scheduled-lot close"
+          : (stateView.blocksUntilClose == null ? "-" : String(stateView.blocksUntilClose));
 
   return [
     '<article class="activity-card">',
@@ -4820,7 +4827,7 @@ function renderAuctionCaseCard(auctionCase) {
     '    <div class="result-item"><label>' + escapeHtml(nextBidLabel) + '</label><p class="field-value">' + escapeHtml(nextBidValue) + "</p></div>",
     '    <div class="result-item"><label>Accepted / rejected</label><p class="field-value">' + escapeHtml(String(stateView.acceptedBidCount ?? 0) + " / " + String(stateView.rejectedBidCount ?? 0)) + "</p></div>",
     '    <div class="result-item"><label>Settlement lock</label><p class="field-value">' + escapeHtml(formatBlockWindow(stateView.settlementLockBlocks)) + "</p></div>",
-    '    <div class="result-item"><label>Blocks to opening</label><p class="field-value">' + escapeHtml(String(stateView.blocksUntilUnlock ?? 0)) + "</p></div>",
+    '    <div class="result-item"><label>Eligibility wait</label><p class="field-value">' + escapeHtml(String(stateView.blocksUntilUnlock ?? 0)) + "</p></div>",
     '    <div class="result-item"><label>' + escapeHtml(secondaryTimingLabel) + '</label><p class="field-value">' + escapeHtml(secondaryTimingValue) + "</p></div>",
     "  </div>",
     renderAuctionBidPackageComposer({
@@ -4831,7 +4838,11 @@ function renderAuctionCaseCard(auctionCase) {
       defaultBidAmount,
       defaultBidderId,
       note:
-        stateView.phase === "soft_close"
+        stateView.phase === "awaiting_opening_bid"
+          ? "This package is an opening bid. If signed and confirmed, it starts the auction clock."
+          : stateView.phase === "pending_unlock"
+          ? "This package previews an opening bid, but this fixture is not eligible yet."
+          : stateView.phase === "soft_close"
           ? "Soft close is active. A bid from this state must clear the stronger late-extension increment."
           : "Build a bid package from the simulator state shown on this card.",
       fallbackPath: buildAuctionsPath(stateView.normalizedName ?? "")
@@ -4847,7 +4858,9 @@ function renderExperimentalAuctionCard(auction) {
   const leaderLabel = phase === "settled" ? "Winner commitment" : "Leader commitment";
   const nextBidLabel =
     phase === "closed_without_winner"
-      ? "Opening floor"
+      ? "Legacy opening floor"
+      : phase === "pending_unlock" || phase === "awaiting_opening_bid"
+        ? "Opening bid minimum"
       : phase === "soft_close"
         ? "Next valid bid (extends close)"
         : "Next valid bid";
@@ -4859,23 +4872,31 @@ function renderExperimentalAuctionCard(auction) {
         : "Auction settled";
   const settlementLabel =
     phase === "closed_without_winner"
-      ? "No winner"
+      ? "Legacy state"
       : phase === "settled"
         ? "Winner release"
         : "Settlement";
   const settlementValue =
     phase === "closed_without_winner"
-      ? (auction.noBidReleaseBlock == null ? "Closed without winner" : "closed at block " + String(auction.noBidReleaseBlock))
+      ? (auction.noBidReleaseBlock == null ? "Legacy no-bid close" : "legacy close at block " + String(auction.noBidReleaseBlock))
       : phase === "settled"
       ? (auction.winnerBondReleaseBlock == null ? "-" : "block " + String(auction.winnerBondReleaseBlock))
       : "Not settled";
   const closeLabel =
     phase === "closed_without_winner"
-      ? "Closed at block"
-      : "Blocks to close";
+      ? "Legacy close block"
+      : phase === "pending_unlock"
+        ? "Blocks until eligible"
+        : phase === "awaiting_opening_bid"
+          ? "Auction clock"
+          : "Blocks to close";
   const closeValue =
     phase === "closed_without_winner"
       ? String(auction.noBidReleaseBlock ?? "-")
+      : phase === "pending_unlock"
+        ? String(auction.blocksUntilUnlock ?? 0)
+      : phase === "awaiting_opening_bid"
+        ? "Starts with a valid opening bid"
       : (auction.blocksUntilClose == null ? "-" : String(auction.blocksUntilClose));
   const settledHandoff =
     phase === "settled"
@@ -4892,7 +4913,7 @@ function renderExperimentalAuctionCard(auction) {
     '  <div class="result-grid">',
     '    <div class="result-item"><label>Name</label><p class="field-value">' + escapeHtml(String(auction.normalizedName ?? "-")) + "</p></div>",
     '    <div class="result-item"><label>Class</label><p class="field-value">' + escapeHtml(String(auction.classLabel ?? "-")) + "</p></div>",
-    '    <div class="result-item"><label>Lot commitment</label><p class="field-value">' + escapeHtml(formatAuctionCommitment(auction.auctionLotCommitment)) + "</p></div>",
+    '    <div class="result-item"><label>Name commitment</label><p class="field-value">' + escapeHtml(formatAuctionCommitment(auction.auctionLotCommitment)) + "</p></div>",
     '    <div class="result-item"><label>Current block</label><p class="field-value">' + escapeHtml(String(auction.currentBlockHeight ?? "-")) + "</p></div>",
     '    <div class="result-item"><label>Base floor</label><p class="field-value">' + escapeHtml(formatSats(auction.baseMinimumBidSats ?? "0")) + "</p></div>",
     '    <div class="result-item"><label>Opening minimum</label><p class="field-value">' + escapeHtml(formatSats(auction.openingMinimumBidSats ?? "0")) + "</p></div>",
@@ -4901,7 +4922,7 @@ function renderExperimentalAuctionCard(auction) {
     '    <div class="result-item"><label>' + escapeHtml(nextBidLabel) + '</label><p class="field-value">' + escapeHtml(nextBidValue) + "</p></div>",
     '    <div class="result-item"><label>Accepted / rejected</label><p class="field-value">' + escapeHtml(String(auction.acceptedBidCount ?? 0) + " / " + String(auction.rejectedBidCount ?? 0)) + "</p></div>",
     '    <div class="result-item"><label>Observed bids</label><p class="field-value">' + escapeHtml(String(auction.totalObservedBidCount ?? 0)) + "</p></div>",
-    '    <div class="result-item"><label>Blocks to opening</label><p class="field-value">' + escapeHtml(String(auction.blocksUntilUnlock ?? 0)) + "</p></div>",
+    '    <div class="result-item"><label>Eligibility wait</label><p class="field-value">' + escapeHtml(String(auction.blocksUntilUnlock ?? 0)) + "</p></div>",
     '    <div class="result-item"><label>' + escapeHtml(closeLabel) + '</label><p class="field-value">' + escapeHtml(closeValue) + "</p></div>",
     '    <div class="result-item"><label>Accepted capital locked</label><p class="field-value">' + escapeHtml(formatSats(auction.currentlyLockedAcceptedBidAmountSats ?? "0")) + " (" + escapeHtml(String(auction.currentlyLockedAcceptedBidCount ?? 0)) + ")</p></div>",
     '    <div class="result-item"><label>Accepted capital releasable</label><p class="field-value">' + escapeHtml(formatSats(auction.releasableAcceptedBidAmountSats ?? "0")) + " (" + escapeHtml(String(auction.releasableAcceptedBidCount ?? 0)) + ")</p></div>",
@@ -4928,7 +4949,11 @@ function renderExperimentalAuctionCard(auction) {
         .replace(/^_+|_+$/g, "")
         .toLowerCase(),
       note:
-        phase === "soft_close"
+        phase === "awaiting_opening_bid"
+          ? "This package is an opening bid. If signed and confirmed, it starts the auction clock."
+          : phase === "pending_unlock"
+          ? "This package previews an opening bid, but this prototype entry is not eligible yet."
+          : phase === "soft_close"
           ? "Built from current resolver-derived state. A soft-close extension bid must clear the stronger late increment and may go stale if another bid lands first."
           : "Build a bid package from the current resolver-derived experimental auction state.",
       fallbackPath: buildAuctionsPath(auction.normalizedName ?? "")
@@ -4957,8 +4982,8 @@ function renderSettledAuctionHandoff(auction, configuredBasePath = BASE_PATH) {
       : null;
   const lockIsActive = blocksUntilRelease !== null && blocksUntilRelease > 0;
   const headline = lockIsActive
-    ? "This settled lot is already a live name, but the post-auction lock is still active."
-    : "This settled lot is already a live name with a normal owner workflow.";
+    ? "This settled auction is already a live name, but the post-auction lock is still active."
+    : "This settled auction is already a live name with a normal owner workflow.";
   const copy = lockIsActive
     ? "Use the detail page for the current owner-visible state, publish a value if you want a destination or profile attached, and only transfer with bond continuity until the release height clears."
     : "Use the detail page for the current owner-visible state, update destinations, and treat transfer prep the same way you would for any other mature name.";
@@ -5004,7 +5029,7 @@ function renderAuctionBidPackageComposer(input) {
       '<details class="detail-technical">',
       "  <summary>Auction bid packages unavailable</summary>",
       '  <div class="detail-technical-body">',
-      '    <p class="tx-panel-note">This lot attracted no valid opening bid before the close window ended, so it closed without a winner. The name remains without an owner.</p>',
+      '    <p class="tx-panel-note">This is a legacy scheduled-lot state from the prototype catalog, not the current user-started auction model. No bid package is available here.</p>',
       "  </div>",
       "</details>"
     ].join("");
@@ -5034,7 +5059,7 @@ function renderAuctionBidPackageComposer(input) {
     '        <button type="button" data-auction-owner-key-action="generate-local" data-auction-package-source="' + escapeHtml(input.source) + '" data-auction-package-id="' + escapeHtml(input.id) + '" data-auction-name="' + escapeHtml(input.normalizedName ?? "") + '">Create In This Browser</button>',
     '        <button type="button" class="secondary-button" data-auction-owner-key-action="generate-hosted" data-auction-package-source="' + escapeHtml(input.source) + '" data-auction-package-id="' + escapeHtml(input.id) + '" data-auction-name="' + escapeHtml(input.normalizedName ?? "") + '">Use Demo Key From Server</button>',
     "      </div>",
-    '      <div class="result-card empty" data-auction-owner-key-result="' + escapeHtml(domKey) + '">No generated owner key yet for this lot. Create one in this browser for the normal self-custody path, or use a demo key from the server only for prototype testing.</div>',
+    '      <div class="result-card empty" data-auction-owner-key-result="' + escapeHtml(domKey) + '">No generated owner key yet for this bid. Create one in this browser for the normal self-custody path, or use a demo key from the server only for prototype testing.</div>',
     '      <div class="field-actions">',
     '        <button type="button" data-auction-package-action="preview" data-auction-package-source="' + escapeHtml(input.source) + '" data-auction-package-id="' + escapeHtml(input.id) + '">Preview bid package</button>',
     '        <button type="button" class="secondary-button" data-auction-package-action="download" data-auction-package-source="' + escapeHtml(input.source) + '" data-auction-package-id="' + escapeHtml(input.id) + '">Download bid package</button>',
@@ -5145,7 +5170,7 @@ function renderAuctionBidPackagePreview(pkg, sourceLabel) {
     '    <div class="result-item"><label>Would extend soft close</label><p class="field-value">' + escapeHtml(pkg.wouldExtendSoftClose ? "Yes" : "No") + "</p></div>",
     '    <div class="result-item"><label>Bidder commitment</label>' + renderCopyableCode(pkg.bidderCommitment) + "</div>",
     '    <div class="result-item"><label>State commitment</label>' + renderCopyableCode(pkg.auctionStateCommitment) + "</div>",
-    '    <div class="result-item"><label>Lot commitment</label>' + renderCopyableCode(pkg.auctionLotCommitment) + "</div>",
+    '    <div class="result-item"><label>Name commitment</label>' + renderCopyableCode(pkg.auctionLotCommitment) + "</div>",
     '    <div class="result-item"><label>Settlement lock</label><p class="field-value">' + escapeHtml(formatBlockWindow(pkg.settlementLockBlocks)) + "</p></div>",
     "  </div>",
     '  <ul class="guide-list">',
@@ -5209,7 +5234,7 @@ function renderAuctionBidHistory(outcomes) {
 
 function renderExperimentalAuctionBidHistory(outcomes) {
   if (!Array.isArray(outcomes) || outcomes.length === 0) {
-    return '<p class="tx-panel-note">No AUCTION_BID transactions for this catalog lot have been observed yet.</p>';
+    return '<p class="tx-panel-note">No AUCTION_BID transactions have been observed for this prototype entry yet.</p>';
   }
 
   return [
@@ -5306,7 +5331,7 @@ function mapAuctionPhasePill(phase) {
     case "awaiting_opening_bid":
       return "available";
     case "closed_without_winner":
-      return "available";
+      return "invalid";
     case "live_bidding":
       return "immature";
     case "soft_close":
@@ -5374,14 +5399,6 @@ function renderPrivateAuctionSmokeStatus() {
   const totalObservedBidCount = Number(finalState.totalObservedBidCount ?? 0);
   const highestBidText = finalState.currentHighestBidSats ? formatSats(finalState.currentHighestBidSats) : "None yet";
   const nextBidText = finalState.currentRequiredMinimumBidSats ? formatSats(finalState.currentRequiredMinimumBidSats) : "Auction settled";
-  const releaseCheck =
-    auctionSmoke.releaseCheck && typeof auctionSmoke.releaseCheck === "object"
-      ? auctionSmoke.releaseCheck
-      : null;
-  const releaseFinalState =
-    releaseCheck?.finalState && typeof releaseCheck.finalState === "object"
-      ? releaseCheck.finalState
-      : {};
   const winnerValueSequence =
     auctionSmoke.winnerValue?.currentValue && typeof auctionSmoke.winnerValue.currentValue === "object"
       ? auctionSmoke.winnerValue.currentValue.sequence
@@ -5427,9 +5444,6 @@ function renderPrivateAuctionSmokeStatus() {
       acceptedBidCount > 0 || totalObservedBidCount > 0
         ? String(acceptedBidCount) + " accepted / " + String(totalObservedBidCount) + " observed bids"
         : null,
-      releaseCheck?.highlight?.lateBidReason
-        ? "Release check: " + formatAuctionReason(releaseCheck.highlight.lateBidReason)
-        : null
     ]
       .filter(Boolean)
       .join(" · ")
@@ -5443,11 +5457,11 @@ function renderPrivateAuctionSmokeStatus() {
     '</div>',
     '<div class="result-grid">',
     '  <div class="result-item">',
-    "    <label>Message</label>",
-    '    <p class="field-value">' + escapeHtml(auctionSmoke.message ?? "No message") + '</p>',
+    "    <label>Summary</label>",
+    '    <p class="field-value">Opening bid, higher bid, settlement, value publishing, transfer, and losing-bond violation checks are covered by this smoke run.</p>',
     "  </div>",
     '  <div class="result-item">',
-    "    <label>Lot</label>",
+    "    <label>Auction id</label>",
     '    <p class="field-value">' + escapeHtml(String(auction.auctionId ?? finalState.auctionId ?? "Not published")) + '</p>',
     "  </div>",
     '  <div class="result-item">',
@@ -5514,26 +5528,6 @@ function renderPrivateAuctionSmokeStatus() {
     "    <label>Transferred value sequence</label>",
     '    <p class="field-value">' + escapeHtml(transferredValueSequence === null ? "Not published" : String(transferredValueSequence)) + '</p>',
     "  </div>",
-    '  <div class="result-item">',
-    "    <label>Release Lot</label>",
-    '    <p class="field-value">' + escapeHtml(String(releaseCheck?.auctionId ?? "Not published")) + '</p>',
-    "  </div>",
-    '  <div class="result-item">',
-    "    <label>Release Phase</label>",
-    '    <p class="field-value">' + escapeHtml(String(releaseFinalState.phaseLabel ?? releaseCheck?.highlight?.releasePhase ?? "Not published")) + '</p>',
-    "  </div>",
-    '  <div class="result-item">',
-    "    <label>No-Bid Release Block</label>",
-    '    <p class="field-value">' + escapeHtml(String(releaseCheck?.noBidReleaseBlock ?? "Not published")) + '</p>',
-    "  </div>",
-    '  <div class="result-item">',
-    "    <label>Late Bid Txid</label>",
-    releaseCheck?.lateBidTxid ? renderCopyableCode(releaseCheck.lateBidTxid) : '<p class="field-value">Not published</p>',
-    "  </div>",
-    '  <div class="result-item">',
-    "    <label>Late Bid Outcome</label>",
-    '    <p class="field-value">' + escapeHtml(formatAuctionReason(releaseCheck?.highlight?.lateBidReason ?? null)) + '</p>',
-    "  </div>",
     "</div>",
     actionLinks ? '<div class="result-actions">' + actionLinks + "</div>" : ""
   ].join("");
@@ -5547,13 +5541,13 @@ function renderPrivateAuctionWinnerHandoffCopy(finalState) {
   const currentBlockHeight = Number(finalState.currentBlockHeight ?? NaN);
   const winnerBondReleaseBlock = Number(finalState.winnerBondReleaseBlock ?? NaN);
   if (!Number.isFinite(currentBlockHeight) || !Number.isFinite(winnerBondReleaseBlock)) {
-    return "The lot has settled and should now appear as a live name record.";
+    return "The auction has settled and should now appear as a live name record.";
   }
 
   const blocksUntilRelease = Math.max(0, winnerBondReleaseBlock - currentBlockHeight);
   return blocksUntilRelease > 0
-    ? "The lot has settled into a live name record, but the post-auction lock remains active for about " + String(blocksUntilRelease) + " more blocks."
-    : "The lot has settled into a live name record and the post-auction lock has cleared.";
+    ? "The auction has settled into a live name record, but the post-auction lock remains active for about " + String(blocksUntilRelease) + " more blocks."
+    : "The auction has settled into a live name record and the post-auction lock has cleared.";
 }
 
 function renderPrivateAuctionWorkflowSummary(auctionSmoke) {

@@ -463,7 +463,7 @@ function deriveAuctionBidPreview(input: {
     return {
       previewStatus: "too_early",
       previewSummary:
-        `Auction has not opened yet. Wait ${input.blocksUntilUnlock} more block${input.blocksUntilUnlock === 1 ? "" : "s"} before bidding.`,
+        `This name is not eligible to open yet. Wait ${input.blocksUntilUnlock} more block${input.blocksUntilUnlock === 1 ? "" : "s"} before bidding.`,
       previewRequiredMinimumBidSats: input.openingMinimumBidSats,
       wouldBecomeLeader: false,
       wouldExtendSoftClose: false
@@ -495,7 +495,7 @@ function deriveAuctionBidPreview(input: {
   if (input.phase === "awaiting_opening_bid") {
     return {
       previewStatus: "currently_valid",
-      previewSummary: "Bid clears the opening minimum and would start the auction at this observed state.",
+      previewSummary: "Bid clears the opening minimum and would open the auction from this observed state.",
       previewRequiredMinimumBidSats: requiredMinimumBidSats,
       wouldBecomeLeader: true,
       wouldExtendSoftClose: false

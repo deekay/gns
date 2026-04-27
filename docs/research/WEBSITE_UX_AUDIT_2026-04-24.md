@@ -137,14 +137,16 @@ Needs improvement:
 
 What works:
 
-- It is clearly marked advanced.
+- It was clearly marked advanced at the time; the current auction-first product
+  direction makes Auctions a primary surface instead.
 - The read-only policy defaults are safer than exposing simulator knobs to first-time users.
 
 Needs improvement:
 
 - Auction pages should continue to look visually aligned with the rest of the site.
 - The page should separate "what is live-chain observed" from "what is fixture/reference state".
-- A small phase legend would help: pending opening, awaiting bid, live bidding, soft close, settled, released.
+- A small phase legend would help: not eligible yet, eligible to open, live
+  bidding, soft close, settled, released.
 
 ## Recommended Next UX Work
 

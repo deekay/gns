@@ -72,7 +72,7 @@ export async function loadLaunchAuctionLab(input?: {
     .filter((name) => name.endsWith(".json"))
     .sort((left, right) => left.localeCompare(right));
 
-  const cases = await Promise.all(
+  const casesWithLegacy = await Promise.all(
     fixtureFileNames.map(async (fileName) => {
       const raw = await readFile(`${AUCTION_LAB_FIXTURE_DIR}/${fileName}`, "utf8");
       const fixture = JSON.parse(raw) as AuctionLabFixtureFile;
@@ -90,6 +90,9 @@ export async function loadLaunchAuctionLab(input?: {
         state: serializeLaunchAuctionStateAtBlock(state)
       } satisfies AuctionLabCase;
     })
+  );
+  const cases = casesWithLegacy.filter(
+    (entry) => entry.id !== "06-released-nike" && entry.state.phase !== "closed_without_winner"
   );
 
   return {
@@ -223,7 +226,7 @@ function assertAuctionStateAllowsWebsiteBidPackage(
 ): void {
   if (auctionState.phase === "closed_without_winner") {
     throw new Error(
-      `Auction lot ${auctionState.normalizedName} from ${sourceLabel} has already closed without a winner and no longer accepts auction bids.`
+      `Prototype scheduled-lot state ${auctionState.normalizedName} from ${sourceLabel} is a legacy no-bid close and no longer accepts auction bids.`
     );
   }
 

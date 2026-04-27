@@ -1,6 +1,6 @@
 {
-  "title": "Private phase lot · before auction opens",
-  "description": "Dedicated private signet lot kept unbidded and still before opening so the live experimental feed can show a real pending-opening state.",
+  "title": "Private phase fixture · not eligible yet",
+  "description": "Dedicated private signet fixture kept before eligibility so the live experimental feed can show the pre-opening prototype state without implying a real auction already exists.",
   "currentBlockHeight": 181,
   "scenario": {
     "name": "phasepending",

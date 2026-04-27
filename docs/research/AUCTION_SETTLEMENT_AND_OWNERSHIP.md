@@ -89,17 +89,19 @@ The intended outcome is:
 
 This split-lock shape is not fully implemented yet.
 
-## No-Bid Lots
+## Legacy Scheduled-Catalog No-Bid State
 
-If a lot reaches the configured no-winner close window without a valid opening
-bid:
+The older scheduled-catalog prototype allowed a catalog entry to reach a
+configured no-bid close window without a valid opening bid:
 
 - it moves to `closed_without_winner`
 - no auction-owned name is materialized
 - the name remains without an owner until a future objective path reopens it
 
-Settlement materialization only happens for lots with an actual settled winning
-bid.
+That state is useful compatibility coverage for old catalog fixtures, but it is
+not the current launch story. In the user-started model, no auction exists until
+a valid bonded opening bid confirms. Settlement materialization only happens for
+auctions with an actual settled winning bid.
 
 ## Current Validation
 

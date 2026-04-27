@@ -96,7 +96,7 @@ expect to keep:
 - soft close
 - meaningful minimum increments
 - stronger increment for bids that extend the close
-- no valid bid means the lot closes without a winner
+- a valid bonded opening bid starts the auction clock
 - same-bidder replacement only counts when the later bid spends the prior bid
   bond
 

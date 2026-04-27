@@ -1,6 +1,6 @@
 {
   "title": "Private smoke lot · release D",
-  "description": "Private signet experimental auction lot dedicated to no-winner close smoke coverage and late-bid rejection after release.",
+  "description": "Legacy private signet scheduled-catalog fixture dedicated to compatibility coverage for late-bid rejection after a no-bid close.",
   "currentBlockHeight": 128,
   "scenario": {
     "name": "notion",

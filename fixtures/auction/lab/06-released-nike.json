@@ -1,6 +1,6 @@
 {
-  "title": "Closed without winner · nike",
-  "description": "Launch auction after the no-winner close window passed without any valid opening bid. Auction bidding is over for this lot.",
+  "title": "Legacy no-bid close · nike",
+  "description": "Legacy scheduled-catalog fixture retained for compatibility tests. The current user-started auction model should not present this as a normal launch outcome.",
   "currentBlockHeight": 884321,
   "scenario": {
     "name": "nike",

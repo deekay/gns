@@ -212,13 +212,13 @@ describe("experimental auction derivation", () => {
     });
   });
 
-  it("closes a no-bid lot without a winner and rejects later auction bids", () => {
+  it("keeps legacy scheduled-catalog no-bid close behavior covered", () => {
     const policy = createDefaultLaunchAuctionPolicy();
     const catalogEntry = createExperimentalLaunchAuctionCatalogEntry(
       {
         auctionId: "02-awaiting-opening-nike",
-        title: "Awaiting opening bid · nike",
-        description: "Launch auction after the configured opening height but before a valid opening bid.",
+        title: "Eligible to open · nike",
+        description: "Prototype entry after the configured eligibility height but before a valid opening bid.",
         name: "nike",
         auctionClassId: "launch_name",
         unlockBlock: 880_000

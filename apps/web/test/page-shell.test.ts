@@ -141,7 +141,8 @@ describe("renderPageHtml", () => {
     expect(html).toContain("Launch Status");
     expect(html).toContain("Auction bid-package handoffs");
     expect(html).toContain("Same-bidder replacement");
-    expect(html).toContain("no-winner close");
+    expect(html).toContain("valid bonded opening bid");
+    expect(html).not.toContain("no-winner close");
     expect(html).toContain("single-lane launch model");
     expect(html).toContain("stronger soft-close increment rule");
     expect(html).toContain("bond spend/release summaries");

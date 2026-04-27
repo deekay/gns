@@ -293,7 +293,7 @@ async function main() {
         selectReleaseSmokeAuction(beforeFeed.auctions)
       );
 
-      logStep(releaseTargetBefore.auctionId, "building a late bid before the no-bid close window closes");
+      logStep(releaseTargetBefore.auctionId, "building a late bid for legacy scheduled-catalog close coverage");
       const releaseBidderId = `${releaseTargetBefore.normalizedName}-late`;
       const releaseBidAmountSats = BigInt(
         releaseTargetBefore.currentRequiredMinimumBidSats ?? releaseTargetBefore.openingMinimumBidSats
@@ -313,7 +313,7 @@ async function main() {
 
       const releasedState = await ensureAuctionClosedWithoutWinner(releaseTargetBefore);
 
-      logStep(releasedState.auctionId, "broadcasting the prebuilt late bid after the lot has released");
+      logStep(releasedState.auctionId, "broadcasting the prebuilt late bid after the legacy close state");
       const lateBidTxid = await broadcastSignedAuctionBid({
         signedPath: lateBid.signedPath,
         rpcPassword,
@@ -338,7 +338,7 @@ async function main() {
 
       summary.status = "complete";
       summary.message =
-        "Private signet experimental auction smoke succeeded with live bidding, settlement, winner value publication, post-release transfer, and no-bid no-winner close rejection.";
+        "Private signet experimental auction smoke succeeded with live bidding, settlement, winner value publication, post-release transfer, and legacy scheduled-catalog close compatibility.";
       summary.completedAt = new Date().toISOString();
       summary.resolverUrl = privateResolverUrl;
       summary.rpcUrl = rpcUrl;
@@ -488,7 +488,7 @@ async function ensureAuctionReadyForOpeningBid(auctionState) {
   }
 
   if (auctionState.phase !== "pending_unlock") {
-    throw new Error(`expected ${auctionState.auctionId} to be pending opening or awaiting opening bid`);
+    throw new Error(`expected ${auctionState.auctionId} to be not eligible yet or eligible to open`);
   }
 
   const blocksToMine = Math.max(1, auctionState.unlockBlock - auctionState.currentBlockHeight);
@@ -519,13 +519,13 @@ async function ensureAuctionClosedWithoutWinner(auctionState) {
   }
 
   if (auctionState.noBidReleaseBlock === null) {
-    throw new Error(`expected ${auctionState.auctionId} to expose a no-bid close block`);
+    throw new Error(`expected ${auctionState.auctionId} to expose a legacy scheduled-catalog close block`);
   }
 
   const blocksToMine = Math.max(1, auctionState.noBidReleaseBlock - auctionState.currentBlockHeight + 1);
   logStep(
     auctionState.auctionId,
-    `mining ${blocksToMine} block${blocksToMine === 1 ? "" : "s"} to cross the no-bid close window`
+    `mining ${blocksToMine} block${blocksToMine === 1 ? "" : "s"} to cross the legacy scheduled-catalog close window`
   );
   const currentHeight = await getBlockCount();
   await mineBlocks(blocksToMine);

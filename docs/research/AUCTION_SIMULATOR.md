@@ -8,11 +8,15 @@ The simulator now follows the current launch direction:
 - no semantic reserved-word list
 - no brand/person/generic classes
 - `1-4` character names represented as a later short-name wave
-- no valid bid means the lot closes without a winner
+- a valid bonded opening bid starts the auction clock
 
 The TypeScript identifiers still contain some older `reserved` names in a few
 internal places. Treat those as legacy implementation names, not product or
 launch vocabulary.
+
+The simulator still contains a legacy scheduled-catalog no-bid close state for
+compatibility fixtures. That should not be presented as the current launch UX:
+in the user-started model, no auction exists until the opening bid confirms.
 
 ## CLI Commands
 
@@ -54,7 +58,7 @@ The simulator models:
 - minimum increment rules
 - stronger soft-close increment rules
 - soft-close extension
-- no-winner close
+- legacy scheduled-catalog no-bid close compatibility
 - bidder budget constraints in market scenarios
 - settlement into a winning bidder when a valid auction clears
 

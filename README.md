@@ -8,7 +8,7 @@ The hosted website is mainly a tool surface:
 
 - browse names
 - check ownership and auction state
-- inspect auction lots
+- inspect eligible names and active auctions
 - prepare prototype auction bid packages
 - prepare transfers
 - fund the private signet demo
@@ -33,7 +33,7 @@ If you want the fastest first walkthrough, use the hosted private demo:
 
 1. Open [setup](https://opennametags.org/setup) and point Sparrow at the hosted demo wallet endpoint shown there.
 2. Request demo coins into the same Sparrow wallet you plan to spend from.
-3. Open [auctions](https://opennametags.org/auctions), inspect a lot, and prepare a bid package with an owner key.
+3. Open [auctions](https://opennametags.org/auctions), inspect eligible names or active auctions, and prepare a bid package with an owner key.
 4. Build and sign the auction bid transaction in Sparrow, then watch the name appear in [explore](https://opennametags.org/explore) after settlement.
 
 If you want the tightest possible product demo instead of the full docs path, use:
@@ -109,7 +109,7 @@ Self-hosted website + resolver:
 
 | Phase | What it means | What you do next |
 | --- | --- | --- |
-| `Review` | Inspect the lot, current phase, minimum bid, and closing rules | Decide whether to prepare a bid |
+| `Review` | Inspect eligibility, current auction state, minimum bid, and closing rules | Decide whether to prepare a bid |
 | `Bid Broadcast` | A bid transaction is on-chain with bonded bitcoin | Watch whether the bid becomes or remains the leader |
 | `Settling` | The name is already owned and usable, but bond continuity still matters | Keep the bond intact until maturity |
 | `Active` | The name is mature, so ongoing bond continuity no longer matters | Publish values, update the key/value bundle, or transfer later |
@@ -131,7 +131,7 @@ Use the setup page to point Sparrow at the hosted private signet wallet endpoint
 
 ### 3. Prepare an auction bid
 
-On auctions, inspect the lot, generate or paste the owner key, and build the bid-package signer handoff.
+On auctions, inspect the eligible name or active auction, generate or paste the owner key, and build the bid-package signer handoff.
 
 ### 4. Publish what the name points to
 
@@ -143,14 +143,12 @@ Use the explore page to inspect recent names, provenance, and the current smoke 
 
 Use the auction page to inspect the prototype auction mechanics:
 
-- simulator states for waiting, bidding, soft close, settlement, and no-winner
-  outcomes
+- simulator states for eligibility, bidding, soft close, and settlement
 - the chain-derived experimental `AUCTION_BID` feed, including stale-bid
   rejection, same-bidder replacement, and derived bond spend / release summaries
 - the hosted private signet auction-smoke summary showing a real opening bid,
   higher bid, settlement into a live owned name, winner value publishing,
-  transfer, and an intentionally early losing-bond spend on a dedicated smoke
-  lot
+  transfer, and an intentionally early losing-bond spend
 
 ## What ONT Is
 
@@ -189,7 +187,7 @@ Adjacent work is worth keeping in mind here too. Systems like Pubky / PKARR (whi
 
 Launch-eligible names use one auction lane.
 
-1. a bid names the auction lot, bidder, owner key, and bonded amount
+1. a valid bonded opening bid names the auction, bidder, owner key, and bonded amount
 2. market rules determine the leading bid, soft close, and settlement
 3. the winning name then enters a settlement period during which bond continuity matters
 

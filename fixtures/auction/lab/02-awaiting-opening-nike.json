@@ -1,6 +1,6 @@
 {
-  "title": "Awaiting opening bid · nike",
-  "description": "Launch auction after the configured opening height, but every visible attempt is still below the opening minimum. The auction is open, but no valid bidder has started the clock yet.",
+  "title": "Eligible to open · nike",
+  "description": "Prototype fixture after the configured eligibility height. Below-floor attempts do not open the auction; only a valid bonded opening bid starts the clock.",
   "currentBlockHeight": 880030,
   "scenario": {
     "name": "nike",

@@ -148,7 +148,8 @@ and value-record lifecycle creates under realistic usage.
 ### What is already proven
 
 - auction fixtures and market simulations are deterministic
-- bid packages bind bidder, lot, amount, owner key, and observed auction state
+- bid packages bind bidder, name/state commitment, amount, owner key, and
+  observed auction state
 - chain-derived auction state can materialize a winner into an owned name
 - later transfer and value-record paths work against owned-name records
 
@@ -176,7 +177,7 @@ Today we have:
 - chain-derived auction feed from observed `AUCTION_BID` transactions
 - stale-state rejection
 - same-bidder replacement derivation
-- no-winner close for lots with no valid opening bid
+- legacy scheduled-catalog no-bid close coverage kept out of the launch story
 - settled winner materialization into a live owned name
 - live private-signet smoke proving auction lifecycle behavior
 
@@ -261,7 +262,7 @@ These are the current house recommendations for the next review revision.
 - `1-4` character names deferred to a later short-name auction wave
 - current auction family: open ascending, soft close, meaningful minimum
   increments, stronger extension increments
-- no-winner close
+- opening-bid starts the auction clock
 - winner materialization from the winning bid
 
 ### Keep open or experimental

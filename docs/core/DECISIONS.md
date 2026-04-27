@@ -456,8 +456,8 @@ The current auction family is:
 - soft close
 - meaningful minimum increments
 - stronger minimum increments for bids that would extend the auction
-- no valid bid means the name remains without an owner, not redirected into another
-  allocation path
+- if nobody submits a valid bonded opening bid, no auction has opened and no
+  ownership changes
 
 Implications:
 - the project can explain one coherent allocation rule for all eligible names

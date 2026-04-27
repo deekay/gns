@@ -885,11 +885,11 @@ export function formatExperimentalLaunchAuctionPhaseLabel(
 ): string {
   switch (phase) {
     case "pending_unlock":
-      return "Pending opening";
+      return "Not eligible yet";
     case "awaiting_opening_bid":
-      return "Awaiting opening bid";
+      return "Eligible to open";
     case "closed_without_winner":
-      return "Closed without winner";
+      return "Legacy no-bid close";
     case "live_bidding":
       return "Live bidding";
     case "soft_close":

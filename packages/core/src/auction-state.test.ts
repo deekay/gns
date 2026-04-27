@@ -7,7 +7,7 @@ import { parseLaunchAuctionScenario } from "./auction-sim.js";
 const policy = createDefaultLaunchAuctionPolicy();
 
 describe("simulateLaunchAuctionStateAtBlock", () => {
-  it("reports pending opening before the auction opens", () => {
+  it("reports not eligible yet before the opening-bid window", () => {
     const state = simulateLaunchAuctionStateAtBlock({
       policy,
       currentBlockHeight: 839_990,
@@ -26,7 +26,7 @@ describe("simulateLaunchAuctionStateAtBlock", () => {
     expect(state.currentRequiredMinimumBidSats?.toString()).toBe("3125000");
   });
 
-  it("reports awaiting opening bid when only underfloor bids are visible", () => {
+  it("reports eligible to open when only underfloor bids are visible", () => {
     const state = simulateLaunchAuctionStateAtBlock({
       policy,
       currentBlockHeight: 880_030,
@@ -48,7 +48,7 @@ describe("simulateLaunchAuctionStateAtBlock", () => {
     expect(state.currentRequiredMinimumBidSats?.toString()).toBe("12500000");
   });
 
-  it("closes a no-bid lot without a winner after the close window passes", () => {
+  it("keeps legacy scheduled-catalog no-bid close behavior covered", () => {
     const state = simulateLaunchAuctionStateAtBlock({
       policy,
       currentBlockHeight: 884_321,

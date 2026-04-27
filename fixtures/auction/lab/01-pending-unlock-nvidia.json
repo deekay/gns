@@ -1,6 +1,6 @@
 {
-  "title": "Before auction opens · nvidia",
-  "description": "Auction lot before its configured opening height. This is the state before any valid opening bid can be accepted.",
+  "title": "Not eligible yet · nvidia",
+  "description": "Prototype fixture before the configured eligibility height. No real auction exists until a valid bonded opening bid can confirm.",
   "currentBlockHeight": 839990,
   "scenario": {
     "name": "nvidia",

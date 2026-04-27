@@ -19,9 +19,9 @@ describe("renderClientScript", () => {
     expect(script).toContain("renderPrivateAuctionSmokeStatus");
     expect(script).toContain("Opening Bid Txid");
     expect(script).toContain("Higher Bid Txid");
-    expect(script).toContain("Release Lot");
-    expect(script).toContain("Late Bid Txid");
-    expect(script).toContain("Late Bid Outcome");
+    expect(script).not.toContain("Release Lot");
+    expect(script).not.toContain("Late Bid Txid");
+    expect(script).not.toContain("Late Bid Outcome");
     expect(script).toContain("Winner handoff");
     expect(script).toContain("Workflow proved");
     expect(script).toContain("Winner value sequence");
@@ -125,7 +125,7 @@ describe("renderClientScript", () => {
     expect(script).toContain("Requesting a demo owner key from the server for this bid...");
     expect(script).toContain("Create In This Browser");
     expect(script).toContain("Use Demo Key From Server");
-    expect(script).toContain("Closed without winner");
+    expect(script).not.toContain("Closed without winner");
     expect(script).toContain("Base floor");
     expect(script).toContain("Preview or download bid package");
     expect(script).toContain("Late-bid step");
