@@ -223,7 +223,7 @@ async function generateHostedDemoOwnerKey() {
     warning:
       typeof generated.warning === "string" && generated.warning.length > 0
         ? generated.warning
-        : "Hosted demo helper only. This key came from the prototype server and should not be used for real value."
+        : "Hosted demo helper only. This key came from the demo server and should not be used for real value."
   };
 }
 
@@ -310,8 +310,8 @@ async function bootstrap() {
       fetchJson(withBasePath("/api/health")),
       fetchJson(withBasePath("/api/names")),
       fetchJson(withBasePath("/api/activity?limit=10")),
-      isAuctionsPage() ? fetchJson(getAuctionLabApiPath()).catch(() => null) : Promise.resolve(null),
-      isAuctionsPage() ? fetchJson(withBasePath("/api/experimental-auctions")).catch(() => null) : Promise.resolve(null)
+      shouldLoadAuctionRulesOrReference() ? fetchJson(getAuctionLabApiPath()).catch(() => null) : Promise.resolve(null),
+      shouldLoadObservedAuctionFeed() ? fetchJson(withBasePath("/api/experimental-auctions")).catch(() => null) : Promise.resolve(null)
     ]);
     const privateAuctionSmokeStatus = config.showPrivateAuctionSmoke
       ? await fetchJson(withBasePath("/api/private-auction-smoke-status")).catch(() => null)
@@ -921,7 +921,7 @@ function renderHealth() {
   }
 
   const stats = health.stats ?? {};
-  const claimedNames = state.names.length;
+  const trackedNameCount = state.names.length;
   const immatureNames = state.names.filter((record) => record.status === "immature").length;
   const matureNames = state.names.filter((record) => record.status === "mature").length;
   const invalidNames = state.names.filter((record) => record.status === "invalid").length;
@@ -930,7 +930,7 @@ function renderHealth() {
   setText(elements.networkSource, String(health.source ?? "unknown"));
   setText(elements.networkChain, String(health.rpcChainInfo?.chain ?? "-"));
   setText(elements.networkResolver, String(health.descriptor ?? "Unknown resolver"));
-  setText(elements.trackedNames, String(claimedNames));
+  setText(elements.trackedNames, String(trackedNameCount));
   setText(elements.immatureNames, String(immatureNames));
   setText(elements.matureNames, String(matureNames));
   setText(elements.invalidNames, String(invalidNames));
@@ -941,7 +941,7 @@ function renderHealth() {
     [
       state.config?.networkLabel ?? "Unknown Network",
       "Height " + (stats.currentHeight == null ? "-" : String(stats.currentHeight)),
-      String(claimedNames) + " names",
+      String(trackedNameCount) + " names",
       String(immatureNames) + " settling",
       String(matureNames) + " active"
     ].join(" · ")
@@ -961,13 +961,13 @@ function renderNames() {
     setText(
       elements.namesState,
       resolverEmpty
-        ? "Resolver reachable · waiting for a new demo reseed."
+        ? "Resolver reachable · no owned names visible yet."
         : "No tracked names are visible from the resolver yet."
     );
     list.innerHTML = resolverEmpty
       ? renderExploreResolverEmptyCard(
-          "Registry Waiting For Seed Data",
-          "Owned, settling, and released names will appear here after the canonical demo seed or a fresh auction walkthrough lands on this resolver."
+          "No Owned Names Yet",
+          "Owned, settling, and released names will appear here after auctions settle or transfers publish on this resolver."
         )
       : "";
     return;
@@ -1031,13 +1031,13 @@ function renderExploreEmptyState() {
 
   setText(
     elements.exploreEmptyStateMessage,
-    "This " + networkLabel + " resolver is reachable, but it is not showing any seeded names, auction activity, or resolver updates right now."
+    "This " + networkLabel + " resolver is reachable, but it is not showing owned names, auction activity, or resolver updates right now."
   );
   setText(
     elements.exploreEmptyStateDetail,
     currentHeight == null
-      ? "That usually means the demo chain was reset or has not been reseeded yet."
-      : "Current height " + String(currentHeight) + ". That usually means the demo chain was reset or has not been reseeded yet."
+      ? "Open an auction or inspect the auction rules while the resolver waits for owned names."
+      : "Current height " + String(currentHeight) + ". Open an auction or inspect the auction rules while the resolver waits for owned names."
   );
 }
 
@@ -1052,13 +1052,13 @@ function renderRecentNames() {
     setText(
       elements.recentNamesState,
       resolverEmpty
-        ? "Resolver reachable · waiting for a new demo reseed."
+        ? "Resolver reachable · no owned names visible yet."
         : "No tracked names are visible from the resolver yet."
     );
     list.innerHTML = resolverEmpty
       ? renderExploreResolverEmptyCard(
           "No Recorded Names Yet",
-          "Once the demo chain is reseeded, newly owned and transferred names will show up here in recency order."
+          "Newly owned and transferred names will show up here in recency order after this resolver has visible state."
         )
       : "";
     return;
@@ -1090,7 +1090,7 @@ function renderActivity() {
     setText(
       elements.activityState,
       resolverEmpty
-        ? "Resolver reachable · waiting for a new demo reseed."
+        ? "Resolver reachable · no auction activity visible yet."
         : "No recent Open Name Tags activity is visible from the resolver yet."
     );
     if (highlightsContainer) {
@@ -1329,11 +1329,11 @@ function resolverHasVisibleState() {
 function renderExploreResolverEmptyCard(title, copy) {
   return \`
     <article class="guide-card explore-empty-card">
-      <p class="highlight-kicker">Demo resolver waiting for reseed</p>
+      <p class="highlight-kicker">No resolver activity yet</p>
       <h3>\${escapeHtml(title)}</h3>
       <p>\${escapeHtml(copy)}</p>
       <div class="guide-card-actions">
-        <a class="action-link secondary" href="\${escapeHtml(withBasePath("/setup"))}">Open setup</a>
+        <a class="action-link secondary" href="\${escapeHtml(withBasePath("/setup"))}">Open demo setup</a>
         <a class="action-link secondary" href="\${escapeHtml(withBasePath("/auctions"))}">Open auctions</a>
       </div>
     </article>
@@ -1516,7 +1516,7 @@ function renderSearchRecord(record, valueRecord) {
             \${renderCopyableCode(record.currentOwnerPubkey)}
           </div>
           <div class="result-item">
-            <label>Acquired Height</label>
+            <label>Ownership Height</label>
             <p class="field-value">\${escapeHtml(String(record.claimHeight))}</p>
           </div>
           <div class="result-item">
@@ -1580,7 +1580,7 @@ function renderNameDetailRecord(record, valueRecord, panelId) {
             \${renderCopyableCode(record.currentOwnerPubkey)}
           </div>
           <div class="result-item">
-            <label>Acquired Height</label>
+            <label>Ownership Height</label>
             <p class="field-value">\${escapeHtml(String(record.claimHeight))}</p>
           </div>
           <div class="result-item">
@@ -1592,11 +1592,11 @@ function renderNameDetailRecord(record, valueRecord, panelId) {
             <p class="field-value">\${escapeHtml(formatSats(record.requiredBondSats))}</p>
           </div>
           <div class="result-item">
-            <label>\${escapeHtml(isAuctionNameRecord(record) ? "Winning Bid Tx" : "Acquisition Tx")}</label>
+            <label>\${escapeHtml(isAuctionNameRecord(record) ? "Winning Bid Tx" : "Ownership Tx")}</label>
             \${renderCopyableCode(isAuctionNameRecord(record) ? (record.acquisitionAuctionBidTxid || record.claimCommitTxid) : record.claimCommitTxid)}
           </div>
           <div class="result-item">
-            <label>\${escapeHtml(isAuctionNameRecord(record) ? "Auction Id" : "Visibility Tx")}</label>
+            <label>\${escapeHtml(isAuctionNameRecord(record) ? "Auction Id" : "State Tx")}</label>
             \${isAuctionNameRecord(record)
               ? '<p class="field-value">' + escapeHtml(String(record.acquisitionAuctionId ?? "unknown")) + '</p>'
               : renderCopyableCode(record.claimRevealTxid)}
@@ -1718,7 +1718,7 @@ function renderTransferPackageReviewError(error) {
 }
 
 function renderTransferRecipientKeyError(error) {
-  const message = error instanceof Error ? error.message : "Unable to generate a recipient key in the prototype helper.";
+  const message = error instanceof Error ? error.message : "Unable to generate a recipient key in the demo helper.";
   renderTransferRecipientKeyMessage(message);
 }
 
@@ -1830,6 +1830,14 @@ function isAuctionsPage() {
   const currentUrl = new URL(window.location.href);
   const pathname = stripClientBasePath(currentUrl.pathname);
   return pathname === "/auctions" || pathname === "/auctions/";
+}
+
+function shouldLoadAuctionRulesOrReference() {
+  return Boolean(elements.auctionPolicySummary || elements.auctionLabList);
+}
+
+function shouldLoadObservedAuctionFeed() {
+  return Boolean(elements.experimentalAuctionList);
 }
 
 function isTransferPrepPage() {
@@ -1968,13 +1976,13 @@ function mapLiveSmokeStatusPill(value) {
 
 function formatSats(value) {
   const sats = BigInt(value);
-  return "₿" + sats.toLocaleString("en-US") + " (" + formatBtcDecimal(sats) + " BTC)";
+  return sats.toLocaleString("en-US") + " sats (" + formatBtcDecimal(sats) + " BTC)";
 }
 
 function formatStateLabel(status) {
   switch (String(status)) {
     case "pending":
-      return "Awaiting Reveal";
+      return "Pending Ownership";
     case "immature":
       return "Settling";
     case "mature":
@@ -1989,16 +1997,16 @@ function formatStateLabel(status) {
 function formatCompactSats(value) {
   const sats = BigInt(value);
   if (sats >= 1000000000n) {
-    return "₿" + (Number(sats) / 1000000000).toFixed(1).replace(/\.0$/, "") + "B";
+    return (Number(sats) / 1000000000).toFixed(1).replace(/\.0$/, "") + "B sats";
   }
   if (sats >= 1000000n) {
-    return "₿" + (Number(sats) / 1000000).toFixed(1).replace(/\.0$/, "") + "M";
+    return (Number(sats) / 1000000).toFixed(1).replace(/\.0$/, "") + "M sats";
   }
   if (sats >= 1000n) {
-    return "₿" + (Number(sats) / 1000).toFixed(1).replace(/\.0$/, "") + "k";
+    return (Number(sats) / 1000).toFixed(1).replace(/\.0$/, "") + "k sats";
   }
 
-  return "₿" + sats.toString();
+  return sats.toString() + " sats";
 }
 
 function formatBtcDecimal(sats) {
@@ -2065,7 +2073,7 @@ function renderNameCard(record) {
           </div>
           <div class="name-summary-meta">
             <span>Owner \${escapeHtml(truncateMiddle(record.currentOwnerPubkey, 10, 6))}</span>
-            <span>Acquired height \${escapeHtml(String(record.claimHeight))}</span>
+            <span>Owned at height \${escapeHtml(String(record.claimHeight))}</span>
             <span>Bond \${escapeHtml(formatCompactSats(record.requiredBondSats))}</span>
           </div>
         </div>
@@ -2081,7 +2089,7 @@ function renderNameCard(record) {
             \${renderCopyableCode(record.currentOwnerPubkey)}
           </div>
           <div class="name-item">
-            <label>Acquired Height</label>
+            <label>Ownership Height</label>
             <p class="field-value">\${escapeHtml(String(record.claimHeight))}</p>
           </div>
           <div class="name-item">
@@ -2131,7 +2139,7 @@ function renderCompactNameCard(record) {
           </div>
           <div class="compact-name-meta">
             <span>Owner \${escapeHtml(truncateMiddle(record.currentOwnerPubkey, 10, 6))}</span>
-            <span>Acquired \${escapeHtml(String(record.claimHeight))}</span>
+            <span>Owned at \${escapeHtml(String(record.claimHeight))}</span>
             <span>Bond \${escapeHtml(formatCompactSats(record.requiredBondSats))}</span>
           </div>
         </div>
@@ -2147,7 +2155,7 @@ function renderCompactNameCard(record) {
             \${renderCopyableCode(record.currentOwnerPubkey)}
           </div>
           <div class="name-item">
-            <label>Acquired Height</label>
+            <label>Ownership Height</label>
             <p class="field-value">\${escapeHtml(String(record.claimHeight))}</p>
           </div>
           <div class="name-item">
@@ -2255,7 +2263,7 @@ function recentNameRecency(record, activity) {
     ? (String(record.lastStateTxid) === String(record.acquisitionAuctionBidTxid ?? record.claimRevealTxid)
         ? "auctioned"
         : "transferred")
-    : (String(record.lastStateTxid) === String(record.claimRevealTxid) ? "claimed" : "transferred");
+    : (String(record.lastStateTxid) === String(record.claimRevealTxid) ? "owned" : "transferred");
 
   return {
     height: fallbackHeight,
@@ -2277,7 +2285,7 @@ function recentNameEventLabel(record, kind) {
     return "Transferred";
   }
 
-  return String(record.status) === "mature" ? "Acquired" : "Acquired";
+  return "Ownership recorded";
 }
 
 function searchOutcomeSummary(record) {
@@ -2376,7 +2384,7 @@ function searchOutcomeSteps(status, record) {
       return [
         "Ownership is now active and no longer depends on the original bond output remaining live.",
         "The current owner can publish new destinations or transfer the name without successor-bond continuity.",
-        "If you want to understand how it got here, inspect the acquisition transaction and any later state transaction."
+        "If you want to understand how it got here, inspect the ownership transaction and any later state transaction."
       ];
     case "invalid":
       return [
@@ -2839,7 +2847,7 @@ function buildTimelineItems(record, valueRecord, activity, currentHeight) {
     });
   } else {
     items.push({
-      label: "Acquisition",
+      label: "Ownership",
       title: "Bonded ownership committed",
       meta:
         "Height " +
@@ -3276,7 +3284,7 @@ function buildTransferPackage(draft) {
     requiredBondSats: String(draft.record.requiredBondSats),
     recommendedMode: String(draft.recommendedMode),
     settlementExpectation: String(getTransferSettlementExpectation(recommendedMode)),
-    prototypeExecutionModel: String(getTransferPrototypeExecutionModel(recommendedMode)),
+    executionModel: String(getTransferExecutionModel(recommendedMode)),
     sellerPayoutAddress: draft.sellerPayoutAddress || null,
     successorBondAddress: draft.bondAddress || null,
     participantSummary: transferParticipantLines(draft, recommendedMode),
@@ -3317,7 +3325,7 @@ function buildSellerTransferPackage(draft) {
     requiredBondSats: String(draft.record.requiredBondSats),
     recommendedMode: String(draft.recommendedMode),
     settlementExpectation: String(getTransferSettlementExpectation(recommendedMode)),
-    prototypeExecutionModel: String(getTransferPrototypeExecutionModel(recommendedMode)),
+    executionModel: String(getTransferExecutionModel(recommendedMode)),
     sellerPayoutAddress: draft.sellerPayoutAddress || null,
     successorBondAddress: draft.bondAddress || null,
     sharedReviewChecklist: buildTransferSharedReviewChecklist(draft, recommendedMode),
@@ -3350,7 +3358,7 @@ function buildBuyerTransferPackage(draft) {
     requiredBondSats: String(draft.record.requiredBondSats),
     recommendedMode: String(draft.recommendedMode),
     settlementExpectation: String(getTransferSettlementExpectation(recommendedMode)),
-    prototypeExecutionModel: String(getTransferPrototypeExecutionModel(recommendedMode)),
+    executionModel: String(getTransferExecutionModel(recommendedMode)),
     sharedReviewChecklist: buildTransferSharedReviewChecklist(draft, recommendedMode),
     roleChecklist: buildTransferRoleChecklist(draft, recommendedMode, "buyer"),
     participantSummary: transferParticipantLines(draft, recommendedMode),
@@ -3408,7 +3416,7 @@ function getTransferSettlementExpectation(mode) {
     : "atomic_same_transaction_for_sale";
 }
 
-function getTransferPrototypeExecutionModel(mode) {
+function getTransferExecutionModel(mode) {
   return mode.key === "gift"
     ? "coordinated_cli_handoff"
     : "coordinated_cli_handoff_pending_two_party_psbt_flow";
@@ -3492,7 +3500,7 @@ function transferPrimarySteps(draft, mode) {
   }
 
   if (mode.key !== "gift") {
-    steps.push("Current prototype note: this page still exports a coordinated CLI handoff rather than a full two-party PSBT wizard.");
+    steps.push("Current implementation boundary: this page still exports a coordinated CLI handoff rather than a full two-party PSBT wizard.");
   }
 
   steps.push("Run the command locally, then return to the explorer to confirm the new owner and state txid.");
@@ -3593,7 +3601,7 @@ function renderTransferDraft(draft) {
             <p class="field-value">Do not treat payment and name transfer as separate promises. Both sides should settle against the same exact Bitcoin transaction.</p>
           </article>
           <article class="guide-card">
-            <h3>Current Prototype Boundary</h3>
+            <h3>Current Implementation Boundary</h3>
             <p class="field-value">This page still exports a coordinated CLI handoff. It is not yet a full two-party PSBT wizard for buyer and seller, so both parties should review the exact fields before any signatures happen.</p>
           </article>
         </div>
@@ -3989,7 +3997,7 @@ function buildTransferEssentialsText(draft) {
     "Required bond: " + formatSats(draft.record.requiredBondSats),
     "Recommended mode: " + String(draft.recommendedMode),
     "Settlement expectation: " + getTransferSettlementExpectation(recommendedMode),
-    "Prototype execution model: " + getTransferPrototypeExecutionModel(recommendedMode),
+    "Execution model: " + getTransferExecutionModel(recommendedMode),
     "",
     "Shared review checklist",
     "-----------------------"
@@ -4170,8 +4178,8 @@ function renderTxButtonList(record, panelId, activity = []) {
         { label: "Bond Tx", txid: record.currentBondTxid }
       ]
     : [
-        { label: "Acquisition Tx", txid: record.claimCommitTxid },
-        { label: "Visibility Tx", txid: record.claimRevealTxid },
+        { label: "Ownership Tx", txid: record.claimCommitTxid },
+        { label: "State Tx", txid: record.claimRevealTxid },
         { label: "Last State Tx", txid: record.lastStateTxid },
         { label: "Bond Tx", txid: record.currentBondTxid }
       ];
@@ -4481,35 +4489,41 @@ function escapeHtml(value) {
 }
 
 function renderAuctionLab() {
-  if (!elements.auctionLabList) {
+  if (!elements.auctionLabList && !elements.auctionPolicySummary) {
     return;
   }
 
   const auctionLab = state.auctionLab;
   if (!auctionLab || !Array.isArray(auctionLab.cases)) {
-    elements.auctionLabList.classList.add("empty");
-    elements.auctionLabList.innerHTML = '<div class="result-card empty">No auction lab payload is available yet.</div>';
+    if (elements.auctionLabList) {
+      elements.auctionLabList.classList.add("empty");
+      elements.auctionLabList.innerHTML = '<div class="result-card empty">No auction reference payload is available yet.</div>';
+    }
     if (elements.auctionPolicySummary) {
       elements.auctionPolicySummary.innerHTML = "";
     }
     setText(
       elements.auctionLabMeta,
-      "Waiting for the auction lab payload."
+      "Waiting for the auction rules payload."
     );
     return;
   }
 
-  elements.auctionLabList.classList.remove("empty");
   if (elements.auctionPolicySummary) {
     elements.auctionPolicySummary.innerHTML = renderAuctionPolicySummary(auctionLab.policy ?? null);
   }
   setText(
     elements.auctionLabMeta,
     [
-      String(auctionLab.cases.length) + " auction flow example" + (auctionLab.cases.length === 1 ? "" : "s"),
-      "showing current simulator defaults"
+      String(auctionLab.cases.length) + " auction reference case" + (auctionLab.cases.length === 1 ? "" : "s"),
+      "showing current demo rules"
     ].join(" · ")
   );
+  if (!elements.auctionLabList) {
+    return;
+  }
+
+  elements.auctionLabList.classList.remove("empty");
   elements.auctionLabList.innerHTML = auctionLab.cases
     .map((auctionCase) => renderAuctionCaseCard(auctionCase))
     .join("");
@@ -4607,7 +4621,7 @@ function renderAuctionPolicySummary(policy) {
 
   return [
     '<article class="guide-card">',
-    "  <h3>Current defaults</h3>",
+    "  <h3>Current auction rules</h3>",
     '  <p class="result-meta">Plain English: a valid bonded opening bid starts the auction clock; late bids can extend the close.</p>',
     '  <div class="result-grid">',
     topRow
@@ -4633,7 +4647,7 @@ function renderNameAuctionPolicyCard(nameAuction, lengthFloorExamples) {
     : "Name auction";
   const policyRows = [
     {
-      title: "Global minimum",
+      title: "Base floor",
       value: formatSats(nameAuction?.floorSats ?? "0")
     },
     {
@@ -4687,7 +4701,7 @@ function renderAuctionCaseCard(auctionCase) {
         ? "Next valid bid (extends close)"
         : "Next valid bid";
   const closeLabel = phase === "pending_unlock"
-    ? "Openable at block"
+    ? "Internal timing block"
     : phase === "awaiting_opening_bid"
       ? "Auction status"
       : "Auction close";
@@ -4705,7 +4719,7 @@ function renderAuctionCaseCard(auctionCase) {
         : "Auction settled";
   const secondaryTimingLabel =
     phase === "pending_unlock"
-      ? "Blocks until openable"
+      ? "Internal timing wait"
       : phase === "awaiting_opening_bid"
         ? "Auction clock"
         : "Blocks to close";
@@ -4735,7 +4749,7 @@ function renderAuctionCaseCard(auctionCase) {
     '    <div class="result-item"><label>' + escapeHtml(nextBidLabel) + '</label><p class="field-value">' + escapeHtml(nextBidValue) + "</p></div>",
     '    <div class="result-item"><label>Accepted / rejected</label><p class="field-value">' + escapeHtml(String(stateView.acceptedBidCount ?? 0) + " / " + String(stateView.rejectedBidCount ?? 0)) + "</p></div>",
     '    <div class="result-item"><label>Settlement lock</label><p class="field-value">' + escapeHtml(formatBlockWindow(stateView.settlementLockBlocks)) + "</p></div>",
-    '    <div class="result-item"><label>Opening wait</label><p class="field-value">' + escapeHtml(String(stateView.blocksUntilUnlock ?? 0)) + "</p></div>",
+    '    <div class="result-item"><label>Reference wait</label><p class="field-value">' + escapeHtml(String(stateView.blocksUntilUnlock ?? 0)) + "</p></div>",
     '    <div class="result-item"><label>' + escapeHtml(secondaryTimingLabel) + '</label><p class="field-value">' + escapeHtml(secondaryTimingValue) + "</p></div>",
     "  </div>",
     renderAuctionBidPackageComposer({
@@ -4749,7 +4763,7 @@ function renderAuctionCaseCard(auctionCase) {
         stateView.phase === "awaiting_opening_bid"
           ? "This package is an opening bid. If signed and confirmed, it starts the auction clock."
           : stateView.phase === "pending_unlock"
-          ? "This internal timing fixture should not appear in the public auction examples."
+          ? "This internal timing fixture should not appear in auction examples."
           : stateView.phase === "soft_close"
           ? "Soft close is active. A bid from this state must clear the stronger late-extension increment."
           : "Build a bid package from the simulator state shown on this card.",
@@ -4784,7 +4798,7 @@ function renderExperimentalAuctionCard(auction) {
       : "Not settled";
   const closeLabel =
     phase === "pending_unlock"
-        ? "Blocks until openable"
+        ? "Internal timing wait"
         : phase === "awaiting_opening_bid"
           ? "Auction clock"
           : "Blocks to close";
@@ -4818,7 +4832,7 @@ function renderExperimentalAuctionCard(auction) {
     '    <div class="result-item"><label>' + escapeHtml(nextBidLabel) + '</label><p class="field-value">' + escapeHtml(nextBidValue) + "</p></div>",
     '    <div class="result-item"><label>Accepted / rejected</label><p class="field-value">' + escapeHtml(String(auction.acceptedBidCount ?? 0) + " / " + String(auction.rejectedBidCount ?? 0)) + "</p></div>",
     '    <div class="result-item"><label>Observed bids</label><p class="field-value">' + escapeHtml(String(auction.totalObservedBidCount ?? 0)) + "</p></div>",
-    '    <div class="result-item"><label>Opening wait</label><p class="field-value">' + escapeHtml(String(auction.blocksUntilUnlock ?? 0)) + "</p></div>",
+    '    <div class="result-item"><label>Reference wait</label><p class="field-value">' + escapeHtml(String(auction.blocksUntilUnlock ?? 0)) + "</p></div>",
     '    <div class="result-item"><label>' + escapeHtml(closeLabel) + '</label><p class="field-value">' + escapeHtml(closeValue) + "</p></div>",
     '    <div class="result-item"><label>Accepted capital locked</label><p class="field-value">' + escapeHtml(formatSats(auction.currentlyLockedAcceptedBidAmountSats ?? "0")) + " (" + escapeHtml(String(auction.currentlyLockedAcceptedBidCount ?? 0)) + ")</p></div>",
     '    <div class="result-item"><label>Accepted capital releasable</label><p class="field-value">' + escapeHtml(formatSats(auction.releasableAcceptedBidAmountSats ?? "0")) + " (" + escapeHtml(String(auction.releasableAcceptedBidCount ?? 0)) + ")</p></div>",
@@ -4848,7 +4862,7 @@ function renderExperimentalAuctionCard(auction) {
         phase === "awaiting_opening_bid"
           ? "This package is an opening bid. If signed and confirmed, it starts the auction clock."
           : phase === "pending_unlock"
-          ? "This internal timing prototype entry is filtered out of public auction views."
+          ? "This internal timing entry is filtered out of public auction views."
           : phase === "soft_close"
           ? "Built from current resolver-derived state. A soft-close extension bid must clear the stronger late increment and may go stale if another bid lands first."
           : "Build a bid package from the current resolver-derived auction state.",
@@ -4939,12 +4953,12 @@ function renderAuctionBidPackageComposer(input) {
     '    <div class="field"><label class="field-label" for="auction-owner-' + escapeHtml(domKey) + '">Owner pubkey</label><input id="auction-owner-' + escapeHtml(domKey) + '" type="text" data-auction-owner-pubkey="' + escapeHtml(input.id) + '" data-auction-package-source="' + escapeHtml(input.source) + '" value="' + escapeHtml(defaultOwnerPubkey) + '" placeholder="32-byte x-only pubkey" /></div>',
     '    <div class="field"><label class="field-label" for="auction-amount-' + escapeHtml(domKey) + '">Bid amount (sats)</label><input id="auction-amount-' + escapeHtml(domKey) + '" type="text" inputmode="numeric" data-auction-bid-amount="' + escapeHtml(input.id) + '" data-auction-package-source="' + escapeHtml(input.source) + '" value="' + escapeHtml(input.defaultBidAmount) + '" /></div>',
     '    <div class="draft-field-full">',
-    '      <p class="tx-panel-note">Set the x-only owner pubkey that should control the name if this bid wins. Create it in this browser for the normal self-custody path, or use a demo key from the server only for prototype testing.</p>',
+    '      <p class="tx-panel-note">Set the x-only owner pubkey that should control the name if this bid wins. Create it in this browser for the normal self-custody path, or use a demo key from the server only for demo testing.</p>',
     '      <div class="field-actions">',
     '        <button type="button" data-auction-owner-key-action="generate-local" data-auction-package-source="' + escapeHtml(input.source) + '" data-auction-package-id="' + escapeHtml(input.id) + '" data-auction-name="' + escapeHtml(input.normalizedName ?? "") + '">Create In This Browser</button>',
     '        <button type="button" class="secondary-button" data-auction-owner-key-action="generate-hosted" data-auction-package-source="' + escapeHtml(input.source) + '" data-auction-package-id="' + escapeHtml(input.id) + '" data-auction-name="' + escapeHtml(input.normalizedName ?? "") + '">Use Demo Key From Server</button>',
     "      </div>",
-    '      <div class="result-card empty" data-auction-owner-key-result="' + escapeHtml(domKey) + '">No generated owner key yet for this bid. Create one in this browser for the normal self-custody path, or use a demo key from the server only for prototype testing.</div>',
+    '      <div class="result-card empty" data-auction-owner-key-result="' + escapeHtml(domKey) + '">No generated owner key yet for this bid. Create one in this browser for the normal self-custody path, or use a demo key from the server only for demo testing.</div>',
     '      <div class="field-actions">',
     '        <button type="button" data-auction-package-action="preview" data-auction-package-source="' + escapeHtml(input.source) + '" data-auction-package-id="' + escapeHtml(input.id) + '">Preview bid package</button>',
     '        <button type="button" class="secondary-button" data-auction-package-action="download" data-auction-package-source="' + escapeHtml(input.source) + '" data-auction-package-id="' + escapeHtml(input.id) + '">Download bid package</button>',
@@ -5113,7 +5127,7 @@ function renderAuctionBidHistory(outcomes) {
 
 function renderExperimentalAuctionBidHistory(outcomes) {
   if (!Array.isArray(outcomes) || outcomes.length === 0) {
-    return '<p class="tx-panel-note">No AUCTION_BID transactions have been observed for this prototype entry yet.</p>';
+    return '<p class="tx-panel-note">No AUCTION_BID transactions have been observed for this entry yet.</p>';
   }
 
   return [

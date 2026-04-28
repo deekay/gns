@@ -9,13 +9,13 @@ The hosted website is mainly a tool surface:
 - browse names
 - check ownership and auction state
 - inspect valid names and active auctions
-- prepare prototype auction bid packages
+- prepare auction bid packages
 - prepare transfers
 - fund the private signet demo
 
 This repository is where the fuller project explanation lives.
 
-Human-facing amounts in ONT use integer bitcoin notation alongside the conventional BTC equivalent. Example: `₿50,000 (0.0005 BTC)`.
+Human-facing amounts in ONT use satoshi amounts alongside the conventional BTC equivalent. Example: `50,000 sats (0.0005 BTC)`.
 
 ## Start Here
 
@@ -77,7 +77,7 @@ There are three practical ways to use ONT today:
 | --- | --- | --- | --- |
 | `Hosted Private Demo` | Fastest first walkthrough | Hosted site, hosted resolver, private demo chain | Yes |
 | `Self-Hosted Website + Resolver` | Running your own browsing and resolution surface | Your own web stack and resolver; optionally your own Bitcoin backend | Yes |
-| `Auction Bid Prep` | Reviewing auction state and preparing bidder handoffs | Website preview plus your own wallet signer | Prototype |
+| `Auction Bid Prep` | Reviewing auction state and preparing bidder handoffs | Website preview plus your own wallet signer | Yes |
 
 Hosted private demo:
 - website: [https://opennametags.org](https://opennametags.org)
@@ -91,12 +91,12 @@ Self-hosted website + resolver:
 
 | Capability | Status | Notes |
 | --- | --- | --- |
-| Hosted private demo auctions | Prototype | Best first walkthrough today |
+| Hosted private demo auctions | Demo | Best first walkthrough today |
 | Self-hosted website + resolver | Yes | Fixture-backed by default; can point at your own backend later |
 | Browser value publishing | Yes | Owner-signed in the browser |
 | Profile bundle value records | Yes | One record can point to several destinations |
-| Transfers | Prototype | Works in the prototype, but not yet mainnet-ready |
-| Mainnet-ready usage | Not yet | Still an active prototype |
+| Transfers | Handoff | Website prepares packages; CLI and signer finish the transaction |
+| Mainnet-ready usage | Not yet | Still under active design and review |
 
 ## Which Key Does What
 
@@ -137,18 +137,13 @@ On auctions, inspect the valid name or active auction, generate or paste the own
 
 Once the name is active, use the values tool to publish ordered key/value pairs that describe where the name should resolve.
 
-### 5. Inspect the live prototype status
+### 5. Inspect the live demo status
 
 Use the explore page to inspect recent names, provenance, and the current smoke summaries.
 
-Use the auction page to inspect the prototype auction mechanics:
+Use the auction page to check a name, review the current length-based opening floors, and prepare the opening-bid path.
 
-- simulator states for ready-to-open, bidding, soft close, and settlement
-- the chain-derived observed `AUCTION_BID` feed, including stale-bid
-  rejection, same-bidder replacement, and derived bond spend / release summaries
-- the hosted private signet auction-smoke summary showing a real opening bid,
-  higher bid, settlement into a live owned name, winner value publishing,
-  transfer, and an intentionally early losing-bond spend
+Use the Advanced page when you want implementation reference material: modeled auction states, the chain-derived observed `AUCTION_BID` feed, stale-bid rejection, same-bidder replacement, derived bond spend / release summaries, and the hosted private signet auction-smoke summary.
 
 ## What ONT Is
 
@@ -245,9 +240,9 @@ or words deserve special launch treatment.
 
 The current illustrative floor curve is:
 
-- `₿100,000,000 (1 BTC)` for a 1-character name
+- `100,000,000 sats (1 BTC)` for a 1-character name
 - each additional character halves the required bond
-- the bond floors at `₿50,000 (0.0005 BTC)` for names of length 12 and longer
+- the bond floors at `50,000 sats (0.0005 BTC)` for names of length 12 and longer
 
 Under the universal-auction launch model, this kind of curve is best understood
 as an opening-bond / anti-spam floor. It is not the final price; the auction
@@ -257,7 +252,7 @@ discovers that.
 
 Length floors also make early bulk capture expensive. Using the current v1 alphabet (`a-z0-9`), there are about `2.18 billion` possible 6-character names.
 
-At the current 6-character bond of `₿3,125,000 (0.03125 BTC)`, bonding all possible 6-character names would require about `68 million BTC`, which is more than three times Bitcoin's total `21 million` supply.
+At the current 6-character bond of `3,125,000 sats (0.03125 BTC)`, bonding all possible 6-character names would require about `68 million BTC`, which is more than three times Bitcoin's total `21 million` supply.
 
 Even if every bitcoin in existence were somehow devoted to 6-character bonds, it would only be enough to bond about `672 million` names out of roughly `2.18 billion` possible 6-character names. The majority of that namespace would still remain open.
 
@@ -343,7 +338,7 @@ npm run reseed:private-signet:canonical -- root@<server-ip> ~/.ssh/<your-key>
 
 ## Quick Start
 
-### Run the local prototype
+### Run the local demo
 
 ```bash
 npm install
@@ -420,7 +415,7 @@ More exploratory and draft-oriented material lives under [`docs/research/`](./do
 
 ## Status
 
-ONT is currently in active prototype phase.
+ONT is currently in active demo/prototype phase.
 
 It is useful for local, regtest, signet, and private-signet experimentation, but it is **not ready for mainnet use**.
 

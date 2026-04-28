@@ -52,13 +52,13 @@ Example opening-bond floors, not final launch parameters:
 
 | Name length | Auction treatment | Example opening floor |
 | --- | --- | --- |
-| `1` | same auction lane | `₿1` |
-| `2` | same auction lane | `₿0.5` |
-| `3` | same auction lane | `₿0.25` |
-| `4` | same auction lane | `₿0.125` |
-| `5` | same auction lane | `₿0.0625` |
-| `6` | same auction lane | `₿0.03125` |
-| `12+` | same auction lane | `₿0.0005 floor` |
+| `1` | same auction lane | `100,000,000 sats (1 BTC)` |
+| `2` | same auction lane | `50,000,000 sats (0.5 BTC)` |
+| `3` | same auction lane | `25,000,000 sats (0.25 BTC)` |
+| `4` | same auction lane | `12,500,000 sats (0.125 BTC)` |
+| `5` | same auction lane | `6,250,000 sats (0.0625 BTC)` |
+| `6` | same auction lane | `3,125,000 sats (0.03125 BTC)` |
+| `12+` | same auction lane | `50,000 sats (0.0005 BTC) floor` |
 
 The floor starts the auction. The auction can clear higher when multiple bidders care about the same name.
 
@@ -101,7 +101,7 @@ Two key roles matter:
 - The wallet key signs Bitcoin transactions.
 - The owner key signs records and controls future updates or transfers.
 
-In the current prototype model, losing the owner key means losing update and transfer authority for that name.
+In the current model, losing the owner key means losing update and transfer authority for that name.
 
 ## Base-Layer Discipline
 
@@ -113,9 +113,9 @@ ONT is intentionally narrow at the base layer: Bitcoin anchors ownership, and ow
 
 ## Status
 
-ONT is an active prototype, not a mainnet-ready production system.
+ONT is an active demo/prototype, not a mainnet-ready production system.
 
-Working pieces include private signet demos, auction state, bid packages, value publishing, resolver tooling, and transfer prototypes. Remaining work includes finalizing auction parameters, settlement duration, wallet UX, and outside review.
+Working pieces include private signet demos, auction state, bid packages, value publishing, resolver tooling, and transfer handoffs. Remaining work includes finalizing auction parameters, settlement duration, wallet UX, and outside review.
 
 The product surface is [opennametags.org](https://opennametags.org). The public repository is [github.com/deekay/ont](https://github.com/deekay/ont).
 

@@ -22,18 +22,18 @@ describe("renderPageHtml", () => {
     expect(html).toContain("Human-readable names you can actually own");
     expect(html).toContain("Open an auction for a valid name.");
     expect(html).toContain("Single auction flow");
-    expect(html).toContain("Self-custodied bond");
+    expect(html).toContain("Length-based opening bond");
     expect(html).toContain("Owner-signed destinations");
     expect(html).toContain("Check a name");
     expect(html).toContain("Resolve ownership or see whether the next step is the auction flow.");
     expect(html).toContain("Before a bid");
-    expect(html).toContain("Valid, owned, or unavailable");
+    expect(html).toContain("Ready, owned, or invalid");
     expect(html).toContain("After a bonded opening bid");
     expect(html).toContain("Auction clock starts");
     expect(html).toContain("Shorter names start with higher bonded opening floors.");
     expect(html).toContain("Choose A Path");
     expect(html).toContain("Understand ONT");
-    expect(html).toContain("Try The Prototype");
+    expect(html).toContain("Try The Demo");
     expect(html).toContain("Explore The Registry");
     expect(html).toContain("Walk Through");
     expect(html).toContain("From Zero");
@@ -63,7 +63,7 @@ describe("renderPageHtml", () => {
 
     expect(html).toContain("explore-cluster");
     expect(html).toContain("explore-empty-state");
-    expect(html).toContain("Resolver Empty Right Now?");
+    expect(html).toContain("No Visible Names Yet");
     expect(html).not.toContain("Legacy Public Signet Smoke");
   });
 
@@ -117,11 +117,13 @@ describe("renderPageHtml", () => {
     expect(html).toContain("Advanced Tools");
     expect(html).toContain("When To Use This Area");
     expect(html).toContain("Most People Can Ignore This");
+    expect(html).toContain("Auction Reference Cases");
+    expect(html).toContain("Observed Auction Feed");
+    expect(html).toContain("Implementation Status");
+    expect(html).toContain("privateAuctionSmokeResult");
     expect(html).toContain("Reference Material");
     expect(html).toContain("Testing guide");
     expect(html).toContain("Launch spec");
-    expect(html).not.toContain("Open auctions");
-    expect(html).not.toContain("Auction Implementation");
     expect(html).not.toContain("Advanced Surfaces");
     expect(html).toContain(">Advanced<");
     expect(html).not.toContain("policy controls");
@@ -136,25 +138,23 @@ describe("renderPageHtml", () => {
     expect(html).toContain("Auctions");
     expect(html).toContain(">Auctions<");
     expect(html).toContain(">Advanced<");
-    expect(html).toContain("Auction Flow Examples");
-    expect(html).toContain("auctionLabList");
-    expect(html).toContain("Auction bid prep and flow examples");
-    expect(html).toContain("Auction flow surface");
-    expect(html).toContain("Current website defaults");
-    expect(html).toContain("read-only on purpose");
-    expect(html).toContain("use the CLI instead of the website");
-    expect(html).toContain("Observed Auction Activity");
-    expect(html).toContain("experimentalAuctionList");
-    expect(html).toContain("privateAuctionSmokeResult");
-    expect(html).toContain("Launch Status");
-    expect(html).toContain("Auction bid-package handoffs");
-    expect(html).toContain("Same-bidder replacement");
+    expect(html).toContain("Open An Auction");
+    expect(html).toContain("auction-open");
+    expect(html).toContain("auction-rules");
+    expect(html).toContain("auction-workflow");
+    expect(html).toContain("length-based floors");
+    expect(html).toContain("A valid bonded opening bid starts the auction clock.");
+    expect(html).toContain("Check name");
+    expect(html).toContain("length-based opening floors");
+    expect(html).toContain("current auction rules");
     expect(html).toContain("valid bonded opening bid");
+    expect(html).not.toContain("auctionLabList");
+    expect(html).not.toContain("experimentalAuctionList");
+    expect(html).not.toContain("privateAuctionSmokeResult");
     expect(html).not.toContain("no-winner close");
-    expect(html).toContain("single-lane launch model");
-    expect(html).toContain("stronger soft-close increment rule");
-    expect(html).toContain("bond spend/release summaries");
-    expect(html).toContain("working defaults");
+    expect(html).not.toContain("Auction Flow Examples");
+    expect(html).not.toContain("Observed Auction Activity");
+    expect(html).not.toContain("Current website defaults");
   });
 
   it("renders the simplified values page", () => {

@@ -44,17 +44,17 @@ export function renderPageHtml(options: PageShellOptions): string {
       : pageKind === "transfer"
         ? `${PRODUCT_NAME} Transfer Prep`
         : pageKind === "setup"
-          ? `${PRODUCT_NAME} Setup`
+          ? `${PRODUCT_NAME} Demo Setup`
         : pageKind === "explainer"
           ? `${PRODUCT_NAME} Overview`
           : `${PRODUCT_NAME} Explorer`;
   const description =
     pageKind === "home"
-      ? "Search a name, inspect ownership, and choose whether to bid, explore, or review the current Open Name Tags prototype."
+      ? "Search a name, inspect ownership, and choose whether to bid, explore, or review the current Open Name Tags demo."
       : pageKind === "advanced"
       ? "Open Name Tags reference material for CLI-heavy workflows and protocol review."
     : pageKind === "auctions"
-      ? "Auction bid prep, flow examples, and chain-derived bid activity."
+      ? "Check a name, review length-based opening floors, and prepare the auction path."
       : pageKind === "values"
         ? "Update the destinations for an owned Open Name Tags name by signing locally and publishing the signed update."
       : pageKind === "transfer"
@@ -99,7 +99,7 @@ export function renderPageHtml(options: PageShellOptions): string {
             : pageKind === "advanced"
             ? renderAdvancedPageSections(basePath, includePrivateAuctionSmoke)
             : pageKind === "auctions"
-            ? renderAuctionsPageSections(includePrivateAuctionSmoke)
+            ? renderAuctionsPageSections(basePath)
             : pageKind === "values"
               ? renderValuesPageSections(basePath)
             : pageKind === "transfer"
@@ -156,7 +156,7 @@ function renderHeroSection(
       <div class="hero-copy">
         <h1>Quick Overview</h1>
         <p class="lede">
-          How the current prototype works, what is live today, and where to go next.
+          How the current demo works, what is live today, and where to go next.
         </p>
       </div>
     </header>`;
@@ -192,7 +192,7 @@ function renderHeroSection(
       <div class="hero-copy">
         <h1>Advanced Tools</h1>
         <p class="lede">
-          CLI-heavy workflows, implementation notes, and protocol review. Most first-time users can stay on Setup, Auctions, Destinations, Transfer, and Explore.
+          CLI-heavy workflows, implementation notes, and protocol review. Most first-time users can stay on Demo Setup, Auctions, Destinations, Transfer, and Explore.
         </p>
         <p class="hero-status">
           Advanced / optional surface · use when you need deeper protocol context or expert tooling.
@@ -206,10 +206,10 @@ function renderHeroSection(
       <div class="hero-copy">
         <h1>Auctions</h1>
         <p class="lede">
-          Auction bid prep and flow examples for the single-lane launch model. Any valid name can be opened by a valid bonded bid; shorter names start with higher length-based floors.
+          Check a valid name, see its length-based opening floor, and prepare the bid path that starts the auction.
         </p>
         <p class="hero-status">
-          Auction flow surface · bid packages, examples, and observed AUCTION_BID activity.
+          One auction lane · length-based floors · owner-signed destinations after settlement.
         </p>
       </div>
     </header>`;
@@ -224,7 +224,7 @@ function renderHeroSection(
       </p>
       <div class="hero-home-proof-row" aria-label="Core ONT model">
         <span>Single auction flow</span>
-        <span>Self-custodied bond</span>
+        <span>Length-based opening bond</span>
         <span>Owner-signed destinations</span>
       </div>
     </section>
@@ -245,7 +245,7 @@ function renderHeroSection(
       <div class="hero-lookup-status-grid" aria-label="Auction opening rule">
         <article>
           <span>Before a bid</span>
-          <strong>Valid, owned, or unavailable</strong>
+          <strong>Ready, owned, or invalid</strong>
         </article>
         <article>
           <span>After a bonded opening bid</span>
@@ -280,7 +280,7 @@ function renderPrimaryNav(configuredBasePath: string, pageKind: PageKind, favico
     { href: withBasePath("/explainer", configuredBasePath), label: "Overview", active: pageKind === "explainer" },
     { href: withBasePath("/auctions", configuredBasePath), label: "Auctions", active: pageKind === "auctions" },
     { href: withBasePath("/explore", configuredBasePath), label: "Explore", active: pageKind === "explore" },
-    { href: withBasePath("/setup", configuredBasePath), label: "Setup", active: pageKind === "setup" },
+    { href: withBasePath("/setup", configuredBasePath), label: "Demo Setup", active: pageKind === "setup" },
     { href: withBasePath("/values", configuredBasePath), label: "Destinations", active: pageKind === "values" },
     { href: withBasePath("/transfer", configuredBasePath), label: "Transfer", active: pageKind === "transfer" },
     { href: withBasePath("/advanced", configuredBasePath), label: "Advanced", active: pageKind === "advanced" }
@@ -344,24 +344,24 @@ function renderExplorePageSections(configuredBasePath: string): string {
 function renderExploreEmptyStateSection(configuredBasePath: string): string {
   return `<section id="explore-empty-state" class="panel panel-guide panel-empty-state" hidden>
     ${renderPanelHead(
-      "Resolver Empty Right Now?",
-      "The resolver is reachable, but it is not showing any seeded names yet."
+      "No Visible Names Yet",
+      "The resolver is reachable, but it is not showing owned names or activity yet."
     )}
     <div class="guide-grid guide-grid-balanced">
       <article class="guide-card">
         <h3>What This Usually Means</h3>
         <p id="exploreEmptyStateMessage">This resolver is not showing any names or activity yet.</p>
-        <p id="exploreEmptyStateDetail" class="field-note">That usually means the demo chain was reset or has not been reseeded yet.</p>
+        <p id="exploreEmptyStateDetail" class="field-note">Open an auction or check the auction rules while the resolver waits for owned names.</p>
       </article>
       <article class="guide-card">
         <h3>What You Can Do Next</h3>
         <ul class="guide-list">
-          <li>Use Auctions to inspect the current allocation flow.</li>
-          <li>Use Overview to understand the model and current prototype constraints.</li>
-          <li>Use Destinations to see which canonical demo names come back once the demo chain is reseeded.</li>
+          <li>Use Auctions to check a name and review the current opening floors.</li>
+          <li>Use Overview to understand the model and current demo boundaries.</li>
+          <li>Use Destinations after a name exists and the owner is ready to publish records.</li>
         </ul>
         <div class="guide-card-actions">
-          <a class="action-link secondary" href="${withBasePath("/setup", configuredBasePath)}">Open setup</a>
+          <a class="action-link secondary" href="${withBasePath("/setup", configuredBasePath)}">Open demo setup</a>
           <a class="action-link secondary" href="${withBasePath("/auctions", configuredBasePath)}">Open auctions</a>
           <a class="action-link secondary" href="${withBasePath("/explainer", configuredBasePath)}">Open overview</a>
         </div>
@@ -372,15 +372,18 @@ function renderExploreEmptyStateSection(configuredBasePath: string): string {
 
 function renderAdvancedPageSections(configuredBasePath: string, includePrivateAuctionSmoke: boolean): string {
   return `${renderAdvancedGuideSection(configuredBasePath)}
-    ${renderAdvancedReferencesSection(configuredBasePath)}
-    ${includePrivateAuctionSmoke ? renderPrivateAuctionSmokeSection(true) : ""}`;
-}
-
-function renderAuctionsPageSections(includePrivateAuctionSmoke: boolean): string {
-  return `${renderAuctionLabSection()}
+    ${renderAuctionLabSection()}
     ${renderExperimentalAuctionFeedSection()}
     ${renderAuctionLabNotesSection(true)}
-    ${includePrivateAuctionSmoke ? renderPrivateAuctionSmokeSection(true) : ""}`;
+    ${includePrivateAuctionSmoke ? renderPrivateAuctionSmokeSection(true) : ""}
+    ${renderAdvancedReferencesSection(configuredBasePath)}
+  `;
+}
+
+function renderAuctionsPageSections(configuredBasePath: string): string {
+  return `${renderAuctionOpenSection(configuredBasePath)}
+    ${renderAuctionRulesSection()}
+    ${renderAuctionWorkflowSection(configuredBasePath)}`;
 }
 
 function renderAdvancedGuideSection(configuredBasePath: string): string {
@@ -393,7 +396,7 @@ function renderAdvancedGuideSection(configuredBasePath: string): string {
       <article class="guide-card">
         <h3>Most People Can Ignore This</h3>
         <ul class="guide-list">
-          <li>Use Auctions, Setup, Destinations, Transfer, and Explore for the normal website walkthrough.</li>
+          <li>Use Auctions, Demo Setup, Destinations, Transfer, and Explore for the normal website walkthrough.</li>
           <li>The website already hides most expert knobs from those pages on purpose.</li>
           <li>If you are learning the system for the first time, start there instead.</li>
         </ul>
@@ -419,7 +422,7 @@ function renderAdvancedGuideSection(configuredBasePath: string): string {
     <div class="hero-cta-row section-cta-row">
       <a class="action-link secondary" href="${DOC_URLS.implementation}" target="_blank" rel="noreferrer noopener">Implementation notes</a>
       <a class="action-link secondary" href="${withBasePath("/explainer", configuredBasePath)}">Open overview</a>
-      <a class="action-link secondary" href="${withBasePath("/setup", configuredBasePath)}">Back to setup</a>
+      <a class="action-link secondary" href="${withBasePath("/setup", configuredBasePath)}">Back to demo setup</a>
     </div>
   </section>`;
 }
@@ -433,7 +436,7 @@ function renderAdvancedReferencesSection(_configuredBasePath: string): string {
     <div class="guide-grid guide-grid-balanced">
       <article class="guide-card">
         <h3>Implementation Notes</h3>
-        <p>Review how the prototype pieces fit together: resolver state, bid-package handoffs, value records, transfers, and the remaining validation work.</p>
+        <p>Review how the demo pieces fit together: resolver state, bid-package handoffs, value records, transfers, and the remaining validation work.</p>
         <div class="guide-card-actions">
           <a class="action-link secondary" href="${DOC_URLS.implementation}" target="_blank" rel="noreferrer noopener">Implementation</a>
         </div>
@@ -489,23 +492,104 @@ function renderExplainerPageSections(configuredBasePath: string): string {
     ${renderHomeDocsSection()}`;
 }
 
+function renderAuctionOpenSection(configuredBasePath: string): string {
+  return `<section id="auction-open" class="panel panel-compose panel-compose-minimal">
+    ${renderPanelHead(
+      "Open An Auction",
+      "A valid bonded opening bid starts the auction clock. Before that, a name is only ready, owned, or invalid.",
+      `<p>Use this as the common acquisition path. The website checks resolver ownership and shows the current auction rules; signing and broadcast still happen with your wallet and CLI handoff.</p>`
+    )}
+    <div class="value-intake-grid">
+      <form id="searchForm" class="tool-draft-form">
+        <div class="draft-grid">
+          <label class="draft-field">
+            <span class="field-label">Name</span>
+            <input id="nameInput" name="name" type="text" maxlength="32" placeholder="alice" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" />
+            <span class="field-hint">Any valid name uses the same auction lane. Shorter names simply require a higher opening bond.</span>
+          </label>
+        </div>
+        <div class="draft-actions">
+          <button type="submit">Check name</button>
+        </div>
+      </form>
+      <article class="guide-card value-intake-callout">
+        <h3>Opening Rule</h3>
+        <ul class="guide-list">
+          <li>The auction does not exist until a valid opening bid confirms.</li>
+          <li>The opening bid must meet the current length-based floor.</li>
+          <li>If the bid wins, the owner key controls destinations and transfers after settlement.</li>
+        </ul>
+      </article>
+    </div>
+    <div id="searchResult" class="result-card empty" hidden></div>
+    <div class="hero-cta-row section-cta-row">
+      <a class="action-link secondary" href="${withBasePath("/setup", configuredBasePath)}">Open demo setup</a>
+      <a class="action-link secondary" href="${withBasePath("/advanced", configuredBasePath)}">Advanced auction reference</a>
+    </div>
+  </section>`;
+}
+
+function renderAuctionRulesSection(): string {
+  return `<section id="auction-rules" class="panel panel-guide">
+    ${renderPanelHead(
+      "Auction Rules",
+      "One auction lane, length-based opening floors, and a stronger increment when late bids extend the close.",
+      `<p>These are current demo rules surfaced read-only. Use the CLI and docs for deeper policy modeling.</p>`
+    )}
+    <p id="auctionLabMeta" class="helper-text">Loading current auction rules.</p>
+    <div id="auctionPolicySummary" class="guide-grid"></div>
+  </section>`;
+}
+
+function renderAuctionWorkflowSection(configuredBasePath: string): string {
+  return `<section id="auction-workflow" class="panel panel-guide">
+    ${renderPanelHead(
+      "Auction Workflow",
+      "The public path is simple: fund the bidding wallet, prepare a package, sign, broadcast, then manage the owned name."
+    )}
+    <div class="guide-grid guide-grid-balanced">
+      <article class="guide-card">
+        <h3>1. Fund The Bid</h3>
+        <p>Use the demo setup path to connect Sparrow and fund the wallet that will lock the opening bid bond.</p>
+      </article>
+      <article class="guide-card">
+        <h3>2. Save The Owner Key</h3>
+        <p>The owner key is the control key for destinations and transfers if the bid wins. Keep the private half yourself.</p>
+      </article>
+      <article class="guide-card">
+        <h3>3. Bid From Current State</h3>
+        <p>Build the bid handoff from the latest auction state. If another bid lands first, rebuild before signing.</p>
+      </article>
+      <article class="guide-card">
+        <h3>4. Manage The Name</h3>
+        <p>After settlement, use Destinations to publish records or Transfer to hand off control.</p>
+      </article>
+    </div>
+    <div class="hero-cta-row section-cta-row">
+      <a class="action-link" href="${withBasePath("/setup", configuredBasePath)}">Open demo setup</a>
+      <a class="action-link secondary" href="${withBasePath("/values", configuredBasePath)}">Open destinations</a>
+      <a class="action-link secondary" href="${withBasePath("/transfer", configuredBasePath)}">Open transfer</a>
+    </div>
+  </section>`;
+}
+
 function renderAuctionLabSection(): string {
   return `<section id="auction-lab" class="panel panel-list">
     ${renderPanelHead(
-      "Auction Flow Examples",
-      "Reference view for valid names and active auction states.",
-      `<p>This page shows how the current auction model behaves before and after a bidder opens the auction.</p>
+      "Auction Reference Cases",
+      "Advanced view for modeled auction states and implementation review.",
+      `<p>This reference shows how the current auction model behaves before and after a bidder opens the auction.</p>
       <ul>
-        <li>The website shows the current read-only defaults for the examples below.</li>
+        <li>The website shows the current read-only auction rules for the examples below.</li>
         <li>The cards underneath are simulator-backed examples, not live protocol changes.</li>
         <li>A real auction starts with a valid bonded opening bid; before that, a name is only valid, owned, or unavailable.</li>
       </ul>`
     )}
     <details class="detail-technical">
-      <summary>Current website defaults</summary>
+      <summary>Current auction rules</summary>
       <div class="detail-technical-body">
-        <p class="field-note">The website keeps this read-only on purpose. If you want to model different release windows or other policy parameters, use the CLI instead of the website.</p>
-        <p id="auctionLabMeta" class="helper-text">Loading current auction defaults and flow examples.</p>
+        <p class="field-note">The website keeps this read-only on purpose. If you want to model different auction windows or other policy parameters, use the CLI instead of the website.</p>
+        <p id="auctionLabMeta" class="helper-text">Loading current auction rules and reference cases.</p>
         <div id="auctionPolicySummary" class="guide-grid"></div>
       </div>
     </details>
@@ -516,16 +600,16 @@ function renderAuctionLabSection(): string {
 function renderExperimentalAuctionFeedSection(): string {
   return `<section id="experimental-auction-feed" class="panel panel-list">
     ${renderPanelHead(
-      "Observed Auction Activity",
+      "Observed Auction Feed",
       "Resolver-backed view derived from observed AUCTION_BID transactions.",
       `<p>This sits closer to observed chain behavior than the reference states above.</p>
       <ul>
-        <li>The feed still uses prototype entries while fully on-demand auction-opening tooling is being built.</li>
+        <li>The feed still uses demo entries while fully on-demand auction-opening tooling is being built.</li>
         <li>Leaders, minimum next bids, stale-state rejection, and bond spend/release summaries are derived from observed AUCTION_BID transactions.</li>
         <li>A real auction begins when a valid bonded opening bid confirms; names with no opening bid should not be described as failed auctions.</li>
         <li>Bids that merely clear the normal increment are not enough during soft close if they would extend the auction. Late extension bids use the stronger soft-close increment rule.</li>
         <li>Same-bidder replacement is only recognized when the later bid spends the prior bid bond outpoint.</li>
-        <li>This feed is a prototype view; final launch settlement rules are not frozen yet.</li>
+        <li>This feed is an implementation view; final launch settlement rules are not frozen yet.</li>
       </ul>`
     )}
     <p id="experimentalAuctionMeta" class="helper-text">Loading observed bid activity.</p>
@@ -552,7 +636,7 @@ function renderAuctionLabNotesSection(collapsible = false): string {
         <h3>Still In Progress</h3>
         <ul class="guide-list">
           <li>Settlement is implemented for the experimental path, but final launch settlement rules are not frozen yet.</li>
-          <li>The chain-derived feed is still a prototype view, not a mainnet launch commitment.</li>
+          <li>The chain-derived feed is still an implementation view, not a mainnet launch commitment.</li>
           <li>The values here are working defaults, not yet locked protocol parameters.</li>
           <li>For deeper policy experiments or custom bid flows, use the CLI rather than the website.</li>
         </ul>
@@ -562,7 +646,7 @@ function renderAuctionLabNotesSection(collapsible = false): string {
   if (!collapsible) {
     return `<section class="panel panel-guide">
       ${renderPanelHead(
-        "Launch Status",
+        "Implementation Status",
         "What is already working here, what remains provisional, and which parts are still derived rather than final."
       )}
       ${body}
@@ -572,7 +656,7 @@ function renderAuctionLabNotesSection(collapsible = false): string {
   return `<details class="panel panel-guide panel-collapsible">
     <summary class="panel-summary">
       <div class="panel-summary-copy">
-        <h2>Launch Status</h2>
+        <h2>Implementation Status</h2>
         <p>See what is already implemented, what is still provisional, and where auction settlement is still not final.</p>
       </div>
       <span class="summary-chip">Open summary</span>
@@ -585,23 +669,23 @@ function renderHomeActionsSection(configuredBasePath: string): string {
   return `<section id="start-here" class="panel panel-guide panel-home">
     ${renderPanelHead(
       "Choose A Path",
-      "Use the home page to do one thing quickly: understand the model, try the prototype, or inspect the live registry."
+      "Use the home page to do one thing quickly: understand the model, try the demo, or inspect the live registry."
     )}
     <div class="path-grid">
       <article class="path-card">
         <p class="path-card-kicker">Read</p>
         <h3>Understand ONT</h3>
-        <p>Read the overview when you want how the current prototype works, what is live today, and where to go next.</p>
+        <p>Read the overview when you want how the current demo works, what is live today, and where to go next.</p>
         <div class="path-card-actions">
           <a class="action-link secondary" href="${withBasePath("/explainer", configuredBasePath)}">Open overview</a>
         </div>
       </article>
       <article class="path-card">
         <p class="path-card-kicker">Walk Through</p>
-        <h3>Try The Prototype</h3>
+        <h3>Try The Demo</h3>
         <p>Set up Sparrow, then open Auctions to prepare a bid package with the same wallet you will use to sign.</p>
         <div class="path-card-actions">
-          <a class="action-link secondary" href="${withBasePath("/setup", configuredBasePath)}">Open setup</a>
+          <a class="action-link secondary" href="${withBasePath("/setup", configuredBasePath)}">Open demo setup</a>
           <a class="action-link secondary" href="${withBasePath("/auctions", configuredBasePath)}">Open auctions</a>
         </div>
       </article>
@@ -614,7 +698,7 @@ function renderHomeActionsSection(configuredBasePath: string): string {
         </div>
       </article>
     </div>
-    <p class="tool-handoff-note">Need a stable place for the full map? Use the footer below for docs and prototype surfaces.</p>
+    <p class="tool-handoff-note">Need a stable place for the full map? Use the footer below for docs and website tools.</p>
   </section>`;
 }
 
@@ -677,7 +761,7 @@ function renderExplainerJumpBar(_configuredBasePath: string): string {
     <span class="jump-bar-label">Overview sections</span>
     <a href="#how-ont-works">How it works</a>
     <a href="#one-name-many-destinations">One name, many destinations</a>
-    <a href="#using-ont">Use the prototype</a>
+    <a href="#using-ont">Use the demo</a>
     <a href="#current-docs">Current status</a>
   </nav>`;
 }
@@ -738,7 +822,7 @@ function renderHomeDocsSection(): string {
   return `<section id="current-docs" class="panel panel-guide">
     ${renderPanelHead(
       "Current Status",
-      "The hosted demo is real, but it is still a prototype. Use this page to separate what works now from what is still under active design."
+      "The hosted demo is real, but it is not mainnet-ready. Use this page to separate what works now from what is still under active design."
     )}
     <div class="guide-grid guide-grid-balanced">
       <article class="guide-card">
@@ -751,11 +835,11 @@ function renderHomeDocsSection(): string {
         </ul>
       </article>
       <article class="guide-card">
-        <h3>Still Prototype</h3>
+        <h3>Not Mainnet-Ready Yet</h3>
         <ul class="guide-list">
           <li>Transfers still rely on external signer and CLI steps.</li>
           <li>Resolver availability is only partly decentralized in v1.</li>
-          <li>The universal-auction launch flow is implemented as a prototype and still not mainnet-ready.</li>
+          <li>The universal-auction flow is implemented in the demo and still not mainnet-ready.</li>
           <li>Mainnet-ready usage is not ready yet.</li>
         </ul>
       </article>
@@ -784,8 +868,8 @@ function renderUsingOntSection(configuredBasePath: string): string {
     )}
     <div class="guide-grid">
       <article class="guide-card">
-        <h3>Setup And Auctions</h3>
-        <p>Use setup to connect Sparrow to the hosted demo wallet server, then use Auctions to inspect bid packages and current allocation behavior.</p>
+        <h3>Demo Setup And Auctions</h3>
+        <p>Use Demo Setup to connect Sparrow to the hosted demo wallet server, then use Auctions to check names and prepare bid handoffs.</p>
       </article>
       <article class="guide-card">
         <h3>Explore</h3>
@@ -793,7 +877,7 @@ function renderUsingOntSection(configuredBasePath: string): string {
       </article>
       <article class="guide-card">
         <h3>Destinations And Transfer</h3>
-        <p>Use the values and transfer surfaces after a name exists and you want to manage what it points to or hand off control.</p>
+        <p>Use Destinations and Transfer after a name exists and you want to manage what it points to or hand off control.</p>
       </article>
       <article class="guide-card">
         <h3>Advanced Tools</h3>
@@ -801,7 +885,7 @@ function renderUsingOntSection(configuredBasePath: string): string {
       </article>
     </div>
     <div class="hero-cta-row section-cta-row">
-      <a class="action-link" href="${withBasePath("/setup", configuredBasePath)}">Open setup</a>
+      <a class="action-link" href="${withBasePath("/setup", configuredBasePath)}">Open demo setup</a>
       <a class="action-link" href="${withBasePath("/auctions", configuredBasePath)}">Open auctions</a>
       <a class="action-link secondary" href="${withBasePath("/explore", configuredBasePath)}">Open explorer</a>
       <a class="action-link secondary" href="${withBasePath("/values", configuredBasePath)}">Open destinations</a>
@@ -925,7 +1009,7 @@ function renderPrivateAuctionSmokeSection(collapsible = false): string {
       "Latest status from the hosted private-signet auction walkthrough.",
       `<p>This is the current live-chain proof for the auction slice.</p>
       <ul>
-        <li>It starts from a dedicated prototype entry, then opens the auction with a real bonded bid.</li>
+        <li>It starts from a dedicated demo entry, then opens the auction with a real bonded bid.</li>
         <li>It submits an opening bid, then a higher bid, settles the auction into a live owned name, publishes winner destinations, and later transfers that name after the winner lock clears.</li>
         <li>It still spends the losing bond early to prove the chain-derived feed flags that violation.</li>
         <li>The resulting website feed shows accepted bid history, settlement state, post-settlement handoff, and bond spend / release consequences.</li>
@@ -1026,7 +1110,7 @@ function renderSetupFundingSection(privateSignetFundingAmountSats: bigint): stri
 
 function formatBitcoinDisplay(value: bigint | string | number): string {
   const sats = BigInt(value);
-  return `₿${sats.toLocaleString("en-US")} (${formatBtcDecimal(sats)} BTC)`;
+  return `${sats.toLocaleString("en-US")} sats (${formatBtcDecimal(sats)} BTC)`;
 }
 
 function formatBtcDecimal(sats: bigint): string {
@@ -1352,7 +1436,7 @@ function renderTransferGuideSection(): string {
         </ul>
       </article>
       <article class="guide-card">
-        <h3>Prototype Status</h3>
+        <h3>Implementation Boundary</h3>
         <ul class="guide-list">
           <li>The website prepares the handoff packages.</li>
           <li>The CLI and your signer finish the transaction.</li>
@@ -1538,7 +1622,7 @@ function renderSiteFooter(configuredBasePath: string): string {
   return `<footer class="site-footer">
     <div class="site-footer-brand">
       <p class="site-footer-kicker">${escapeHtml(PRODUCT_NAME)}</p>
-      <p class="site-footer-copy">Bitcoin-anchored names, owner-signed destinations, and the current prototype surfaces.</p>
+      <p class="site-footer-copy">Bitcoin-anchored names, owner-signed destinations, and the current website tools.</p>
     </div>
     <div class="site-footer-grid">
       <section class="site-footer-group">
@@ -1552,7 +1636,7 @@ function renderSiteFooter(configuredBasePath: string): string {
       <section class="site-footer-group">
         <h2>Try</h2>
         <div class="site-footer-links">
-          <a href="${withBasePath("/setup", configuredBasePath)}">Setup</a>
+          <a href="${withBasePath("/setup", configuredBasePath)}">Demo Setup</a>
           <a href="${withBasePath("/auctions", configuredBasePath)}">Auctions</a>
           <a href="${withBasePath("/values", configuredBasePath)}">Destinations</a>
           <a href="${withBasePath("/transfer", configuredBasePath)}">Transfer</a>

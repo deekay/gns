@@ -1183,7 +1183,7 @@ function decodeValuePayloadUtf8(payloadHex: string): string | null {
 function formatStateLabel(status: string): string {
   switch (status) {
     case "pending":
-      return "Awaiting Reveal";
+      return "Pending Ownership";
     case "immature":
       return "Settling";
     case "mature":
@@ -1221,7 +1221,7 @@ function renderBundleValue(value: string): string {
 
 function formatSats(value: string | number | bigint): string {
   const sats = BigInt(value);
-  return `₿${sats.toLocaleString("en-US")} (${formatBtcDecimal(sats)} BTC)`;
+  return `${sats.toLocaleString("en-US")} sats (${formatBtcDecimal(sats)} BTC)`;
 }
 
 function formatBtcDecimal(sats: bigint): string {

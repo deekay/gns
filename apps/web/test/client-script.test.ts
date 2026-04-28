@@ -43,7 +43,7 @@ describe("renderClientScript", () => {
     expect(script).toContain("Do not split payment and transfer into separate promises.");
     expect(script).toContain("Do not treat payment and name transfer as separate promises.");
     expect(script).toContain("not yet a full two-party PSBT wizard for buyer and seller");
-    expect(script).toContain("Current prototype note: this page still exports a coordinated CLI handoff rather than a full two-party PSBT wizard.");
+    expect(script).toContain("Current implementation boundary: this page still exports a coordinated CLI handoff rather than a full two-party PSBT wizard.");
     expect(script).toContain("Generating a local browser key for the buyer...");
     expect(script).toContain("buildSellerTransferNotesText");
     expect(script).toContain("buildBuyerTransferNotesText");
@@ -81,10 +81,10 @@ describe("renderClientScript", () => {
     expect(script).toContain("renderExploreResolverEmptyCard");
     expect(script).toContain("exploreEmptyStateMessage");
     expect(script).toContain("resolverHasVisibleState");
-    expect(script).toContain("Demo resolver waiting for reseed");
-    expect(script).toContain("Registry Waiting For Seed Data");
-    expect(script).toContain("canonical demo seed or a fresh auction walkthrough");
-    expect(script).toContain("Resolver reachable · waiting for a new demo reseed.");
+    expect(script).toContain("No resolver activity yet");
+    expect(script).toContain("No Owned Names Yet");
+    expect(script).toContain("after auctions settle or transfers publish on this resolver");
+    expect(script).toContain("Resolver reachable · no owned names visible yet.");
   });
 
   it("includes auction lab handling", () => {
@@ -135,6 +135,6 @@ describe("renderClientScript", () => {
     expect(script).toContain("Publish or update value");
     expect(script).toContain("Prepare transfer (lock active)");
     expect(script).toContain("renderSettledAuctionHandoff");
-    expect(script).toContain("isAuctionsPage");
+    expect(script).toContain("shouldLoadAuctionRulesOrReference");
   });
 });
