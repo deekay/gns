@@ -114,7 +114,7 @@ describe("resolver fanout helpers", () => {
       return new Response(
         JSON.stringify({
           error: "value_not_found",
-          message: "No value record yet."
+          message: "No destination record yet."
         }),
         {
           status: 404,
@@ -257,7 +257,7 @@ describe("resolver fanout helpers", () => {
     expect(summary.conflictingResolverUrls).toEqual(["http://resolver-b.test"]);
   });
 
-  it("publishes one signed value record to all configured resolvers", async () => {
+  it("publishes one signed destination record to all configured resolvers", async () => {
     const valueRecord = signValueRecord({
       name: "alice",
       ownerPrivateKeyHex: "01".repeat(32),

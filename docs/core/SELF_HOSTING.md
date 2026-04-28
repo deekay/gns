@@ -70,7 +70,7 @@ It serves:
 - auction state
 - recent activity
 - provenance detail
-- signed value records
+- signed destination records
 
 ### `web`
 
@@ -154,7 +154,7 @@ Compose stores resolver/indexer state in the named Docker volume `ont_data`.
 That includes:
 
 - resolver snapshot
-- value-record store
+- destination-record store
 - optional one-shot indexer snapshot
 
 ## Trust Model

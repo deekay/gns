@@ -6,7 +6,7 @@ Status note:
   [ONT_FROM_ZERO.md](../core/ONT_FROM_ZERO.md)
 - for what is implemented and validated, use
   [ONT_IMPLEMENTATION_AND_VALIDATION.md](./ONT_IMPLEMENTATION_AND_VALIDATION.md)
-- for the current launch direction, use
+- for the current allocation direction, use
   [UNIVERSAL_AUCTION_LAUNCH_MODEL.md](./UNIVERSAL_AUCTION_LAUNCH_MODEL.md)
 
 ## The Problem With Payment Handles Today
@@ -21,7 +21,7 @@ wallet answer a simple question before money moves:
 
 Readable payment handles exist, but they usually depend on a service, account,
 domain, or operator between the payer and the recipient. ONT is a different
-approach: a name like `satoshi` is something controlled by a key, with ownership
+approach: a name like `alice` is something controlled by a key, with ownership
 anchored to Bitcoin and verifiable by anyone.
 
 ## Why Bonds Instead Of Fees
@@ -70,13 +70,12 @@ ONT separates two concerns:
 - Bitcoin anchors who owns the name
 - the records it points to are kept off-chain and signed by the owner
 
-At launch, the current direction is a single auction lane:
+The current direction is public bonded auctions:
 
 - every valid name is allocated by auction
-- all valid names can be opened at launch
-- shorter names stay in the same auction lane with higher length-based opening floors
-- there is no semantic reserved-name list
-- there is no pre-launch reservation system
+- all valid names can be opened through the same public mechanism
+- shorter names start with higher length-based opening floors
+- allocation does not depend on brand, category, or editorial judgment
 
 This keeps allocation neutral. ONT does not have to decide which brands, people,
 companies, or generic words are important. If a name matters to multiple
@@ -85,8 +84,8 @@ bulk capture of scarce names materially expensive.
 
 ## No Suffixes, No Hierarchy
 
-ONT uses a flat namespace. A name is just `satoshi`, not `satoshi.ont` or
-`satoshi.btc`. There is no root authority, no TLD, and no hierarchy to
+ONT uses a flat namespace. A name is just `alice`, not `alice.ont` or
+`alice.btc`. There is no root authority, no TLD, and no hierarchy to
 maintain.
 
 ## Fairness
@@ -96,7 +95,7 @@ The fairness goal is:
 - no founder allocation
 - no discounted allocations
 - no whitelist or identity-based quotas
-- no hand-built reserved list
+- no hand-built manual allocation list
 
 Fairness should come from public rules and public on-chain outcomes, not private
 approvals.
@@ -115,10 +114,10 @@ approvals.
 Ownership state is recorded on Bitcoin-compatible chain data. The canonical
 registry is recoverable from that record alone.
 
-Off-chain value records are a separate matter. These are stored and served by
+Off-chain destination records are a separate matter. These are stored and served by
 resolvers. They are signed by the name's current owner key, so authenticity is
 verifiable without trusting the resolver, but availability depends on at least
 one resolver having a copy.
 
-This is a deliberate trade-off. Storing routine value updates on-chain would
+This is a deliberate trade-off. Storing routine destination updates on-chain would
 turn Bitcoin into a database rather than an ownership notary.

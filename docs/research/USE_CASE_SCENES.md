@@ -36,7 +36,7 @@ This is the cleanest proof point because the stakes are immediate.
 
 - money going to the wrong place is easy to understand
 - the pain of opaque addresses is already familiar
-- human-readable names feel obviously better at the point of action
+- names people can use feel obviously better at the point of action
 
 It also gives a good answer to "why not just let the model handle it?" A model can help interpret the request, but it should not be free to improvise who gets paid.
 

@@ -1,7 +1,7 @@
 # Testing
 
-This guide reflects the current ONT launch direction: one auction lane for
-valid names, with objective length-based opening floors.
+This guide reflects the current ONT allocation direction: public bonded auctions
+for valid names, with objective length-based opening floors.
 
 ## Core Test Commands
 
@@ -24,10 +24,10 @@ npm test
 
 ## What The Tests Cover Now
 
-- `@ont/protocol`: names, bond helpers, auction bid payloads, transfer authorization, transfer packages, and signed value records.
+- `@ont/protocol`: names, bond helpers, auction bid payloads, transfer authorization, transfer packages, and signed destination records.
 - `@ont/core`: auction policy, auction state, auction fixtures, market simulations, and stale bid handling.
-- `@ont/cli`: auction bid artifact building/signing, transfer flows, value-record publishing, resolver fetch helpers, and package review.
-- `@ont/web`: page shell copy, auction lab rendering, browser key tools, value publishing bundle, client script syntax, and resolver fanout.
+- `@ont/cli`: auction bid artifact building/signing, transfer flows, destination-record publishing, resolver fetch helpers, and package review.
+- `@ont/web`: page shell copy, auction lab rendering, browser key tools, destination publishing bundle, client script syntax, and resolver fanout.
 - `@ont/resolver`: resolver HTTP behavior and chain-derived surfaces.
 - `@ont/db`: snapshot persistence and database client config.
 
@@ -75,7 +75,7 @@ Create and inspect a bid package:
 ```sh
 npm run dev:cli -- create-auction-bid-package fixtures/auction/lab/04-soft-close-marble.json \
   --bidder-id operator_alpha \
-  --amount-sats 1800000000 \
+  --amount 1800000000 \
   --write /tmp/ont-auction-bid.json
 
 npm run dev:cli -- inspect-auction-bid-package /tmp/ont-auction-bid.json
@@ -89,18 +89,18 @@ Transfer package review:
 npm run dev:cli -- inspect-transfer-package /path/to/package.json --role buyer
 ```
 
-Value-record signing and publishing:
+Destination signing and publishing:
 
 ```sh
-npm run dev:cli -- sign-value-record \
+npm run dev:cli -- sign-destination-record \
   --name alice \
   --owner-private-key-hex <hex32> \
   --resolver-url http://127.0.0.1:8787 \
-  --value-type 2 \
+  --destination-type 2 \
   --payload-utf8 https://example.com/alice \
-  --write /tmp/alice-value.json
+  --write /tmp/alice-destination.json
 
-npm run dev:cli -- publish-value-record /tmp/alice-value.json \
+npm run dev:cli -- publish-destination-record /tmp/alice-destination.json \
   --resolver-url http://127.0.0.1:8787
 ```
 

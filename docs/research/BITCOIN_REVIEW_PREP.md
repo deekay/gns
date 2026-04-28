@@ -68,9 +68,9 @@ The clean current stance is:
 
 - compactness work should follow the auction-first transaction shape, not
   precede it
-- universal auctions are the current lead launch direction
-- shorter names stay in the same auction lane with higher length-based opening floors
-- no reserved-word list or pre-launch reservation system is part of the current
+- universal auctions are the current allocation direction
+- shorter names stay in the public auction system with higher length-based opening floors
+- allocation starts with bonded public auctions
   launch plan
 - auction mechanics are implemented enough to inspect and critique, but some
   numbers are still calibration placeholders

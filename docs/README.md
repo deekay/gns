@@ -33,7 +33,7 @@ These are mainly useful if you are self-hosting or running the prototype infrast
 
 These documents are useful, but they are more speculative, essay-like, or draft-oriented than the core docs above.
 
-- [UNIVERSAL_AUCTION_LAUNCH_MODEL.md](./research/UNIVERSAL_AUCTION_LAUNCH_MODEL.md): current lead launch model; one auction lane, no reserved list, length-based opening floors
+- [UNIVERSAL_AUCTION_LAUNCH_MODEL.md](./research/UNIVERSAL_AUCTION_LAUNCH_MODEL.md): current public auction allocation model with length-based opening floors
 - [AUCTION_SIMULATOR.md](./research/AUCTION_SIMULATOR.md): current simulator and CLI commands for auction policy, single-auction cases, and market scenarios
 - [ONT_VS_PUBKY_PKARR.md](./research/ONT_VS_PUBKY_PKARR.md)
 - [ONT_AND_PRIVATE_MESSAGING_BOOTSTRAP.md](./research/ONT_AND_PRIVATE_MESSAGING_BOOTSTRAP.md)
@@ -53,6 +53,7 @@ These documents are useful, but they are more speculative, essay-like, or draft-
 - [FUTURE_EXPLORATIONS.md](./research/FUTURE_EXPLORATIONS.md)
 - [NOSTR_STRATEGY.md](./research/NOSTR_STRATEGY.md)
 
-Current launch model at a glance: every valid name uses the same auction lane;
-shorter names start with higher objective opening floors; ownership is on
-Bitcoin; mutable destination records are owner-signed and off-chain.
+Current allocation model at a glance: every valid name opens through public
+bonded auctions; shorter names start with higher objective opening floors;
+ownership is on Bitcoin; mutable destination records are owner-signed and
+off-chain.

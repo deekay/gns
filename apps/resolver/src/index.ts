@@ -464,7 +464,7 @@ async function main(): Promise<void> {
         if (!verifyValueRecord(parsedRecord)) {
           return writeJson(response, 400, {
             error: "invalid_signature",
-            message: "Value record signature did not verify."
+            message: "Destination record signature did not verify."
           });
         }
 
@@ -473,7 +473,7 @@ async function main(): Promise<void> {
         if (currentNameRecord === null || currentNameRecord.status === "invalid") {
           return writeJson(response, 404, {
             error: "name_not_found",
-            message: "Cannot publish a value for an unclaimed or invalid name.",
+            message: "Cannot publish destinations for an unclaimed or invalid name.",
             name: parsedRecord.name
           });
         }
@@ -481,7 +481,7 @@ async function main(): Promise<void> {
         if (currentNameRecord.currentOwnerPubkey !== parsedRecord.ownerPubkey) {
           return writeJson(response, 409, {
             error: "owner_mismatch",
-            message: "Value record owner pubkey does not match the resolver's current owner.",
+            message: "Destination record owner pubkey does not match the resolver's current owner.",
             name: parsedRecord.name,
             currentOwnerPubkey: currentNameRecord.currentOwnerPubkey
           });
@@ -492,7 +492,7 @@ async function main(): Promise<void> {
         if (parsedRecord.ownershipRef !== currentOwnershipRef) {
           return writeJson(response, 409, {
             error: "ownership_ref_mismatch",
-            message: "Value record ownershipRef must match the resolver's current ownership interval.",
+            message: "Destination record ownershipRef must match the resolver's current ownership interval.",
             name: parsedRecord.name,
             currentOwnershipRef
           });
@@ -507,7 +507,7 @@ async function main(): Promise<void> {
         if (parsedRecord.sequence < expectedSequence) {
           return writeJson(response, 409, {
             error: "stale_sequence",
-            message: "Value record sequence must be the exact next sequence for the current ownership interval.",
+            message: "Destination record sequence must be the exact next sequence for the current ownership interval.",
             name: parsedRecord.name,
             currentSequence: existingRecord?.sequence ?? 0,
             expectedSequence
@@ -517,7 +517,7 @@ async function main(): Promise<void> {
         if (parsedRecord.sequence > expectedSequence) {
           return writeJson(response, 409, {
             error: "sequence_gap",
-            message: "Value record sequence cannot skip over missing predecessors.",
+            message: "Destination record sequence cannot skip over missing predecessors.",
             name: parsedRecord.name,
             currentSequence: existingRecord?.sequence ?? 0,
             expectedSequence
@@ -527,7 +527,7 @@ async function main(): Promise<void> {
         if (parsedRecord.previousRecordHash !== expectedPreviousRecordHash) {
           return writeJson(response, 409, {
             error: "predecessor_mismatch",
-            message: "Value record previousRecordHash must point to the current chain head.",
+            message: "Destination record previousRecordHash must point to the current chain head.",
             name: parsedRecord.name,
             expectedPreviousRecordHash
           });
@@ -553,7 +553,7 @@ async function main(): Promise<void> {
       } catch (error) {
         return writeJson(response, 400, {
           error: "invalid_value_record",
-          message: error instanceof Error ? error.message : "Invalid value record"
+          message: error instanceof Error ? error.message : "Invalid destination record"
         });
       }
     }

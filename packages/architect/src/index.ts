@@ -185,7 +185,7 @@ export function parseFundingInputDescriptor(spec: string): FundingInputDescripto
 
   if (parts.length !== 4 && parts.length !== 5) {
     throw new Error(
-      "input descriptors must use txid:vout:valueSats:address[:derivationPath]"
+      "input descriptors must use txid:vout:amount:address[:derivationPath]"
     );
   }
 
@@ -202,7 +202,7 @@ export function parseFundingInputDescriptor(spec: string): FundingInputDescripto
 
   const valueSats = BigInt(valueText ?? "");
   if (valueSats <= 0n) {
-    throw new Error("input valueSats must be positive");
+    throw new Error("input amount must be positive");
   }
 
   if (!inputAddress) {
@@ -406,7 +406,7 @@ export function buildTransferArtifacts(options: BuildTransferArtifactsOptions): 
   }
 
   if (options.successorBondSats < 0n) {
-    throw new Error("successorBondSats must be non-negative");
+    throw new Error("successor bond amount must be non-negative");
   }
 
   const fundingInputs = [options.currentBondInput, ...(options.additionalFundingInputs ?? [])];
@@ -553,7 +553,7 @@ export function buildSaleTransferArtifacts(
   }
 
   if (options.sellerPaymentSats < 0n) {
-    throw new Error("sellerPaymentSats must be non-negative");
+    throw new Error("seller payment amount must be non-negative");
   }
 
   const totalSellerInputSats = sumInputValues(options.sellerInputs);
@@ -706,11 +706,11 @@ export function buildImmatureSaleTransferArtifacts(
   }
 
   if (options.successorBondSats < 0n) {
-    throw new Error("successorBondSats must be non-negative");
+    throw new Error("successor bond amount must be non-negative");
   }
 
   if (options.salePriceSats < 0n) {
-    throw new Error("salePriceSats must be non-negative");
+    throw new Error("sale price amount must be non-negative");
   }
 
   const sellerInputs = [options.currentBondInput, ...(options.sellerInputs ?? [])];

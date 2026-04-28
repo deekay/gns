@@ -4,7 +4,7 @@ This note explores a higher-layer idea that should stay clearly separate from th
 
 The idea is simple:
 
-- ONT provides public human-readable names and public authority
+- ONT provides public names people can use and public authority
 - a separate encrypted layer could provide private relationship memory on top
 
 Examples of that private memory:
@@ -18,7 +18,7 @@ Examples of that private memory:
 
 ## Why This Is Not The Core ONT Value Layer
 
-ONT value records are currently much closer to:
+ONT destination records are currently much closer to:
 
 - public or semi-public resolution data
 - name-centric records

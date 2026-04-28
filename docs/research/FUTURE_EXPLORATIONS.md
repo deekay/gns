@@ -37,7 +37,7 @@ This document captures speculative technical directions and brainstorming for th
 
 ### BIP 352 Integration
 - **The Idea:** Use the Bond UTXO's public key as the basis for a **Silent Payment** scheme.
-- **Benefit:** Allows users to pay "satoshi" by generating a unique, one-time address that only the owner can spend. To an observer, it's an anonymous BTC payment.
+- **Benefit:** Allows users to pay "alice" by generating a unique, one-time address that only the owner can spend. To an observer, it's an anonymous BTC payment.
 
 ## 4. On-Chain Enforcement (BitVM)
 
@@ -47,7 +47,7 @@ This document captures speculative technical directions and brainstorming for th
 
 ## 5. Resolver Discovery and Data Availability
 
-A known open question in the current design: off-chain value records (Lightning addresses, payment targets, HTTPS pointers, etc.) are served by resolvers, but there is no defined mechanism for clients to discover resolvers or evaluate their trustworthiness. In practice, every client bootstraps against a single known endpoint.
+A known open question in the current design: off-chain destination records (Lightning addresses, payment targets, HTTPS pointers, etc.) are served by resolvers, but there is no defined mechanism for clients to discover resolvers or evaluate their trustworthiness. In practice, every client bootstraps against a single known endpoint.
 
 These are ideas for addressing that without introducing a central registry or a new trust layer.
 
@@ -74,20 +74,20 @@ These are ideas for addressing that without introducing a central registry or a 
 - **The Idea:** When a client connects to a resolver, that resolver returns a list of other resolvers it knows about — similar to Bitcoin's `addr` message. No central registry needed. Could be as simple as a convention: `GET /peers` returns a list of endpoints.
 - **Benefit:** The resolver network becomes self-propagating over time without any coordination mechanism.
 
-### Value Record Transport Options
+### Destination Record Transport Options
 
-Off-chain value records have an additional DA challenge: unlike ownership state, they are mutable and not derivable from chain. A few approaches worth considering:
+Off-chain destination records have an additional DA challenge: unlike ownership state, they are mutable and not derivable from chain. A few approaches worth considering:
 
-- **Owner self-hosts, resolver caches:** The owner publishes their signed value record at a URL they control and registers a "fetch hint" with the resolver. The resolver caches for performance, but the canonical copy stays under owner control. If a resolver disappears, the record survives at the owner's URL.
-- **History-aware value chains:** Value records now use a per-name append-only chain with a signed predecessor hash, scoped to the current ownership interval. This is the Keybase-sigchain lesson that most directly applies to ONT.
-- **Multi-resolver replication:** Since value records are small and Schnorr-signed, any resolver can store and serve them for any name. Clients query multiple resolvers and compare the latest valid chain head. Completeness scoring extends naturally to value record coverage.
-- **Resolver transparency roots:** A future resolver can periodically sign a Merkle root over accepted value-record heads and append receipts. This helps clients detect rollback, withholding, or forked resolver views without putting every mutable value update on Bitcoin.
-- **Nostr as optional value record transport:** Value records are already Schnorr-signed. A Nostr event kind for ONT records is a natural fit — Nostr relays are designed for signed mutable data. This keeps Nostr optional (not required for ownership verification) while giving owners a decentralized publication layer they don't have to self-host. Consistent with Decision #2 as long as Nostr is never required.
+- **Owner self-hosts, resolver caches:** The owner publishes their signed destination record at a URL they control and registers a fetch hint with the resolver. The resolver caches for performance, but the canonical copy stays under owner control. If a resolver disappears, the record survives at the owner's URL.
+- **History-aware destination chains:** Destination records now use a per-name append-only chain with a signed predecessor hash, scoped to the current ownership interval. This is the Keybase-sigchain lesson that most directly applies to ONT.
+- **Multi-resolver replication:** Since destination records are small and Schnorr-signed, any resolver can store and serve them for any name. Clients query multiple resolvers and compare the latest valid chain head. Completeness scoring extends naturally to destination record coverage.
+- **Resolver transparency roots:** A future resolver can periodically sign a Merkle root over accepted destination-record heads and append receipts. This helps clients detect rollback, withholding, or forked resolver views without putting every mutable destination update on Bitcoin.
+- **Nostr as optional destination record transport:** Destination records are already Schnorr-signed. A Nostr event kind for ONT records is a natural fit — Nostr relays are designed for signed mutable data. This keeps Nostr optional (not required for ownership verification) while giving owners a decentralized publication layer they don't have to self-host. Consistent with Decision #2 as long as Nostr is never required.
 
 See [VALUE_RECORD_HISTORY_AND_KEYBASE_NOTES.md](./VALUE_RECORD_HISTORY_AND_KEYBASE_NOTES.md) for the current implementation notes and remaining transparency questions.
 
 ## 6. First-Class Identity (No Suffixes)
 
 ### Global Flattening
-- **The Idea:** Formalizing the "No-Suffix" rule where names like `satoshi` are protocol-level primitives.
+- **The Idea:** Formalizing the no-suffix rule where names like `alice` are protocol-level primitives.
 - **Challenge:** Handling potential collisions or the desire for TLD-like grouping in the future without re-introducing hierarchy.

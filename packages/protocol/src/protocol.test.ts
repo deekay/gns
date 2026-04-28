@@ -232,8 +232,8 @@ describe("transfer packages", () => {
   });
 });
 
-describe("value records", () => {
-  it("signs and verifies owner-authenticated off-chain value records", () => {
+describe("destination records", () => {
+  it("signs and verifies owner-authenticated off-chain destination records", () => {
     const record = signValueRecord({
       name: "Alice",
       ownerPrivateKeyHex: "0c".repeat(32),
@@ -253,7 +253,7 @@ describe("value records", () => {
     expect(verifyValueRecord(record)).toBe(true);
   });
 
-  it("parses and verifies signed value records", () => {
+  it("parses and verifies signed destination records", () => {
     const record = signValueRecord({
       name: "bob",
       ownerPrivateKeyHex: "0d".repeat(32),

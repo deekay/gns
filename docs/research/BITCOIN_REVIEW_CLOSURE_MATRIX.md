@@ -30,10 +30,10 @@ Status labels:
 | Core framing | Payment handles first, owner-signed payment records second, broader key/value uses later | closed for this review rev | yes, as context | keep intro docs aligned |
 | Public vs private signet | Private signet is the live demo path; public signet is retired | closed for this review rev | no, only mention for clarity | keep docs and site consistent |
 | Retired claim prototype | The old two-step claim prototype was validated historically, but is not the launch allocation UX | closed for this review rev | no, only as context | keep status language explicit |
-| Universal auction launch | One auction lane for all valid names | provisional but shareable | yes, at mechanism level | keep launch spec aligned |
-| Length floors | Shorter names use higher objective opening floors in the same auction lane | provisional but shareable | maybe, mostly launch policy | document objective curve |
-| Reserved-word lists | Drop them from the launch model | closed for this review rev | not as a Bitcoin-native ask | remove from current docs and tools |
-| Pre-launch reservations | Drop them from the launch model | closed for this review rev | no | keep out of implementation and docs |
+| Universal auction launch | One auction system for all valid names | provisional but shareable | yes, at mechanism level | keep launch spec aligned |
+| Length floors | Shorter names use higher objective opening floors in the public auction system | provisional but shareable | maybe, mostly launch policy | document objective curve |
+| Manual allocation lists | Drop them from the allocation model | closed for this review rev | not as a Bitcoin-native ask | remove from current docs and tools |
+| Private reservations | Drop them from the allocation model | closed for this review rev | no | keep out of implementation and docs |
 | Auction family | Open ascending, soft close, meaningful increments, stronger late-extension increments | provisional but shareable | yes | present current rule family and why |
 | Same-bidder rebid shape | Later bid should spend the earlier bid bond outpoint | provisional but shareable | yes | include in auction semantics section |
 | Winning-bid settlement shape | Winning bid carries eventual owner key and materializes directly into a name | provisional but shareable | yes | ask whether a separate settlement step would be cleaner |
@@ -41,7 +41,7 @@ Status labels:
 | Transfer batching | Defer | defer from this review round | no | leave out unless directly asked |
 | Auction implementation status | Present as experimental but real: simulator + bid artifacts + chain-derived state + private-signet smoke | closed for this review rev | yes | keep status language honest |
 | Value-record history | Use Keybase-style signed predecessor chains scoped to ownership intervals | closed for this review rev | maybe, as a systems question rather than a Bitcoin-native blocker | keep implementation, website history view, and CLI multi-resolver comparison exercised |
-| Resolver transparency roots | Defer until value chains and multi-resolver publish/read are clearer | defer from this review round | maybe only if reviewers raise anti-rollback / forked-view concerns | keep routine value updates off Bitcoin by default |
+| Resolver transparency roots | Defer until value chains and multi-resolver publish/read are clearer | defer from this review round | maybe only if reviewers raise anti-rollback / forked-view concerns | keep routine destination updates off Bitcoin by default |
 | Website / tooling story | Website is good enough for inspection and demo; not yet a full end-user bidder flow | closed for this review rev | no, only as context | keep expectations explicit |
 
 ## What Should Be Closed Before A Broader Technical Outreach

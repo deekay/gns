@@ -1,21 +1,21 @@
 # Open Name Tags (ONT)
 
-Open Name Tags is a payment-handle system anchored to Bitcoin.
+Open Name Tags is a Bitcoin-anchored naming system.
 
-An ONT name is a human-readable handle you can actually own. Its first job is simple: let a wallet or client resolve who should get paid before money moves. The owner can update signed off-chain value records, so the same name can later carry other destinations if clients and applications decide to support them.
+ONTs are names you can own, verify, and update. Bitcoin anchors ownership; owner-signed off-chain records keep destinations updateable; bonded public auctions price scarce names without rent.
 
 The hosted website is mainly a tool surface:
 
 - browse names
 - check ownership and auction state
-- inspect valid names and active auctions
+- check names and active auctions
 - prepare auction bid packages
 - prepare transfers
 - fund the private signet demo
 
 This repository is where the fuller project explanation lives.
 
-Human-facing amounts in ONT use satoshi amounts alongside the conventional BTC equivalent. Example: `50,000 sats (0.0005 BTC)`.
+Human-facing amounts in ONT use the bitcoin symbol with integer amounts and the conventional BTC equivalent. Example: `₿50,000 (0.0005 BTC)`.
 
 ## Start Here
 
@@ -33,7 +33,7 @@ If you want the fastest first walkthrough, use the hosted private demo:
 
 1. Open [setup](https://opennametags.org/setup) and point Sparrow at the hosted demo wallet endpoint shown there.
 2. Request demo coins into the same Sparrow wallet you plan to spend from.
-3. Open [auctions](https://opennametags.org/auctions), inspect valid names or active auctions, and prepare a bid package with an owner key.
+3. Open [auctions](https://opennametags.org/auctions), check a name or active auction, and prepare a bid package with an owner key.
 4. Build and sign the auction bid transaction in Sparrow, then watch the name appear in [explore](https://opennametags.org/explore) after settlement.
 
 If you want the tightest possible product demo instead of the full docs path, use:
@@ -43,14 +43,14 @@ If you want the tightest possible product demo instead of the full docs path, us
 Keep these distinctions in mind:
 
 - the **wallet key** signs Bitcoin transactions
-- the **owner key** controls the name later for value updates and transfers
+- the **owner key** controls the name later for destination updates and transfers
 - the hosted site prepares the flow, but your wallet still signs and broadcasts it
 - in v1, losing the **owner key** means losing update and transfer authority for that name
 
 One important testing/status distinction:
 
 - the hosted private demo is a **private signet** walkthrough and the active live environment we maintain
-- the leading launch model is one auction lane for every valid name, with length-based opening floors
+- public bonded auctions allocate every valid name, with length-based opening floors
 - the old shared **public signet** path has been retired from the active demo and validation story because faucet funding never became reliable
 
 ## Quick Map
@@ -60,14 +60,14 @@ flowchart LR
   A["Wallet Key"] -->|"signs"| B["Auction / Transfer Bitcoin Transactions"]
   B -->|"records ownership on"| C["Bitcoin Chain"]
   C -->|"canonical state for"| D["Resolver / Website"]
-  E["Owner Key"] -->|"signs"| F["Value Record / Profile Bundle"]
+  E["Owner Key"] -->|"signs"| F["Destination Record / Profile Bundle"]
   F -->|"published to"| D
 ```
 
 ONT has two different authority layers:
 
 - the **wallet key** signs Bitcoin transactions that establish or transfer ownership
-- the **owner key** signs the off-chain value record that says what the name points to
+- the **owner key** signs the off-chain destination record that says what the name points to
 
 ## Pick The Path That Fits
 
@@ -93,8 +93,8 @@ Self-hosted website + resolver:
 | --- | --- | --- |
 | Hosted private demo auctions | Demo | Best first walkthrough today |
 | Self-hosted website + resolver | Yes | Fixture-backed by default; can point at your own backend later |
-| Browser value publishing | Yes | Owner-signed in the browser |
-| Profile bundle value records | Yes | One record can point to several destinations |
+| Browser destination publishing | Yes | Owner-signed in the browser |
+| Profile bundle destination records | Yes | One record can point to several destinations |
 | Transfers | Handoff | Website prepares packages; CLI and signer finish the transaction |
 | Mainnet-ready usage | Not yet | Still under active design and review |
 
@@ -103,7 +103,7 @@ Self-hosted website + resolver:
 | Key | What it controls | Used for | If lost |
 | --- | --- | --- | --- |
 | `Wallet key` | Bitcoin UTXOs | Signing auction bid and transfer transactions | You lose control of the bitcoin and cannot complete those transactions |
-| `Owner key` | Name authority after auction settlement | Signing value updates and authorizing transfers | In v1, you lose update and transfer authority for that name |
+| `Owner key` | Name authority after auction settlement | Signing destination updates and authorizing transfers | In v1, you lose update and transfer authority for that name |
 
 ## Auction Lifecycle At A Glance
 
@@ -112,7 +112,7 @@ Self-hosted website + resolver:
 | `Review` | Inspect opening floor, current auction state, minimum bid, and closing rules | Decide whether to prepare a bid |
 | `Bid Broadcast` | A bid transaction is on-chain with bonded bitcoin | Watch whether the bid becomes or remains the leader |
 | `Settling` | The name is already owned and usable, but bond continuity still matters | Keep the bond intact until maturity |
-| `Active` | The name is mature, so ongoing bond continuity no longer matters | Publish values, update the key/value bundle, or transfer later |
+| `Active` | The name is mature, so ongoing bond continuity no longer matters | Publish destinations, update the signed bundle, or transfer later |
 | `Released` | The name returned to the pool | Start from the auction flow if you still want it |
 
 ## Hosted Demo Walkthrough
@@ -131,11 +131,11 @@ Use the setup page to point Sparrow at the hosted private signet wallet endpoint
 
 ### 3. Prepare an auction bid
 
-On auctions, inspect the valid name or active auction, generate or paste the owner key, and build the bid-package signer handoff.
+On auctions, check a name or active auction, generate or paste the owner key, and build the bid-package signer handoff.
 
 ### 4. Publish what the name points to
 
-Once the name is active, use the values tool to publish ordered key/value pairs that describe where the name should resolve.
+Once the name is active, use the destinations tool to publish ordered entries that describe where the name should resolve.
 
 ### 5. Inspect the live demo status
 
@@ -147,14 +147,14 @@ Use the Advanced page when you want implementation reference material: modeled a
 
 ## What ONT Is
 
-ONT names are first-class strings like `satoshi`.
+ONT names are first-class strings like `alice`.
 
-Ownership is derived from Bitcoin transactions. Mutable value records stay off-chain and are signed by the current owner key. That means ONT uses Bitcoin as a notary for ownership and state transitions, not as a general-purpose database.
+Ownership is derived from Bitcoin transactions. Mutable destination records stay off-chain and are signed by the current owner key. That means ONT uses Bitcoin as a notary for ownership and state transitions, not as a general-purpose database.
 
 The result is a payment handle that can point to:
 
 - payment endpoints
-- additional owner-signed key/value records if clients support them later
+- additional owner-signed destination records if clients support them later
 
 ## Why It Exists
 
@@ -174,13 +174,13 @@ The clearest current wording is:
 
 > a payment handle you can actually own.
 
-Adjacent work is worth keeping in mind here too. Systems like Pubky / PKARR (which the old Slashtags project now points to) explore self-sovereign routing around public keys and signed DHT records while intentionally avoiding a scarce global human-readable namespace. ONT is trying to solve a different layer: Bitcoin-anchored ownership of shared human-readable payment handles, with broader owner-signed records possible later. For a short internal comparison note, see [docs/research/ONT_VS_PUBKY_PKARR.md](./docs/research/ONT_VS_PUBKY_PKARR.md).
+Adjacent work is worth keeping in mind here too. Systems like Pubky / PKARR (which the old Slashtags project now points to) explore self-sovereign routing around public keys and signed DHT records while intentionally avoiding a scarce global name layer. ONT is trying to solve a different layer: Bitcoin-anchored ownership of shared names, with broader owner-signed records possible later. For a short internal comparison note, see [docs/research/ONT_VS_PUBKY_PKARR.md](./docs/research/ONT_VS_PUBKY_PKARR.md).
 
 ## How Ownership Works
 
 ### Auctions
 
-Valid names use one auction lane.
+Valid names open through public bonded auctions.
 
 1. a valid bonded opening bid names the auction, bidder, owner key, and bonded amount
 2. market rules determine the leading bid, soft close, and settlement
@@ -201,15 +201,15 @@ Transfers move owner authority from one pubkey to another.
 
 - settling names still require successor-bond continuity
 - active names no longer require that continuity
-- the owner key, not a resolver, is what authorizes future value updates
-- after a transfer, the old owner can no longer publish new value records for that name
+- the owner key, not a resolver, is what authorizes future destination updates
+- after a transfer, the old owner can no longer publish new destination records for that name
 - if the owner key is lost, v1 has no built-in protocol recovery path even if the user still controls the wallet that funded the auction bid
 
-### Values
+### Destinations
 
 What a name points to is intentionally off-chain.
 
-- values are signed by the current owner
+- destination records are signed by the current owner
 - authenticity is cryptographic
 - availability depends on one or more resolvers retaining a copy
 
@@ -225,26 +225,26 @@ It does that by using locked bitcoin bonds instead of:
 - whitelist access
 - protocol-level sales of names
 
-The current lead launch direction is intentionally simple:
+The current allocation model is intentionally simple:
 
-- all valid names use the same auction lane at launch
+- all valid names use public bonded auctions
 - shorter names start with higher objective opening floors
 - length floors make early bulk capture of scarce names materially expensive
-- there is no semantic reserved-name list
+- allocation does not depend on brand, category, or editorial judgment
 
 Auctions discover the BTC amount. Length may still provide an objective
 opening-bond floor, but ONT should not decide which brands, people, companies,
-or words deserve special launch treatment.
+or words deserve special treatment.
 
 ### Bond Floors
 
 The current illustrative floor curve is:
 
-- `100,000,000 sats (1 BTC)` for a 1-character name
+- `₿100,000,000 (1 BTC)` for a 1-character name
 - each additional character halves the required bond
-- the bond floors at `50,000 sats (0.0005 BTC)` for names of length 12 and longer
+- the bond floors at `₿50,000 (0.0005 BTC)` for names of length 12 and longer
 
-Under the universal-auction launch model, this kind of curve is best understood
+Under the public-auction model, this kind of curve is best understood
 as an opening-bond / anti-spam floor. It is not the final price; the auction
 discovers that.
 
@@ -252,7 +252,7 @@ discovers that.
 
 Length floors also make early bulk capture expensive. Using the current v1 alphabet (`a-z0-9`), there are about `2.18 billion` possible 6-character names.
 
-At the current 6-character bond of `3,125,000 sats (0.03125 BTC)`, bonding all possible 6-character names would require about `68 million BTC`, which is more than three times Bitcoin's total `21 million` supply.
+At the current 6-character bond of `₿3,125,000 (0.03125 BTC)`, bonding all possible 6-character names would require about `68 million BTC`, which is more than three times Bitcoin's total `21 million` supply.
 
 Even if every bitcoin in existence were somehow devoted to 6-character bonds, it would only be enough to bond about `672 million` names out of roughly `2.18 billion` possible 6-character names. The majority of that namespace would still remain open.
 
@@ -271,7 +271,7 @@ ONT keeps its pure naming payload small, but it still consumes real Bitcoin bloc
 Current implementation summary:
 
 - auction bid packages carry compact ONT payloads plus normal Bitcoin inputs and outputs
-- observed footprint depends on signer policy, fee inputs, and whether a later transfer or value update is included
+- observed footprint depends on signer policy, fee inputs, and whether a later transfer or destination update is included
 - exact vbytes should be measured against the current auction transaction templates before mainnet parameters are finalized
 
 So ONT is compact as protocol data, but it still competes in the normal fee market like any other transaction. The main brakes on overuse are:
@@ -292,15 +292,15 @@ Ownership is chain-derived.
 - a resolver does not get to invent ownership
 - a resolver going offline does not destroy the registry
 
-### Values
+### Destinations
 
-Value records are different.
+Destination records are different.
 
 - they are portable and owner-signed
 - any compatible resolver can verify them
 - but in v1 their availability is only as decentralized as the set of resolvers people actually publish to and query
 
-That means v1 is decentralized for ownership, but still only partly decentralized for value availability. The most likely next step is client-side multi-resolver publish, not mandatory resolver gossip as the first move.
+That means v1 is decentralized for ownership, but still only partly decentralized for destination availability. The most likely next step is client-side multi-resolver publish, not mandatory resolver gossip as the first move.
 
 ## Hosted Product
 
@@ -376,19 +376,19 @@ This is a TypeScript monorepo using `npm` workspaces.
 ### Product surfaces
 
 - `apps/web`: hosted site, explorer, auctions, transfer prep, setup
-- `apps/cli`: auction, transfer, value-record, and operator tooling
+- `apps/cli`: auction, transfer, destination-record, and operator tooling
 
 ### Chain and resolution services
 
-- `apps/resolver`: read API, value-record API, provenance endpoints, recent activity
+- `apps/resolver`: read API, destination-record API, provenance endpoints, recent activity
 - `apps/indexer`: long-running and one-shot chain indexing entrypoint
 
 ### Shared libraries
 
-- `packages/protocol`: wire format, constants, signatures, value records, transfer packages
+- `packages/protocol`: wire format, constants, signatures, destination records, transfer packages
 - `packages/bitcoin`: Bitcoin RPC parsing and chain-source helpers
 - `packages/core`: state machine, indexing logic, snapshots, activity tracking
-- `packages/db`: snapshot and value-record persistence adapters
+- `packages/db`: snapshot and destination-record persistence adapters
 - `packages/architect`: pure transaction-prep and PSBT-building logic shared by web and CLI
 
 ### Scripts
@@ -423,7 +423,7 @@ Important known issues and tradeoffs include:
 
 - the current transfer payload shape exceeds older conservative `OP_RETURN` relay limits, so relay compatibility still depends on node policy even though modern Bitcoin Core defaults are more permissive
 - mature-name permanence makes long-name holding cheap after settlement
-- value-record availability can still concentrate around a small number of resolvers in v1
+- destination-record availability can still concentrate around a small number of resolvers in v1
 
 ## License
 

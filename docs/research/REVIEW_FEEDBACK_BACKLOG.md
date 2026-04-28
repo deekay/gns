@@ -98,10 +98,9 @@ This is currently the most serious challenge to the fairness story.
 The current working direction is now simpler:
 
 - use one auction allocation rule for every valid name
-- keep shorter names in the same auction lane with higher objective opening
+- keep shorter names in the public auction system with higher objective opening
   floors
-- keep semantic reserved lists and pre-launch reservation systems out of the
-  launch design
+- keep private allocation paths out of the design
 - let markets reveal which names have real demand instead of asking ONT to
   classify names ahead of time
 
@@ -251,13 +250,13 @@ This is the main candidate answer to "respect blockspace more aggressively befor
 
 ### Current Status
 
-Open. Footprint review should focus first on auction openings, auction bids, transfers, and owner-signed value publication.
+Open. Footprint review should focus first on auction openings, auction bids, transfers, and owner-signed destination publication.
 
 ## 12. Auction Dynamics
 
 ### Concern
 
-The current launch direction uses auctions for every valid name.
+The current allocation direction uses auctions for every valid name.
 Reviewers are now explicitly asking whether:
 
 - auction windows are long enough

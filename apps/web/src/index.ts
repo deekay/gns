@@ -154,7 +154,7 @@ const server = createServer(async (request, response) => {
     if (method !== "POST") {
       return writeJson(response, 405, {
         error: "method_not_allowed",
-        message: "Use POST for signed value record publishing."
+        message: "Use POST for signed destination publishing."
       });
     }
 
@@ -177,7 +177,7 @@ const server = createServer(async (request, response) => {
 
       return writeJson(response, 400, {
         error: "invalid_value_record",
-        message: error instanceof Error ? error.message : "Unable to publish the signed value record."
+        message: error instanceof Error ? error.message : "Unable to publish the signed destination record."
       });
     }
   }
@@ -186,7 +186,7 @@ const server = createServer(async (request, response) => {
     if (method !== "POST") {
       return writeJson(response, 405, {
         error: "method_not_allowed",
-        message: "Use POST for signed value-record fanout publishing."
+        message: "Use POST for signed destination fanout publishing."
       });
     }
 
@@ -205,7 +205,7 @@ const server = createServer(async (request, response) => {
       return writeJson(response, 400, {
         error: "invalid_value_record",
         message:
-          error instanceof Error ? error.message : "Unable to publish the signed value record to the configured resolver set."
+          error instanceof Error ? error.message : "Unable to publish the signed destination record to the configured resolver set."
       });
     }
   }
@@ -420,7 +420,7 @@ const server = createServer(async (request, response) => {
         message:
           error instanceof Error
             ? error.message
-            : "Unable to generate the value publishing client bundle."
+            : "Unable to generate the destination publishing client bundle."
       });
     }
   }
@@ -709,7 +709,7 @@ function sanitizePrivateAuctionSmokeStatus(payload: unknown): unknown {
   return {
     ...(sanitized as Record<string, unknown>),
     message:
-      "Private signet auction smoke covers opening bid, higher bid, settlement, value publication, transfer, and losing-bond violation checks."
+      "Private signet auction smoke covers opening bid, higher bid, settlement, destination publication, transfer, and losing-bond violation checks."
   };
 }
 
@@ -825,7 +825,7 @@ function getOptionalWebBodySats(
   }
 
   if (typeof value !== "string" && typeof value !== "number") {
-    throw new Error(`${key} must be a sats string or integer`);
+    throw new Error(`${key} must be an integer bitcoin amount`);
   }
 
   const normalized = String(value).trim();
@@ -840,7 +840,7 @@ function getOptionalWebBodySats(
     }
     return parsed;
   } catch {
-    throw new Error(`${key} must be a positive sats amount`);
+    throw new Error(`${key} must be a positive bitcoin amount`);
   }
 }
 
@@ -961,9 +961,9 @@ async function fundPrivateSignetAddress(
   }
 }
 
-function satsToBitcoinString(sats: bigint): string {
-  const whole = sats / 100_000_000n;
-  const fractional = (sats % 100_000_000n).toString().padStart(8, "0").replace(/0+$/g, "");
+function satsToBitcoinString(amount: bigint): string {
+  const whole = amount / 100_000_000n;
+  const fractional = (amount % 100_000_000n).toString().padStart(8, "0").replace(/0+$/g, "");
   return fractional === "" ? `${whole}.0` : `${whole}.${fractional}`;
 }
 

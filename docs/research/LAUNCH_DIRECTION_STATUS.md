@@ -1,9 +1,9 @@
-# ONT Launch Direction Status
+# ONT Allocation Direction Status
 
-This note captures the current launch direction in one place.
+This note captures the current allocation direction in one place.
 
 It is not a final protocol freeze. It is the current working posture for the
-launch allocation model.
+allocation model.
 
 Related notes:
 
@@ -13,14 +13,12 @@ Related notes:
 - [POST_QUANTUM_AND_SIGNATURE_AGILITY.md](./POST_QUANTUM_AND_SIGNATURE_AGILITY.md)
 - [REVIEW_FEEDBACK_BACKLOG.md](./REVIEW_FEEDBACK_BACKLOG.md)
 
-## Current Lead Direction
+## Current Direction
 
-The current lead launch direction is:
+The current allocation direction is:
 
-- one auction lane
-- no semantic reserved-name list
-- no pre-launch reservation system
-- all valid names can be opened at launch
+- public bonded auctions
+- all valid names can be opened with a valid bonded bid
 - shorter names start with higher objective opening floors
 
 The core rule is:
@@ -45,26 +43,18 @@ Universal auctions with length floors make the allocation rule neutral:
 
 ## What Feels Stable Now
 
-### 1. No Semantic Reserved List
+### 1. Public Auctions Are The Allocation Rule
 
-ONT should not launch with a protocol-critical list of reserved brands, public
-figures, companies, generic words, or public identities.
-
-Demand-modeling research can still be useful, but not as launch allocation
-machinery.
-
-### 2. Universal Auctions Are The Allocation Rule
-
-The clean launch story is:
+The clean allocation story is:
 
 > names are scarce, so names are auctioned.
 
 The same rule applies whether the name looks like a brand, a generic word, a
 personal handle, or a long-tail string.
 
-### 3. Short Names Use Objective Floors
+### 2. Short Names Use Objective Floors
 
-Keeping shorter names in the same auction lane avoids arbitrary launch
+Keeping shorter names in the public auction system avoids arbitrary launch
 boundaries.
 
 The scarcity pressure should come from an objective length-based opening floor.
@@ -73,7 +63,7 @@ Current lean:
 
 - every valid name can be opened by a valid bonded bid
 - shorter strings start with higher opening floors
-- no second wave and no semantic reserved list
+- one process for all names
 
 ### 4. Griefing Looks Less Central Than Before
 
@@ -94,7 +84,7 @@ exceptions.
 
 | Surface | Current lean |
 | --- | --- |
-| valid names | one auction lane |
+| valid names | public bonded auctions |
 | shorter strings | higher length-based opening floors |
 | allocation | open auction for every valid name |
 | opening experience | user opens with bonded bid; uncontested names should feel like simple auctions |
@@ -124,5 +114,5 @@ The model still leaves real protocol and product questions:
 ONT should use one market rule for names.
 
 Valid names are auctioned. Shorter names can start with higher objective
-opening floors. No semantic reserved list decides who deserves special
-treatment.
+opening floors. The auction discovers the final bond when more than one
+participant cares.

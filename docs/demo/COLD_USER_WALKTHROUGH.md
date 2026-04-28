@@ -76,7 +76,7 @@ Capture the first point where they hesitate on each of these:
 - requesting demo coins
 - understanding what to save
 - understanding which files belong in Sparrow
-- understanding auction bid, settlement, and post-auction lock timing
+- understanding auction bid, settlement, and bond maturity timing
 - finding the auction-acquired name afterward
 
 Also capture:

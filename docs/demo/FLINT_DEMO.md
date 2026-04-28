@@ -8,7 +8,7 @@ In one short walkthrough, the person should see all three layers:
 
 1. connect a wallet to the hosted private demo
 2. acquire a name through the auction flow
-3. publish key/value pairs for that name
+3. publish destination entries for that name
 
 ## Best Audience
 
@@ -28,7 +28,7 @@ Send exactly these two links first:
 
 If you want one sentence of framing, use:
 
-> ONT lets you acquire a human-readable name through auction, then point it at ordered key/value pairs you control.
+> ONT lets you acquire a name through auction, then point it at ordered destinations you control.
 
 ## What They Need
 
@@ -83,7 +83,7 @@ Success looks like:
 
 Open [values](https://opennametags.org/values) and use a live name from Explore, or replace the name with the one just acquired through auction.
 
-Load the acquired name, then publish a few key/value pairs such as:
+Load the acquired name, then publish a few destination entries such as:
 
 - `website` → `https://example.com`
 - `btc` → `bitcoin:bc1...`
@@ -91,7 +91,7 @@ Load the acquired name, then publish a few key/value pairs such as:
 
 Success looks like:
 
-- the name detail page shows the published key/value pairs
+- the name detail page shows the published destinations
 - sequence increments
 - future updates require the owner key, not the funding wallet key
 
@@ -109,7 +109,7 @@ Use this short answer:
 
 - hosted private demo with Sparrow: yes
 - auction bid flow: yes
-- browser value publishing: yes
+- browser destination publishing: yes
 - transfers: prototype
 - self-hosting: yes
 - mainnet-ready: not yet

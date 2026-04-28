@@ -15,7 +15,7 @@ Related notes:
 
 ## The Short Version
 
-ONT is an attempt to give Bitcoin human-readable payment handles people can
+ONT is an attempt to give Bitcoin payment names people can
 actually own.
 
 The first user problem is simple:
@@ -26,7 +26,7 @@ The first user problem is simple:
   signed by the current owner?
 
 The project is best framed today as **payment handles first, broader
-owner-signed key/value records later**.
+owner-signed destination records later**.
 
 ## What ONT Is Trying To Solve
 
@@ -37,7 +37,7 @@ operator between the payer and the recipient.
 ONT explores a different approach:
 
 - ownership is anchored to Bitcoin
-- the human-readable string is flat, like `satoshi`
+- the name string is flat, like `alice`
 - no registrar or platform gets to revoke it
 - what the name points to can change, while ownership remains public and
   auditable
@@ -60,7 +60,7 @@ Today, a name can conceptually point to:
 
 But the current story should start with:
 
-> use a human-readable payment handle to say who gets paid.
+> use a name you control to say who gets paid.
 
 ## Why Bonds Instead Of Fees
 
@@ -86,15 +86,15 @@ The intended moral intuition is:
 - the cost should come from capital commitment and time
 - not from perpetual rent paid to a gatekeeper
 
-## Launch Allocation
+## Auction Allocation
 
-The current launch direction is a **single auction lane**:
+The current allocation direction is public bonded auctions:
 
 - every valid name is allocated by auction
-- there is no semantic reserved-name list
+- allocation does not depend on brand, category, or editorial judgment
 - shorter names start with higher length-based opening floors
 
-That direction is motivated by launch fairness and simplicity:
+That direction is motivated by fairness and simplicity:
 
 - avoid asking ONT to decide which brands, people, companies, and words are
   special
@@ -105,8 +105,8 @@ That direction is motivated by launch fairness and simplicity:
   auction
 
 The length floor should be objective, auditable, and announced in advance.
-The current working shape keeps every valid name in the same auction flow while
-letting scarce short strings start at a higher bonded amount.
+The current working shape keeps every valid name in the public auction mechanism
+while letting scarce short strings start at a higher bonded amount.
 
 ## Lifecycle
 
@@ -117,7 +117,7 @@ At a high level, ONT now treats the auction bid as the acquisition event:
 3. settlement rules choose the winning bid
 4. the current owner can later transfer the name or publish signed records
 
-Transfers and value updates are separate:
+Transfers and destination updates are separate:
 
 - Bitcoin transaction keys fund and sign the Bitcoin transaction flow
 - owner keys control later ONT updates and transfers
@@ -131,8 +131,8 @@ What is real today:
 - resolver and website
 - auction simulation and bid-package tooling
 - transfer tooling
-- off-chain signed value-record flow
-- private-signet demo paths for auction, transfer, and value-record smoke tests
+- off-chain signed destination flow
+- private-signet demo paths for auction, transfer, and destination smoke tests
 
 Public product surfaces and tests should stay auction-opening-first.
 
@@ -171,6 +171,6 @@ The project is best understood as:
 - a serious Bitcoin-native naming project
 - with a payment-handle first use case
 - a real working prototype already on disk
-- an increasingly coherent universal-auction launch design
+- an increasingly coherent public auction allocation design
 - and a deliberate effort to be thoughtful about allocation, validation, and
   reviewer trust before asking for broad buy-in

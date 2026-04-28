@@ -83,7 +83,7 @@ export function createAuctionBidPayload(input: {
   }
 
   if (input.bidAmountSats < 0n || input.bidAmountSats > 0xffff_ffff_ffff_ffffn) {
-    throw new Error("bidAmountSats must fit in an unsigned 64-bit integer");
+    throw new Error("bid amount must fit in an unsigned 64-bit integer");
   }
 
   return {

@@ -485,7 +485,7 @@ function deriveAuctionBidPreview(input: {
     return {
       previewStatus: "below_minimum",
       previewSummary:
-        `Bid is below the current minimum valid bid of ${requiredMinimumBidSats.toString()} sats for this observed state.`,
+        `Bid is below the current minimum valid bid of ${requiredMinimumBidSats.toString()} for this observed state.`,
       previewRequiredMinimumBidSats: requiredMinimumBidSats,
       wouldBecomeLeader: false,
       wouldExtendSoftClose: false

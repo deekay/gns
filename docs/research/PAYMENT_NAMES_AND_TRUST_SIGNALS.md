@@ -123,7 +123,7 @@ Things that belong in ONT itself:
 - chain-derived ownership
 - transfer history
 - owner-signed payment records
-- typed value records or bundles that tell clients what rails or endpoints are
+- typed destination records or bundles that tell clients what rails or endpoints are
   available
 - sequence and freshness semantics for those owner-signed records
 

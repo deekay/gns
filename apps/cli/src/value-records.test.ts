@@ -8,13 +8,13 @@ import {
 
 const ORIGINAL_FETCH = globalThis.fetch;
 
-describe("value record helpers", () => {
+describe("destination record helpers", () => {
   afterEach(() => {
     globalThis.fetch = ORIGINAL_FETCH;
     vi.restoreAllMocks();
   });
 
-  it("creates signed value records from UTF-8 payloads", () => {
+  it("creates signed destination records from UTF-8 payloads", () => {
     const record = createSignedValueRecord({
       name: "Alice",
       ownerPrivateKeyHex: "0e".repeat(32),
@@ -31,7 +31,7 @@ describe("value record helpers", () => {
     expect(record.signature).toHaveLength(128);
   });
 
-  it("publishes signed value records to the resolver", async () => {
+  it("publishes signed destination records to the resolver", async () => {
     const record = createSignedValueRecord({
       name: "bob",
       ownerPrivateKeyHex: "0f".repeat(32),
@@ -71,7 +71,7 @@ describe("value record helpers", () => {
     });
   });
 
-  it("publishes the same signed value record to multiple resolvers", async () => {
+  it("publishes the same signed destination record to multiple resolvers", async () => {
     const record = createSignedValueRecord({
       name: "carol",
       ownerPrivateKeyHex: "10".repeat(32),

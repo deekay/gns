@@ -23,7 +23,7 @@ The project should be read as:
 
 - payment handles first
 - owner-signed payment records second
-- broader key/value publishing later if useful clients support it
+- broader key/destination publishing later if useful clients support it
 
 ## Core Design
 
@@ -43,7 +43,7 @@ Names use bonded bitcoin rather than annual rent:
 
 ## Current Lead Launch Direction
 
-The current lead launch direction is **universal auctions**.
+The current allocation direction is **universal auctions**.
 
 The rule is:
 
@@ -52,9 +52,9 @@ The rule is:
 Launch shape:
 
 - all valid names can be opened at launch
-- shorter names stay in the same auction lane with higher length-based opening floors
-- there is no semantic reserved-word list
-- there is no pre-launch reservation system
+- shorter names stay in the public auction system with higher length-based opening floors
+- there is no semantic manual allocation list
+- there is public auction openings
 - no list of brands, people, companies, or generic words receives special
   protocol treatment
 
@@ -70,7 +70,7 @@ This is already more than a whitepaper.
 Implemented and validated today:
 
 - resolver and website
-- owner-signed value records
+- owner-signed destination records
 - transfer prototype
 - auction stack with real bid transactions, chain-derived state,
   winner materialization into owned names, regtest coverage, and hosted
@@ -79,7 +79,7 @@ Implemented and validated today:
 Value records are signed, sequence-numbered, and predecessor-linked. The
 current prototype uses a Keybase-style predecessor hash chain scoped to the
 current ownership interval, so resolvers can prove that an owner changed a
-record in order without putting routine value updates on Bitcoin.
+record in order without putting routine destination updates on Bitcoin.
 
 The current live demo environments are:
 

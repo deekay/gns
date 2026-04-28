@@ -75,11 +75,11 @@ It covers:
 - soft-close extension
 - settlement into winner / loser bond states
 - winner materialization into a live owned name
-- winner value publication after settlement
+- winner destination publication after settlement
 - mature transfer from an auction-owned name
-- new-owner value publication after that transfer
+- new-owner destination publication after that transfer
 - loser release and allowed spend
-- winner lock until release and allowed spend
+- winner bond maturity until release and allowed spend
 
 That means we are not relying only on simulator logic for the important auction
 state-machine transitions.
@@ -94,9 +94,9 @@ It currently proves:
 - one higher `AUCTION_BID`
 - one intentionally early losing-bond spend
 - settlement into a real owned name
-- winner value publication
+- winner destination publication
 - post-release transfer
-- recipient value publication
+- recipient destination publication
 
 This is the strongest live demo evidence we currently have.
 
@@ -179,9 +179,9 @@ It gives a real observed end-to-end lifecycle record with:
 - early losing-bond spend
 - settled state
 - winner-owned name
-- winner value record
+- winner destination record
 - post-release transfer
-- post-transfer value record
+- post-transfer destination record
 
 So even if the parked entries drift and need refreshing, the smoke summary still
 proves the key live transitions.

@@ -1082,7 +1082,7 @@ function parseBitcoinTransactionOutputFixture(input: unknown): BitcoinTransactio
     typeof valueSats !== "string" &&
     (typeof valueSats !== "number" || !Number.isInteger(valueSats))
   ) {
-    throw new Error("transaction output fixture valueSats must be an integer-like string or integer");
+    throw new Error("transaction output fixture amount must be an integer-like string or integer");
   }
 
   if (dataHex !== undefined && typeof dataHex !== "string") {

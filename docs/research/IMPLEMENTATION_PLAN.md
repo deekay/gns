@@ -13,7 +13,7 @@ to:
 - gather feedback from Bitcoin-focused reviewers
 - tighten the spec before any canonical mainnet launch
 
-For the current launch model, see
+For the current allocation model, see
 [UNIVERSAL_AUCTION_LAUNCH_MODEL.md](./UNIVERSAL_AUCTION_LAUNCH_MODEL.md).
 
 ## Build Goal
@@ -31,7 +31,7 @@ The signet prototype should demonstrate:
 - auction-based name allocation
 - bond continuity tracking
 - ownership transfer
-- off-chain value publishing and lookup
+- off-chain destination publishing and lookup
 - independent reproducibility from Bitcoin data
 
 ## Working Assumptions
@@ -40,9 +40,9 @@ These assumptions are strong enough to build against:
 
 - names are `[a-z0-9]{1,32}` and canonicalized to lowercase
 - all valid names can be opened at launch
-- shorter names stay in the same auction lane with higher length-based opening floors
-- all valid names use the same auction lane
-- there is no reserved-word list and no pre-launch reservation system
+- shorter names stay in the public auction system with higher length-based opening floors
+- all valid names use the public auction system
+- allocation starts with bonded public auctions
 - values are off-chain by default
 - pre-release transfer must preserve bond continuity
 - same-block competing bids are tie-broken by deterministic transaction order
@@ -88,7 +88,7 @@ A read-only API layered on indexed state.
 Responsibilities:
 
 - resolve names to current state
-- return latest valid off-chain value record
+- return latest valid off-chain destination record
 - return provenance for events and names
 - return auction opening and bid state
 
@@ -98,7 +98,7 @@ A local signer-oriented tool that:
 
 - derives or imports owner keys
 - prepares auction bid packages and transfer packages
-- signs off-chain value records
+- signs off-chain destination records
 - validates bond continuity before signing
 - broadcasts transactions when configured to do so
 
@@ -109,7 +109,7 @@ A website that:
 - queries the resolver
 - shows auction state, ownership, and provenance
 - prepares unsigned or partially prepared auction/transfer flows
-- helps users publish off-chain value records
+- helps users publish off-chain destination records
 
 The website should not be the only execution path. Every meaningful action
 should also be possible with the CLI.
@@ -173,7 +173,7 @@ Deliverables:
 Exit criteria:
 
 - unit tests cover bid acceptance, low-bid rejection, soft close, settlement,
-  transfer, value publishing, and invalidation cases
+  transfer, destination publishing, and invalidation cases
 
 ### Phase 2: Regtest Prototype
 
@@ -222,7 +222,7 @@ Launch posture:
 - mainnet will be scheduled only after signet stability and public review
 - a future Bitcoin block height will be announced in advance
 - the protocol remains committed to no reserved names, no founder allocation,
-  no pre-launch reservations, and no identity-based quotas
+  public auction openings, and no identity-based quotas
 
 ### Phase 5: Ecosystem And Wallet Support
 

@@ -103,10 +103,10 @@ settlement itself.
 In the controlled-chain regtest suite, we prove that:
 
 - a settled winning bid materializes into a live owned name
-- the winning owner can publish a value record after settlement
+- the winning owner can publish a destination record after settlement
 - once the settlement lock expires, that auction-owned name can move through a
   mature transfer
-- the new owner can then publish the next value record sequence successfully
+- the new owner can then publish the next destination record sequence successfully
 
 That gives us a stronger claim than "the winner appears in a feed." The
 auction-owned name is now exercised through later registry lifecycle steps too.

@@ -9,7 +9,7 @@ The current code uses one simple document table:
 That table stores:
 
 - resolver/indexer snapshot state
-- value-record store state
+- destination-record store state
 
 It does **not** yet break state into many relational tables. This is intentional for the current durability phase.
 

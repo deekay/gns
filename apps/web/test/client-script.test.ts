@@ -23,11 +23,11 @@ describe("renderClientScript", () => {
     expect(script).not.toContain("Late Bid Outcome");
     expect(script).toContain("Winner handoff");
     expect(script).toContain("Workflow proved");
-    expect(script).toContain("Winner value sequence");
+    expect(script).toContain("Winner destination sequence");
     expect(script).toContain("Winner bond release spend");
     expect(script).toContain("Post-release transfer Txid");
     expect(script).toContain("Transferred owner");
-    expect(script).toContain("Transferred value sequence");
+    expect(script).toContain("Transferred destination sequence");
     expect(script).toContain("Open settled name");
     expect(script).toContain("renderPrivateAuctionWorkflowSummary");
     expect(script).toContain("renderPrivateAuctionWinnerHandoffCopy");
@@ -132,8 +132,8 @@ describe("renderClientScript", () => {
     expect(script).toContain("Bond spend");
     expect(script).toContain("After Settlement");
     expect(script).toContain("Open live name detail page");
-    expect(script).toContain("Publish or update value");
-    expect(script).toContain("Prepare transfer (lock active)");
+    expect(script).toContain("Publish or update destinations");
+    expect(script).toContain("Prepare transfer (bond maturing)");
     expect(script).toContain("renderSettledAuctionHandoff");
     expect(script).toContain("shouldLoadAuctionRulesOrReference");
   });

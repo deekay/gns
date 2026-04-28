@@ -1,21 +1,18 @@
-# Universal Auction Launch Model
+# Public Auction Allocation Model
 
-This is the current lead launch direction for ONT:
+This is the current allocation direction for ONT:
 
-> every valid ONT name is allocated by auction.
+> every valid ONT name is allocated by public bonded auction.
 
-This is a working launch model, not a final protocol freeze. It is now the
-source-of-truth framing for launch docs and website copy.
+This is a working allocation model, not a final protocol freeze. It is now the
+source-of-truth framing for public docs and website copy.
 
 ## Core Decision
 
-The launch model should be:
+The allocation model should be:
 
-- one auction lane
+- public bonded auctions
 - length-based opening floors for shorter names
-- no semantic reserved-name list
-- no pre-launch reservation system
-- no editorial list of brands, public figures, companies, or generic words
 
 The long-tail experience is handled by the fact that most names will not attract
 serious competing bids.
@@ -50,7 +47,7 @@ The user-facing version can still feel simple:
 
 ## Length-Based Opening Floors
 
-Every valid name should use the same auction lane at launch.
+Every valid name should use the public auction system.
 
 Shorter names can still start higher through the objective bond curve.
 
@@ -69,7 +66,7 @@ Why:
   floor differs
 
 The exact floor curve remains tunable. The principle is that length can set an
-auditable opening floor without creating a launch boundary or second wave.
+auditable opening floor without creating a special release boundary.
 
 ## Auction Timing Defaults
 
@@ -79,7 +76,7 @@ The current preferred timing shape is:
 - soft-close extension: about `24 hours`
 - max extension cap: still to be implemented / decided
 - initial launch period: may use longer windows if awareness is uneven
-- all valid names use the same auction mechanics unless announced otherwise
+- all valid names use the public auction mechanics
 
 The prototype currently has older simulator defaults in some places. Those
 should be migrated toward this model rather than treated as final.
@@ -102,7 +99,7 @@ The current direction:
 - normal Bitcoin transaction fees still apply
 - the protocol does not sell names and does not collect rent
 
-## Research Notes Outside The Launch Path
+## Research Notes Outside The Allocation Path
 
 Demand-list and salience research is not launch machinery.
 
@@ -113,11 +110,11 @@ It may still be useful as research:
 - to generate examples for reviewers
 - to model speculative behavior
 
-It should not be used as a protocol-critical launch list.
+It should not be used as a protocol-critical allocation list.
 
 ## What Still Needs Work
 
-The remaining launch-design questions are now narrower:
+The remaining allocation-design questions are now narrower:
 
 - exact auction window
 - exact soft-close increment
@@ -130,5 +127,5 @@ The remaining launch-design questions are now narrower:
 ## Canonical One-Sentence Summary
 
 ONT uses one market rule for names: valid names are auctioned, shorter names
-can start with higher objective opening floors, and no semantic reserved list
-decides who deserves special treatment.
+can start with higher objective opening floors, and the auction discovers the
+final bond when more than one participant cares.

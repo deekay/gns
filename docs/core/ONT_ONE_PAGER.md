@@ -1,10 +1,10 @@
 # Open Name Tags (ONT) One-Pager
 
-Open Name Tags is a Bitcoin-anchored naming system for human-readable names you can actually own.
+Open Name Tags is a Bitcoin-anchored naming system for names you can actually own.
 
 An ONT name is a flat label like `alice`, `bob`, or a brand name. Ownership is public, auditable, and derived from Bitcoin. The owner can publish signed off-chain records that say where the name points: payment destinations, websites, profiles, messaging endpoints, or other application-specific records.
 
-The goal is simple: make names human-readable without asking a company, registry, resolver, or protocol operator to be the trusted source of truth.
+The goal is simple: make names usable by humans without asking a company, registry, resolver, or protocol operator to be the trusted source of truth.
 
 ## The Core Model
 
@@ -25,7 +25,7 @@ The overview flow is:
 alice
   -> Bitcoin anchor
      owner key: 8f3c...12ab
-     bond: 6,250,000 sats
+     bond: ₿6,250,000 (0.0625 BTC)
 
   -> signed off-chain bundle
      btc: bc1qxy...0wlh
@@ -48,23 +48,23 @@ A winning bidder does not pay ONT, burn bitcoin, or rent the name annually. The 
 
 That makes name allocation costly enough to discourage careless hoarding, while avoiding the usual model where a registry sells or rents names as a central issuer.
 
-Example opening-bond floors, not final launch parameters:
+Example opening-bond floors, not final parameters:
 
 | Name length | Auction treatment | Example opening floor |
 | --- | --- | --- |
-| `1` | same auction lane | `100,000,000 sats (1 BTC)` |
-| `2` | same auction lane | `50,000,000 sats (0.5 BTC)` |
-| `3` | same auction lane | `25,000,000 sats (0.25 BTC)` |
-| `4` | same auction lane | `12,500,000 sats (0.125 BTC)` |
-| `5` | same auction lane | `6,250,000 sats (0.0625 BTC)` |
-| `6` | same auction lane | `3,125,000 sats (0.03125 BTC)` |
-| `12+` | same auction lane | `50,000 sats (0.0005 BTC) floor` |
+| `1` | public auction | `₿100,000,000 (1 BTC)` |
+| `2` | public auction | `₿50,000,000 (0.5 BTC)` |
+| `3` | public auction | `₿25,000,000 (0.25 BTC)` |
+| `4` | public auction | `₿12,500,000 (0.125 BTC)` |
+| `5` | public auction | `₿6,250,000 (0.0625 BTC)` |
+| `6` | public auction | `₿3,125,000 (0.03125 BTC)` |
+| `12+` | public auction | `₿50,000 (0.0005 BTC) floor` |
 
 The floor starts the auction. The auction can clear higher when multiple bidders care about the same name.
 
-## Launch Auctions
+## Public Auctions
 
-At launch, valid names open by auction.
+Any valid name can be opened by auction.
 
 - A participant opens a public auction for a name.
 - If nobody else bids, the opener can win at the opening floor.
@@ -79,13 +79,13 @@ For most long-tail names, the experience can still be simple. Start an auction. 
 
 ## Length Floors
 
-Every valid name can enter the same auction flow.
+Every valid name can enter the public auction flow.
 
 Very short names are structurally scarce, so they start with higher objective opening floors. The floor comes from length, not from deciding whether a person, brand, company, or word deserves special treatment.
 
-Length floors make early bulk capture of the scarcest names materially expensive, while keeping every valid name in the same auction flow.
+Length floors make early bulk capture of the scarcest names materially expensive, while keeping every valid name in the same public auction mechanism.
 
-The exact floor curve can still be tuned, but the launch rule stays simple: one auction lane for every valid name.
+The exact floor curve can still be tuned, but the allocation rule stays simple: public bonded auctions for every valid name.
 
 ## What Ownership Lets You Do
 
@@ -115,10 +115,10 @@ ONT is intentionally narrow at the base layer: Bitcoin anchors ownership, and ow
 
 ONT is an active demo/prototype, not a mainnet-ready production system.
 
-Working pieces include private signet demos, auction state, bid packages, value publishing, resolver tooling, and transfer handoffs. Remaining work includes finalizing auction parameters, settlement duration, wallet UX, and outside review.
+Working pieces include private signet demos, auction state, bid packages, destination publishing, resolver tooling, and transfer handoffs. Remaining work includes finalizing auction parameters, settlement duration, wallet UX, and outside review.
 
 The product surface is [opennametags.org](https://opennametags.org). The public repository is [github.com/deekay/ont](https://github.com/deekay/ont).
 
 ## One-Sentence Summary
 
-ONT uses Bitcoin to anchor ownership of human-readable names, owner-signed off-chain records to keep destinations updateable, bonded bitcoin to create cost without rent, and public auctions to allocate scarce names.
+ONT uses Bitcoin to anchor ownership of names, owner-signed off-chain records to keep destinations updateable, bonded bitcoin to create cost without rent, and public auctions to allocate scarce names.

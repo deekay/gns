@@ -7,8 +7,8 @@ import {
   listProfileBundleEntries
 } from "../src/value-bundle.js";
 
-describe("key/value bundle helpers", () => {
-  it("encodes and decodes a multi-destination key/value bundle", () => {
+describe("destination bundle helpers", () => {
+  it("encodes and decodes a multi-destination bundle", () => {
     const payloadHex = encodeProfileBundlePayloadHex({
       entries: [
         { key: "website", value: "https://example.com" },
@@ -32,7 +32,7 @@ describe("key/value bundle helpers", () => {
     });
   });
 
-  it("describes the destinations present in a key/value bundle", () => {
+  it("describes the destinations present in a destination bundle", () => {
     const payloadHex = encodeProfileBundlePayloadHex({
       entries: [
         { key: "website", value: "https://example.com" },
@@ -48,12 +48,12 @@ describe("key/value bundle helpers", () => {
       { key: "payment", value: "bitcoin:bc1qexample" },
       { key: "profile", value: "https://social.example/alice" }
     ]);
-    expect(describeProfileBundle(decoded!)).toBe("Key/value bundle · website, payment, profile");
+    expect(describeProfileBundle(decoded!)).toBe("Destination bundle · website, payment, profile");
   });
 
-  it("requires at least one key/value entry", () => {
+  it("requires at least one destination entry", () => {
     expect(() => encodeProfileBundlePayloadHex({ entries: [] })).toThrow(
-      "Add at least one key/value entry to the bundle."
+      "Add at least one destination entry to the bundle."
     );
   });
 
@@ -92,7 +92,7 @@ describe("key/value bundle helpers", () => {
         entries: [{ key: "profile", value: "" }]
       })
     ).toThrow(
-      "Key/value bundle entry 1 needs both a key and a value."
+      "Destination entry 1 needs both a label and a destination."
     );
   });
 });

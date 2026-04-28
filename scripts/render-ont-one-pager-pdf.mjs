@@ -230,7 +230,7 @@ function renderHeader() {
   ops += rect(24, 454, page.width - 48, 134, [0.97, 0.90, 0.79]);
   ops += text(48, 552, "OPEN NAME TAGS", "F2", 7.4, colors.clay);
   ops += text(48, 525, "Open Name Tags (ONT)", "F3", 27, colors.ink);
-  ops += text(48, 501, "Human-readable names you can actually own", "F3", 16.2, colors.ink);
+  ops += text(48, 501, "Names you can actually own", "F3", 16.2, colors.ink);
   ops += textBlock({
     x: 48,
     y: 481,
@@ -279,7 +279,7 @@ function renderAliceFlow() {
       x,
       title: "Bitcoin anchor",
       meta: "alice",
-      body: ["owner key: 8f3c...12ab", "bond: 6,250,000 sats"]
+      body: ["owner key: 8f3c...12ab", "bond: ₿6,250,000 (0.0625 BTC)"]
     },
     {
       x: x + width + gap,
@@ -354,20 +354,20 @@ function renderBondCard() {
   const tableWidth = 140;
   const rowH = 17.2;
   const rows = [
-    ["1", "same", "1"],
-    ["2", "same", "0.5"],
-    ["3", "same", "0.25"],
-    ["4", "same", "0.125"],
-    ["5", "same", "0.0625"],
-    ["6", "same", "0.03125"],
-    ["12+", "same", "0.0005 floor"]
+    ["1", "public", "1"],
+    ["2", "public", "0.5"],
+    ["3", "public", "0.25"],
+    ["4", "public", "0.125"],
+    ["5", "public", "0.0625"],
+    ["6", "public", "0.03125"],
+    ["12+", "public", "0.0005 floor"]
   ];
 
   ops += text(tableX, y + height - 29, "Example opening floors", "F2", 7.6, colors.clay);
   ops += text(tableX, y + height - 43, "Illustrative; not final.", "F1", 6.7, colors.muted);
   ops += rect(tableX, tableY + 121, tableWidth, 18, [0.965, 0.90, 0.80]);
   ops += text(tableX + 8, tableY + 128, "Len", "F2", 6.5, colors.clay);
-  ops += text(tableX + 39, tableY + 128, "Lane", "F2", 6.5, colors.clay);
+  ops += text(tableX + 39, tableY + 128, "Path", "F2", 6.5, colors.clay);
   ops += text(tableX + 84, tableY + 128, "Floor", "F2", 6.5, colors.clay);
 
   let rowY = tableY + 111;
@@ -389,18 +389,18 @@ function renderLaunchCards() {
   let ops = "";
   ops += card(x, y, width, height, colors.sheet, [0.88, 0.80, 0.70]);
   ops += text(x + 16, y + height - 24, "Name Auctions", "F3", 16.0, colors.ink);
-  ops += text(x + 16, y + height - 40, "ONE LANE FOR VALID NAMES", "F2", 6.5, colors.clay);
+  ops += text(x + 16, y + height - 40, "PUBLIC BONDED AUCTIONS", "F2", 6.5, colors.clay);
   ops += textBlock({
     x: x + 16,
     y: y + height - 59,
     width: 162,
-    value: "Valid names open by auction at launch. One bidder can win at the floor; competing bidders discover the final bond.",
+    value: "Any valid name can be opened by auction. One bidder can win at the floor; competing bidders discover the final bond.",
     size: 7.35,
     lineHeight: 9.2,
     color: colors.muted
   }).ops;
 
-  const launchItems = [
+  const auctionItems = [
     "public auction window",
     "bids discover final bond",
     "winner settles ownership"
@@ -409,7 +409,7 @@ function renderLaunchCards() {
     x: x + 198,
     y: y + height - 50,
     width: 126,
-    items: launchItems,
+    items: auctionItems,
     size: 6.9,
     lineHeight: 8.6,
     itemGap: 3.0
@@ -431,7 +431,7 @@ function renderLengthFloorCard() {
     y: y + height - 61,
     width: 152,
     items: [
-      "same auction mechanics",
+      "public auction mechanics",
       "objective length curve",
       "expensive early sweeps"
     ],
@@ -444,7 +444,7 @@ function renderLengthFloorCard() {
     x: x + 204,
     y: y + height - 32,
     width: 120,
-    value: "Length floors make early bulk capture expensive without creating a second auction lane.",
+    value: "Length floors make early bulk capture expensive while keeping allocation simple.",
     size: 6.75,
     lineHeight: 8.2,
     color: colors.muted
@@ -455,7 +455,7 @@ function renderLengthFloorCard() {
 function renderFooter() {
   let ops = "";
   ops += text(48, 34, "opennametags.org", "F2", 6.8, colors.clay);
-  ops += text(650, 34, "prototype launch brief", "F1", 6.6, colors.muted);
+  ops += text(650, 34, "prototype brief", "F1", 6.6, colors.muted);
   return ops;
 }
 

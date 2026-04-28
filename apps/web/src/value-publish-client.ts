@@ -776,7 +776,7 @@ function updateValueEditorState(): void {
 
   if (mode === "bundle") {
     elements.payloadHint.textContent =
-      "List as many ordered key/value pairs as you want here. Keys are app-defined and repeatable.";
+      "List as many ordered destination entries as you want here. Labels are app-defined and repeatable.";
     return;
   }
 
@@ -1203,7 +1203,7 @@ function formatValueType(valueType: number, payloadHex = ""): string {
       return "0x02 (https target)";
     case 255:
       return decodeProfileBundlePayloadHex(payloadHex) !== null
-        ? "0xff (key/value pairs)"
+        ? "0xff (destination bundle)"
         : "0xff (raw/app-defined)";
     default:
       return `0x${Number(valueType).toString(16).padStart(2, "0")}`;
@@ -1220,13 +1220,13 @@ function renderBundleValue(value: string): string {
 }
 
 function formatSats(value: string | number | bigint): string {
-  const sats = BigInt(value);
-  return `${sats.toLocaleString("en-US")} sats (${formatBtcDecimal(sats)} BTC)`;
+  const amount = BigInt(value);
+  return `₿${amount.toLocaleString("en-US")} (${formatBtcDecimal(amount)} BTC)`;
 }
 
-function formatBtcDecimal(sats: bigint): string {
-  const whole = sats / 100_000_000n;
-  const fractional = (sats % 100_000_000n).toString().padStart(8, "0").replace(/0+$/g, "");
+function formatBtcDecimal(amount: bigint): string {
+  const whole = amount / 100_000_000n;
+  const fractional = (amount % 100_000_000n).toString().padStart(8, "0").replace(/0+$/g, "");
   return fractional === "" ? whole.toString() : `${whole}.${fractional}`;
 }
 

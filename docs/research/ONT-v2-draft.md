@@ -1,20 +1,20 @@
 # Open Name Tags (ONT): Protocol Specification Draft (v2)
 
-This document defines the ONT protocol behind Open Name Tags: a Bitcoin-anchored ownership and state log for human-readable names.
+This document defines the ONT protocol behind Open Name Tags: a Bitcoin-anchored ownership and state log for names people can use directly.
 
 ## 1. Name Syntax and Normalization
 
 - **Charset:** `[a-z0-9]` (ASCII lowercase letters and digits).
 - **Length:** 1 to 32 characters.
 - **Normalization:** Case-insensitive input; canonical form is lowercase.
-- **No Suffixes:** Names are standalone strings (e.g., `satoshi`).
+- **No Suffixes:** Names are standalone strings (e.g., `alice`).
 
 ## 2. Ownership Model
 
 ONT uses **Pubkey-Controlled Ownership**. A name is owned by a specific public key. Valid state transitions are auction acquisitions and transfers.
 
 - **Ownership Truth:** The latest valid signed state transition recognized by the ONT indexer from the Bitcoin blockchain.
-- **Separation of Concerns:** Bitcoin records ownership events; application-specific "Values" (e.g., Lightning addresses) are off-chain and owner-signed.
+- **Separation of Concerns:** Bitcoin records ownership events; application-specific destination records (e.g., Lightning addresses) are off-chain and owner-signed.
 
 ## 3. The Name-Bond Model
 
@@ -22,7 +22,7 @@ To acquire or maintain an immature name, a participant must lock bitcoin as a bo
 
 ### 3.1 Bond Curve
 Bond amounts are length-based and follow a halving curve:
-`bond_sats(length) = max(50,000, 100,000,000 >> (length - 1))`
+`bond_amount(length) = max(50,000, 100,000,000 >> (length - 1))`
 
 ### 3.2 Maturity Schedule
 Names are "immature" for a set period, after which bond continuity is no longer required.
@@ -39,7 +39,7 @@ ONT v1 standardizes auction and transfer events via `OP_RETURN`.
 
 ### 4.1 AUCTION_BID
 Publishes a bonded bid against a specific name and auction-state commitment.
-- **Payload:** `magic(3) | version(1) | type(1) | flags(1) | bond_vout(1) | lock_blocks(4) | bid_sats(8) | owner_pubkey(32) | lot_commitment(16) | auction_commitment(32) | bidder_commitment(16)`
+- **Payload:** `magic(3) | version(1) | type(1) | flags(1) | bond_vout(1) | lock_blocks(4) | bid_amount(8) | owner_pubkey(32) | lot_commitment(16) | auction_commitment(32) | bidder_commitment(16)`
 - **Rule:** Must be in the same transaction as the bid bond UTXO.
 
 ### 4.2 TRANSFER
@@ -47,9 +47,9 @@ Atomic ownership and bond transition.
 - **Payload:** `magic(3) | version(1) | type(1) | body(...) | signature(64)`
 - **Rule:** For unsettled names, the transfer transaction must spend the old bond and create a valid successor bond.
 
-## 5. Off-Chain Values
+## 5. Off-Chain Destinations
 
-Name "Values" (what the name points to) are off-chain by default.
+Name destinations (what the name points to) are off-chain by default.
 - **Envelope:** `value_type(1) | payload_length(2) | payload(variable)`
 - **Authentication:** Must be signed by the current ONT owner key.
 - **Sequence:** Highest monotonic sequence number wins.
@@ -58,11 +58,11 @@ Name "Values" (what the name points to) are off-chain by default.
 
 ### 6.1 Two-Layer Trust Model
 
-ONT ownership state and off-chain value records have different availability guarantees by design.
+ONT ownership state and off-chain destination records have different availability guarantees by design.
 
 **Ownership state** is fully derivable from Bitcoin. Any operator with access to chain data from the launch height can reconstruct the complete ONT name registry without any resolver. No resolver availability assumption is required for ownership verification.
 
-**Off-chain value records** are signed by the current owner key and served by resolvers. Their authenticity is verifiable: records must match the current owner, current ownership interval, exact next sequence, and previous record hash. Availability still depends on at least one resolver retaining a copy.
+**Off-chain destination records** are signed by the current owner key and served by resolvers. Their authenticity is verifiable: records must match the current owner, current ownership interval, exact next sequence, and previous record hash. Availability still depends on at least one resolver retaining a copy.
 
 ### 6.2 Chain-Derived Completeness
 
@@ -79,12 +79,12 @@ The reference implementation supports a layered discovery model:
 
 ### 6.4 Value Record Availability
 
-Owners have several options for ensuring their value records remain available:
+Owners have several options for ensuring their destination records remain available:
 
 - **Self-hosted with resolver cache:** Owner publishes the signed record at a self-controlled URL and registers a fetch hint with resolvers. The record survives any individual resolver failure.
 - **History-aware value chains:** Value records include a signed predecessor hash and an ownership-interval reference, so clients can verify update order rather than trusting a resolver's latest-value summary.
-- **Multi-resolver replication:** Any resolver may store and serve value records for any name. Clients compare the latest valid chain heads across queried resolvers.
-- **External transport:** Since value records are self-contained signed envelopes, they may be published over any authenticated transport. No specific transport is mandated by the protocol.
+- **Multi-resolver replication:** Any resolver may store and serve destination records for any name. Clients compare the latest valid chain heads across queried resolvers.
+- **External transport:** Since destination records are self-contained signed envelopes, they may be published over any authenticated transport. No specific transport is mandated by the protocol.
 
 ## 7. Fairness and Immutability
 

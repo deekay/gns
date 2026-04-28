@@ -61,7 +61,7 @@ describe("resolver actions", () => {
       new Response(
         JSON.stringify({
           error: "value_not_found",
-          message: "No value record yet."
+          message: "No destination record yet."
         }),
         {
           status: 404,
@@ -80,7 +80,7 @@ describe("resolver actions", () => {
     ).rejects.toMatchObject({
       status: 404,
       code: "value_not_found",
-      message: "No value record yet."
+      message: "No destination record yet."
     } satisfies Partial<ResolverHttpError>);
   });
 
@@ -304,7 +304,7 @@ describe("resolver actions", () => {
       return new Response(
         JSON.stringify({
           error: "value_not_found",
-          message: "No value record yet."
+          message: "No destination record yet."
         }),
         {
           status: 404,

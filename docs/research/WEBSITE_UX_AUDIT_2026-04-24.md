@@ -28,7 +28,7 @@ Advanced protocol details should stay available, but they should not be visually
 
 What works:
 
-- The homepage now has a clear thesis: human-readable names you can actually own.
+- The homepage now has a clear thesis: names people can use you can actually own.
 - The "two ideas" section is doing the right job: scarcity without rent, and ownership on-chain with records off-chain.
 - The three path cards are useful and keep the home page from becoming a full protocol essay.
 

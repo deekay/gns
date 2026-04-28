@@ -81,7 +81,7 @@ Rules:
 
 Notes:
 - The successor bond amount may be topped up with extra inputs.
-- The protocol cares about successor bond continuity, not sat-level continuity of the exact prior bond amount.
+- The protocol cares about successor bond continuity, not exact-unit continuity of the exact prior bond amount.
 - The successor bond may be funded by the seller, the recipient, or any combination of transaction inputs, as long as the old bond outpoint is spent and the required new bond output is created in the same transaction.
 - Fees should be funded separately so the bonded amount is not accidentally reduced below threshold.
 
@@ -97,12 +97,12 @@ Initial launch allocation uses auctions.
 
 Purpose:
 - Let markets price scarce names.
-- Avoid maintaining a subjective reserved-name list.
+- Avoid subjective brand, category, or editorial judgments in allocation.
 - Keep long-tail names reachable without special editorial decisions.
 
 8. Length-based opening floors
 
-All valid names use the same auction lane. Shorter names can still require
+All valid names use public bonded auctions. Shorter names can still require
 higher opening floors through the objective length-based bond curve.
 
 9. Maturity anchor
@@ -124,7 +124,7 @@ Bond amounts follow a Bitcoin-like halving curve with a minimum floor.
 
 Formula under consideration:
 
-`bond_sats(length) = max(floor_sats, base_sats >> (length - 1))`
+`bond_amount(length) = max(floor_amount, base_amount >> (length - 1))`
 
 12. Maturity duration binding
 
@@ -192,58 +192,58 @@ Rules:
 - Allowed alphabet size is 36.
 - No punctuation, separators, whitespace, or Unicode in v1.
 
-16. Ownership versus value placement
+16. Ownership versus destination placement
 
-Bitcoin carries ownership events only. Optional values are off-chain by default.
+Bitcoin carries ownership events only. Optional destination records are off-chain by default.
 
 Implications:
 - Bitcoin alone should be sufficient for independent, trust-minimized ownership verification.
-- Routine value updates should not consume blockspace in v1.
-- Loss of off-chain value data does not affect on-chain ownership validity.
+- Routine destination updates should not consume blockspace in v1.
+- Loss of off-chain destination data does not affect on-chain ownership validity.
 
-17. Off-chain value authentication
+17. Off-chain destination authentication
 
-Off-chain values are authenticated by signatures from the current owner key.
+Off-chain destinations are authenticated by signatures from the current owner key.
 
 Recommended record fields:
 - name
 - owner public key
 - sequence number
 - ownership interval reference
-- previous value-record hash
-- value type
-- value payload
+- previous destination-record hash
+- destination type
+- destination payload
 - owner-issued timestamp
 - signature
 
 Rules:
-- Value records form a signed append-only chain scoped to the current
+- Destination records form a signed append-only chain scoped to the current
   ownership interval.
 - The first record in an ownership interval should have sequence `1` and no
   previous record hash.
 - Later records should increment sequence exactly by one and point to the
-  canonical hash of the previous value-record statement.
+  canonical hash of the previous destination-record statement.
 - Owner-issued timestamps are metadata, not the canonical ordering rule.
-- On ownership transfer, value authority moves to the new owner key.
-- Old owner-signed value records become stale once ownership changes on-chain.
+- On ownership transfer, destination authority moves to the new owner key.
+- Old owner-signed destination records become stale once ownership changes on-chain.
 
 Rationale:
 - Sequence numbers plus predecessor hashes let clients prove update order, not
-  just inspect the latest signed value.
-- Binding the value chain to an ownership interval prevents a stale record from
+  just inspect the latest signed destination record.
+- Binding the destination record chain to an ownership interval prevents a stale record from
   an earlier ownership period from becoming current again if the same key later
   reacquires the same name.
 - This mirrors the useful part of Keybase-style signature chains without
-  requiring routine mutable value updates to be posted to Bitcoin.
+  requiring routine mutable destination updates to be posted to Bitcoin.
 
-18. Value behavior on transfer
+18. Destination behavior on transfer
 
-On transfer, the current off-chain value is cleared by default.
+On transfer, the current off-chain destination record is cleared by default.
 
 Rules:
-- Ownership transfer does not automatically preserve the prior owner's value record.
+- Ownership transfer does not automatically preserve the prior owner's destination record.
 - A transfer format may support an explicit preserve signal, but preserve is not the default behavior.
-- After transfer, the new owner may publish a fresh value record under their own key and sequence space.
+- After transfer, the new owner may publish a fresh destination record under their own key and sequence space.
 
 19. Bitcoin footprint minimization
 
@@ -257,7 +257,7 @@ Implications:
 
 20. Resolver strategy
 
-ONT core remains transport-agnostic for off-chain values, but the project should ship a reference implementation of a minimal read-only ONT resolver/indexer profile.
+ONT core remains transport-agnostic for off-chain destinations, but the project should ship a reference implementation of a minimal read-only ONT resolver/indexer profile.
 
 Implications:
 - The reference resolver is a convenience interface, not the source of ownership truth.
@@ -271,8 +271,8 @@ The first recommended ONT-native resolver profile should be minimal and read-onl
 
 Recommended capabilities:
 - resolve a normalized name to current ownership state
-- return the latest valid off-chain value record for a normalized name, if any
-- return value-record history for the current ownership interval
+- return the latest valid off-chain destination record for a normalized name, if any
+- return destination-record history for the current ownership interval
 - return provenance for an ONT event or name state so clients can inspect the underlying chain-derived basis
 
 Recommended endpoint shape for the reference profile:
@@ -295,7 +295,7 @@ Envelope shape:
 - `payload_length`: 2 bytes
 - `payload`: variable-length bytes
 
-This keeps value records compact while allowing a small standardized type set and future extension.
+This keeps destination records compact while allowing a small standardized type set and future extension.
 
 23. Initial standardized value types
 
@@ -313,12 +313,12 @@ Notes:
 24. Bond amount parameters
 
 The launch bond curve parameters are:
-- `base_sats = 100,000,000` sats
-- `floor_sats = 50,000` sats
+- `base_amount = ₿100,000,000 (1 BTC)`
+- `floor_amount = ₿50,000 (0.0005 BTC)`
 
 Implications:
 - 1-character names require a 1 BTC bond at launch.
-- Each additional character halves the required bond until the 50,000-sat floor is reached.
+- Each additional character halves the required bond until the ₿50,000 (0.0005 BTC) floor is reached.
 - The 4,000-block value previously resolved is the minimum maturity floor, not the bond floor.
 
 25. Same-block auction tie-break rule
@@ -428,15 +428,15 @@ them as the current defaults unless they are later revised explicitly.
 32. Auction lifecycle scaling baseline
 
 Future footprint work should be evaluated against auction openings, bids,
-transfers, and value-publication flows.
+transfers, and destination-publication flows.
 
-34. Launch architecture lead direction
+34. Auction architecture lead direction
 
-The current lead launch architecture is a **single auction lane**.
+The current lead architecture is **public bonded auctions**.
 
 Current shape:
 - every valid name is allocated by auction
-- there is no semantic reserved-name list
+- allocation does not depend on brand, category, or editorial judgment
 - shorter names start with higher length-based opening floors
 - public tooling should present auction-opening as the acquisition path
 
@@ -458,7 +458,7 @@ The current auction family is:
 
 Implications:
 - the project can explain one coherent allocation rule for all valid names
-- reserved-list generation work is not launch-critical
+- source-generated auction lists are not protocol-critical
 - placeholder floors, windows, and lock durations should not be presented as
   frozen constants just because the auction family itself is now the working
   assumption
@@ -475,7 +475,7 @@ Implications:
 - public signet should only appear in historical notes or explicit cleanup
   context, not as an active user path
 
-## Fairness Principles To Carry Into The Launch Rewrite
+## Fairness Principles To Carry Into The Allocation Model
 
 The rewritten launch draft should explicitly state:
 - No founder allocation
@@ -495,13 +495,11 @@ That means:
   protocol.
 - Scarcity and anti-hoarding pressure come from auction-discovered bonded BTC
   and time, not from subjective pricing rules.
-- If opening treatment differs for very short names, that difference comes from an
-  objective length-based floor rather than a delayed lane or discretionary
-  per-user judgment.
+- Shorter names can start with higher objective length-based floors.
 
 ## Open Questions
 
-1. Value payload definitions
+1. Destination payload definitions
 
 Need to define the exact payload format for:
 - `0x01` bitcoin payment target
@@ -512,12 +510,12 @@ For `0x01`, reviewer feedback should explicitly consider compatibility and trade
 - `BIP321` URI scheme guidance
 - `BIP353` DNS payment instructions
 
-2. Value transport and discovery
+2. Destination transport and discovery
 
 Need to define:
-- whether the core protocol mandates any transport for off-chain value records
+- whether the core protocol mandates any transport for off-chain destination records
 - whether there is a recommended default transport profile
-- how clients discover and fetch current value records
+- how clients discover and fetch current destination records
 
 3. ONT-native resolver profile
 
@@ -535,7 +533,7 @@ The rewritten draft should explicitly document:
 Reviewer-facing trade-offs that should be stated plainly include:
 - the current prototype `TRANSFER` payload exceeds older conservative `OP_RETURN` relay limits; modern Bitcoin Core defaults are more permissive, but broader network relay compatibility still depends on node policy
 - mature names currently remain valid without ongoing bond continuity
-- v1 resolver usage may still concentrate value-record availability around a small number of hosted resolvers
+- v1 resolver usage may still concentrate destination-record availability around a small number of hosted resolvers
 - stale or failed auction bids may expose demand for a specific name before a
   bidder wins it
 - the owner key is distinct from the funding wallet key, and v1 does not include a protocol recovery path if that owner key is lost
@@ -560,4 +558,4 @@ Need to define UX and implementation safeguards to prevent users from accidental
 Need to define clearer operator and wallet guidance around stale or failed bids:
 - a failed bid package should have an obvious recovery path for funds
 - the docs should explain when a bid exposes demand for a name before the bidder wins it
-- pre-launch review should revisit auction windows, soft-close extensions, and stale-state behavior
+- mainnet review should revisit auction windows, soft-close extensions, and stale-state behavior

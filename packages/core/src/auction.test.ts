@@ -71,7 +71,7 @@ describe("simulateLaunchAuction", () => {
     expect(result.settlementLockBlocks).toBe(policy.auctionClasses.launch_name.lockBlocks);
   });
 
-  it("puts short names in the same auction lane with a higher length floor", () => {
+  it("puts short names in the public auction flow with a higher length floor", () => {
     const policy = createDefaultLaunchAuctionPolicy();
     const result = simulateLaunchAuction({
       policy,

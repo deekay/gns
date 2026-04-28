@@ -121,7 +121,7 @@ export async function publishValueRecordToResolvers(options: {
           ok: false,
           status: null,
           code: "resolver_publish_failed",
-          message: error instanceof Error ? error.message : "Unable to publish the signed value record.",
+          message: error instanceof Error ? error.message : "Unable to publish the signed destination record.",
           payload: null
         };
       }

@@ -106,14 +106,14 @@ export function computeValueRecordHash(input: ValueRecordFields): string {
 }
 
 export function parseSignedValueRecord(input: unknown): SignedValueRecord {
-  const record = assertRecord(input, "value record");
+  const record = assertRecord(input, "destination record");
 
   if (record.format !== VALUE_RECORD_FORMAT) {
-    throw new Error(`value record format must be ${VALUE_RECORD_FORMAT}`);
+    throw new Error(`destination record format must be ${VALUE_RECORD_FORMAT}`);
   }
 
   if (record.recordVersion !== VALUE_RECORD_VERSION) {
-    throw new Error(`value record version must be ${VALUE_RECORD_VERSION}`);
+    throw new Error(`destination record version must be ${VALUE_RECORD_VERSION}`);
   }
 
   return createValueRecord({

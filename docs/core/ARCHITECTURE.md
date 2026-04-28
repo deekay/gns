@@ -64,7 +64,7 @@ The read API and convenience backend:
 - auction state
 - activity feeds
 - tx provenance
-- off-chain value records
+- off-chain destination records
 
 It owns the current indexed snapshot and optional database-backed persistence.
 
@@ -73,23 +73,23 @@ It owns the current indexed snapshot and optional database-backed persistence.
 There is an important distinction between:
 
 - **name ownership**, which is derived from the chain
-- **value-record availability**, which depends on who is hosting signed value records
+- **destination-record availability**, which depends on who is hosting signed destination records
 
 Today, the trust story is:
 
 - any indexer can independently derive ownership from Bitcoin-compatible chain data
-- any resolver can independently verify a signed value record against the current on-chain owner
-- the hosted resolver is still the primary distribution point for off-chain value records in the v1 product
+- any resolver can independently verify a signed destination record against the current on-chain owner
+- the hosted resolver is still the primary distribution point for off-chain destination records in the v1 product
 
-That means v1 is **not** centralized for ownership, but it is still somewhat centralized for the availability of the latest signed value record if only one resolver is hosting it.
+That means v1 is **not** centralized for ownership, but it is still somewhat centralized for the availability of the latest signed destination record if only one resolver is hosting it.
 
 This is an intentional v1 boundary, not the intended end state.
 
 There is also a history boundary in the current prototype:
 
-- current value records are signed, sequence-numbered, and predecessor-linked
+- current destination records are signed, sequence-numbered, and predecessor-linked
 - the resolver stores value history by current ownership interval
-- each record points to the previous value-record hash, or `null` for the first
+- each record points to the previous destination-record hash, or `null` for the first
   record in that ownership interval
 - timestamps are signed metadata, not the canonical ordering rule
 
@@ -98,7 +98,7 @@ That lets a resolver show not only "the current value is `bar`," but also
 
 ### Why this is acceptable for v1
 
-- the signed value record is portable
+- the signed destination record is portable
 - the resolver does not get to invent ownership
 - the user is not cryptographically locked to one hosted service
 - we are only running one public resolver at launch, so a resolver-fanout protocol would add complexity before it adds much practical resilience
@@ -112,7 +112,7 @@ Resolver-to-resolver gossip is still not the first move.
 
 Today that means:
 
-- the user signs one value record locally
+- the user signs one destination record locally
 - the CLI can publish the same signed record to multiple resolvers
 - the CLI can compare current value history visibility across multiple resolvers
 - the website can do the same only when the deployment explicitly configures a
@@ -125,7 +125,7 @@ Today that means:
 This keeps the security boundary clean:
 
 - chain determines ownership
-- signatures authorize value updates
+- signatures authorize destination updates
 - resolvers provide convenience and availability, not ultimate authority
 
 Resolver federation or relay-based distribution may still make sense later, but they are explicitly outside the v1 scope.
@@ -136,7 +136,7 @@ These are the main issues we already understand and want reviewers to keep pushi
 
 - **Transfer relay policy:** the current prototype transfer payload exceeds older conservative `OP_RETURN` relay limits. Modern Bitcoin Core defaults are more permissive, but transfer relay is still policy-dependent and broad compatibility is not yet guaranteed.
 - **Post-maturity holding cost:** mature names no longer require bond continuity. That reduces permanent UTXO pressure, but it also means long names become cheap to hold indefinitely after the maturity period.
-- **Resolver concentration:** ownership is chain-derived, but value-record availability is still vulnerable to concentration if only one or a few resolvers matter in practice.
+- **Resolver concentration:** ownership is chain-derived, but destination-record availability is still vulnerable to concentration if only one or a few resolvers matter in practice.
 - **Auction visibility:** bids are visible once broadcast. That improves market discovery, but it also means later bidders can react to earlier bids.
 - **Owner-key recovery:** the prototype intentionally separates the wallet/funding key from the owner key. That keeps authority clean, but it means v1 has no built-in recovery path if the owner key is lost.
 
@@ -152,8 +152,8 @@ The operator and power-user surface:
 
 - build artifacts
 - inspect artifacts
-- sign and publish value records
-- auction, transfer, and value-record support flows
+- sign and publish destination records
+- auction, transfer, and destination-record support flows
 - smoke and demo support
 
 ### `packages/protocol`
@@ -163,7 +163,7 @@ Pure protocol definitions:
 - constants
 - event encoding / decoding
 - signatures
-- value records
+- destination records
 - transfer packages
 
 ### `packages/architect`
@@ -199,7 +199,7 @@ The state machine:
 Persistence adapters for:
 
 - resolver snapshots
-- value-record storage
+- destination-record storage
 
 ## Runtime Modes
 

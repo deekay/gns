@@ -9,7 +9,7 @@ paths:
 
 Use `esplora` when you want to validate the live read path without running your
 own node. Use `rpc` when you want the most complete and controllable write path
-for auction bids, transfers, and value updates.
+for auction bids, transfers, and destination updates.
 
 If you want to run the current prototype on your own VPS, use
 [VPS_SETUP.md](../operators/VPS_SETUP.md).
@@ -23,13 +23,13 @@ npm run dev:cli -- generate-live-account --network signet --write /path/to/live-
 npm run dev:cli -- create-auction-bid-package /path/to/auction-scenario.json \
   --bidder-id <local-bidder-id> \
   --owner-pubkey <owner-pubkey-hex> \
-  --bid-amount-sats <amount-sats> \
+  --amount <amount> \
   --write /path/to/bid-package.json
 ```
 
 That gives you:
 
-- one owner key for ONT ownership and off-chain value updates
+- one owner key for ONT ownership and off-chain destination updates
 - one funding WIF/address for signet transaction inputs
 - one auction bid package ready for the signer flow
 

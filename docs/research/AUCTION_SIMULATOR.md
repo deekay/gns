@@ -2,10 +2,9 @@
 
 This note describes the current auction simulator and CLI surface.
 
-The simulator now follows the current launch direction:
+The simulator now follows the current auction direction:
 
 - one auction mechanism for valid names
-- no semantic reserved-word list
 - no brand/person/generic classes
 - length-based opening floors for shorter names
 - a valid bonded opening bid starts the auction clock
@@ -59,10 +58,10 @@ It is still a simulator, not the final launch engine.
 
 The default policy has one auction group:
 
-- `launch_name`: the implementation id for the single name-auction lane
+- `launch_name`: the implementation id for the single name-auction system
 
 The serialized policy also publishes length-floor examples so demos can show
-how shorter names start higher without moving into a second lane. The default
+how shorter names start higher while using the same public auction mechanics. The default
 timing and floors are placeholders, intentionally useful for tests and demos,
 not final launch constants.
 

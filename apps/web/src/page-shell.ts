@@ -154,9 +154,9 @@ function renderHeroSection(
   if (pageKind === "explainer") {
     return `<header class="hero hero-single hero-page hero-page-explainer">
       <div class="hero-copy">
-        <h1>Quick Overview</h1>
+        <h1>How ONTs Work</h1>
         <p class="lede">
-          How the current demo works, what is live today, and where to go next.
+          Ownership, destinations, and public bonded auctions in the current demo.
         </p>
       </div>
     </header>`;
@@ -206,10 +206,10 @@ function renderHeroSection(
       <div class="hero-copy">
         <h1>Auctions</h1>
         <p class="lede">
-          Check a valid name, see its length-based opening floor, and prepare the bid path that starts the auction.
+          Check a name, see its length-based opening floor, and prepare the bid path that starts a public auction.
         </p>
         <p class="hero-status">
-          One auction lane · length-based floors · owner-signed destinations after settlement.
+          Bonded public auctions · ownership on Bitcoin · destinations off-chain.
         </p>
       </div>
     </header>`;
@@ -218,12 +218,12 @@ function renderHeroSection(
   return `<header class="hero hero-home hero-home-product">
     <section class="hero-home-copy" aria-labelledby="homeHeroTitle">
       <p class="hero-home-kicker">Bitcoin-bonded names</p>
-      <h1 id="homeHeroTitle">Human-readable names you can actually own</h1>
+      <h1 id="homeHeroTitle">Names you can actually own</h1>
       <p class="hero-home-lede">
-        Open an auction for a valid name. Bitcoin anchors ownership; owner-signed records keep destinations flexible off-chain.
+        ONTs are names you can own, verify, and update. Bitcoin anchors ownership; owner-signed off-chain records keep destinations updateable; bonded auctions price scarce names without rent.
       </p>
       <div class="hero-home-proof-row" aria-label="Core ONT model">
-        <span>Single auction flow</span>
+        <span>Bonded public auctions</span>
         <span>Length-based opening bond</span>
         <span>Owner-signed destinations</span>
       </div>
@@ -244,12 +244,12 @@ function renderHeroSection(
       <div id="searchResult" class="result-card empty hero-search-result" hidden></div>
       <div class="hero-lookup-status-grid" aria-label="Auction opening rule">
         <article>
-          <span>Before a bid</span>
-          <strong>Ready, owned, or invalid</strong>
+          <span>Unopened</span>
+          <strong>Anyone can open the auction</strong>
         </article>
         <article>
-          <span>After a bonded opening bid</span>
-          <strong>Auction clock starts</strong>
+          <span>After an opening bid</span>
+          <strong>Public auction clock starts</strong>
         </article>
       </div>
       <div class="hero-lookup-actions">
@@ -257,18 +257,18 @@ function renderHeroSection(
         <a class="action-link secondary" href="${withBasePath("/setup", configuredBasePath)}">Set up signing</a>
       </div>
     </section>
-    <section class="hero-home-launch-strip" aria-label="Launch rules">
+    <section class="hero-home-launch-strip" aria-label="ONT principles">
       <article>
-        <span>At launch</span>
-        <strong>Valid names use the same auction mechanics.</strong>
+        <span>Ownership</span>
+        <strong>Bitcoin anchors who controls the name.</strong>
       </article>
       <article>
-        <span>Length floors</span>
-        <strong>Shorter names start with higher bonded opening floors.</strong>
+        <span>Destinations</span>
+        <strong>Owner-signed records stay updateable off-chain.</strong>
       </article>
       <article>
-        <span>Records</span>
-        <strong>Ownership is on-chain; destinations update off-chain.</strong>
+        <span>Bonds</span>
+        <strong>Auctions price scarce names without rent.</strong>
       </article>
     </section>
   </header>`;
@@ -406,15 +406,15 @@ function renderAdvancedGuideSection(configuredBasePath: string): string {
         <ul class="guide-list">
           <li>CLI-heavy workflows and custom protocol experiments</li>
           <li>Reviewer-facing docs and implementation notes</li>
-          <li>Testing notes, launch assumptions, and protocol tradeoffs</li>
+          <li>Testing notes, deployment assumptions, and protocol tradeoffs</li>
         </ul>
       </article>
       <article class="guide-card guide-card-wide">
         <h3>Use The CLI For Custom Work</h3>
-        <p>If you need custom value formats, multi-resolver fanout, policy modeling, deeper transfer/sale flows, or protocol research work, the CLI and docs are still the right tools.</p>
+        <p>If you need custom destination formats, multi-resolver fanout, policy modeling, deeper transfer/sale flows, or protocol research work, the CLI and docs are still the right tools.</p>
         <div class="guide-card-actions">
           <a class="action-link secondary" href="${DOC_URLS.fromZero}" target="_blank" rel="noreferrer noopener">Read from zero</a>
-          <a class="action-link secondary" href="${DOC_URLS.launchSpec}" target="_blank" rel="noreferrer noopener">Launch spec</a>
+          <a class="action-link secondary" href="${DOC_URLS.launchSpec}" target="_blank" rel="noreferrer noopener">Protocol notes</a>
           <a class="action-link secondary" href="${DOC_URLS.implementation}" target="_blank" rel="noreferrer noopener">Implementation</a>
         </div>
       </article>
@@ -436,7 +436,7 @@ function renderAdvancedReferencesSection(_configuredBasePath: string): string {
     <div class="guide-grid guide-grid-balanced">
       <article class="guide-card">
         <h3>Implementation Notes</h3>
-        <p>Review how the demo pieces fit together: resolver state, bid-package handoffs, value records, transfers, and the remaining validation work.</p>
+        <p>Review how the demo pieces fit together: resolver state, bid-package handoffs, destination records, transfers, and the remaining validation work.</p>
         <div class="guide-card-actions">
           <a class="action-link secondary" href="${DOC_URLS.implementation}" target="_blank" rel="noreferrer noopener">Implementation</a>
         </div>
@@ -451,10 +451,10 @@ function renderAdvancedReferencesSection(_configuredBasePath: string): string {
       </article>
       <article class="guide-card">
         <h3>Protocol Review Docs</h3>
-        <p>Use the launch and system docs when you want the higher-level protocol framing, tradeoffs, and current working assumptions.</p>
+        <p>Use the protocol docs when you want the higher-level framing, tradeoffs, and current working assumptions.</p>
         <div class="guide-card-actions">
           <a class="action-link secondary" href="${DOC_URLS.fromZero}" target="_blank" rel="noreferrer noopener">From zero</a>
-          <a class="action-link secondary" href="${DOC_URLS.launchSpec}" target="_blank" rel="noreferrer noopener">Launch spec</a>
+          <a class="action-link secondary" href="${DOC_URLS.launchSpec}" target="_blank" rel="noreferrer noopener">Protocol notes</a>
         </div>
       </article>
     </div>
@@ -496,7 +496,7 @@ function renderAuctionOpenSection(configuredBasePath: string): string {
   return `<section id="auction-open" class="panel panel-compose panel-compose-minimal">
     ${renderPanelHead(
       "Open An Auction",
-      "A valid bonded opening bid starts the auction clock. Before that, a name is only ready, owned, or invalid.",
+      "A bonded opening bid starts the auction clock. Before that, an unowned name is unopened.",
       `<p>Use this as the common acquisition path. The website checks resolver ownership and shows the current auction rules; signing and broadcast still happen with your wallet and CLI handoff.</p>`
     )}
     <div class="value-intake-grid">
@@ -505,7 +505,7 @@ function renderAuctionOpenSection(configuredBasePath: string): string {
           <label class="draft-field">
             <span class="field-label">Name</span>
             <input id="nameInput" name="name" type="text" maxlength="32" placeholder="alice" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" />
-            <span class="field-hint">Any valid name uses the same auction lane. Shorter names simply require a higher opening bond.</span>
+            <span class="field-hint">Any valid name can be opened through a public bonded auction. Shorter names start with higher opening floors.</span>
           </label>
         </div>
         <div class="draft-actions">
@@ -533,7 +533,7 @@ function renderAuctionRulesSection(): string {
   return `<section id="auction-rules" class="panel panel-guide">
     ${renderPanelHead(
       "Auction Rules",
-      "One auction lane, length-based opening floors, and a stronger increment when late bids extend the close.",
+      "Length-based opening floors and stronger late-bid increments keep public auctions orderly.",
       `<p>These are current demo rules surfaced read-only. Use the CLI and docs for deeper policy modeling.</p>`
     )}
     <p id="auctionLabMeta" class="helper-text">Loading current auction rules.</p>
@@ -545,7 +545,8 @@ function renderAuctionWorkflowSection(configuredBasePath: string): string {
   return `<section id="auction-workflow" class="panel panel-guide">
     ${renderPanelHead(
       "Auction Workflow",
-      "The public path is simple: fund the bidding wallet, prepare a package, sign, broadcast, then manage the owned name."
+      "The public path is simple: fund the bidding wallet, prepare a package, sign, broadcast, then manage the owned name.",
+      `<p>If nobody else bids during the public window, the opener wins at the floor. If others bid, open bidding discovers the final bond.</p>`
     )}
     <div class="guide-grid guide-grid-balanced">
       <article class="guide-card">
@@ -609,7 +610,7 @@ function renderExperimentalAuctionFeedSection(): string {
         <li>A real auction begins when a valid bonded opening bid confirms; names with no opening bid should not be described as failed auctions.</li>
         <li>Bids that merely clear the normal increment are not enough during soft close if they would extend the auction. Late extension bids use the stronger soft-close increment rule.</li>
         <li>Same-bidder replacement is only recognized when the later bid spends the prior bid bond outpoint.</li>
-        <li>This feed is an implementation view; final launch settlement rules are not frozen yet.</li>
+        <li>This feed is an implementation view; final settlement rules are not frozen yet.</li>
       </ul>`
     )}
     <p id="experimentalAuctionMeta" class="helper-text">Loading observed bid activity.</p>
@@ -635,9 +636,9 @@ function renderAuctionLabNotesSection(collapsible = false): string {
       <article class="guide-card">
         <h3>Still In Progress</h3>
         <ul class="guide-list">
-          <li>Settlement is implemented for the experimental path, but final launch settlement rules are not frozen yet.</li>
-          <li>The chain-derived feed is still an implementation view, not a mainnet launch commitment.</li>
-          <li>The values here are working defaults, not yet locked protocol parameters.</li>
+          <li>Settlement is implemented for the experimental path, but final settlement rules are not frozen yet.</li>
+          <li>The chain-derived feed is still an implementation view, not a mainnet commitment.</li>
+          <li>The parameters here are working defaults, not yet locked protocol parameters.</li>
           <li>For deeper policy experiments or custom bid flows, use the CLI rather than the website.</li>
         </ul>
       </article>
@@ -705,8 +706,8 @@ function renderHomeActionsSection(configuredBasePath: string): string {
 function renderHomeModelSection(): string {
   return `<section id="how-ont-works" class="panel panel-guide">
     ${renderPanelHead(
-      "How It Works",
-      "Follow one name from Bitcoin ownership to the destinations apps can use."
+      "How ONTs Work",
+      "Follow one ONT from Bitcoin ownership to the destinations apps can use."
     )}
     <div class="protocol-flow" aria-label="ONT lifecycle for alice">
       <article class="protocol-flow-card protocol-flow-card-chain">
@@ -720,7 +721,7 @@ function renderHomeModelSection(): string {
           <p><span>name</span><strong class="mono">alice</strong></p>
           <p><span>auction</span><strong>won</strong></p>
           <p><span>owner</span><strong class="mono">8f3c...12ab</strong></p>
-          <p><span>bond</span><strong>6,250,000 sats</strong></p>
+          <p><span>bond</span><strong>₿6,250,000 (0.0625 BTC)</strong></p>
         </div>
       </article>
       <div class="protocol-flow-arrow" aria-hidden="true"></div>
@@ -729,7 +730,7 @@ function renderHomeModelSection(): string {
           <p class="protocol-flow-number">02</p>
           <p class="protocol-flow-place">Resolver</p>
         </div>
-        <h3>Publish Off-Chain</h3>
+        <h3>Publish Destinations</h3>
         <p>The owner signs the current destinations for <span class="mono">alice</span>. Resolvers store that signed record.</p>
         <div class="protocol-example protocol-example-destinations" aria-label="Destination examples">
           <p><span>btc</span><strong class="mono">bc1qxy...0wlh</strong></p>
@@ -770,7 +771,7 @@ function renderHomeDestinationDiagramSection(): string {
   return `<section id="one-name-many-destinations" class="panel panel-guide">
     ${renderPanelHead(
       "One Name, Many Destinations",
-      "The chain owns the name. The signed record says what it points to right now."
+      "Bitcoin anchors who owns the name. The signed record says what it points to right now."
     )}
     <div class="destination-map" aria-label="How alice maps to destinations">
       <article class="destination-map-anchor">
@@ -785,7 +786,7 @@ function renderHomeDestinationDiagramSection(): string {
       <div class="destination-map-rail" aria-hidden="true"></div>
       <article class="destination-map-record">
         <div>
-          <p class="destination-map-kicker">Resolver record</p>
+          <p class="destination-map-kicker">Owner-signed destinations</p>
           <h3>Latest owner-signed bundle</h3>
           <p>Resolvers keep the mutable destination layer off-chain. The current owner can update this bundle without putting every change on Bitcoin.</p>
         </div>
@@ -830,7 +831,7 @@ function renderHomeDocsSection(): string {
         <ul class="guide-list">
           <li>Hosted signet setup and auction inspection</li>
           <li>Self-hosted website and resolver</li>
-          <li>Browser value publishing</li>
+          <li>Browser destination publishing</li>
           <li>Auction bid-package handoffs and live auction smoke checks</li>
         </ul>
       </article>
@@ -839,7 +840,7 @@ function renderHomeDocsSection(): string {
         <ul class="guide-list">
           <li>Transfers still rely on external signer and CLI steps.</li>
           <li>Resolver availability is only partly decentralized in v1.</li>
-          <li>The universal-auction flow is implemented in the demo and still not mainnet-ready.</li>
+          <li>The public-auction flow is implemented in the demo and still not mainnet-ready.</li>
           <li>Mainnet-ready usage is not ready yet.</li>
         </ul>
       </article>
@@ -848,12 +849,12 @@ function renderHomeDocsSection(): string {
         <ul class="guide-list">
           <li><a class="detail-link" href="${DOC_URLS.fromZero}" target="_blank" rel="noreferrer noopener">ONT From Zero</a></li>
           <li><a class="detail-link" href="${DOC_URLS.implementation}" target="_blank" rel="noreferrer noopener">Implementation &amp; Validation</a></li>
-          <li><a class="detail-link" href="${DOC_URLS.launchSpec}" target="_blank" rel="noreferrer noopener">Launch Spec v0</a></li>
+          <li><a class="detail-link" href="${DOC_URLS.launchSpec}" target="_blank" rel="noreferrer noopener">Protocol Notes v0</a></li>
         </ul>
         <div class="guide-card-actions">
           <a class="action-link secondary" href="${DOC_URLS.fromZero}" target="_blank" rel="noreferrer noopener">Read from zero</a>
           <a class="action-link secondary" href="${DOC_URLS.implementation}" target="_blank" rel="noreferrer noopener">Implementation</a>
-          <a class="action-link secondary" href="${DOC_URLS.launchSpec}" target="_blank" rel="noreferrer noopener">Launch spec</a>
+          <a class="action-link secondary" href="${DOC_URLS.launchSpec}" target="_blank" rel="noreferrer noopener">Protocol notes</a>
         </div>
       </article>
     </div>
@@ -957,11 +958,11 @@ function renderActivitySection(collapsible = false): string {
     ${renderPanelHead(
       "Recent Changes",
       "Latest changes, with the most interesting items surfaced first.",
-      `<p>Lifecycle transitions across auctions, transfers, value updates, and releases.</p>
+      `<p>Lifecycle transitions across auctions, transfers, destination updates, and releases.</p>
       <ul>
         <li>Auction bids and settlements</li>
         <li>Transfers between owners</li>
-        <li>Value publications</li>
+        <li>Destination publications</li>
         <li>Invalidations when bond continuity fails</li>
       </ul>`
     )}
@@ -1010,7 +1011,7 @@ function renderPrivateAuctionSmokeSection(collapsible = false): string {
       `<p>This is the current live-chain proof for the auction slice.</p>
       <ul>
         <li>It starts from a dedicated demo entry, then opens the auction with a real bonded bid.</li>
-        <li>It submits an opening bid, then a higher bid, settles the auction into a live owned name, publishes winner destinations, and later transfers that name after the winner lock clears.</li>
+        <li>It submits an opening bid, then a higher bid, settles the auction into a live owned name, publishes winner destinations, and later transfers that name after the winner bond matures.</li>
         <li>It still spends the losing bond early to prove the chain-derived feed flags that violation.</li>
         <li>The resulting website feed shows accepted bid history, settlement state, post-settlement handoff, and bond spend / release consequences.</li>
       </ul>`
@@ -1109,13 +1110,13 @@ function renderSetupFundingSection(privateSignetFundingAmountSats: bigint): stri
 }
 
 function formatBitcoinDisplay(value: bigint | string | number): string {
-  const sats = BigInt(value);
-  return `${sats.toLocaleString("en-US")} sats (${formatBtcDecimal(sats)} BTC)`;
+  const amount = BigInt(value);
+  return `₿${amount.toLocaleString("en-US")} (${formatBtcDecimal(amount)} BTC)`;
 }
 
-function formatBtcDecimal(sats: bigint): string {
-  const whole = sats / 100_000_000n;
-  const fractional = (sats % 100_000_000n).toString().padStart(8, "0").replace(/0+$/g, "");
+function formatBtcDecimal(amount: bigint): string {
+  const whole = amount / 100_000_000n;
+  const fractional = (amount % 100_000_000n).toString().padStart(8, "0").replace(/0+$/g, "");
   return fractional === "" ? whole.toString() : `${whole}.${fractional}`;
 }
 
@@ -1281,7 +1282,7 @@ function renderValuesGuideSection(configuredBasePath: string): string {
         <ul class="guide-list">
           <li>Use the <strong>owner key</strong> saved for the name.</li>
           <li>If the owner key no longer matches the current owner, publish will fail.</li>
-          <li>After a transfer, only the new owner can publish fresh values.</li>
+          <li>After a transfer, only the new owner can publish fresh destinations.</li>
         </ul>
       </article>
       <article class="guide-card">
@@ -1289,7 +1290,7 @@ function renderValuesGuideSection(configuredBasePath: string): string {
         <ul class="guide-list">
           <li>A single website URL</li>
           <li>A single Bitcoin payment target</li>
-          <li>A bundled list of repeatable key/value entries like <span class="mono">btc -&gt; bc1qxy...0wlh</span>, <span class="mono">lightning -&gt; lno1q...9sa</span>, <span class="mono">website -&gt; alice.example</span>, and <span class="mono">cashapp -&gt; $alice1234</span></li>
+          <li>A bundled list of repeatable destination entries like <span class="mono">btc -&gt; bc1qxy...0wlh</span>, <span class="mono">lightning -&gt; lno1q...9sa</span>, <span class="mono">website -&gt; alice.example</span>, and <span class="mono">cashapp -&gt; $alice1234</span></li>
         </ul>
         <div class="guide-card-actions">
           <a class="action-link secondary" href="${withBasePath("/values", configuredBasePath)}">Open destinations tool</a>
@@ -1630,7 +1631,7 @@ function renderSiteFooter(configuredBasePath: string): string {
         <div class="site-footer-links">
           <a href="${withBasePath("/explainer", configuredBasePath)}">Overview</a>
           <a href="${DOC_URLS.fromZero}" target="_blank" rel="noreferrer noopener">From Zero</a>
-          <a href="${DOC_URLS.launchSpec}" target="_blank" rel="noreferrer noopener">Launch Spec</a>
+          <a href="${DOC_URLS.launchSpec}" target="_blank" rel="noreferrer noopener">Protocol Notes</a>
         </div>
       </section>
       <section class="site-footer-group">

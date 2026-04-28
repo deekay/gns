@@ -337,7 +337,7 @@ async function buildAndBroadcastAuctionBid({
     packagePath,
     "--input",
     formatDescriptor(fundingInput),
-    "--fee-sats",
+    "--fee",
     BID_FEE_SATS.toString(),
     "--network",
     "signet",

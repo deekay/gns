@@ -19,18 +19,18 @@ describe("renderPageHtml", () => {
       pageKind: "home"
     });
 
-    expect(html).toContain("Human-readable names you can actually own");
-    expect(html).toContain("Open an auction for a valid name.");
-    expect(html).toContain("Single auction flow");
+    expect(html).toContain("Names you can actually own");
+    expect(html).toContain("ONTs are names you can own, verify, and update.");
+    expect(html).toContain("Bonded public auctions");
     expect(html).toContain("Length-based opening bond");
     expect(html).toContain("Owner-signed destinations");
     expect(html).toContain("Check a name");
     expect(html).toContain("Resolve ownership or see whether the next step is the auction flow.");
-    expect(html).toContain("Before a bid");
-    expect(html).toContain("Ready, owned, or invalid");
-    expect(html).toContain("After a bonded opening bid");
-    expect(html).toContain("Auction clock starts");
-    expect(html).toContain("Shorter names start with higher bonded opening floors.");
+    expect(html).toContain("Unopened");
+    expect(html).toContain("Anyone can open the auction");
+    expect(html).toContain("After an opening bid");
+    expect(html).toContain("Public auction clock starts");
+    expect(html).toContain("Auctions price scarce names without rent.");
     expect(html).toContain("Choose A Path");
     expect(html).toContain("Understand ONT");
     expect(html).toContain("Try The Demo");
@@ -48,7 +48,6 @@ describe("renderPageHtml", () => {
     expect(html).not.toContain("Costly To Hoard");
     expect(html).not.toContain("Maps To Destinations");
     expect(html).not.toContain("Two ideas shape ONT.");
-    expect(html).not.toContain("Names with 1-4 characters wait");
     expect(html).not.toContain("One Name, Many Destinations");
     expect(html).not.toContain("Small Bitcoin footprint");
     expect(html).not.toContain("Resolvers store the current owner-signed bundle for <span class=\"mono\">alice</span>");
@@ -78,20 +77,20 @@ describe("renderPageHtml", () => {
     expect(html).toContain('href="#how-ont-works"');
     expect(html).toContain("Overview sections");
     expect(html).toContain("How it works");
-    expect(html).toContain("How It Works");
-    expect(html).toContain("Follow one name from Bitcoin ownership to the destinations apps can use.");
+    expect(html).toContain("How ONTs Work");
+    expect(html).toContain("Follow one ONT from Bitcoin ownership to the destinations apps can use.");
     expect(html).toContain("protocol-flow");
     expect(html).toContain("Win At Auction");
     expect(html).toContain("Bitcoin establishes that <span class=\"mono\">alice</span> is controlled by an owner key");
-    expect(html).toContain("6,250,000 sats");
-    expect(html).toContain("Publish Off-Chain");
+    expect(html).toContain("₿6,250,000 (0.0625 BTC)");
+    expect(html).toContain("Publish Destinations");
     expect(html).toContain("Resolvers store that signed record.");
     expect(html).toContain("<strong class=\"mono\">bc1qxy...0wlh</strong>");
     expect(html).toContain("<strong class=\"mono\">alice@example.com</strong>");
     expect(html).toContain("Resolve And Verify");
     expect(html).toContain("website -&gt; alice.example");
     expect(html).toContain("One Name, Many Destinations");
-    expect(html).toContain("The chain owns the name. The signed record says what it points to right now.");
+    expect(html).toContain("Bitcoin anchors who owns the name. The signed record says what it points to right now.");
     expect(html).toContain("destination-map");
     expect(html).toContain("Bitcoin anchor");
     expect(html).toContain("Latest owner-signed bundle");
@@ -104,7 +103,7 @@ describe("renderPageHtml", () => {
     expect(html).toContain("Works Today");
     expect(html).toContain("Read Next");
     expect(html).toContain("Read from zero");
-    expect(html).toContain("Launch Spec v0");
+    expect(html).toContain("Protocol Notes v0");
     expect(html).not.toContain("What ONT Is");
   });
 
@@ -123,7 +122,7 @@ describe("renderPageHtml", () => {
     expect(html).toContain("privateAuctionSmokeResult");
     expect(html).toContain("Reference Material");
     expect(html).toContain("Testing guide");
-    expect(html).toContain("Launch spec");
+    expect(html).toContain("Protocol notes");
     expect(html).not.toContain("Advanced Surfaces");
     expect(html).toContain(">Advanced<");
     expect(html).not.toContain("policy controls");
@@ -142,12 +141,11 @@ describe("renderPageHtml", () => {
     expect(html).toContain("auction-open");
     expect(html).toContain("auction-rules");
     expect(html).toContain("auction-workflow");
-    expect(html).toContain("length-based floors");
-    expect(html).toContain("A valid bonded opening bid starts the auction clock.");
+    expect(html).toContain("A bonded opening bid starts the auction clock.");
     expect(html).toContain("Check name");
     expect(html).toContain("length-based opening floors");
     expect(html).toContain("current auction rules");
-    expect(html).toContain("valid bonded opening bid");
+    expect(html).toContain("valid opening bid");
     expect(html).not.toContain("auctionLabList");
     expect(html).not.toContain("experimentalAuctionList");
     expect(html).not.toContain("privateAuctionSmokeResult");

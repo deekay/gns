@@ -27,7 +27,7 @@ ONT says yes.
 
 ## Pubky / PKARR In One Sentence
 
-Pubky / PKARR uses public keys as the durable identity layer and signed DNS-like records over the Mainline DHT, while avoiding a scarce global human-readable namespace in the base layer.
+Pubky / PKARR uses public keys as the durable identity layer and signed DNS-like records over the Mainline DHT, while avoiding a scarce global name layer in the base layer.
 
 ## ONT In One Sentence
 
@@ -43,7 +43,7 @@ ONT uses Bitcoin to anchor ownership of scarce flat human-readable payment handl
 
 ### 1. Human-readable shared names
 
-Pubky / PKARR does not try to solve globally shared human-readable names in the base layer. Public keys are the stable identity.
+Pubky / PKARR does not try to solve globally shared names people can use in the base layer. Public keys are the stable identity.
 
 ONT is specifically trying to solve that missing human layer:
 

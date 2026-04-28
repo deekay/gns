@@ -193,7 +193,7 @@ ONT_VALUE_STORE_KEY=resolver
 
 Notes:
 
-- if `ONT_DATABASE_URL` is set, the resolver/indexer will store snapshots and value-record state in Postgres
+- if `ONT_DATABASE_URL` is set, the resolver/indexer will store snapshots and destination-record state in Postgres
 - if `ONT_DATABASE_URL` is unset, they continue using `ONT_SNAPSHOT_PATH` and `ONT_VALUE_STORE_PATH`
 - the first startup will automatically create the `ont_documents` table in the configured schema
 - for Supabase, the session pooler connection string is the safest default choice unless you know you want direct connections

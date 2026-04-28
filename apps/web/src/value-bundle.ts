@@ -34,7 +34,7 @@ export function encodeProfileBundlePayloadHex(input: ProfileBundleDraft): string
   const payload = createProfileBundlePayload(input);
 
   if (payload.entries.length === 0) {
-    throw new Error("Add at least one key/value entry to the bundle.");
+    throw new Error("Add at least one destination entry to the bundle.");
   }
 
   return utf8ToHex(JSON.stringify(payload, null, 2));
@@ -88,12 +88,12 @@ export function describeProfileBundle(payload: ProfileBundlePayload): string {
   const entries = listProfileBundleEntries(payload);
 
   if (entries.length === 0) {
-    return "Key/value bundle";
+    return "Destination bundle";
   }
 
   const keys = entries.slice(0, 3).map((entry) => entry.key);
   const suffix = entries.length > 3 ? ` +${entries.length - 3} more` : "";
-  return `Key/value bundle · ${keys.join(", ")}${suffix}`;
+  return `Destination bundle · ${keys.join(", ")}${suffix}`;
 }
 
 export function listProfileBundleEntries(payload: ProfileBundlePayload): Array<{ key: string; value: string }> {
@@ -133,7 +133,7 @@ function normalizeDraftEntries(entries: readonly ProfileBundleEntry[]): ProfileB
     }
 
     if (key === null || value === null) {
-      throw new Error(`Key/value bundle entry ${index + 1} needs both a key and a value.`);
+      throw new Error(`Destination entry ${index + 1} needs both a label and a destination.`);
     }
 
     normalized.push({ key, value });
@@ -151,7 +151,7 @@ function parseBundleEntries(value: unknown): ProfileBundleEntry[] | null {
     return normalizeDraftEntries(
       value.map((entry) => {
         if (typeof entry !== "object" || entry === null || Array.isArray(entry)) {
-          throw new Error("invalid key/value bundle entry");
+          throw new Error("invalid destination bundle entry");
         }
 
         const record = entry as Record<string, unknown>;

@@ -24,7 +24,7 @@ Here is how it works.
 
 To acquire a name, you participate in an auction and lock bitcoin as a bond. The name goes through a settlement period, during which the bond stays parked. Once settlement completes, the bond is yours to unlock. The name remains yours.
 
-What the name points to can change. A payment address first; other owner-signed key/value records later if clients support them. Those records live off-chain and are signed by the current owner. The mutable pointer stays lightweight. The ownership record is what stays permanent.
+What the name points to can change. A payment address first; other owner-signed key/destination records later if clients support them. Those records live off-chain and are signed by the current owner. The mutable pointer stays lightweight. The ownership record is what stays permanent.
 
 This matters even more as software starts acting on your behalf. Let the model infer what you want. Do not let the model guess who gets paid. When software routes a payment without a human inspecting every character, the final destination should not rest on a probabilistic guess. ONT gives human-readable payment handles cryptographically grounded ownership.
 

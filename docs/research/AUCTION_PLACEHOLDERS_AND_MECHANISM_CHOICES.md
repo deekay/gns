@@ -18,8 +18,8 @@ still technically provisional:
 
 - valid names should be allocated by auction
 - shorter names should use higher length-based opening floors
-- ONT should not use a semantic reserved-word list
-- ONT should not use a pre-launch reservation system
+- ONT should not use semantic allocation classes
+- ONT should start names through bonded public auctions
 - auctions should have soft close rather than hard-end sniping
 - bids that extend an auction during soft close should face a stronger minimum
   increment than ordinary mid-auction bids

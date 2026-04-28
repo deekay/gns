@@ -712,7 +712,7 @@ async function bootstrap() {
       }
 
       if (amountSats.length === 0) {
-        setAuctionBidPackageMessage(domKey, "Enter a bid amount in sats first.");
+        setAuctionBidPackageMessage(domKey, "Enter a bid amount first.");
         return;
       }
 
@@ -1097,7 +1097,7 @@ function renderActivity() {
       highlightsContainer.innerHTML = resolverEmpty
         ? renderExploreResolverEmptyCard(
             "No Recent Activity Yet",
-            "Auction bids, transfers, and value updates will appear here once this resolver has visible chain activity again."
+            "Auction bids, transfers, and destination updates will appear here once this resolver has visible chain activity again."
           )
         : "";
     }
@@ -1975,8 +1975,8 @@ function mapLiveSmokeStatusPill(value) {
 }
 
 function formatSats(value) {
-  const sats = BigInt(value);
-  return sats.toLocaleString("en-US") + " sats (" + formatBtcDecimal(sats) + " BTC)";
+  const amount = BigInt(value);
+  return "₿" + amount.toLocaleString("en-US") + " (" + formatBtcDecimal(amount) + " BTC)";
 }
 
 function formatStateLabel(status) {
@@ -1995,23 +1995,23 @@ function formatStateLabel(status) {
 }
 
 function formatCompactSats(value) {
-  const sats = BigInt(value);
-  if (sats >= 1000000000n) {
-    return (Number(sats) / 1000000000).toFixed(1).replace(/\.0$/, "") + "B sats";
+  const amount = BigInt(value);
+  if (amount >= 1000000000n) {
+    return "₿" + (Number(amount) / 1000000000).toFixed(1).replace(/\.0$/, "") + "B";
   }
-  if (sats >= 1000000n) {
-    return (Number(sats) / 1000000).toFixed(1).replace(/\.0$/, "") + "M sats";
+  if (amount >= 1000000n) {
+    return "₿" + (Number(amount) / 1000000).toFixed(1).replace(/\.0$/, "") + "M";
   }
-  if (sats >= 1000n) {
-    return (Number(sats) / 1000).toFixed(1).replace(/\.0$/, "") + "k sats";
+  if (amount >= 1000n) {
+    return "₿" + (Number(amount) / 1000).toFixed(1).replace(/\.0$/, "") + "k";
   }
 
-  return sats.toString() + " sats";
+  return "₿" + amount.toString();
 }
 
-function formatBtcDecimal(sats) {
-  const whole = sats / 100000000n;
-  const fractional = (sats % 100000000n).toString().padStart(8, "0").replace(/0+$/g, "");
+function formatBtcDecimal(amount) {
+  const whole = amount / 100000000n;
+  const fractional = (amount % 100000000n).toString().padStart(8, "0").replace(/0+$/g, "");
   return fractional === "" ? whole.toString() : whole.toString() + "." + fractional;
 }
 
@@ -2296,7 +2296,7 @@ function searchOutcomeSummary(record) {
       case "immature":
         return "This auction has settled, and the winning bond is still locked in its post-auction holding period.";
       case "mature":
-        return "This auction has settled, the winner owns the name, and the post-auction bond lock has cleared.";
+        return "This auction has settled, the winner owns the name, and the bond period has matured.";
       case "invalid":
         return "This auction-derived name was released because the winning bond continuity failed before the required lock ended.";
       default:
@@ -2355,8 +2355,8 @@ function searchOutcomeSteps(status, record) {
         ];
       case "mature":
         return [
-          "The auction has fully settled and the post-auction lock has cleared.",
-          "The current owner can now transfer the name or publish new values without recreating the original winning bond.",
+          "The auction has fully settled and the bond maturity period has cleared.",
+          "The current owner can now transfer the name or publish new destinations without recreating the original winning bond.",
           "If you want the full path, inspect the winning bid transaction and any later transfer state."
         ];
       case "invalid":
@@ -2616,7 +2616,7 @@ function primaryLookupNote(record, valueRecord, currentHeight) {
 
   if (status === "invalid") {
     return isAuctionNameRecord(record)
-      ? "This auction-derived name was released before the winning bond lock finished. Use the detail page if you want the full bid and bond history before acting on it."
+      ? "This auction-derived name was released before bond maturity. Use the detail page if you want the full bid and bond history before acting on it."
       : "This name was released before settlement finished. Use the detail page if you want the full transaction history before treating it as available again.";
   }
 
@@ -2634,15 +2634,15 @@ function primaryLookupNote(record, valueRecord, currentHeight) {
 
   if (currentHeight === null) {
     return isAuctionNameRecord(record)
-      ? "This auction winner is still inside the post-auction lock window under the current resolver snapshot."
+      ? "This auction winner is still inside the bond period under the current resolver snapshot."
       : "This name is still settling under the current resolver snapshot.";
   }
 
   const blocksLeft = Math.max(0, Number(record.maturityHeight) - Number(currentHeight));
   if (isAuctionNameRecord(record)) {
     return blocksLeft === 0
-      ? "This auction winner is at the edge of clearing its post-auction lock."
-      : "This auction winner is still locked. About " + String(blocksLeft) + " blocks remain before the bond lock clears.";
+      ? "This auction winner is at the edge of bond maturity."
+      : "This auction winner is still inside the bond period. About " + String(blocksLeft) + " blocks remain before bond maturity.";
   }
 
   return blocksLeft === 0
@@ -2658,7 +2658,7 @@ function detailSettlementValue(record, currentHeight) {
   const status = String(record.status);
 
   if (status === "invalid") {
-    return isAuctionNameRecord(record) ? "Released before lock cleared" : "Released before settlement";
+    return isAuctionNameRecord(record) ? "Released before bond maturity" : "Released before settlement";
   }
 
   if (status === "mature") {
@@ -2666,12 +2666,12 @@ function detailSettlementValue(record, currentHeight) {
   }
 
   if (currentHeight === null) {
-    return isAuctionNameRecord(record) ? "Lock still active" : "Still settling";
+    return isAuctionNameRecord(record) ? "Bond still maturing" : "Still settling";
   }
 
   const blocksLeft = Math.max(0, Number(record.maturityHeight) - Number(currentHeight));
   if (isAuctionNameRecord(record)) {
-    return blocksLeft === 0 ? "Lock clears now" : String(blocksLeft) + " blocks of lock left";
+    return blocksLeft === 0 ? "Bond matures now" : String(blocksLeft) + " blocks to maturity";
   }
 
   return blocksLeft === 0 ? "At maturity" : String(blocksLeft) + " blocks left";
@@ -2688,21 +2688,21 @@ function detailSettlementCopy(record, currentHeight) {
 
   if (status === "mature") {
     return isAuctionNameRecord(record)
-      ? "The auction winner has cleared the post-auction bond lock and is now active without depending on the original winning bond staying live."
+      ? "The auction winner has reached bond maturity and is now active without depending on the original winning bond staying live."
       : "The name has cleared the bond-backed settlement period and is now active without depending on the original bond output staying live.";
   }
 
   if (currentHeight === null) {
     return isAuctionNameRecord(record)
-      ? "The resolver has not published a current height yet, but this auction winner is still within the post-auction lock window."
+      ? "The resolver has not published a current height yet, but this auction winner is still within the bond period."
       : "The resolver has not published a current height yet, but this name is still within the settlement window.";
   }
 
   const blocksLeft = Math.max(0, Number(record.maturityHeight) - Number(currentHeight));
   if (isAuctionNameRecord(record)) {
     return blocksLeft === 1
-      ? "One block remains before the winning-bid lock clears."
-      : String(blocksLeft) + " blocks remain before the winning-bid lock clears.";
+      ? "One block remains before bond maturity."
+      : String(blocksLeft) + " blocks remain before bond maturity.";
   }
 
   return blocksLeft === 1
@@ -2741,7 +2741,7 @@ function detailValueCopy(valueRecord) {
   if (bundle !== null) {
     const destinationCount = listProfileBundleEntries(bundle).length;
     return (
-      "Signed off-chain by the current owner. This key/value bundle currently points to " +
+      "Signed off-chain by the current owner. This destination bundle currently points to " +
       String(destinationCount) +
       " destination" +
       (destinationCount === 1 ? "" : "s") +
@@ -2772,7 +2772,7 @@ function renderOffChainDataSection(valueRecord) {
     : null;
   const explanatoryCopy = valueRecord
     ? bundle !== null
-      ? "This name currently resolves through one signed key/value bundle. Ownership stays on-chain; the bundle carries several off-chain destinations at once."
+      ? "This name currently resolves through one signed destination bundle. Ownership stays on-chain; the bundle carries several off-chain destinations at once."
       : "These are the current signed destinations for the name. Ownership stays on-chain; destinations are stored and updated off-chain."
     : "No signed destinations have been published yet. The name exists, but it does not currently point anywhere.";
   const destinationCountValue = bundle !== null ? String(listProfileBundleEntries(bundle).length) : null;
@@ -2997,7 +2997,7 @@ function renderTransferRecipientKey(generated) {
       <ol>
         <li>Download or copy the private key now and keep it with the buyer.</li>
         <li>Share only the pubkey with the seller for transfer prep.</li>
-        <li>Use this private key later if the recipient will publish values or authorize the next transfer.</li>
+        <li>Use this private key later if the recipient will publish destinations or authorize the next transfer.</li>
       </ol>
       <div class="hero-cta-row">
         <button type="button" class="secondary-button" data-download-transfer-generated-owner-key="1">Download recipient key</button>
@@ -3064,7 +3064,7 @@ function renderPrivateFundingResult(result) {
       <ol>
         <li>Refresh Sparrow so the new confirmed UTXO appears.</li>
         <li>Keep using that same wallet when you prepare auction bid transactions.</li>
-        <li>Use Auctions to inspect valid names and active auctions, create an owner key, and build bid-package handoffs.</li>
+        <li>Use Auctions to check names and active auctions, create an owner key, and build bid-package handoffs.</li>
         <li>Use the CLI for custom bid construction until the website auction flow is fully settled.</li>
       </ol>
     </div>
@@ -3146,7 +3146,7 @@ function buildTransferDraft({ record, activity, newOwnerPubkey, mode, sellerPayo
     ":" +
     String(record.currentBondValueSats) +
     ":<current-bond-address>";
-  const feeInputDescriptor = "<fee-input-txid:vout:valueSats:address>";
+  const feeInputDescriptor = "<fee-input-txid:vout:amount:address>";
   const ownerKeyPlaceholder = "<current-owner-private-key-hex>";
   const ownerWifPlaceholder = "<owner-wif>";
   const buyerWifPlaceholder = "<buyer-wif>";
@@ -3158,8 +3158,8 @@ function buildTransferDraft({ record, activity, newOwnerPubkey, mode, sellerPayo
     "  --bond-input " + bondInputDescriptor + " \\\\",
     "  --input " + feeInputDescriptor + " \\\\",
     "  --successor-bond-vout 0 \\\\",
-    "  --successor-bond-sats " + String(record.currentBondValueSats) + " \\\\",
-    "  --fee-sats <fee-sats> \\\\",
+    "  --successor-bond " + String(record.currentBondValueSats) + " \\\\",
+    "  --fee <fee-amount> \\\\",
     "  --bond-address " + successorBondAddress + " \\\\",
     "  --wif " + ownerWifPlaceholder
   ].join("\\n");
@@ -3169,12 +3169,12 @@ function buildTransferDraft({ record, activity, newOwnerPubkey, mode, sellerPayo
     "  --new-owner-pubkey " + String(newOwnerPubkey) + " \\\\",
     "  --owner-private-key-hex " + ownerKeyPlaceholder + " \\\\",
     "  --bond-input " + bondInputDescriptor + " \\\\",
-    "  --buyer-input <buyer-input-txid:vout:valueSats:address> \\\\",
+    "  --buyer-input <buyer-input-txid:vout:amount:address> \\\\",
     "  --successor-bond-vout 0 \\\\",
-    "  --successor-bond-sats " + String(record.currentBondValueSats) + " \\\\",
-    "  --sale-price-sats <sale-price-sats> \\\\",
+    "  --successor-bond " + String(record.currentBondValueSats) + " \\\\",
+    "  --sale-price <sale-price-amount> \\\\",
     "  --seller-payout-address " + sellerPayout + " \\\\",
-    "  --fee-sats <fee-sats> \\\\",
+    "  --fee <fee-amount> \\\\",
     "  --bond-address " + successorBondAddress + " \\\\",
     "  --wif " + ownerWifPlaceholder + " \\\\",
     "  --wif " + buyerWifPlaceholder
@@ -3184,11 +3184,11 @@ function buildTransferDraft({ record, activity, newOwnerPubkey, mode, sellerPayo
     "  --prev-state-txid " + String(record.lastStateTxid) + " \\\\",
     "  --new-owner-pubkey " + String(newOwnerPubkey) + " \\\\",
     "  --owner-private-key-hex " + ownerKeyPlaceholder + " \\\\",
-    "  --seller-input <seller-input-txid:vout:valueSats:address> \\\\",
-    "  --buyer-input <buyer-input-txid:vout:valueSats:address> \\\\",
-    "  --seller-payment-sats <sale-price-sats> \\\\",
+    "  --seller-input <seller-input-txid:vout:amount:address> \\\\",
+    "  --buyer-input <buyer-input-txid:vout:amount:address> \\\\",
+    "  --seller-payment <sale-price-amount> \\\\",
     "  --seller-payment-address " + sellerPayout + " \\\\",
-    "  --fee-sats <fee-sats> \\\\",
+    "  --fee <fee-amount> \\\\",
     "  --wif " + ownerWifPlaceholder + " \\\\",
     "  --wif " + buyerWifPlaceholder
   ].join("\\n");
@@ -3481,7 +3481,7 @@ function buildTransferRoleChecklist(draft, mode, role) {
 
 function transferPrimarySteps(draft, mode) {
   const steps = [
-    "Replace the placeholder keys, funding inputs, payout address, and fee values in the command block.",
+    "Replace the placeholder keys, funding inputs, payout address, and fee amounts in the command block.",
     "Keep the current owner pubkey and last state txid exactly as shown in this handoff."
   ];
 
@@ -4368,7 +4368,7 @@ function formatValueType(valueType, payloadHex) {
       return "0x02 (https target)";
     case 255:
       return decodeProfileBundlePayloadHex(payloadHex) !== null
-        ? "0xff (key/value bundle)"
+        ? "0xff (destination bundle)"
         : "0xff (raw/app-defined)";
     default:
       return "0x" + Number(valueType).toString(16).padStart(2, "0");
@@ -4651,7 +4651,7 @@ function renderNameAuctionPolicyCard(nameAuction, lengthFloorExamples) {
       value: formatSats(nameAuction?.floorSats ?? "0")
     },
     {
-      title: "Winner lock",
+      title: "Bond period",
       value: formatBlockWindow(nameAuction?.lockBlocks)
     },
     ...lengthFloorExamples.map((entry) => ({
@@ -4663,7 +4663,7 @@ function renderNameAuctionPolicyCard(nameAuction, lengthFloorExamples) {
   return [
     '<article class="guide-card guide-card-wide">',
     "  <h3>" + escapeHtml(label) + "</h3>",
-    '  <p class="result-meta">Every valid name uses the same auction mechanics. The opening floor is length-based, so shorter strings start higher.</p>',
+    '  <p class="result-meta">Every valid name can be opened through the same public auction mechanics. The opening floor is length-based, so shorter strings start higher.</p>',
     '  <div class="result-grid">',
     policyRows
       .map((row) => {
@@ -4892,23 +4892,23 @@ function renderSettledAuctionHandoff(auction, configuredBasePath = BASE_PATH) {
       : null;
   const lockIsActive = blocksUntilRelease !== null && blocksUntilRelease > 0;
   const headline = lockIsActive
-    ? "This settled auction is already a live name, but the post-auction lock is still active."
+    ? "This settled auction is already a live name, but the bond period is still active."
     : "This settled auction is already a live name with a normal owner workflow.";
   const copy = lockIsActive
-    ? "Use the detail page for the current owner-visible state, publish a value if you want a destination or profile attached, and only transfer with bond continuity until the release height clears."
+    ? "Use the detail page for the current owner-visible state, publish destinations if you want a destination or profile attached, and only transfer with buyer replacement bond continuity until maturity."
     : "Use the detail page for the current owner-visible state, update destinations, and treat transfer prep the same way you would for any other mature name.";
   const releaseCopy =
     blocksUntilRelease === null
-      ? "Winner release height is not available in this snapshot."
+      ? "Bond maturity height is not available in this snapshot."
       : blocksUntilRelease === 0
-        ? "The post-auction lock has cleared."
-        : String(blocksUntilRelease) + " blocks remain before the post-auction lock clears.";
+        ? "The bond period has matured."
+        : String(blocksUntilRelease) + " blocks remain before bond maturity.";
   const actions = [
     renderDetailLink(normalizedName, "Open live name detail page", configuredBasePath),
-    renderValuePublishLink(normalizedName, "Publish or update value", configuredBasePath),
+    renderValuePublishLink(normalizedName, "Publish or update destinations", configuredBasePath),
     renderTransferPrepLink(
       normalizedName,
-      lockIsActive ? "Prepare transfer (lock active)" : "Prepare transfer",
+      lockIsActive ? "Prepare transfer (bond maturing)" : "Prepare transfer",
       configuredBasePath
     )
   ].join(" · ");
@@ -4951,7 +4951,7 @@ function renderAuctionBidPackageComposer(input) {
     '  <div class="detail-technical-body draft-grid">',
     '    <div class="field"><label class="field-label" for="auction-bidder-' + escapeHtml(domKey) + '">Bidder label</label><input id="auction-bidder-' + escapeHtml(domKey) + '" type="text" data-auction-bidder-id="' + escapeHtml(input.id) + '" data-auction-package-source="' + escapeHtml(input.source) + '" value="' + escapeHtml(input.defaultBidderId) + '" /><p class="field-note">This is a stable identifier for the bidding entity. The website pre-fills a demo label here and the package derives a bidder commitment from it.</p></div>',
     '    <div class="field"><label class="field-label" for="auction-owner-' + escapeHtml(domKey) + '">Owner pubkey</label><input id="auction-owner-' + escapeHtml(domKey) + '" type="text" data-auction-owner-pubkey="' + escapeHtml(input.id) + '" data-auction-package-source="' + escapeHtml(input.source) + '" value="' + escapeHtml(defaultOwnerPubkey) + '" placeholder="32-byte x-only pubkey" /></div>',
-    '    <div class="field"><label class="field-label" for="auction-amount-' + escapeHtml(domKey) + '">Bid amount (sats)</label><input id="auction-amount-' + escapeHtml(domKey) + '" type="text" inputmode="numeric" data-auction-bid-amount="' + escapeHtml(input.id) + '" data-auction-package-source="' + escapeHtml(input.source) + '" value="' + escapeHtml(input.defaultBidAmount) + '" /></div>',
+    '    <div class="field"><label class="field-label" for="auction-amount-' + escapeHtml(domKey) + '">Bid amount</label><input id="auction-amount-' + escapeHtml(domKey) + '" type="text" inputmode="numeric" data-auction-bid-amount="' + escapeHtml(input.id) + '" data-auction-package-source="' + escapeHtml(input.source) + '" value="' + escapeHtml(input.defaultBidAmount) + '" /></div>',
     '    <div class="draft-field-full">',
     '      <p class="tx-panel-note">Set the x-only owner pubkey that should control the name if this bid wins. Create it in this browser for the normal self-custody path, or use a demo key from the server only for demo testing.</p>',
     '      <div class="field-actions">',
@@ -5015,7 +5015,7 @@ function renderAuctionOwnerKeyHelper(domKey, source, id, name, generated) {
     "    <ol>",
     "      <li>Save the private key before you leave this page.</li>",
     "      <li>Use only the x-only pubkey in the owner pubkey field above.</li>",
-    "      <li>If this bid wins, keep this private key for later value updates or owner-authorized transfers.</li>",
+    "      <li>If this bid wins, keep this private key for later destination updates or owner-authorized transfers.</li>",
     "    </ol>",
     '    <div class="hero-cta-row">',
     '      <button type="button" class="secondary-button" data-auction-owner-key-action="download" data-auction-package-source="' + escapeHtml(source) + '" data-auction-package-id="' + escapeHtml(id) + '" data-auction-name="' + escapeHtml(typeof name === "string" ? name : "") + '">Download owner key</button>',
@@ -5192,7 +5192,7 @@ function formatAuctionBondStatus(value) {
     case "losing_bid_releasable":
       return "Losing bid releasable";
     case "winner_locked":
-      return "Winner locked";
+      return "Winner bond maturing";
     case "winner_releasable":
       return "Winner releasable";
     default:
@@ -5349,7 +5349,7 @@ function renderPrivateAuctionSmokeStatus() {
     '<div class="result-grid">',
     '  <div class="result-item">',
     "    <label>Summary</label>",
-    '    <p class="field-value">Opening bid, higher bid, settlement, value publishing, transfer, and losing-bond violation checks are covered by this smoke run.</p>',
+    '    <p class="field-value">Opening bid, higher bid, settlement, destination publishing, transfer, and losing-bond violation checks are covered by this smoke run.</p>',
     "  </div>",
     '  <div class="result-item">',
     "    <label>Auction id</label>",
@@ -5400,7 +5400,7 @@ function renderPrivateAuctionSmokeStatus() {
     '    <p class="field-value">' + escapeHtml(formatAuctionBondStatus(auctionSmoke.highlight?.betaBondStatus ?? null)) + '</p>',
     "  </div>",
     '  <div class="result-item">',
-    "    <label>Winner value sequence</label>",
+    "    <label>Winner destination sequence</label>",
     '    <p class="field-value">' + escapeHtml(winnerValueSequence === null ? "Not published" : String(winnerValueSequence)) + '</p>',
     "  </div>",
     '  <div class="result-item">',
@@ -5416,7 +5416,7 @@ function renderPrivateAuctionSmokeStatus() {
     transferredOwnerPubkey ? renderCopyableCode(transferredOwnerPubkey) : '<p class="field-value">Not published</p>',
     "  </div>",
     '  <div class="result-item">',
-    "    <label>Transferred value sequence</label>",
+    "    <label>Transferred destination sequence</label>",
     '    <p class="field-value">' + escapeHtml(transferredValueSequence === null ? "Not published" : String(transferredValueSequence)) + '</p>',
     "  </div>",
     "</div>",
@@ -5437,8 +5437,8 @@ function renderPrivateAuctionWinnerHandoffCopy(finalState) {
 
   const blocksUntilRelease = Math.max(0, winnerBondReleaseBlock - currentBlockHeight);
   return blocksUntilRelease > 0
-    ? "The auction has settled into a live name record, but the post-auction lock remains active for about " + String(blocksUntilRelease) + " more blocks."
-    : "The auction has settled into a live name record and the post-auction lock has cleared.";
+    ? "The auction has settled into a live name record, but the bond period remains active for about " + String(blocksUntilRelease) + " more blocks."
+    : "The auction has settled into a live name record and the bond period has matured.";
 }
 
 function renderPrivateAuctionWorkflowSummary(auctionSmoke) {
@@ -5447,11 +5447,11 @@ function renderPrivateAuctionWorkflowSummary(auctionSmoke) {
   const transferTxid = auctionSmoke?.transfer?.transferTxid;
 
   if (winnerSequence === 1 && transferredSequence === 1 && typeof transferTxid === "string" && transferTxid.length > 0) {
-    return "Bidding, settlement, winner value publication, post-release transfer, and recipient value publication all succeeded.";
+    return "Bidding, settlement, winner destination publication, post-release transfer, and recipient destination publication all succeeded.";
   }
 
   if (winnerSequence === 1) {
-    return "Bidding, settlement, and winner value publication succeeded; the later mature transfer path is not published in this summary.";
+    return "Bidding, settlement, and winner destination publication succeeded; the later mature transfer path is not published in this summary.";
   }
 
   return "This summary is still focused on bid acceptance and settlement signals.";
