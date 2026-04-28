@@ -5240,18 +5240,29 @@ function formatBlockWindow(value) {
     return "0 blocks";
   }
 
+  const blockText = blocks.toLocaleString("en-US") + " " + (blocks === 1 ? "block" : "blocks");
+  const approx = formatApproxBlockDuration(blocks);
+  return approx === null ? blockText : blockText + " (~" + approx + ")";
+}
+
+function formatApproxBlockDuration(blocks) {
   const days = blocks / 144;
   if (days >= 365) {
-    return (days / 365).toFixed(days % 365 === 0 ? 0 : 1) + " years";
+    return formatApproxDurationUnit(days / 365, "year");
   }
   if (days >= 30) {
-    return (days / 30).toFixed(days % 30 === 0 ? 0 : 1) + " months";
+    return formatApproxDurationUnit(days / 30, "month");
   }
   if (days >= 1) {
-    return days.toFixed(days % 1 === 0 ? 0 : 1) + " days";
+    return formatApproxDurationUnit(days, "day");
   }
 
-  return String(blocks) + " blocks";
+  return null;
+}
+
+function formatApproxDurationUnit(value, singularUnit) {
+  const rounded = value.toFixed(value % 1 === 0 ? 0 : 1);
+  return rounded + " " + (rounded === "1" ? singularUnit : singularUnit + "s");
 }
 
 function getPrivateDemoBasePath() {

@@ -124,6 +124,8 @@ describe("renderClientScript", () => {
     expect(script).toContain("Use Demo Key From Server");
     expect(script).not.toContain("Closed without winner");
     expect(script).toContain("Base floor");
+    expect(script).toContain('blockText + " (~" + approx + ")"');
+    expect(script).toContain('formatApproxDurationUnit(days / 30, "month")');
     expect(script).toContain("Preview or download bid package");
     expect(script).toContain("Late-bid step");
     expect(script).toContain("Next valid bid (extends close)");
