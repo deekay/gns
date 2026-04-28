@@ -11,6 +11,20 @@ describe("renderClientScript", () => {
     expect(() => new Function(script)).not.toThrow();
   });
 
+  it("carries searched names into the auction page route", () => {
+    const script = renderClientScript("");
+
+    expect(script).toContain("const initialAuctionName = getInitialAuctionName();");
+    expect(script).toContain("function getInitialAuctionName()");
+    expect(script).toContain("return getInitialNameQueryParam();");
+    expect(script).toContain("updateLookupHistory(normalizedName)");
+    expect(script).toContain("updateAuctionHistory(name)");
+    expect(script).toContain('baseAuctionsPath + "?name=" + encodeURIComponent(normalizedName)');
+    expect(script).toContain('href="${escapeHtml(buildAuctionsPath(name))}">Open auction for');
+    expect(script).toContain('href="#auction-lab">Review auction rules');
+    expect(script).toContain("getInitialDetailName() ?? getInitialAuctionName()");
+  });
+
   it("includes private signet auction smoke status handling", () => {
     const script = renderClientScript("");
 

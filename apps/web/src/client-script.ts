@@ -293,6 +293,7 @@ void bootstrap();
 
 async function bootstrap() {
   const initialDetailName = getInitialDetailName();
+  const initialAuctionName = getInitialAuctionName();
   const initialTransferName = getInitialTransferName();
   const restoredTransferProgress = restoreTransferProgress(initialTransferName);
 
@@ -339,6 +340,13 @@ async function bootstrap() {
         elements.nameInput.value = initialDetailName;
       }
       await resolveNameLookup(initialDetailName, {
+        updateHistory: false
+      });
+    } else if (isAuctionsPage() && initialAuctionName) {
+      if (elements.nameInput) {
+        elements.nameInput.value = initialAuctionName;
+      }
+      await resolveNameLookup(initialAuctionName, {
         updateHistory: false
       });
     } else if (isTransferPrepPage() && initialTransferName) {
@@ -848,7 +856,7 @@ async function bootstrap() {
   });
 
   window.addEventListener("popstate", () => {
-    const routeName = getInitialDetailName();
+    const routeName = getInitialDetailName() ?? getInitialAuctionName();
     if (!routeName) {
       hideSearchResult();
       return;
@@ -875,7 +883,7 @@ async function resolveNameLookup(rawName, options = {}) {
     elements.nameInput.value = normalizedName;
   }
   if (options.updateHistory !== false) {
-    updateNameDetailHistory(normalizedName);
+    updateLookupHistory(normalizedName);
   }
 
   renderSearchMessage("Resolving name...");
@@ -1815,7 +1823,19 @@ function getInitialDetailName() {
   }
 }
 
+function getInitialAuctionName() {
+  if (!isAuctionsPage()) {
+    return null;
+  }
+
+  return getInitialNameQueryParam();
+}
+
 function getInitialTransferName() {
+  return getInitialNameQueryParam();
+}
+
+function getInitialNameQueryParam() {
   const currentUrl = new URL(window.location.href);
   const prefill = currentUrl.searchParams.get("name");
 
@@ -1870,8 +1890,10 @@ function buildNameDetailPath(name, configuredBasePath = BASE_PATH) {
   return withBasePath("/names/" + encodeURIComponent(String(name).trim().toLowerCase()), configuredBasePath);
 }
 
-function buildAuctionsPath(_name = "", configuredBasePath = BASE_PATH) {
-  return withBasePath("/auctions", configuredBasePath);
+function buildAuctionsPath(name = "", configuredBasePath = BASE_PATH) {
+  const normalizedName = String(name ?? "").trim().toLowerCase();
+  const baseAuctionsPath = withBasePath("/auctions", configuredBasePath);
+  return normalizedName === "" ? baseAuctionsPath : baseAuctionsPath + "?name=" + encodeURIComponent(normalizedName);
 }
 
 function buildTransferPrepPath(name, configuredBasePath = BASE_PATH) {
@@ -1886,14 +1908,33 @@ function buildValuePublishPath(name, configuredBasePath = BASE_PATH) {
   return normalizedName === "" ? baseValuesPath : baseValuesPath + "?name=" + encodeURIComponent(normalizedName);
 }
 
+function updateLookupHistory(name) {
+  if (isAuctionsPage()) {
+    updateAuctionHistory(name);
+    return;
+  }
+
+  updateNameDetailHistory(name);
+}
+
 function updateNameDetailHistory(name) {
   const targetPath = buildNameDetailPath(name);
 
-  if (window.location.pathname === targetPath) {
+  if (window.location.pathname + window.location.search === targetPath) {
     return;
   }
 
   window.history.pushState({ name }, "", targetPath);
+}
+
+function updateAuctionHistory(name) {
+  const targetPath = buildAuctionsPath(name);
+
+  if (window.location.pathname + window.location.search === targetPath) {
+    return;
+  }
+
+  window.history.pushState({ name, page: "auctions" }, "", targetPath);
 }
 
 function setDocumentTitle(name, status) {
@@ -2912,6 +2953,16 @@ function renderAuctionFirstNameNotFound(name) {
     return;
   }
 
+  const actionLinks = isAuctionsPage()
+    ? \`
+      <a class="action-link" href="#auction-lab">Review auction rules</a>
+      <a class="action-link secondary" href="#experimental-auction-feed">View auction activity</a>
+    \`
+    : \`
+      <a class="action-link" href="\${escapeHtml(buildAuctionsPath(name))}">Open auction for \${escapeHtml(name)}</a>
+      <a class="action-link secondary" href="\${escapeHtml(buildAuctionsPath(name))}">View auction rules</a>
+    \`;
+
   elements.searchResult.hidden = false;
   setHomeLookupHasResult(true);
   setSearchResultVariant("available");
@@ -2929,8 +2980,7 @@ function renderAuctionFirstNameNotFound(name) {
       <p>A valid bonded opening bid can start the auction. No auction exists for this name until that opening bid confirms.</p>
     </div>
     <div class="hero-cta-row lookup-result-actions">
-      <a class="action-link" href="\${escapeHtml(withBasePath("/auctions"))}">Open auction for \${escapeHtml(name)}</a>
-      <a class="action-link secondary" href="\${escapeHtml(withBasePath("/auctions"))}">View auction rules</a>
+      \${actionLinks}
     </div>
   \`;
 }

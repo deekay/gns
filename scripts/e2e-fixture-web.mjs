@@ -63,6 +63,7 @@ try {
   const page = await context.newPage();
 
   await assertHomePage(page);
+  await assertHomeToAuctionLookupCarryover(page);
   await assertAuctionsPage(page);
   await assertRetiredDirectClaimRedirect(page);
 
@@ -78,8 +79,9 @@ try {
         webUrl,
         checkedFlows: [
           "home-docs-surface",
+          "home-search-to-auction-carryover",
           "auction-lab-browser-flow",
-          "claim-route-redirect"
+          "retired-direct-claim-redirect"
         ]
       },
       null,
@@ -103,15 +105,66 @@ async function assertHomePage(page) {
     waitUntil: "domcontentloaded"
   });
 
-  await waitForVisibleText(page, "Human-Readable Names You Can Actually Own");
+  await waitForVisibleText(page, "Names you can actually own");
   await waitForVisibleText(page, "Choose A Path");
   await waitForVisibleText(page, "Understand ONT");
-  await waitForVisibleText(page, "Try The Prototype");
-  await waitForVisibleText(page, "Explore The Registry");
+  await waitForVisibleText(page, "Try It On Signet");
+  await waitForVisibleText(page, "Explore Current State");
   const html = await page.content();
   assert(
     html.includes("/auctions"),
     "home page should link users to auctions"
+  );
+}
+
+async function assertHomeToAuctionLookupCarryover(page) {
+  const displayName = "Alice";
+  const normalizedName = "alice";
+
+  await page.goto(`${webUrl}/`, {
+    waitUntil: "networkidle"
+  });
+  await page.locator("#nameInput").fill(displayName);
+  await page.locator("#searchForm button[type='submit']").click();
+
+  await waitForVisibleText(page, "No current owner is recorded for this name.");
+  await waitForVisibleText(page, normalizedName);
+
+  const openAuctionLink = page.getByRole("link", {
+    name: new RegExp(`Open auction for ${normalizedName}`, "i")
+  });
+  const openAuctionHref = await openAuctionLink.getAttribute("href");
+  assert(
+    openAuctionHref === `/auctions?name=${normalizedName}`,
+    `home lookup should link to /auctions?name=${normalizedName}, got ${openAuctionHref}`
+  );
+
+  await openAuctionLink.click();
+  await page.waitForURL(`${webUrl}/auctions?name=${normalizedName}`, {
+    timeout: 15_000
+  });
+  await waitForVisibleText(page, "No current owner is recorded for this name.");
+
+  const carriedInputValue = await page.locator("#nameInput").inputValue();
+  assert(
+    carriedInputValue === normalizedName,
+    `auction page should preserve searched name ${normalizedName}, got ${carriedInputValue}`
+  );
+
+  const repeatedOpenAuctionLinks = await page.getByRole("link", {
+    name: new RegExp(`Open auction for ${normalizedName}`, "i")
+  }).count();
+  assert(
+    repeatedOpenAuctionLinks === 0,
+    "auction page should not render a self-link that looks like it will open the same auction again"
+  );
+
+  const reviewRulesHref = await page.getByRole("link", {
+    name: /Review auction rules/i
+  }).first().getAttribute("href");
+  assert(
+    reviewRulesHref === "#auction-lab",
+    `auction page follow-up action should jump to auction rules, got ${reviewRulesHref}`
   );
 }
 
@@ -122,9 +175,9 @@ async function assertRetiredDirectClaimRedirect(page) {
 
   assert(
     new URL(page.url()).pathname === "/auctions",
-    "claim route should redirect to auctions"
+    "retired direct-acquisition page should redirect to auctions"
   );
-  await waitForVisibleText(page, "Auction Flow Examples");
+  await waitForVisibleText(page, "Auction Reference Cases");
 }
 
 async function assertAuctionsPage(page) {
@@ -138,7 +191,7 @@ async function assertAuctionsPage(page) {
   });
   const bodyText = await page.locator("body").textContent();
   assert(
-    (bodyText ?? "").includes("Auction bid prep and flow examples"),
+    (bodyText ?? "").includes("A bonded opening bid starts the auction clock."),
     "auction page should expose the current auction framing"
   );
   assert(
@@ -146,7 +199,7 @@ async function assertAuctionsPage(page) {
     "auction page should expose the chain-derived experimental bid feed"
   );
   assert(
-    (bodyText ?? "").includes("Auction Flow Examples"),
+    (bodyText ?? "").includes("Auction Reference Cases"),
     "auction page should render the simulator-backed state surface"
   );
 }
