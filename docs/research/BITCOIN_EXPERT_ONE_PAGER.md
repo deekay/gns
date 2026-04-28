@@ -51,17 +51,17 @@ The rule is:
 
 Launch shape:
 
-- all valid names are eligible at launch
+- all valid names can be opened at launch
 - shorter names stay in the same auction lane with higher length-based opening floors
 - there is no semantic reserved-word list
 - there is no pre-launch reservation system
-- there is no separate ordinary lane
 - no list of brands, people, companies, or generic words receives special
   protocol treatment
 
 The motivation is neutrality. ONT should not decide which names are important.
 If a name matters to multiple bidders, the auction discovers the bonded BTC
-amount.
+amount. Length floors make early bulk capture of scarce names materially
+expensive without creating a second allocation rule.
 
 ## What Is Implemented Today
 
@@ -100,9 +100,8 @@ expect to keep:
 - same-bidder replacement only counts when the later bid spends the prior bid
   bond
 
-The universal-auction model drops the old question of which names belong in a
-special reserved list. The important remaining questions are now objective
-parameters:
+The universal-auction model keeps name importance out of protocol governance.
+The important remaining questions are objective parameters:
 
 - auction window
 - soft-close extension and cap

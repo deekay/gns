@@ -25,7 +25,7 @@ The overview flow is:
 alice
   -> Bitcoin anchor
      owner key: 8f3c...12ab
-     bond: 50,000 sats
+     bond: 6,250,000 sats
 
   -> signed off-chain bundle
      btc: bc1qxy...0wlh
@@ -83,7 +83,9 @@ Every valid name can enter the same auction flow.
 
 Very short names are structurally scarce, so they start with higher objective opening floors. The floor comes from length, not from deciding whether a person, brand, company, or word deserves special treatment.
 
-The exact floor curve can still be tuned, but the launch rule stays simple: no reserved list, no delayed short-string lane, and no separate lane.
+Length floors make early bulk capture of the scarcest names materially expensive, while keeping every valid name in the same auction flow.
+
+The exact floor curve can still be tuned, but the launch rule stays simple: one auction lane for every valid name.
 
 ## What Ownership Lets You Do
 

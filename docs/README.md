@@ -53,6 +53,6 @@ These documents are useful, but they are more speculative, essay-like, or draft-
 - [FUTURE_EXPLORATIONS.md](./research/FUTURE_EXPLORATIONS.md)
 - [NOSTR_STRATEGY.md](./research/NOSTR_STRATEGY.md)
 
-Superseded launch-list and two-lane notes are intentionally removed from this
-index. The current launch model does not use a reserved-word list, salience
-spreadsheet, pre-launch reservation system, or separate ordinary lane.
+Current launch model at a glance: every valid name uses the same auction lane;
+shorter names start with higher objective opening floors; ownership is on
+Bitcoin; mutable destination records are owner-signed and off-chain.

@@ -62,7 +62,7 @@ export async function loadLaunchAuctionLab(): Promise<LaunchAuctionLabPayload> {
     .filter((name) => name.endsWith(".json"))
     .sort((left, right) => left.localeCompare(right));
 
-  const casesWithLegacy = await Promise.all(
+  const loadedCases = await Promise.all(
     fixtureFileNames.map(async (fileName) => {
       const raw = await readFile(`${AUCTION_LAB_FIXTURE_DIR}/${fileName}`, "utf8");
       const fixture = JSON.parse(raw) as AuctionLabFixtureFile;
@@ -81,7 +81,7 @@ export async function loadLaunchAuctionLab(): Promise<LaunchAuctionLabPayload> {
       } satisfies AuctionLabCase;
     })
   );
-  const cases = casesWithLegacy.filter(
+  const cases = loadedCases.filter(
     (entry) =>
       entry.state.phase !== "pending_unlock"
       && !entry.id.includes("legacy")

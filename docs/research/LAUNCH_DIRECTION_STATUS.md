@@ -2,8 +2,8 @@
 
 This note captures the current launch direction in one place.
 
-It is not a final protocol freeze. It is the current working posture after
-moving away from the older two-lane / reserved-list design.
+It is not a final protocol freeze. It is the current working posture for the
+launch allocation model.
 
 Related notes:
 
@@ -18,42 +18,30 @@ Related notes:
 The current lead launch direction is:
 
 - one auction lane
-- no ordinary lane
-- no reserved lane
 - no semantic reserved-name list
 - no pre-launch reservation system
-- all valid names eligible at launch
+- all valid names can be opened at launch
 - shorter names start with higher objective opening floors
 
 The core rule is:
 
 > every valid name is allocated by auction.
 
-This is now cleaner than trying to generate an exhaustive list of brands,
-companies, people, generics, and boundary cases.
+This keeps ONT out of deciding which brands, people, companies, words, or
+handles deserve special protocol treatment.
 
-## Why The Direction Changed
+## Why This Shape Works
 
-The earlier two-lane model was trying to solve a real launch problem:
+The launch problem is real:
 
 - obvious names should not be cheaply captured before natural buyers notice ONT
 
-But the solution created a larger governance problem:
-
-- which names are reserved?
-- which names are not?
-- who decides the boundary?
-- how do we defend omissions?
-- how do we avoid insider-looking whitelist dynamics?
-
-The reserved-list project was becoming the hard part of ONT.
-
-Universal auctions make the allocation rule neutral:
+Universal auctions with length floors make the allocation rule neutral:
 
 - if nobody else cares, the opener likely wins cheaply
 - if others care, the market discovers that price
-- speculators concentrate on visibly valuable auctions instead of forcing ONT
-  to pre-rank the world
+- shorter names have higher objective opening floors
+- early bulk capture of scarce names is materially expensive
 
 ## What Feels Stable Now
 
@@ -62,8 +50,8 @@ Universal auctions make the allocation rule neutral:
 ONT should not launch with a protocol-critical list of reserved brands, public
 figures, companies, generic words, or public identities.
 
-The previous list-generation work may remain useful for research and demand
-modeling, but not as the launch allocation artifact.
+Demand-modeling research can still be useful, but not as launch allocation
+machinery.
 
 ### 2. Universal Auctions Are The Allocation Rule
 
@@ -71,10 +59,8 @@ The clean launch story is:
 
 > names are scarce, so names are auctioned.
 
-That is much easier to explain than:
-
-> some names are ordinary, some names are reserved, and ONT decides which is
-> which.
+The same rule applies whether the name looks like a brand, a generic word, a
+personal handle, or a long-tail string.
 
 ### 3. Short Names Use Objective Floors
 
@@ -101,8 +87,8 @@ If ONT works, rational speculators have better opportunities:
 - scarce short names with higher opening floors
 - names with visible demand
 
-That makes the old ordinary-lane protection less important than the neutrality
-and trust gained from using markets everywhere.
+That makes neutrality and objective floors more important than hand-curated
+exceptions.
 
 ## Current Working Architecture
 
@@ -119,33 +105,19 @@ and trust gained from using markets everywhere.
 | extension cap | open, likely needed |
 | settlement | winning bid becomes name ownership after settlement requirements |
 
-## What This Retires
-
-The following are no longer the current lead launch direction:
-
-- ordinary lane plus reserved lane
-- a source-generated reserved list
-- source-generated auction list as protocol-critical launch input
-- reserved classes for brands, public identities, and generics
-- unopened-name fallback into an ordinary direct-allocation lane
-- pre-launch reservations by domain, handle, or social proof
-
-Older docs may still mention those ideas. Treat them as historical research
-unless they are explicitly updated to this model.
-
 ## What Still Needs Work
 
-The new model leaves a better set of open questions:
+The model still leaves real protocol and product questions:
 
 - exact auction window
 - exact increment rules
 - max soft-close extension cap
 - length-based opening-bond floor curve
 - settlement duration for auction winners
-- how to replace retired direct-claim tooling with auction-opening tooling
+- how to keep public tooling auction-opening-first
 - how auction openings and bids should be batched for blockspace efficiency
 - how to present uncontested auctions so normal users understand the low-drama
-  path without implying a separate direct-allocation lane
+  path without thinking ONT is selling names
 
 ## Current Best Summary
 

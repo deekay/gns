@@ -13,7 +13,7 @@ import {
 describe("auction bid packages", () => {
   it("builds a preview for pending-opening states", () => {
     const pkg = createAuctionBidPackage({
-      auctionId: "01-pre-eligibility-marble",
+      auctionId: "01-not-openable-marble",
       name: "marble",
       auctionClassId: "launch_name",
       classLabel: "Name auction",
@@ -43,7 +43,7 @@ describe("auction bid packages", () => {
     expect(pkg.currentLeaderBidderCommitment).toBeNull();
     expect(pkg.auctionLotCommitment).toBe(
       computeAuctionLotCommitment({
-        auctionId: "01-pre-eligibility-marble",
+        auctionId: "01-not-openable-marble",
         name: "marble",
         auctionClassId: "launch_name",
         unlockBlock: 95_144

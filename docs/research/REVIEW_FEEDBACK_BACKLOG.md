@@ -100,7 +100,7 @@ The current working direction is now simpler:
 - use one auction allocation rule for every valid name
 - keep shorter names in the same auction lane with higher objective opening
   floors
-- remove semantic reserved lists and pre-launch reservation systems from the
+- keep semantic reserved lists and pre-launch reservation systems out of the
   launch design
 - let markets reveal which names have real demand instead of asking ONT to
   classify names ahead of time
@@ -251,7 +251,7 @@ This is the main candidate answer to "respect blockspace more aggressively befor
 
 ### Current Status
 
-Open. The current launch direction no longer depends on the retired direct-allocation batching work. Footprint review should focus first on auction openings, auction bids, transfers, and owner-signed value publication.
+Open. Footprint review should focus first on auction openings, auction bids, transfers, and owner-signed value publication.
 
 ## 12. Auction Dynamics
 

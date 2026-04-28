@@ -73,14 +73,15 @@ ONT separates two concerns:
 At launch, the current direction is a single auction lane:
 
 - every valid name is allocated by auction
-- all valid names are eligible at launch
+- all valid names can be opened at launch
 - shorter names stay in the same auction lane with higher length-based opening floors
 - there is no semantic reserved-name list
 - there is no pre-launch reservation system
 
 This keeps allocation neutral. ONT does not have to decide which brands, people,
 companies, or generic words are important. If a name matters to multiple
-bidders, the auction discovers the bonded BTC amount.
+bidders, the auction discovers the bonded BTC amount; length floors make early
+bulk capture of scarce names materially expensive.
 
 ## No Suffixes, No Hierarchy
 

@@ -65,7 +65,7 @@ Open [auctions](https://opennametags.org/auctions).
 Use:
 
 - the same funded Sparrow wallet from setup
-- a visible eligible name or active auction from the hosted demo
+- a visible ready-to-open name or active auction from the hosted demo
 - a saved owner key and bid package
 
 Then:

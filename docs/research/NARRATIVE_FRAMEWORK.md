@@ -231,7 +231,7 @@ The tone should be:
 
 The universal-auction story strengthens the philosophy rather than weakening it.
 
-The old two-lane story tried to protect the long tail with a simple direct-allocation lane and send salient names to auction. The stronger updated story is simpler: if ONT is allocating scarce human-readable names, every valid name should face the same market rule.
+The story is simple: if ONT is allocating scarce human-readable names, every valid name should face the same market rule. Length floors add objective friction where scarcity is highest without asking ONT to decide which names are important.
 
 The moral center should be:
 
@@ -256,7 +256,6 @@ So the launch story says:
 
 - valid names are auctioned under one rule
 - there is no reserved-word list
-- there is no ordinary direct-allocation lane
 - shorter names use higher length-based opening floors
 
 This is not a retreat from fairness. It is a cleaner market-based account of fairness.

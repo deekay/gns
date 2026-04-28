@@ -145,7 +145,7 @@ Needs improvement:
 
 - Auction pages should continue to look visually aligned with the rest of the site.
 - The page should separate "what is live-chain observed" from "what is fixture/reference state".
-- A small phase legend would help: pre-eligibility, eligible to open, live
+- A small phase legend would help: not openable yet, ready to open, live
   bidding, soft close, settled, released.
 
 ## Recommended Next UX Work

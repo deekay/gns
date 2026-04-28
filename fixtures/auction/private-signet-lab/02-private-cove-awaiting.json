@@ -1,6 +1,6 @@
 {
   "title": "Private demo auction · cove (awaiting)",
-  "description": "Private signet prototype entry with below-floor attempts after the configured eligibility height so the hosted lab still shows the eligible-to-open state.",
+  "description": "Private signet prototype entry with below-floor attempts after the configured opening height so the hosted lab still shows the ready-to-open state.",
   "currentBlockHeight": 128,
   "scenario": {
     "name": "cove",

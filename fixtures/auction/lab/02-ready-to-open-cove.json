@@ -1,6 +1,6 @@
 {
   "title": "Ready to open · cove",
-  "description": "Prototype fixture after the configured eligibility height. Below-floor attempts do not open the auction; only a valid bonded opening bid starts the clock.",
+  "description": "Prototype fixture after the configured opening height. Below-floor attempts do not open the auction; only a valid bonded opening bid starts the clock.",
   "currentBlockHeight": 880030,
   "scenario": {
     "name": "cove",

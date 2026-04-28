@@ -97,10 +97,10 @@ describe("loadLaunchAuctionLab", () => {
     ).toThrow(/already settled/i);
   });
 
-  it("keeps pre-eligibility states out of the public lab payload", async () => {
+  it("keeps not-openable timing states out of the public lab payload", async () => {
     const payload = await loadLaunchAuctionLab();
 
-    expect(payload.cases.map((entry) => entry.id)).not.toContain("01-pre-eligibility-marble");
+    expect(payload.cases.map((entry) => entry.id)).not.toContain("01-not-openable-marble");
     expect(payload.cases.map((entry) => entry.state.phase)).not.toContain("pending_unlock");
   });
 });

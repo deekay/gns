@@ -50,7 +50,7 @@ Keep these distinctions in mind:
 One important testing/status distinction:
 
 - the hosted private demo is a **private signet** walkthrough and the active live environment we maintain
-- the leading launch model is one auction lane for every valid name, with length-based opening floors instead of a delayed short-string lane
+- the leading launch model is one auction lane for every valid name, with length-based opening floors
 - the old shared **public signet** path has been retired from the active demo and validation story because faucet funding never became reliable
 
 ## Quick Map
@@ -109,7 +109,7 @@ Self-hosted website + resolver:
 
 | Phase | What it means | What you do next |
 | --- | --- | --- |
-| `Review` | Inspect eligibility, current auction state, minimum bid, and closing rules | Decide whether to prepare a bid |
+| `Review` | Inspect opening floor, current auction state, minimum bid, and closing rules | Decide whether to prepare a bid |
 | `Bid Broadcast` | A bid transaction is on-chain with bonded bitcoin | Watch whether the bid becomes or remains the leader |
 | `Settling` | The name is already owned and usable, but bond continuity still matters | Keep the bond intact until maturity |
 | `Active` | The name is mature, so ongoing bond continuity no longer matters | Publish values, update the key/value bundle, or transfer later |
@@ -143,7 +143,7 @@ Use the explore page to inspect recent names, provenance, and the current smoke 
 
 Use the auction page to inspect the prototype auction mechanics:
 
-- simulator states for eligibility, bidding, soft close, and settlement
+- simulator states for ready-to-open, bidding, soft close, and settlement
 - the chain-derived observed `AUCTION_BID` feed, including stale-bid
   rejection, same-bidder replacement, and derived bond spend / release summaries
 - the hosted private signet auction-smoke summary showing a real opening bid,
@@ -234,8 +234,8 @@ The current lead launch direction is intentionally simple:
 
 - all valid names use the same auction lane at launch
 - shorter names start with higher objective opening floors
+- length floors make early bulk capture of scarce names materially expensive
 - there is no semantic reserved-name list
-- there is no separate ordinary lane
 
 Auctions discover the BTC amount. Length may still provide an objective
 opening-bond floor, but ONT should not decide which brands, people, companies,
@@ -243,7 +243,7 @@ or words deserve special launch treatment.
 
 ### Bond Floors
 
-The current legacy floor curve is:
+The current illustrative floor curve is:
 
 - `₿100,000,000 (1 BTC)` for a 1-character name
 - each additional character halves the required bond
@@ -255,7 +255,7 @@ discovers that.
 
 ### Why The Namespace Remains Open
 
-Using the current v1 alphabet (`a-z0-9`), there are about `2.18 billion` possible 6-character names.
+Length floors also make early bulk capture expensive. Using the current v1 alphabet (`a-z0-9`), there are about `2.18 billion` possible 6-character names.
 
 At the current 6-character bond of `₿3,125,000 (0.03125 BTC)`, bonding all possible 6-character names would require about `68 million BTC`, which is more than three times Bitcoin's total `21 million` supply.
 

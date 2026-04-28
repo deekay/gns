@@ -93,12 +93,12 @@ The winning bid transaction must establish both:
 
 7. Auction-first allocation
 
-Initial launch allocation uses auctions, not a separate direct-claim lane.
+Initial launch allocation uses auctions.
 
 Purpose:
 - Let markets price scarce names.
 - Avoid maintaining a subjective reserved-name list.
-- Keep ordinary long-tail names reachable without special editorial decisions.
+- Keep long-tail names reachable without special editorial decisions.
 
 8. Length-based opening floors
 
@@ -425,9 +425,8 @@ These are not yet immutable launch commitments, but they are concrete enough
 that implementation, documentation, and reviewer-facing materials should treat
 them as the current defaults unless they are later revised explicitly.
 
-32. Retired direct-allocation batching baseline
+32. Auction lifecycle scaling baseline
 
-The old direct-allocation scaling baseline is retired from launch planning.
 Future footprint work should be evaluated against auction openings, bids,
 transfers, and value-publication flows.
 
@@ -438,11 +437,8 @@ The current lead launch architecture is a **single auction lane**.
 Current shape:
 - every valid name is allocated by auction
 - there is no semantic reserved-name list
-- there is no ordinary direct-allocation lane in the launch model
 - shorter names start with higher length-based opening floors
-- there is no delayed short-string lane or second auction wave
-- old direct-claim tooling should be removed from public surfaces rather than
-  treated as a parallel launch path
+- public tooling should present auction-opening as the acquisition path
 
 This is strong enough to build supporting materials around, but it should still
 be treated as a working launch assumption rather than an immutable protocol
@@ -462,7 +458,7 @@ The current auction family is:
 
 Implications:
 - the project can explain one coherent allocation rule for all valid names
-- old reserved-list generation work is no longer launch-critical
+- reserved-list generation work is not launch-critical
 - placeholder floors, windows, and lock durations should not be presented as
   frozen constants just because the auction family itself is now the working
   assumption

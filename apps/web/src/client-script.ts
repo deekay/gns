@@ -2929,7 +2929,7 @@ function renderAuctionFirstNameNotFound(name) {
     </div>
     <div class="lookup-next-step">
       <p class="search-state-label">Next step</p>
-      <p>Eligible names can be opened by a valid bonded bid. A name is not an auction until that opening bid confirms.</p>
+      <p>Valid names can be opened by a bonded bid that meets the length floor. A name is not an auction until that opening bid confirms.</p>
     </div>
     <div class="hero-cta-row lookup-result-actions">
       <a class="action-link" href="\${escapeHtml(withBasePath("/auctions"))}">Open auction for \${escapeHtml(name)}</a>
@@ -4687,7 +4687,7 @@ function renderAuctionCaseCard(auctionCase) {
         ? "Next valid bid (extends close)"
         : "Next valid bid";
   const closeLabel = phase === "pending_unlock"
-    ? "Eligible at block"
+    ? "Openable at block"
     : phase === "awaiting_opening_bid"
       ? "Auction status"
       : "Auction close";
@@ -4735,7 +4735,7 @@ function renderAuctionCaseCard(auctionCase) {
     '    <div class="result-item"><label>' + escapeHtml(nextBidLabel) + '</label><p class="field-value">' + escapeHtml(nextBidValue) + "</p></div>",
     '    <div class="result-item"><label>Accepted / rejected</label><p class="field-value">' + escapeHtml(String(stateView.acceptedBidCount ?? 0) + " / " + String(stateView.rejectedBidCount ?? 0)) + "</p></div>",
     '    <div class="result-item"><label>Settlement lock</label><p class="field-value">' + escapeHtml(formatBlockWindow(stateView.settlementLockBlocks)) + "</p></div>",
-    '    <div class="result-item"><label>Eligibility wait</label><p class="field-value">' + escapeHtml(String(stateView.blocksUntilUnlock ?? 0)) + "</p></div>",
+    '    <div class="result-item"><label>Opening wait</label><p class="field-value">' + escapeHtml(String(stateView.blocksUntilUnlock ?? 0)) + "</p></div>",
     '    <div class="result-item"><label>' + escapeHtml(secondaryTimingLabel) + '</label><p class="field-value">' + escapeHtml(secondaryTimingValue) + "</p></div>",
     "  </div>",
     renderAuctionBidPackageComposer({
@@ -4749,7 +4749,7 @@ function renderAuctionCaseCard(auctionCase) {
         stateView.phase === "awaiting_opening_bid"
           ? "This package is an opening bid. If signed and confirmed, it starts the auction clock."
           : stateView.phase === "pending_unlock"
-          ? "This pre-eligibility fixture is internal and should not appear in the public auction examples."
+          ? "This internal timing fixture should not appear in the public auction examples."
           : stateView.phase === "soft_close"
           ? "Soft close is active. A bid from this state must clear the stronger late-extension increment."
           : "Build a bid package from the simulator state shown on this card.",
@@ -4818,7 +4818,7 @@ function renderExperimentalAuctionCard(auction) {
     '    <div class="result-item"><label>' + escapeHtml(nextBidLabel) + '</label><p class="field-value">' + escapeHtml(nextBidValue) + "</p></div>",
     '    <div class="result-item"><label>Accepted / rejected</label><p class="field-value">' + escapeHtml(String(auction.acceptedBidCount ?? 0) + " / " + String(auction.rejectedBidCount ?? 0)) + "</p></div>",
     '    <div class="result-item"><label>Observed bids</label><p class="field-value">' + escapeHtml(String(auction.totalObservedBidCount ?? 0)) + "</p></div>",
-    '    <div class="result-item"><label>Eligibility wait</label><p class="field-value">' + escapeHtml(String(auction.blocksUntilUnlock ?? 0)) + "</p></div>",
+    '    <div class="result-item"><label>Opening wait</label><p class="field-value">' + escapeHtml(String(auction.blocksUntilUnlock ?? 0)) + "</p></div>",
     '    <div class="result-item"><label>' + escapeHtml(closeLabel) + '</label><p class="field-value">' + escapeHtml(closeValue) + "</p></div>",
     '    <div class="result-item"><label>Accepted capital locked</label><p class="field-value">' + escapeHtml(formatSats(auction.currentlyLockedAcceptedBidAmountSats ?? "0")) + " (" + escapeHtml(String(auction.currentlyLockedAcceptedBidCount ?? 0)) + ")</p></div>",
     '    <div class="result-item"><label>Accepted capital releasable</label><p class="field-value">' + escapeHtml(formatSats(auction.releasableAcceptedBidAmountSats ?? "0")) + " (" + escapeHtml(String(auction.releasableAcceptedBidCount ?? 0)) + ")</p></div>",
@@ -4848,7 +4848,7 @@ function renderExperimentalAuctionCard(auction) {
         phase === "awaiting_opening_bid"
           ? "This package is an opening bid. If signed and confirmed, it starts the auction clock."
           : phase === "pending_unlock"
-          ? "This pre-eligibility prototype entry is filtered out of public auction views."
+          ? "This internal timing prototype entry is filtered out of public auction views."
           : phase === "soft_close"
           ? "Built from current resolver-derived state. A soft-close extension bid must clear the stronger late increment and may go stale if another bid lands first."
           : "Build a bid package from the current resolver-derived auction state.",

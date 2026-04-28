@@ -89,19 +89,11 @@ The intended outcome is:
 
 This split-lock shape is not fully implemented yet.
 
-## Legacy Scheduled-Catalog Compatibility State
+## No Auction Without An Opening Bid
 
-The older scheduled-catalog prototype allowed a catalog entry to reach a
-configured expiry window without a valid opening bid:
-
-- it moves to `unopened`
-- no auction-owned name is materialized
-- the name remains without an owner until a future objective path reopens it
-
-That state is useful compatibility coverage for old catalog fixtures, but it is
-not the current launch story. In the user-started model, no auction exists until
-a valid bonded opening bid confirms. Settlement materialization only happens for
-auctions with an actual settled winning bid.
+In the user-started model, no auction exists until a valid bonded opening bid
+confirms. Settlement materialization only happens for auctions with an actual
+settled winning bid.
 
 ## Current Validation
 

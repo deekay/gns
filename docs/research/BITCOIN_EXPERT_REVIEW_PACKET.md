@@ -115,28 +115,25 @@ The launch rule is:
 
 Current launch shape:
 
-- all valid names are eligible at launch
+- all valid names can be opened at launch
 - shorter names stay in the same auction lane with higher length-based opening floors
 - no semantic reserved-word list
 - no pre-launch reservation system
-- no separate ordinary lane
 - no editorial distinction between brands, public figures, generic words, and
   ordinary names
 
 The current lead recommendation is:
 
 - build around universal auctions
-- treat old direct-allocation batching work as historical context only
-- review compactness after the auction-first transaction shape is clearer
+- review compactness around auction openings, bids, transfers, and value updates
 - keep auction mechanics visible and testable, but do not overstate placeholder
   windows, floors, or settlement durations as final protocol constants
 
 ## 5. Footprint: Auction Lifecycle First
 
-The current scaling story has shifted with the auction-first launch direction.
-The immediate question is no longer how to compress a hidden direct-allocation
-flow. The immediate question is how much footprint the auction bid, transfer,
-and value-record lifecycle creates under realistic usage.
+The current scaling story starts with the auction-first lifecycle: how much
+footprint auction bids, transfers, and value records create under realistic
+usage.
 
 ### Mainline implemented path
 
@@ -157,7 +154,7 @@ and value-record lifecycle creates under realistic usage.
 
 The final auction settlement engine and launch parameters are not frozen yet.
 That means footprint review should focus on the current auction transaction
-shape, not on older allocation paths.
+shape.
 
 The current recommendation is to review the auction transaction shape directly
 before optimizing for batching or alternate carriers.
@@ -177,7 +174,6 @@ Today we have:
 - chain-derived auction feed from observed `AUCTION_BID` transactions
 - stale-state rejection
 - same-bidder replacement derivation
-- legacy scheduled-catalog compatibility coverage kept out of the launch story
 - settled winner materialization into a live owned name
 - live private-signet smoke proving auction lifecycle behavior
 

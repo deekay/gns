@@ -1,6 +1,6 @@
 %PDF-1.4
 1 0 obj
-<< /Length 10306 >>
+<< /Length 10300 >>
 stream
 q 0.965 0.925 0.855 rg 0.00 0.00 792.00 612.00 re f Q
 q 1.000 0.988 0.955 rg 0.890 0.800 0.670 RG 0.9 w 24.00 24.00 744.00 564.00 re B Q
@@ -29,7 +29,7 @@ q 1.000 0.988 0.955 rg 0.870 0.780 0.670 RG 0.75 w 48.00 296.00 212.00 108.00 re
 BT /F3 14 Tf 0.120 0.105 0.090 rg 63.00 379.00 Td (Bitcoin anchor) Tj ET
 BT /F2 7.1 Tf 0.490 0.200 0.100 rg 63.00 362.00 Td (alice) Tj ET
 BT /F4 7.25 Tf 0.360 0.320 0.270 rg 63.00 344.00 Td (owner key: 8f3c...12ab) Tj ET
-BT /F4 7.25 Tf 0.360 0.320 0.270 rg 63.00 333.80 Td (bond: 50,000 sats) Tj ET
+BT /F4 7.25 Tf 0.360 0.320 0.270 rg 63.00 333.80 Td (bond: 6,250,000 sats) Tj ET
 q 0.720 0.380 0.190 RG 1 w 267.00 350.00 m 283.00 350.00 l S Q
 BT /F2 7.5 Tf 0.720 0.380 0.190 rg 280.00 347.00 Td (>) Tj ET
 q 0.995 0.965 0.915 rg 0.870 0.780 0.670 RG 0.75 w 290.00 296.00 212.00 108.00 re B Q
@@ -134,11 +134,11 @@ BT /F1 6.9 Tf 0.360 0.320 0.270 rg 429.00 83.00 Td (same auction mechanics) Tj E
 q 0.720 0.380 0.190 rg 416.00 73.26 2.62 2.62 re f Q
 BT /F1 6.9 Tf 0.360 0.320 0.270 rg 429.00 71.40 Td (objective length curve) Tj ET
 q 0.720 0.380 0.190 rg 416.00 61.66 2.62 2.62 re f Q
-BT /F1 6.9 Tf 0.360 0.320 0.270 rg 429.00 59.80 Td (no reserved-name judgment) Tj ET
+BT /F1 6.9 Tf 0.360 0.320 0.270 rg 429.00 59.80 Td (expensive early sweeps) Tj ET
 q 0.880 0.760 0.640 RG 0.6 w 586.00 70.00 m 586.00 124.00 l S Q
-BT /F1 6.75 Tf 0.360 0.320 0.270 rg 604.00 112.00 Td (Length can raise the opening floor) Tj ET
-BT /F1 6.75 Tf 0.360 0.320 0.270 rg 604.00 103.80 Td (without delaying a name or creating a) Tj ET
-BT /F1 6.75 Tf 0.360 0.320 0.270 rg 604.00 95.60 Td (second auction lane.) Tj ET
+BT /F1 6.75 Tf 0.360 0.320 0.270 rg 604.00 112.00 Td (Length floors make early bulk capture) Tj ET
+BT /F1 6.75 Tf 0.360 0.320 0.270 rg 604.00 103.80 Td (expensive without creating a second) Tj ET
+BT /F1 6.75 Tf 0.360 0.320 0.270 rg 604.00 95.60 Td (auction lane.) Tj ET
 BT /F2 6.8 Tf 0.490 0.200 0.100 rg 48.00 34.00 Td (opennametags.org) Tj ET
 BT /F1 6.6 Tf 0.360 0.320 0.270 rg 650.00 34.00 Td (prototype launch brief) Tj ET
 
@@ -169,15 +169,15 @@ xref
 0 9
 0000000000 65535 f 
 0000000009 00000 n 
-0000010368 00000 n 
-0000010438 00000 n 
-0000010513 00000 n 
-0000010584 00000 n 
-0000010652 00000 n 
-0000010808 00000 n 
-0000010865 00000 n 
+0000010362 00000 n 
+0000010432 00000 n 
+0000010507 00000 n 
+0000010578 00000 n 
+0000010646 00000 n 
+0000010802 00000 n 
+0000010859 00000 n 
 trailer
 << /Size 9 /Root 8 0 R >>
 startxref
-10914
+10908
 %%EOF

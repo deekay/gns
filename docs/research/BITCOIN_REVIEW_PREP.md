@@ -70,8 +70,8 @@ The clean current stance is:
   precede it
 - universal auctions are the current lead launch direction
 - shorter names stay in the same auction lane with higher length-based opening floors
-- no reserved-word list, pre-launch reservation system, or separate ordinary
-  lane is part of the current launch plan
+- no reserved-word list or pre-launch reservation system is part of the current
+  launch plan
 - auction mechanics are implemented enough to inspect and critique, but some
   numbers are still calibration placeholders
 - transfer sales have CLI-backed atomic handoff flows, but the browser is still

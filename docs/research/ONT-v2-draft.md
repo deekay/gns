@@ -28,7 +28,7 @@ Bond amounts are length-based and follow a halving curve:
 Names are "immature" for a set period, after which bond continuity is no longer required.
 - **Epoch 0:** 52,000 blocks (~1 year).
 - **Epoch Length:** 52,000 blocks.
-- **Halving:** Earlier direct-claim maturity curves are retired from the launch model; auction settlement and release durations are policy parameters.
+- **Halving:** Auction settlement and release durations are policy parameters.
 
 ### 3.3 Bond Continuity
 An immature name remains valid only while its dedicated bond outpoint remains unspent (or is moved via a valid ONT Transfer). If bond continuity breaks before maturity, the name is immediately released.

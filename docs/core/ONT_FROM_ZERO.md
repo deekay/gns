@@ -92,9 +92,7 @@ The current launch direction is a **single auction lane**:
 
 - every valid name is allocated by auction
 - there is no semantic reserved-name list
-- there is no ordinary-vs-reserved split
 - shorter names start with higher length-based opening floors
-- there is no delayed short-string lane or second auction wave
 
 That direction is motivated by launch fairness and simplicity:
 
@@ -102,6 +100,7 @@ That direction is motivated by launch fairness and simplicity:
   special
 - let markets discover BTC amounts whenever more than one party cares
 - keep scarcity pressure for shorter strings in the objective opening floor
+- make early bulk capture of scarce names materially expensive
 - make uncontested names feel simple even though the allocation rule is still an
   auction
 
@@ -135,8 +134,7 @@ What is real today:
 - off-chain signed value-record flow
 - private-signet demo paths for auction, transfer, and value-record smoke tests
 
-The old direct-claim path is retired from the product surface and tests. It
-should not be treated as a parallel launch lane.
+Public product surfaces and tests should stay auction-opening-first.
 
 ## Open Questions Worth Review
 

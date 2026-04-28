@@ -79,7 +79,7 @@ try {
         checkedFlows: [
           "home-docs-surface",
           "auction-lab-browser-flow",
-          "retired-direct-claim-redirect"
+          "claim-route-redirect"
         ]
       },
       null,
@@ -122,7 +122,7 @@ async function assertRetiredDirectClaimRedirect(page) {
 
   assert(
     new URL(page.url()).pathname === "/auctions",
-    "retired direct-acquisition page should redirect to auctions"
+    "claim route should redirect to auctions"
   );
   await waitForVisibleText(page, "Auction Flow Examples");
 }

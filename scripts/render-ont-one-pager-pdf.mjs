@@ -279,7 +279,7 @@ function renderAliceFlow() {
       x,
       title: "Bitcoin anchor",
       meta: "alice",
-      body: ["owner key: 8f3c...12ab", "bond: 50,000 sats"]
+      body: ["owner key: 8f3c...12ab", "bond: 6,250,000 sats"]
     },
     {
       x: x + width + gap,
@@ -433,7 +433,7 @@ function renderLengthFloorCard() {
     items: [
       "same auction mechanics",
       "objective length curve",
-      "no reserved-name judgment"
+      "expensive early sweeps"
     ],
     size: 6.9,
     lineHeight: 8.6,
@@ -444,7 +444,7 @@ function renderLengthFloorCard() {
     x: x + 204,
     y: y + height - 32,
     width: 120,
-    value: "Length can raise the opening floor without delaying a name or creating a second auction lane.",
+    value: "Length floors make early bulk capture expensive without creating a second auction lane.",
     size: 6.75,
     lineHeight: 8.2,
     color: colors.muted

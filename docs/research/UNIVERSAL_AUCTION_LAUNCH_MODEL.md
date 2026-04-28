@@ -1,13 +1,6 @@
 # Universal Auction Launch Model
 
-This is the current lead launch direction for ONT.
-
-It replaces the earlier two-lane model of:
-
-- ordinary names
-- reserved names
-
-with one allocation rule:
+This is the current lead launch direction for ONT:
 
 > every valid ONT name is allocated by auction.
 
@@ -16,39 +9,25 @@ source-of-truth framing for launch docs and website copy.
 
 ## Core Decision
 
-ONT should not maintain a semantic reserved-name list.
-
 The launch model should be:
 
 - one auction lane
-- no ordinary direct-allocation lane
-- no reserved-name lane
+- length-based opening floors for shorter names
+- no semantic reserved-name list
 - no pre-launch reservation system
 - no editorial list of brands, public figures, companies, or generic words
-- length-based opening floors for shorter names
 
-The ordinary-long-tail problem is handled by the fact that most names will not
-attract serious competing bids.
+The long-tail experience is handled by the fact that most names will not attract
+serious competing bids.
 
-## Why This Is Cleaner
-
-The earlier reserved-list path solved a real problem, but it created a bigger
-one:
-
-- which names are important enough to reserve?
-- who decides?
-- how do we defend boundary cases?
-- how do we avoid insider or editorial favoritism?
-- how do we keep the list current without governance creep?
-
-Universal auctions avoid that entire category of judgment.
+## Why This Is Neutral
 
 The rule becomes:
 
 > if a name matters to more than one participant, the auction discovers that.
 
-That is simpler, more neutral, and easier to explain than asking ONT to
-pre-compute global salience.
+That is simpler, more neutral, and easier to explain than asking ONT to decide
+which names deserve special treatment.
 
 ## Basic Flow
 
@@ -75,8 +54,7 @@ Every valid name should use the same auction lane at launch.
 
 Shorter names can still start higher through the objective bond curve.
 
-This is not a reserved list and not a separate lane. It is an objective
-structural rule:
+This is an objective structural rule:
 
 - shorter strings: higher opening floors
 - longer strings: quickly fall toward the global floor
@@ -85,8 +63,10 @@ Why:
 
 - very short names are structurally scarce
 - the floor is easy to verify
+- early bulk capture of scarce names becomes materially expensive
 - no private party gets delayed or preferred access
-- ONT does not need to explain why `pepsi` opens before `coke`
+- `coke` and `pepsi` follow the same market rule; only the objective length
+  floor differs
 
 The exact floor curve remains tunable. The principle is that length can set an
 auditable opening floor without creating a launch boundary or second wave.
@@ -122,10 +102,9 @@ The current direction:
 - normal Bitcoin transaction fees still apply
 - the protocol does not sell names and does not collect rent
 
-## What Happens To Old Reserved-List Work
+## Research Notes Outside The Launch Path
 
-The previous auction-list and reserved-list work is now obsolete as launch
-machinery.
+Demand-list and salience research is not launch machinery.
 
 It may still be useful as research:
 
@@ -134,7 +113,7 @@ It may still be useful as research:
 - to generate examples for reviewers
 - to model speculative behavior
 
-But it should not be used as a protocol-critical launch list.
+It should not be used as a protocol-critical launch list.
 
 ## What Still Needs Work
 
@@ -145,12 +124,8 @@ The remaining launch-design questions are now narrower:
 - whether to cap total extension time
 - length-based opening-bond floor curve
 - settlement duration after winning an auction
-- how auction-opening and bid packages replace the retired direct-claim tooling
+- how auction-opening and bid packages should be finalized
 - how batching should work for auction openings and bids
-
-This is a much better open-question set than:
-
-> which people, brands, companies, and words deserve special treatment?
 
 ## Canonical One-Sentence Summary
 

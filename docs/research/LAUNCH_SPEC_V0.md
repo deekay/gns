@@ -24,12 +24,10 @@ The intended rule is:
 
 That means:
 
-- no ordinary direct-allocation lane
-- no reserved-name lane
 - no semantic reserved-name list
 - no pre-launch reservation system
 - no editorial distinction between brands, public figures, generic words, and
-  ordinary names
+  long-tail names
 - shorter names stay in the same auction lane with higher length-based opening floors
 
 ## Primary Objectives
@@ -43,7 +41,7 @@ The launch design should try to satisfy all of these at once:
 5. preserve the bonded-bitcoin model: cost without rent or protocol sales
 6. remain credible on blockspace and implementation complexity
 
-## Eligibility At Launch
+## Opening At Launch
 
 The launch rule is intentionally simple:
 
@@ -57,6 +55,9 @@ This is not a reserved list and not a delayed wave.
 It is a structural scarcity rule. Very short names are uniquely scarce, so they
 can require higher objective opening floors without asking ONT to pick which
 brands, people, companies, or words matter.
+
+Those floors also make early bulk capture materially expensive before the
+market has discovered every name that will eventually matter.
 
 ## Auction Flow
 
@@ -90,7 +91,7 @@ Current preferred defaults:
 | soft-close increment | stronger than normal mid-auction increment |
 | max extension cap | open, likely needed |
 | initial launch period | may use longer windows if awareness is uneven |
-| name eligibility | all valid names use the same auction lane |
+| valid names | all use the same auction lane |
 
 These are launch parameters, not final protocol constants yet.
 
@@ -142,40 +143,31 @@ The floor curve can still be tuned. The important simplification is that the
 auction system handles all valid names, while the length floor supplies
 objective scarcity pressure.
 
-## What The Spec Drops
+## Launch Guardrails
 
-This launch model drops:
+The launch model should keep these guardrails:
 
-- semantic reserved-name lists
-- source-generated auction lists as protocol-critical artifacts
-- pre-launch proof/reservation systems
-- ordinary-vs-reserved allocation treatment
-- unopened-name fallback from auction into a separate ordinary direct-allocation lane
-- bespoke reserved classes for brands, identities, and generics
-
-The previous source-list work can remain useful for research and examples, but
-it is no longer the allocation mechanism.
+- no semantic reserved-name lists
+- no source-generated auction lists as protocol-critical artifacts
+- no pre-launch proof or reservation system
+- no bespoke reserved classes for brands, identities, or generics
 
 ## Implementation Gap List
 
 The main implementation work now is:
 
-- keep retiring old direct-claim code paths in favor of auction-opening-first flows
+- keep public flows auction-opening-first
 - update auction policy defaults toward the launch timing above
 - enforce the length-based opening floors
 - add or decide a max soft-close extension cap
 - decide final settlement duration after winning auction
 - update batch/footprint analysis for auction openings and bids
-- remove old list-based launch language from user-facing docs and tools
-- remove remaining legacy direct-claim implementation details that are no longer
-  needed for auction-opening-first flows
+- keep user-facing docs and tools aligned with the single-lane auction model
 
 ## Current Status
 
-The repo still contains a few legacy internal type names in code and fixtures.
-
-Those should now be read as implementation history unless a document explicitly
-points back to this launch spec.
+The repo still contains some internal test and fixture vocabulary for timing
+states, but public surfaces should describe the current model directly.
 
 The current lead launch sentence is:
 

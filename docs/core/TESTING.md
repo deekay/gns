@@ -48,7 +48,7 @@ Then open:
 - `http://127.0.0.1:3000/values`
 - `http://127.0.0.1:3000/transfer`
 
-The retired direct-claim route, `/claim`, should redirect to `/auctions`.
+For link compatibility, `/claim` should redirect to `/auctions`.
 
 ## Auction CLI Smoke
 
@@ -104,9 +104,8 @@ npm run dev:cli -- publish-value-record /tmp/alice-value.json \
   --resolver-url http://127.0.0.1:8787
 ```
 
-## Retired Paths
+## Compatibility Redirects
 
-The old direct-allocation preparation path is retired. Tests should not assert
-success for that hidden-name staging family of flows. If an old endpoint is kept
-temporarily for link compatibility, it should return a retirement response and
-point users to auctions.
+Tests should not assert success for hidden-name staging flows. If an older
+endpoint is kept temporarily for link compatibility, it should point users to
+auctions.

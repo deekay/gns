@@ -396,7 +396,7 @@ async function ensureAuctionReadyForOpeningBid(auctionState) {
   }
 
   if (auctionState.phase !== "pending_unlock") {
-    throw new Error(`expected ${auctionState.auctionId} to be pre-eligibility or eligible to open`);
+    throw new Error(`expected ${auctionState.auctionId} to be not-openable or ready for an opening bid`);
   }
 
   const blocksToMine = Math.max(1, auctionState.unlockBlock - auctionState.currentBlockHeight);

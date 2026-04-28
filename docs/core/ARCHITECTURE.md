@@ -267,9 +267,8 @@ For high-value use, the stronger path should stay local-first:
 - sign in Sparrow
 
 That keeps high-value preparation closer to the Ian Coleman model: transparent
-and runnable without trusting a live hosted JavaScript bundle. The old
-direct-allocation browser path is retired; any higher-trust path should now be
-auction-first.
+and runnable without trusting a live hosted JavaScript bundle. Any higher-trust
+path should be auction-first.
 
 ## What Still Needs Improvement
 

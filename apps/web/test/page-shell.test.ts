@@ -48,7 +48,7 @@ describe("renderPageHtml", () => {
     expect(html).not.toContain("Costly To Hoard");
     expect(html).not.toContain("Maps To Destinations");
     expect(html).not.toContain("Two ideas shape ONT.");
-    expect(html).not.toContain("Eligible names use one auction lane.");
+    expect(html).not.toContain("Names with 1-4 characters wait");
     expect(html).not.toContain("One Name, Many Destinations");
     expect(html).not.toContain("Small Bitcoin footprint");
     expect(html).not.toContain("Resolvers store the current owner-signed bundle for <span class=\"mono\">alice</span>");
@@ -83,7 +83,7 @@ describe("renderPageHtml", () => {
     expect(html).toContain("protocol-flow");
     expect(html).toContain("Win At Auction");
     expect(html).toContain("Bitcoin establishes that <span class=\"mono\">alice</span> is controlled by an owner key");
-    expect(html).toContain("50,000 sats");
+    expect(html).toContain("6,250,000 sats");
     expect(html).toContain("Publish Off-Chain");
     expect(html).toContain("Resolvers store that signed record.");
     expect(html).toContain("<strong class=\"mono\">bc1qxy...0wlh</strong>");

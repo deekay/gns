@@ -39,11 +39,10 @@ The signet prototype should demonstrate:
 These assumptions are strong enough to build against:
 
 - names are `[a-z0-9]{1,32}` and canonicalized to lowercase
-- all valid names are eligible at launch
+- all valid names can be opened at launch
 - shorter names stay in the same auction lane with higher length-based opening floors
 - all valid names use the same auction lane
-- there is no reserved-word list, no pre-launch reservation system, and no
-  ordinary-vs-reserved split
+- there is no reserved-word list and no pre-launch reservation system
 - values are off-chain by default
 - pre-release transfer must preserve bond continuity
 - same-block competing bids are tie-broken by deterministic transaction order
@@ -91,7 +90,7 @@ Responsibilities:
 - resolve names to current state
 - return latest valid off-chain value record
 - return provenance for events and names
-- return auction eligibility and bid state
+- return auction opening and bid state
 
 4. `ont-cli`
 

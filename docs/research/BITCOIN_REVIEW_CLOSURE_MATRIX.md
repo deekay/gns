@@ -35,7 +35,6 @@ Status labels:
 | Reserved-word lists | Drop them from the launch model | closed for this review rev | not as a Bitcoin-native ask | remove from current docs and tools |
 | Pre-launch reservations | Drop them from the launch model | closed for this review rev | no | keep out of implementation and docs |
 | Auction family | Open ascending, soft close, meaningful increments, stronger late-extension increments | provisional but shareable | yes | present current rule family and why |
-| Legacy scheduled-catalog close | Retire from the launch story; keep only as compatibility coverage unless the mechanism changes again | cleanup required | no | do not present unopened names as failed auctions |
 | Same-bidder rebid shape | Later bid should spend the earlier bid bond outpoint | provisional but shareable | yes | include in auction semantics section |
 | Winning-bid settlement shape | Winning bid carries eventual owner key and materializes directly into a name | provisional but shareable | yes | ask whether a separate settlement step would be cleaner |
 | Exact auction windows and floors | Keep temporary numbers for testing; do not present them as final | tighten before broader outreach | not as a core review ask | document which numbers are placeholders |
@@ -62,10 +61,8 @@ The highest-value tightening work before a broader round is:
 These items are already in a reviewable state:
 
 - payment-handle framing
-- retired claim prototype as historical context
 - universal auction lead architecture
 - auction mechanics as an experimental but real system slice
-- legacy scheduled-catalog compatibility only as compatibility context
 - winner materialization into owned names
 
 ## Recommended First-Round Ask

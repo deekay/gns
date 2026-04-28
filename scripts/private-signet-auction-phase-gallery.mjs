@@ -170,7 +170,7 @@ function summarizeAuction(auction) {
 async function ensurePendingPhase(auctionState) {
   if (auctionState.phase !== "pending_unlock") {
     throw new Error(
-      `expected ${auctionState.auctionId} to remain in pre-eligibility; current phase is ${auctionState.phase}`
+      `expected ${auctionState.auctionId} to remain in the not-openable timing state; current phase is ${auctionState.phase}`
     );
   }
 }
@@ -178,7 +178,7 @@ async function ensurePendingPhase(auctionState) {
 async function ensureAwaitingPhase(auctionState) {
   const ready = await ensureAuctionReadyForOpeningBid(auctionState);
   if (ready.phase !== "awaiting_opening_bid") {
-    throw new Error(`expected ${auctionState.auctionId} to be eligible to open`);
+    throw new Error(`expected ${auctionState.auctionId} to be ready for an opening bid`);
   }
 }
 
@@ -286,7 +286,7 @@ async function ensureAuctionReadyForOpeningBid(auctionState) {
   }
 
   throw new Error(
-    `expected ${auctionState.auctionId} to be pre-eligibility or eligible to open; current phase is ${auctionState.phase}`
+    `expected ${auctionState.auctionId} to be not-openable or ready for an opening bid; current phase is ${auctionState.phase}`
   );
 }
 

@@ -26,7 +26,7 @@ const FIXTURE_FILES = [
   "marble-competitive.json",
   "meadow-moderate.json",
   "silverpine-thin-market.json",
-  "unopened-eligible.json",
+  "unopened-ready.json",
   "underfloor-opening-bid.json",
   "soft-close-tail.json"
 ] as const;

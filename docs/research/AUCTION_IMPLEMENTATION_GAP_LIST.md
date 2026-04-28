@@ -107,7 +107,7 @@ entries:
 - same-bidder replacement when the later bid spends the earlier bid bond
 - accepted-bid bond / release summaries
 - early-vs-allowed spend classification for observed bid bond outpoints
-- settled / soft-close / eligible / legacy scheduled-catalog close phase
+- settled / soft-close / ready-to-open phase coverage
 - settled-winner ownership materialization for names that do not already exist
   in the registry state
 
@@ -128,8 +128,6 @@ Still open:
 
 - whether the current loser-release / winner-lock timing is the right final
   rule set
-- whether the legacy scheduled-catalog compatibility path should be removed
-  entirely or kept only for compatibility tests
 - whether transfers before maturity are allowed and under what constraints
 - whether any explicit post-win settlement or acknowledgement step is still
   desirable despite the current winner-owned-name materialization path

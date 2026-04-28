@@ -97,8 +97,6 @@ It currently proves:
 - winner value publication
 - post-release transfer
 - recipient value publication
-- legacy scheduled-catalog compatibility is still covered in the
-  smoke data, but should not be presented as a current launch outcome
 
 This is the strongest live demo evidence we currently have.
 
@@ -115,16 +113,15 @@ user-facing auction states in one place.
 
 At the time of this audit, the public lab API includes explicit cases for:
 
-- `not_eligible_yet` (internal phase id: `pending_unlock`)
-- `eligible_to_open` (internal phase id: `awaiting_opening_bid`)
+- `ready_to_open` (internal phase id: `awaiting_opening_bid`)
 - `live_bidding`
 - `soft_close`
 - `settled`
 
 This is the right place to say:
 
-> the website visibly demonstrates eligibility, opening-bid prep, live bidding,
-> soft close, and settlement
+> the website visibly demonstrates ready-to-open, live bidding, soft close, and
+> settlement states
 
 because that claim is stable and fixture-backed.
 
@@ -148,8 +145,8 @@ The private feed is now maintained in two ways:
 
 - the private auction smoke leaves behind real `settled` outcomes
 - a dedicated private phase-gallery refresh script parks real prototype entries in
-  `not_eligible_yet` (internal phase id: `pending_unlock`),
-  `eligible_to_open` (internal phase id: `awaiting_opening_bid`),
+  internal timing coverage before a lot is openable (internal phase id:
+  `pending_unlock`), ready-to-open (internal phase id: `awaiting_opening_bid`),
   `live_bidding`, and `soft_close`
 
 That means the private live feed can now show all major phases at once, but it
@@ -185,8 +182,6 @@ It gives a real observed end-to-end lifecycle record with:
 - winner value record
 - post-release transfer
 - post-transfer value record
-- legacy scheduled-catalog compatibility remains in the smoke JSON but is not part
-  of the current public auction story
 
 So even if the parked entries drift and need refreshing, the smoke summary still
 proves the key live transitions.
@@ -196,10 +191,10 @@ proves the key live transitions.
 The clearest accurate wording today is:
 
 > ONT auctions are tested across simulator, package, regtest, and hosted
-> private-signet layers. The public auction lab shows eligibility, opening-bid
-> prep, live bidding, soft close, and settlement through curated fixtures,
-> while the private signet live feed and smoke summary show real chain-derived
-> examples across the active auction lifecycle on the hosted demo chain.
+> private-signet layers. The public auction lab shows ready-to-open, live
+> bidding, soft close, and settlement through curated fixtures, while the
+> private signet live feed and smoke summary show real chain-derived examples
+> across the active auction lifecycle on the hosted demo chain.
 
 ## Remaining Gap
 
