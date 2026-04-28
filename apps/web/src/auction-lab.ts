@@ -4,6 +4,8 @@ import { fileURLToPath } from "node:url";
 import { createAuctionBidPackage, type AuctionBidPackage } from "@ont/protocol";
 import {
   createDefaultLaunchAuctionPolicy,
+  getDefaultLaunchAuctionClassIdForName,
+  getLaunchAuctionOpeningRequirements,
   parseLaunchAuctionScenario,
   serializeLaunchAuctionPolicy,
   serializeLaunchAuctionStateAtBlock,
@@ -131,6 +133,47 @@ export async function createLaunchAuctionLabBidPackage(input: {
     ownerPubkey: input.ownerPubkey,
     bidAmountSats: input.bidAmountSats,
     sourceLabel: `auction lab case ${auctionCase.id}`
+  });
+}
+
+export function createOpeningAuctionBidPackage(input: {
+  readonly name: string;
+  readonly currentBlockHeight: number;
+  readonly bidderId: string;
+  readonly ownerPubkey: string;
+  readonly bidAmountSats: bigint | number | string;
+}): AuctionBidPackage {
+  const policy = createDefaultLaunchAuctionPolicy();
+  const auctionClassId = getDefaultLaunchAuctionClassIdForName(input.name);
+  const opening = getLaunchAuctionOpeningRequirements({
+    policy,
+    name: input.name,
+    auctionClassId
+  });
+
+  return createWebsiteAuctionBidPackage({
+    auctionState: {
+      auctionId: `opening-${opening.normalizedName}`,
+      normalizedName: opening.normalizedName,
+      auctionClassId,
+      classLabel: opening.classLabel,
+      currentBlockHeight: input.currentBlockHeight,
+      phase: "awaiting_opening_bid",
+      unlockBlock: input.currentBlockHeight,
+      auctionCloseBlockAfter: null,
+      openingMinimumBidSats: opening.openingMinimumBidSats.toString(),
+      currentLeaderBidderId: null,
+      currentHighestBidSats: null,
+      currentRequiredMinimumBidSats: opening.openingMinimumBidSats.toString(),
+      settlementLockBlocks: opening.settlementLockBlocks,
+      blocksUntilUnlock: 0,
+      blocksUntilClose: null,
+      baseMinimumBidSats: opening.baseMinimumBidSats.toString()
+    },
+    bidderId: input.bidderId,
+    ownerPubkey: input.ownerPubkey,
+    bidAmountSats: input.bidAmountSats,
+    sourceLabel: `opening bid for ${opening.normalizedName}`
   });
 }
 

@@ -159,13 +159,15 @@ async function assertHomeToAuctionLookupCarryover(page) {
     "auction page should not render a self-link that looks like it will open the same auction again"
   );
 
-  const reviewRulesHref = await page.getByRole("link", {
-    name: /Review auction rules/i
+  const openAuctionPageHref = await page.getByRole("link", {
+    name: /^Open auction$/i
   }).first().getAttribute("href");
   assert(
-    reviewRulesHref === "#auction-lab",
-    `auction page follow-up action should jump to auction rules, got ${reviewRulesHref}`
+    openAuctionPageHref === `#opening-bid-${normalizedName}`,
+    `auction page follow-up action should jump to opening bid prep, got ${openAuctionPageHref}`
   );
+  await waitForVisibleText(page, "Prepare opening bid package");
+  await waitForVisibleText(page, "Bond amount");
 }
 
 async function assertRetiredDirectClaimRedirect(page) {

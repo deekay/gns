@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   createExperimentalAuctionFeedBidPackage,
   createLaunchAuctionLabBidPackage,
+  createOpeningAuctionBidPackage,
   loadLaunchAuctionLab
 } from "../src/auction-lab.js";
 
@@ -69,6 +70,25 @@ describe("loadLaunchAuctionLab", () => {
     expect(pkg.previewStatus).toBe("currently_valid");
     expect(pkg.wouldExtendSoftClose).toBe(true);
     expect(pkg.previewRequiredMinimumBidSats).toBe("330000000");
+  });
+
+  it("can derive an opening bid package for a searched name", () => {
+    const pkg = createOpeningAuctionBidPackage({
+      name: "moneyball",
+      currentBlockHeight: 785,
+      bidderId: "operator_moneyball",
+      ownerPubkey: "33".repeat(32),
+      bidAmountSats: "390625"
+    });
+
+    expect(pkg.auctionId).toBe("opening-moneyball");
+    expect(pkg.name).toBe("moneyball");
+    expect(pkg.phase).toBe("awaiting_opening_bid");
+    expect(pkg.currentBlockHeight).toBe(785);
+    expect(pkg.unlockBlock).toBe(785);
+    expect(pkg.previewStatus).toBe("currently_valid");
+    expect(pkg.previewRequiredMinimumBidSats).toBe("390625");
+    expect(pkg.wouldBecomeLeader).toBe(true);
   });
 
   it("refuses resolver-derived bid packages after settlement", () => {

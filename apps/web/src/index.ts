@@ -15,6 +15,7 @@ import {
 import {
   createExperimentalAuctionFeedBidPackage,
   createLaunchAuctionLabBidPackage,
+  createOpeningAuctionBidPackage,
   loadLaunchAuctionLab
 } from "./auction-lab.js";
 import { renderClientScript } from "./client-script.js";
@@ -248,6 +249,50 @@ const server = createServer(async (request, response) => {
           error instanceof Error
             ? error.message
             : "Unable to build the auction bid package."
+      });
+    }
+  }
+
+  if (pathname === "/api/auction-opening-bid-package") {
+    if (method !== "POST") {
+      return writeJson(response, 405, {
+        error: "method_not_allowed",
+        message: "Use POST for opening bid package generation."
+      });
+    }
+
+    try {
+      const body = await readJsonBody(request);
+
+      if (!body || typeof body !== "object") {
+        return writeJson(response, 400, {
+          error: "invalid_body",
+          message: "Opening bid package generation requires a JSON body."
+        });
+      }
+
+      const record = body as Record<string, unknown>;
+      const name = getRequiredWebBodyString(record, "name");
+      const bidderId = getRequiredWebBodyString(record, "bidderId");
+      const ownerPubkey = getRequiredWebBodyString(record, "ownerPubkey");
+      const bidAmountSats = getRequiredWebBodySats(record, "bidAmountSats");
+      const currentBlockHeight = await fetchResolverCurrentHeight();
+      const pkg = createOpeningAuctionBidPackage({
+        name,
+        currentBlockHeight,
+        bidderId,
+        ownerPubkey,
+        bidAmountSats
+      });
+
+      return writeJson(response, 200, pkg);
+    } catch (error) {
+      return writeJson(response, 400, {
+        error: "auction_opening_bid_package_failed",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Unable to build the opening bid package."
       });
     }
   }
@@ -540,7 +585,7 @@ const server = createServer(async (request, response) => {
     error: "not_found",
     message:
       "Supported paths: /, /explore, /advanced, /auctions, /values, /transfer, /setup, /explainer, /api/config, /api/health, /api/names, /api/activity, /api/tx/{txid}, /api/dev-owner-key, /api/private-signet-fund, /api/name/{name}, /api/name/{name}/activity, /api/name/{name}/value, /api/name/{name}/value/history, /api/name/{name}/value/compare, /api/auctions"
-      + ", /api/private-auction-smoke-status, /api/experimental-auctions, /api/auction-bid-package, /api/experimental-auction-bid-package, /api/values, /api/values/fanout"
+      + ", /api/private-auction-smoke-status, /api/experimental-auctions, /api/auction-bid-package, /api/auction-opening-bid-package, /api/experimental-auction-bid-package, /api/values, /api/values/fanout"
   });
 });
 
@@ -620,6 +665,25 @@ async function proxyJson(
       message: error instanceof Error ? error.message : "Resolver request failed"
     });
   }
+}
+
+async function fetchResolverCurrentHeight(): Promise<number> {
+  const upstream = await fetch(`${resolverUrl}/health`);
+  if (!upstream.ok) {
+    throw new Error(`Resolver returned ${upstream.status} while loading current block height.`);
+  }
+
+  const payload = await upstream.json() as {
+    readonly stats?: { readonly currentHeight?: unknown };
+    readonly rpcChainInfo?: { readonly blocks?: unknown };
+  };
+  const currentHeight = payload.stats?.currentHeight ?? payload.rpcChainInfo?.blocks;
+
+  if (!Number.isInteger(currentHeight) || Number(currentHeight) < 0) {
+    throw new Error("Resolver health did not include a current block height.");
+  }
+
+  return Number(currentHeight);
 }
 
 async function proxyExperimentalAuctionsJson(

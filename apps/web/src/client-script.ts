@@ -712,20 +712,29 @@ async function bootstrap() {
       const amountInput = document.querySelector('[data-auction-bid-amount="' + cssEscape(id) + '"][data-auction-package-source="' + cssEscape(source) + '"]');
       const bidderId = bidderInput instanceof HTMLInputElement ? bidderInput.value.trim() : "";
       const ownerPubkey = ownerPubkeyInput instanceof HTMLInputElement ? ownerPubkeyInput.value.trim() : "";
-      const amountSats = amountInput instanceof HTMLInputElement ? amountInput.value.trim() : "";
+      const amountValue = amountInput instanceof HTMLInputElement ? amountInput.value.trim() : "";
+      const amountUnit = amountInput instanceof HTMLInputElement ? amountInput.getAttribute("data-auction-bid-amount-unit") : null;
 
       if (bidderId.length === 0) {
         setAuctionBidPackageMessage(domKey, "Enter a bidder id first.");
         return;
       }
 
-      if (amountSats.length === 0) {
+      if (amountValue.length === 0) {
         setAuctionBidPackageMessage(domKey, "Enter a bid amount first.");
         return;
       }
 
       if (ownerPubkey.length === 0) {
         setAuctionBidPackageMessage(domKey, "Enter the owner key that should control the name if this bid wins.");
+        return;
+      }
+
+      let amountSats;
+      try {
+        amountSats = amountUnit === "btc" ? parseBitcoinAmountToSats(amountValue) : amountValue;
+      } catch (error) {
+        setAuctionBidPackageMessage(domKey, describeError(error));
         return;
       }
 
@@ -753,7 +762,14 @@ async function bootstrap() {
         state.auctionBidPackages.set(domKey, pkg);
         setAuctionBidPackagePreview(
           domKey,
-          renderAuctionBidPackagePreview(pkg, source === "experimental" ? "resolver-derived state" : "simulator state")
+          renderAuctionBidPackagePreview(
+            pkg,
+            source === "experimental"
+              ? "resolver-derived state"
+              : source === "opening"
+                ? "opening bid"
+                : "simulator state"
+          )
         );
         setAuctionBidPackageMessage(
           domKey,
@@ -2020,6 +2036,19 @@ function formatSats(value) {
   return "₿" + formatBtcDecimal(amount);
 }
 
+function getOpeningMinimumBidSatsForName(name) {
+  const normalizedLength = String(name ?? "").trim().length;
+  if (normalizedLength <= 0) {
+    return "50000";
+  }
+
+  const baseBond = 100000000n >> BigInt(Math.max(0, normalizedLength - 1));
+  const protocolFloor = 50000n;
+  const lengthFloor = baseBond > protocolFloor ? baseBond : protocolFloor;
+  const classFloor = BigInt(state.auctionLab?.policy?.auctionClasses?.launch_name?.floorSats ?? "50000");
+  return (lengthFloor > classFloor ? lengthFloor : classFloor).toString();
+}
+
 function formatStateLabel(status) {
   switch (String(status)) {
     case "pending":
@@ -2043,6 +2072,23 @@ function formatBtcDecimal(amount) {
   const whole = amount / 100000000n;
   const fractional = (amount % 100000000n).toString().padStart(8, "0").replace(/0+$/g, "");
   return fractional === "" ? whole.toString() : whole.toString() + "." + fractional;
+}
+
+function parseBitcoinAmountToSats(value) {
+  const normalized = String(value ?? "").trim().replace(/^₿/u, "");
+  if (!/^\d+(?:\.\d{1,8})?$/u.test(normalized)) {
+    throw new Error("Enter the bond amount as a bitcoin value like 0.01.");
+  }
+
+  const [wholePart, fractionalPart = ""] = normalized.split(".");
+  const whole = BigInt(wholePart);
+  const fractional = BigInt(fractionalPart.padEnd(8, "0"));
+  const amount = whole * 100000000n + fractional;
+  if (amount <= 0n) {
+    throw new Error("Enter a positive bond amount.");
+  }
+
+  return amount.toString();
 }
 
 function buildNameGroups(names) {
@@ -2955,13 +3001,14 @@ function renderAuctionFirstNameNotFound(name) {
 
   const actionLinks = isAuctionsPage()
     ? \`
-      <a class="action-link" href="#auction-lab">Review auction rules</a>
-      <a class="action-link secondary" href="#experimental-auction-feed">View auction activity</a>
+      <a class="action-link" href="#opening-bid-\${escapeHtml(name)}">Open auction</a>
+      <a class="action-link secondary" href="\${escapeHtml(withBasePath("/setup"))}">Set up wallet</a>
     \`
     : \`
       <a class="action-link" href="\${escapeHtml(buildAuctionsPath(name))}">Open auction for \${escapeHtml(name)}</a>
       <a class="action-link secondary" href="\${escapeHtml(buildAuctionsPath(name))}">View auction rules</a>
     \`;
+  const openingBidPanel = isAuctionsPage() ? renderOpeningBidComposer(name) : "";
 
   elements.searchResult.hidden = false;
   setHomeLookupHasResult(true);
@@ -2982,7 +3029,38 @@ function renderAuctionFirstNameNotFound(name) {
     <div class="hero-cta-row lookup-result-actions">
       \${actionLinks}
     </div>
+    \${openingBidPanel}
   \`;
+}
+
+function renderOpeningBidComposer(name) {
+  const normalizedName = String(name ?? "").trim().toLowerCase();
+  const defaultBidAmount = getOpeningMinimumBidSatsForName(normalizedName);
+  const defaultBidderId = "operator_" + normalizedName.replace(/[^a-z0-9]+/gi, "_").replace(/^_+|_+$/g, "").toLowerCase();
+
+  return [
+    '<div id="opening-bid-' + escapeHtml(normalizedName) + '" class="step-list opening-bid-panel">',
+    '  <p class="step-list-label">Open auction</p>',
+    '  <p class="field-value">Prepare the bonded opening bid for <strong>' + escapeHtml(normalizedName) + '</strong>. After you preview or download the package, sign and broadcast the bid with your wallet to start the auction clock.</p>',
+    '  <div class="result-grid">',
+    '    <div class="result-item"><label>Name</label><p class="field-value">' + escapeHtml(normalizedName) + "</p></div>",
+    '    <div class="result-item"><label>Opening bond</label><p class="field-value">' + escapeHtml(formatSats(defaultBidAmount)) + "</p></div>",
+    "  </div>",
+    renderAuctionBidPackageComposer({
+      source: "opening",
+      id: normalizedName,
+      phase: "awaiting_opening_bid",
+      normalizedName,
+      defaultBidAmount,
+      defaultBidderId,
+      amountUnit: "btc",
+      summary: "Prepare opening bid package",
+      expanded: true,
+      note:
+        "Create or paste the owner key that should control this name if the bid wins. Preview the package, then sign and broadcast with your wallet."
+    }),
+    "</div>"
+  ].join("");
 }
 
 function setHomeLookupHasResult(hasResult) {
@@ -4972,6 +5050,12 @@ function caseIdFromAuctionState(id, fallbackName) {
 function renderAuctionBidPackageComposer(input) {
   const domKey = buildAuctionPackageDomKey(input.source, input.id);
   const defaultOwnerPubkey = String(input.defaultOwnerPubkey ?? "");
+  const amountUnit = input.amountUnit === "btc" ? "btc" : "sats";
+  const amountInputValue =
+    amountUnit === "btc" ? formatBtcDecimal(BigInt(input.defaultBidAmount ?? "0")) : String(input.defaultBidAmount ?? "");
+  const amountLabel = amountUnit === "btc" ? "Bond amount (₿)" : "Bid amount";
+  const summary = String(input.summary ?? "Preview or download bid package");
+  const openAttribute = input.expanded === true ? " open" : "";
 
   if (input.phase === "settled") {
     return [
@@ -4985,12 +5069,12 @@ function renderAuctionBidPackageComposer(input) {
   }
 
   return [
-    '<details class="detail-technical">',
-    "  <summary>Preview or download bid package</summary>",
+    '<details class="detail-technical"' + openAttribute + ">",
+    "  <summary>" + escapeHtml(summary) + "</summary>",
     '  <div class="detail-technical-body draft-grid">',
     '    <div class="field"><label class="field-label" for="auction-bidder-' + escapeHtml(domKey) + '">Bidder label</label><input id="auction-bidder-' + escapeHtml(domKey) + '" type="text" data-auction-bidder-id="' + escapeHtml(input.id) + '" data-auction-package-source="' + escapeHtml(input.source) + '" value="' + escapeHtml(input.defaultBidderId) + '" /><p class="field-note">This is a stable identifier for the bidding entity. The website pre-fills a sample label here and the package derives a bidder commitment from it.</p></div>',
     '    <div class="field"><label class="field-label" for="auction-owner-' + escapeHtml(domKey) + '">Owner key</label><input id="auction-owner-' + escapeHtml(domKey) + '" type="text" data-auction-owner-pubkey="' + escapeHtml(input.id) + '" data-auction-package-source="' + escapeHtml(input.source) + '" value="' + escapeHtml(defaultOwnerPubkey) + '" placeholder="32-byte x-only public key" /></div>',
-    '    <div class="field"><label class="field-label" for="auction-amount-' + escapeHtml(domKey) + '">Bid amount</label><input id="auction-amount-' + escapeHtml(domKey) + '" type="text" inputmode="numeric" data-auction-bid-amount="' + escapeHtml(input.id) + '" data-auction-package-source="' + escapeHtml(input.source) + '" value="' + escapeHtml(input.defaultBidAmount) + '" /></div>',
+    '    <div class="field"><label class="field-label" for="auction-amount-' + escapeHtml(domKey) + '">' + escapeHtml(amountLabel) + '</label><input id="auction-amount-' + escapeHtml(domKey) + '" type="text" inputmode="decimal" data-auction-bid-amount="' + escapeHtml(input.id) + '" data-auction-package-source="' + escapeHtml(input.source) + '" data-auction-bid-amount-unit="' + escapeHtml(amountUnit) + '" value="' + escapeHtml(amountInputValue) + '" /></div>',
     '    <div class="draft-field-full">',
     '      <p class="tx-panel-note">Set the x-only public owner key that should control the name if this bid wins. Create it in this browser for the normal self-custody path, or use a server-generated test key only for test bids.</p>',
     '      <div class="field-actions">',
@@ -5078,6 +5162,13 @@ async function buildAuctionBidPackageForUi(input) {
     return await postJson(withBasePath("/api/experimental-auction-bid-package"), {
       ...body,
       auctionId: input.id
+    });
+  }
+
+  if (input.source === "opening") {
+    return await postJson(withBasePath("/api/auction-opening-bid-package"), {
+      ...body,
+      name: input.id
     });
   }
 

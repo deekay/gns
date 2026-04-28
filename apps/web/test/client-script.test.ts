@@ -21,7 +21,9 @@ describe("renderClientScript", () => {
     expect(script).toContain("updateAuctionHistory(name)");
     expect(script).toContain('baseAuctionsPath + "?name=" + encodeURIComponent(normalizedName)');
     expect(script).toContain('href="${escapeHtml(buildAuctionsPath(name))}">Open auction for');
-    expect(script).toContain('href="#auction-lab">Review auction rules');
+    expect(script).toContain('href="#opening-bid-${escapeHtml(name)}">Open auction');
+    expect(script).toContain("renderOpeningBidComposer(name)");
+    expect(script).toContain('/api/auction-opening-bid-package');
     expect(script).toContain("getInitialDetailName() ?? getInitialAuctionName()");
   });
 
@@ -107,6 +109,7 @@ describe("renderClientScript", () => {
     expect(script).toContain('/api/auctions');
     expect(script).toContain('/api/experimental-auctions');
     expect(script).toContain('/api/auction-bid-package');
+    expect(script).toContain('/api/auction-opening-bid-package');
     expect(script).toContain('/api/experimental-auction-bid-package');
     expect(script).toContain("reloadAuctionLab");
     expect(script).not.toContain("getAuctionLabPolicyOverridesFromLocation");
@@ -125,6 +128,9 @@ describe("renderClientScript", () => {
     expect(script).toContain("formatAuctionBondStatus");
     expect(script).toContain("formatAuctionBondSpendStatus");
     expect(script).toContain("renderAuctionBidPackageComposer");
+    expect(script).toContain("Prepare opening bid package");
+    expect(script).toContain("Bond amount (₿)");
+    expect(script).toContain("parseBitcoinAmountToSats");
     expect(script).toContain("data-auction-package-preview");
     expect(script).toContain("data-auction-owner-key-action");
     expect(script).toContain("data-auction-owner-key-result");
