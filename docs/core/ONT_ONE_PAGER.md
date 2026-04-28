@@ -81,7 +81,7 @@ For most long-tail names, the experience can still be simple. Start an auction. 
 
 Every valid name can enter the public auction flow.
 
-Very short names are structurally scarce, so they start with higher objective opening floors. The floor comes from length, not from deciding whether a person, brand, company, or word deserves special treatment.
+Very short names are structurally scarce, so they have higher fixed objective opening floors. The floor comes from length, not from deciding whether a person, brand, company, or word deserves special treatment.
 
 Length floors make early bulk capture of the scarcest names materially expensive, while keeping every valid name in the same public auction mechanism.
 

@@ -54,6 +54,6 @@ These documents are useful, but they are more speculative, essay-like, or draft-
 - [NOSTR_STRATEGY.md](./research/NOSTR_STRATEGY.md)
 
 Current allocation model at a glance: every valid name opens through public
-bonded auctions; shorter names start with higher objective opening floors;
+bonded auctions; shorter names have higher fixed objective opening floors;
 ownership is on Bitcoin; mutable destination records are owner-signed and
 off-chain.

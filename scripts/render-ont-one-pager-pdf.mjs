@@ -425,7 +425,7 @@ function renderLengthFloorCard() {
   let ops = "";
   ops += card(x, y, width, height, [0.995, 0.958, 0.895], [0.86, 0.72, 0.60]);
   ops += text(x + 16, y + height - 24, "Length Floors", "F3", 16.0, colors.ink);
-  ops += text(x + 16, y + height - 40, "SHORTER NAMES START HIGHER", "F2", 6.5, colors.clay);
+  ops += text(x + 16, y + height - 40, "FIXED BY NAME LENGTH", "F2", 6.5, colors.clay);
   ops += bulletList({
     x: x + 16,
     y: y + height - 61,

@@ -228,7 +228,7 @@ It does that by using locked bitcoin bonds instead of:
 The current allocation model is intentionally simple:
 
 - all valid names use public bonded auctions
-- shorter names start with higher objective opening floors
+- shorter names have higher fixed objective opening floors
 - length floors make early bulk capture of scarce names materially expensive
 - allocation does not depend on brand, category, or editorial judgment
 

@@ -20,7 +20,7 @@ The current allocation rule is simple:
 
 > every valid name is allocated by public bonded auction.
 
-Shorter names can start with higher objective opening floors, but they do not
+Shorter names can have higher fixed objective opening floors, but they do not
 move into a special wave or alternate process.
 
 ## Primary Objectives
@@ -161,5 +161,5 @@ states, but public surfaces should describe the current model directly.
 The current allocation sentence is:
 
 > ONT uses one market rule for names: valid names are auctioned, shorter names
-> can start with higher objective opening floors, and the auction discovers the
+> can have higher fixed objective opening floors, and the auction discovers the
 > final bond when more than one participant cares.

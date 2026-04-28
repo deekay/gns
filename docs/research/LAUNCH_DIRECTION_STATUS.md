@@ -19,7 +19,7 @@ The current allocation direction is:
 
 - public bonded auctions
 - all valid names can be opened with a valid bonded bid
-- shorter names start with higher objective opening floors
+- shorter names have higher fixed objective opening floors
 
 The core rule is:
 
@@ -62,7 +62,7 @@ The scarcity pressure should come from an objective length-based opening floor.
 Current lean:
 
 - every valid name can be opened by a valid bonded bid
-- shorter strings start with higher opening floors
+- shorter strings have higher fixed opening floors
 - one process for all names
 
 ### 4. Griefing Looks Less Central Than Before
@@ -113,6 +113,6 @@ The model still leaves real protocol and product questions:
 
 ONT should use one market rule for names.
 
-Valid names are auctioned. Shorter names can start with higher objective
+Valid names are auctioned. Shorter names can have higher fixed objective
 opening floors. The auction discovers the final bond when more than one
 participant cares.

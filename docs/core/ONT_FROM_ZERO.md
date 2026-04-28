@@ -92,7 +92,7 @@ The current allocation direction is public bonded auctions:
 
 - every valid name is allocated by auction
 - allocation does not depend on brand, category, or editorial judgment
-- shorter names start with higher length-based opening floors
+- shorter names have higher fixed length-based opening floors
 
 That direction is motivated by fairness and simplicity:
 

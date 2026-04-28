@@ -505,7 +505,7 @@ function renderAuctionOpenSection(configuredBasePath: string): string {
           <label class="draft-field">
             <span class="field-label">Name</span>
             <input id="nameInput" name="name" type="text" maxlength="32" placeholder="alice" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" />
-            <span class="field-hint">Any valid name can be opened through a public bonded auction. Shorter names start with higher opening floors.</span>
+            <span class="field-hint">Any valid name can be opened through a public bonded auction. The opening floor is fixed by name length.</span>
           </label>
         </div>
         <div class="draft-actions">

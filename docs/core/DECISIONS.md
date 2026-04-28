@@ -437,7 +437,7 @@ The current lead architecture is **public bonded auctions**.
 Current shape:
 - every valid name is allocated by auction
 - allocation does not depend on brand, category, or editorial judgment
-- shorter names start with higher length-based opening floors
+- shorter names have higher fixed length-based opening floors
 - public tooling should present auction-opening as the acquisition path
 
 This is strong enough to build supporting materials around, but it should still
@@ -495,7 +495,7 @@ That means:
   protocol.
 - Scarcity and anti-hoarding pressure come from auction-discovered bonded BTC
   and time, not from subjective pricing rules.
-- Shorter names can start with higher objective length-based floors.
+- Shorter names can have higher fixed objective length-based floors.
 
 ## Open Questions
 

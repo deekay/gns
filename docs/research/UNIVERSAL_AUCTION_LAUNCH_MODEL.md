@@ -49,7 +49,7 @@ The user-facing version can still feel simple:
 
 Every valid name should use the public auction system.
 
-Shorter names can still start higher through the objective bond curve.
+The objective bond curve gives shorter names higher fixed opening floors.
 
 This is an objective structural rule:
 
@@ -127,5 +127,5 @@ The remaining allocation-design questions are now narrower:
 ## Canonical One-Sentence Summary
 
 ONT uses one market rule for names: valid names are auctioned, shorter names
-can start with higher objective opening floors, and the auction discovers the
+can have higher fixed objective opening floors, and the auction discovers the
 final bond when more than one participant cares.

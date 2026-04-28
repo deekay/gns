@@ -4663,7 +4663,7 @@ function renderNameAuctionPolicyCard(nameAuction, lengthFloorExamples) {
   return [
     '<article class="guide-card guide-card-wide">',
     "  <h3>" + escapeHtml(label) + "</h3>",
-    '  <p class="result-meta">Every valid name can be opened through the same public auction mechanics. The opening floor is length-based, so shorter strings start higher.</p>',
+    '  <p class="result-meta">Every valid name can be opened through the same public auction mechanics. The opening floor is fixed by name length; shorter strings have higher floors.</p>',
     '  <div class="result-grid">',
     policyRows
       .map((row) => {

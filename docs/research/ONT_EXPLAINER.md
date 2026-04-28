@@ -74,7 +74,7 @@ The current direction is public bonded auctions:
 
 - every valid name is allocated by auction
 - all valid names can be opened through the same public mechanism
-- shorter names start with higher length-based opening floors
+- shorter names have higher fixed length-based opening floors
 - allocation does not depend on brand, category, or editorial judgment
 
 This keeps allocation neutral. ONT does not have to decide which brands, people,

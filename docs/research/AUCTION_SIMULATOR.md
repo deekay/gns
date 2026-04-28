@@ -61,7 +61,7 @@ The default policy has one auction group:
 - `launch_name`: the implementation id for the single name-auction system
 
 The serialized policy also publishes length-floor examples so demos can show
-how shorter names start higher while using the same public auction mechanics. The default
+how shorter names have higher fixed floors while using the same public auction mechanics. The default
 timing and floors are placeholders, intentionally useful for tests and demos,
 not final launch constants.
 
