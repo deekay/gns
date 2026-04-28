@@ -2930,14 +2930,14 @@ function renderAuctionFirstNameNotFound(name) {
     <div class="lookup-availability-result">
       <div class="lookup-result-title-row">
         <p class="search-state-label">Search result</p>
-        <span class="status-pill available">not owned here</span>
+        <span class="status-pill available">unopened</span>
       </div>
       <h3 class="lookup-result-name">\${escapeHtml(name)}</h3>
-      <p class="lookup-result-summary">No current owner found in this resolver.</p>
+      <p class="lookup-result-summary">No current owner is recorded for this name.</p>
     </div>
     <div class="lookup-next-step">
       <p class="search-state-label">Next step</p>
-      <p>Valid names can be opened by a bonded bid that meets the length floor. A name is not an auction until that opening bid confirms.</p>
+      <p>A valid bonded opening bid can start the auction. No auction exists for this name until that opening bid confirms.</p>
     </div>
     <div class="hero-cta-row lookup-result-actions">
       <a class="action-link" href="\${escapeHtml(withBasePath("/auctions"))}">Open auction for \${escapeHtml(name)}</a>

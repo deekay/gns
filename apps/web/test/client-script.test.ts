@@ -123,6 +123,11 @@ describe("renderClientScript", () => {
     expect(script).toContain("Create In This Browser");
     expect(script).toContain("Use Demo Key From Server");
     expect(script).not.toContain("Closed without winner");
+    expect(script).toContain("No current owner is recorded for this name.");
+    expect(script).toContain("A valid bonded opening bid can start the auction.");
+    expect(script).toContain("No auction exists for this name until that opening bid confirms.");
+    expect(script).not.toContain("not owned here");
+    expect(script).not.toContain("No current owner found in this resolver.");
     expect(script).toContain("Base floor");
     expect(script).toContain('blockText + " (~" + approx + ")"');
     expect(script).toContain('formatApproxDurationUnit(days / 30, "month")');
