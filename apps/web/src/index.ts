@@ -822,7 +822,8 @@ function writeText(
   contentType: string
 ): void {
   response.writeHead(statusCode, {
-    "content-type": contentType
+    "content-type": contentType,
+    "cache-control": "no-store"
   });
   response.end(body);
 }

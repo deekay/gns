@@ -197,6 +197,9 @@ describe("renderPageHtml", () => {
     expect(html).toContain("Build The Transfer Handoff");
     expect(html).not.toContain("Use Demo Key From Server");
     expect(html).toContain("Recipient Owner Key (public)");
+    expect(html).toContain("Transfer Type");
+    expect(html).toContain("Replacement Bond Address (settling names)");
+    expect(html).toContain("buildTransferPlanButton");
     expect(html).toContain("I am receiving a name");
     expect(html).toContain("I am sending a name");
     expect(html).not.toContain("inspect-transfer-package --role buyer");

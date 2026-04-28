@@ -239,7 +239,7 @@ async function bootstrap(): Promise<void> {
 
     downloadJsonFile(
       state.signedRecord,
-      `ont-value-${state.signedRecord.name}-sequence-${state.signedRecord.sequence}.json`
+      `ont-destinations-${state.signedRecord.name}-sequence-${state.signedRecord.sequence}.json`
     );
   });
 
@@ -288,8 +288,7 @@ async function loadName(rawName: string): Promise<void> {
         }
 
         throw error;
-      })
-      ,
+      }),
       comparePromise
     ]);
 
@@ -312,6 +311,11 @@ async function loadName(rawName: string): Promise<void> {
     state.lastSuggestedSequence = null;
     resetValueInputs();
     invalidateSignedRecord("Load an owned name first, then sign the destination update locally.");
+    if (isNotFound(error)) {
+      renderLookupNotOwned(normalizedName);
+      syncWizard();
+      return;
+    }
     renderLookupMessage(error instanceof Error ? error.message : "Unable to load the requested name.");
     syncWizard();
   }
@@ -429,6 +433,32 @@ function renderLookupMessage(message: string): void {
 
   elements.lookupResult.classList.add("empty");
   elements.lookupResult.textContent = message;
+}
+
+function renderLookupNotOwned(name: string): void {
+  if (!elements.lookupResult) {
+    return;
+  }
+
+  elements.lookupResult.classList.remove("empty");
+  elements.lookupResult.innerHTML = `
+    <div class="lookup-availability-result">
+      <div class="lookup-result-title-row">
+        <p class="search-state-label">Destinations unavailable</p>
+        <span class="status-pill available">unopened</span>
+      </div>
+      <h3 class="lookup-result-name">${escapeHtml(name)}</h3>
+      <p class="lookup-result-summary">No current owner is recorded for this name, so there is no owner-authorized destination record to update yet.</p>
+    </div>
+    <div class="lookup-next-step">
+      <p class="search-state-label">Next step</p>
+      <p>Start from Auctions if you want to open the public auction for this name.</p>
+    </div>
+    <div class="hero-cta-row lookup-result-actions">
+      <a class="action-link" href="${escapeHtml(withBasePath(`/auctions?name=${encodeURIComponent(name)}`))}">Open auction for ${escapeHtml(name)}</a>
+      <a class="action-link secondary" href="${escapeHtml(withBasePath("/explore"))}">Open explorer</a>
+    </div>
+  `;
 }
 
 function renderSignMessage(message: string): void {
@@ -558,7 +588,7 @@ function renderResolverCompare(
         ? "Lagging"
         : valueCompare.status === "conflict"
           ? "Conflict"
-          : "No visible value";
+          : "No visible destinations";
 
   const rows = [
     valueCompare.canonicalResolverUrl === null
@@ -638,7 +668,7 @@ function renderSignedRecord(record: BrowserSignedValueRecord): void {
             <p class="field-value">${escapeHtml(record.previousRecordHash === null ? "None (first in ownership interval)" : truncateMiddle(record.previousRecordHash, 12, 10))}</p>
           </div>
           <div class="result-item">
-            <label>Value Type</label>
+            <label>Destination Format</label>
             <p class="field-value">${escapeHtml(formatValueType(record.valueType, record.payloadHex))}</p>
           </div>
         </div>
@@ -782,7 +812,7 @@ function updateValueEditorState(): void {
 
   if (mode === "raw") {
     elements.payloadInput.placeholder = "68747470733a2f2f6578616d706c652e636f6d";
-    elements.payloadHint.textContent = "Raw/app-defined values expect hex. Use even-length hex without a 0x prefix.";
+    elements.payloadHint.textContent = "Raw/app-defined destination records expect hex. Use even-length hex without a 0x prefix.";
     return;
   }
 
@@ -1126,7 +1156,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function describeCurrentValue(valueRecord: ValueRecord | null): string {
   if (valueRecord === null) {
-    return "No published value yet";
+    return "No published destinations yet";
   }
 
   return `${formatValueType(valueRecord.valueType, valueRecord.payloadHex)} · sequence ${valueRecord.sequence}`;

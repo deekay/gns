@@ -3,6 +3,7 @@ import { PRODUCT_NAME } from "@ont/protocol";
 export type PageKind = "home" | "explore" | "advanced" | "auctions" | "values" | "transfer" | "setup" | "explainer";
 const GITHUB_REPO_URL = "https://github.com/deekay/ont";
 const GITHUB_BLOB_BASE_URL = `${GITHUB_REPO_URL}/blob/main`;
+const ASSET_VERSION = "2026-04-28-ux-audit-7";
 const DOC_URLS = {
   readme: `${GITHUB_BLOB_BASE_URL}/README.md`,
   fromZero: `${GITHUB_BLOB_BASE_URL}/docs/core/ONT_FROM_ZERO.md`,
@@ -50,7 +51,7 @@ export function renderPageHtml(options: PageShellOptions): string {
           : `${PRODUCT_NAME} Explorer`;
   const description =
     pageKind === "home"
-      ? "Search a name, inspect ownership, and open the public auction path for Open Name Tags."
+      ? "Search a name, check ownership, and open the public auction path for Open Name Tags."
       : pageKind === "advanced"
       ? "Open Name Tags reference material for CLI-heavy workflows and protocol review."
     : pageKind === "auctions"
@@ -66,9 +67,9 @@ export function renderPageHtml(options: PageShellOptions): string {
         : "Explorer for browsing owned names, recent activity, and current Open Name Tags state.";
 
   const pageScripts = [
-    `<script type="module" src="${withBasePath("/app.js", basePath)}"></script>`,
+    `<script type="module" src="${withBasePath(`/app.js?v=${ASSET_VERSION}`, basePath)}"></script>`,
     pageKind === "values"
-      ? `<script type="module" src="${withBasePath("/value-tools.js", basePath)}"></script>`
+      ? `<script type="module" src="${withBasePath(`/value-tools.js?v=${ASSET_VERSION}`, basePath)}"></script>`
       : ""
   ]
     .filter(Boolean)
@@ -86,7 +87,7 @@ export function renderPageHtml(options: PageShellOptions): string {
     />
     <link rel="icon" href="${faviconDataUrl}" />
     <link rel="apple-touch-icon" href="${faviconDataUrl}" />
-    <link rel="stylesheet" href="${withBasePath("/styles.css", basePath)}" />
+    <link rel="stylesheet" href="${withBasePath(`/styles.css?v=${ASSET_VERSION}`, basePath)}" />
   </head>
   <body data-base-path="${escapeHtml(basePath)}" data-page-kind="${escapeHtml(pageKind)}">
     <div class="page-shell">
@@ -351,12 +352,12 @@ function renderExploreEmptyStateSection(configuredBasePath: string): string {
       <article class="guide-card">
         <h3>What This Usually Means</h3>
         <p id="exploreEmptyStateMessage">No owned names or auction activity are visible yet.</p>
-        <p id="exploreEmptyStateDetail" class="field-note">Open an auction, or check the auction rules while the namespace is still empty.</p>
+        <p id="exploreEmptyStateDetail" class="field-note">Open an auction from any valid name, or use Setup if you still need a funded wallet.</p>
       </article>
       <article class="guide-card">
         <h3>What You Can Do Next</h3>
         <ul class="guide-list">
-          <li>Use Auctions to check a name and review the current opening floors.</li>
+          <li>Use Auctions to check a name and prepare the opening bid.</li>
           <li>Use Overview to understand ownership, destination records, and bonded auctions.</li>
           <li>Use Destinations after a name exists and the owner is ready to publish records.</li>
         </ul>
@@ -516,7 +517,7 @@ function renderAuctionOpenSection(configuredBasePath: string): string {
         <h3>Opening Rule</h3>
         <ul class="guide-list">
           <li>The auction does not exist until a valid opening bid confirms.</li>
-          <li>The opening bid must meet the current length-based floor.</li>
+          <li>The opening bid must meet the fixed length-based floor.</li>
           <li>If the bid wins, the owner key controls destinations and transfers after settlement.</li>
         </ul>
       </article>
@@ -605,7 +606,7 @@ function renderExperimentalAuctionFeedSection(): string {
       "Resolver-backed view derived from observed AUCTION_BID transactions.",
       `<p>This sits closer to observed chain behavior than the reference states above.</p>
       <ul>
-        <li>The feed still uses reference entries while fully on-demand auction-opening tooling is being built.</li>
+        <li>The feed shows observed bid activity from the current environment; low-activity signet periods may be sparse.</li>
         <li>Leaders, minimum next bids, stale-state rejection, and bond spend/release summaries are derived from observed AUCTION_BID transactions.</li>
         <li>A real auction begins when a valid bonded opening bid confirms; names with no opening bid should not be described as failed auctions.</li>
         <li>Bids that merely clear the normal increment are not enough during soft close if they would extend the auction. Late extension bids use the stronger soft-close increment rule.</li>
@@ -670,7 +671,7 @@ function renderHomeActionsSection(configuredBasePath: string): string {
   return `<section id="start-here" class="panel panel-guide panel-home">
     ${renderPanelHead(
       "Choose A Path",
-      "Use the home page to do one thing quickly: understand the model, open an auction, or inspect visible ownership."
+      "Use the home page to do one thing quickly: understand the model, open an auction, or check visible ownership."
     )}
     <div class="path-grid">
       <article class="path-card">
@@ -691,9 +692,9 @@ function renderHomeActionsSection(configuredBasePath: string): string {
         </div>
       </article>
       <article class="path-card">
-        <p class="path-card-kicker">Inspect</p>
+        <p class="path-card-kicker">Check</p>
         <h3>Explore Current State</h3>
-        <p>Resolve a name, browse recent activity, and inspect currently visible ownership without working through the full auction flow.</p>
+        <p>Resolve a name, browse recent activity, and check currently visible ownership without working through the full auction flow.</p>
         <div class="path-card-actions">
           <a class="action-link secondary" href="${withBasePath("/explore", configuredBasePath)}">Open explorer</a>
         </div>
@@ -829,7 +830,7 @@ function renderHomeDocsSection(): string {
       <article class="guide-card">
         <h3>Works Today</h3>
         <ul class="guide-list">
-          <li>Hosted signet setup and auction inspection</li>
+          <li>Hosted signet setup and auction opening</li>
           <li>Self-hosted website and resolver</li>
           <li>Browser destination publishing</li>
           <li>Auction bid-package handoffs and live auction smoke checks</li>
@@ -865,7 +866,7 @@ function renderUsingOntSection(configuredBasePath: string): string {
   return `<section id="using-ont" class="panel panel-guide">
     ${renderPanelHead(
       "Use The Website",
-      "The website is meant for the common path: open auctions, update destinations, transfer names, and inspect current state."
+      "The website is meant for the common path: open auctions, update destinations, transfer names, and check current state."
     )}
     <div class="guide-grid">
       <article class="guide-card">
@@ -1067,7 +1068,7 @@ function renderSetupQuickstartSection(configuredBasePath: string, privateSignetE
         <ul class="guide-list">
           <li>Use the funding form below to request private signet coins.</li>
           <li>Refresh Sparrow and confirm the balance appears in the same wallet.</li>
-          <li>Then return to Auctions and inspect the bid handoff.</li>
+          <li>Then return to Auctions and prepare the opening bid.</li>
         </ul>
       </article>
     </div>
@@ -1298,7 +1299,7 @@ function renderValuesGuideSection(configuredBasePath: string): string {
       </article>
       <article class="guide-card guide-card-wide">
         <h3>Find A Live Name First</h3>
-        <p>Destinations are signed by the current owner key. Start in Explore if you need an already-owned name, or Auctions if you want to inspect how names become owned.</p>
+        <p>Destinations are signed by the current owner key. Start in Explore if you need an already-owned name, or Auctions if you want to see how names become owned.</p>
         <div class="guide-card-actions">
           <a class="action-link secondary" href="${withBasePath("/explore", configuredBasePath)}">Open explorer</a>
           <a class="action-link secondary" href="${withBasePath("/auctions", configuredBasePath)}">Open auctions</a>
@@ -1425,6 +1426,7 @@ function renderTransferGuideSection(): string {
         <ul class="guide-list">
           <li>Paste the receiver's public owner key.</li>
           <li>Add a seller payout address only for sales.</li>
+          <li>Add the replacement bond address while the name is still settling.</li>
           <li>Export packages so both sides review the same plan.</li>
         </ul>
       </article>
@@ -1485,7 +1487,7 @@ function renderTransferPrepSection(): string {
                 <h3>Build The Transfer Handoff</h3>
                 <span class="status-pill transfer">current owner</span>
               </div>
-              <p class="field-value">Paste the receiver's public owner key, then build the plan both sides will review.</p>
+              <p class="field-value">Paste the receiver's public owner key, add any payment or replacement-bond details, then build the plan both sides will review.</p>
               <form id="transferDraftForm" class="tool-draft-form">
                 <div class="draft-grid">
                   <label class="draft-field">
@@ -1514,11 +1516,29 @@ function renderTransferPrepSection(): string {
                       autocomplete="off"
                     />
                   </label>
+                  <label class="draft-field">
+                    <span class="field-label">Transfer Type</span>
+                    <select id="transferModeInput" name="transferMode">
+                      <option value="auto" selected>Recommended for this name</option>
+                      <option value="gift">Gift / pre-arranged transfer</option>
+                      <option value="sale">Sale with payment</option>
+                    </select>
+                    <span class="field-hint">Recommended chooses a buyer-funded replacement bond before maturity and a cooperative sale path after maturity.</span>
+                  </label>
+                  <label class="draft-field">
+                    <span class="field-label">Replacement Bond Address (settling names)</span>
+                    <input
+                      id="transferBondAddressInput"
+                      name="transferBondAddress"
+                      type="text"
+                      placeholder="Buyer address for the replacement bond output"
+                      autocomplete="off"
+                    />
+                    <span class="field-hint">Required before bond maturity. Leave blank only if your signer will fill it before anyone signs.</span>
+                  </label>
                 </div>
-                <input id="transferModeInput" name="transferMode" type="hidden" value="auto" />
-                <input id="transferBondAddressInput" name="transferBondAddress" type="hidden" value="" />
                 <div class="draft-actions">
-                  <button type="submit">Build Transfer Plan</button>
+                  <button id="buildTransferPlanButton" type="button">Build Transfer Plan</button>
                 </div>
               </form>
             </section>

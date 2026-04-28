@@ -64,6 +64,8 @@ try {
 
   await assertHomePage(page);
   await assertHomeToAuctionLookupCarryover(page);
+  await assertAuctionOpeningPackagePreview(page);
+  await assertTransferUnopenedNameHandoff(page);
   await assertAuctionsPage(page);
   await assertRetiredDirectClaimRedirect(page);
 
@@ -80,7 +82,9 @@ try {
         checkedFlows: [
           "home-docs-surface",
           "home-search-to-auction-carryover",
-          "auction-lab-browser-flow",
+          "auction-opening-browser-flow",
+          "auction-opening-package-preview",
+          "transfer-unopened-name-handoff",
           "retired-direct-claim-redirect"
         ]
       },
@@ -179,7 +183,54 @@ async function assertRetiredDirectClaimRedirect(page) {
     new URL(page.url()).pathname === "/auctions",
     "retired direct-acquisition page should redirect to auctions"
   );
-  await waitForVisibleText(page, "Auction Reference Cases");
+  await waitForVisibleText(page, "Open An Auction");
+}
+
+async function assertAuctionOpeningPackagePreview(page) {
+  const normalizedName = "alice";
+
+  await page.goto(`${webUrl}/auctions?name=${normalizedName}`, {
+    waitUntil: "networkidle"
+  });
+  await waitForVisibleText(page, "Prepare opening bid package");
+  await waitForVisibleText(page, "Bond amount (₿)");
+
+  await page.getByRole("button", {
+    name: "Create In This Browser"
+  }).click();
+  await waitForVisibleText(page, "Generated Auction Owner Key");
+
+  await page.getByRole("button", {
+    name: "Preview bid package"
+  }).click();
+  await waitForVisibleText(page, "Bid Package Preview");
+  await waitForVisibleText(page, "Currently valid");
+  await waitForVisibleText(page, "Bid clears the opening minimum");
+
+  const bodyText = await page.locator("body").textContent();
+  assert(
+    !(bodyText ?? "").includes("Enter the bond amount"),
+    "opening bid preview should accept the prefilled ₿ amount"
+  );
+}
+
+async function assertTransferUnopenedNameHandoff(page) {
+  const normalizedName = "alice";
+
+  await page.goto(`${webUrl}/transfer?name=${normalizedName}`, {
+    waitUntil: "networkidle"
+  });
+  await waitForVisibleText(page, "Transfer unavailable");
+  await waitForVisibleText(page, "No current owner is recorded for this name");
+
+  const openAuctionLink = page.getByRole("link", {
+    name: new RegExp(`Open auction for ${normalizedName}`, "i")
+  });
+  const openAuctionHref = await openAuctionLink.getAttribute("href");
+  assert(
+    openAuctionHref === `/auctions?name=${normalizedName}`,
+    `transfer page unopened state should link to /auctions?name=${normalizedName}, got ${openAuctionHref}`
+  );
 }
 
 async function assertAuctionsPage(page) {
@@ -187,7 +238,7 @@ async function assertAuctionsPage(page) {
     waitUntil: "domcontentloaded"
   });
 
-  await page.locator("#auctionLabList").waitFor({
+  await page.locator("#auction-open").waitFor({
     state: "attached",
     timeout: 15_000
   });
@@ -197,12 +248,12 @@ async function assertAuctionsPage(page) {
     "auction page should expose the current auction framing"
   );
   assert(
-    (bodyText ?? "").includes("Resolver-backed view derived from observed AUCTION_BID transactions."),
-    "auction page should expose the chain-derived experimental bid feed"
+    (bodyText ?? "").includes("Auction Rules"),
+    "auction page should expose the current auction rules"
   );
   assert(
-    (bodyText ?? "").includes("Auction Reference Cases"),
-    "auction page should render the simulator-backed state surface"
+    (bodyText ?? "").includes("Auction Workflow"),
+    "auction page should explain the bid-prep workflow"
   );
 }
 

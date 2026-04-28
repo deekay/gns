@@ -53,6 +53,7 @@ const elements = {
   transferModeInput: document.getElementById("transferModeInput"),
   transferSellerPayoutAddressInput: document.getElementById("transferSellerPayoutAddressInput"),
   transferBondAddressInput: document.getElementById("transferBondAddressInput"),
+  buildTransferPlanButton: document.getElementById("buildTransferPlanButton"),
   downloadTransferSellerPackageButton: document.getElementById("downloadTransferSellerPackageButton"),
   downloadTransferBuyerPackageButton: document.getElementById("downloadTransferBuyerPackageButton"),
   downloadTransferPackageButton: document.getElementById("downloadTransferPackageButton"),
@@ -95,6 +96,34 @@ const elements = {
   exploreEmptyStateMessage: document.getElementById("exploreEmptyStateMessage"),
   exploreEmptyStateDetail: document.getElementById("exploreEmptyStateDetail")
 };
+
+let transferDraftBuildInFlight = false;
+
+document.addEventListener("pointerdown", handleTransferPlanIntent);
+document.addEventListener("click", handleTransferPlanIntent);
+
+function handleTransferPlanIntent(event) {
+  const target = eventTargetElement(event.target);
+  if (!target) {
+    return;
+  }
+
+  if (target.closest("#buildTransferPlanButton")) {
+    event.preventDefault();
+    requestPrepareTransferDraftFromInputs();
+  }
+}
+
+function requestPrepareTransferDraftFromInputs() {
+  if (transferDraftBuildInFlight) {
+    return;
+  }
+
+  transferDraftBuildInFlight = true;
+  void prepareTransferDraftFromInputs().finally(() => {
+    transferDraftBuildInFlight = false;
+  });
+}
 
 function updateTransferActionStates() {
   const hasTransferDraft = state.transferDraft !== null;
@@ -263,7 +292,7 @@ function restoreTransferProgress(initialTransferName) {
     elements.transferNewOwnerPubkeyInput.value = newOwnerPubkey;
     restored = true;
   }
-  if (elements.transferModeInput && !elements.transferModeInput.value && mode) {
+  if (elements.transferModeInput && mode && elements.transferModeInput.value !== mode) {
     elements.transferModeInput.value = mode;
     restored = true;
   }
@@ -280,10 +309,11 @@ function restoreTransferProgress(initialTransferName) {
 }
 
 function persistTransferProgress() {
+  const transferMode = elements.transferModeInput?.value ?? "";
   writeStoredObject(TRANSFER_PROGRESS_STORAGE_KEY, {
     transferName: elements.transferNameInput?.value ?? "",
     newOwnerPubkey: elements.transferNewOwnerPubkeyInput?.value ?? "",
-    mode: elements.transferModeInput?.value ?? "",
+    mode: transferMode === "auto" ? "" : transferMode,
     sellerPayoutAddress: elements.transferSellerPayoutAddressInput?.value ?? "",
     bondAddress: elements.transferBondAddressInput?.value ?? ""
   });
@@ -296,6 +326,7 @@ async function bootstrap() {
   const initialAuctionName = getInitialAuctionName();
   const initialTransferName = getInitialTransferName();
   const restoredTransferProgress = restoreTransferProgress(initialTransferName);
+  let initialTransferNameHandled = false;
 
   if (initialTransferName && elements.transferNameInput && !elements.transferNameInput.value) {
     elements.transferNameInput.value = initialTransferName;
@@ -350,11 +381,8 @@ async function bootstrap() {
         updateHistory: false
       });
     } else if (isTransferPrepPage() && initialTransferName) {
-      renderTransferDraftMessage(
-        'Ready to prepare a transfer for "' +
-          initialTransferName +
-          '". Add the recipient owner key and the site will recommend the right transfer path from the current name state.'
-      );
+      await renderInitialTransferNameState(initialTransferName);
+      initialTransferNameHandled = true;
     } else if (isTransferPrepPage() && restoredTransferProgress) {
       renderTransferDraftMessage(
         "Recovered transfer details from this browser. Build the transfer plan again to resume."
@@ -362,6 +390,10 @@ async function bootstrap() {
     }
   } catch (error) {
     renderBootError(error);
+  }
+
+  if (isTransferPrepPage() && initialTransferName && !initialTransferNameHandled) {
+    await renderInitialTransferNameState(initialTransferName);
   }
 
   elements.searchForm?.addEventListener("submit", async (event) => {
@@ -429,7 +461,7 @@ async function bootstrap() {
         elements.transferReviewPackageInput.value = text;
       }
       renderTransferPackageReviewMessage(
-        "Loaded package file. Choose buyer or seller review, then inspect the package."
+        "Loaded package file. Choose buyer or seller review, then review the package."
       );
     } catch (error) {
       renderTransferPackageReviewError(error);
@@ -499,50 +531,7 @@ async function bootstrap() {
 
   elements.transferDraftForm?.addEventListener("submit", async (event) => {
     event.preventDefault();
-
-    const rawName = elements.transferNameInput?.value?.trim() ?? "";
-    const newOwnerPubkey = elements.transferNewOwnerPubkeyInput?.value?.trim() ?? "";
-    const mode = elements.transferModeInput?.value?.trim() ?? "auto";
-    const sellerPayoutAddress = elements.transferSellerPayoutAddressInput?.value?.trim() ?? "";
-    const bondAddress = elements.transferBondAddressInput?.value?.trim() ?? "";
-
-    if (rawName.length === 0) {
-      renderTransferDraftMessage("Enter the name you want to transfer first.");
-      return;
-    }
-
-    if (newOwnerPubkey.length === 0) {
-      renderTransferDraftMessage("Enter the recipient owner key in 32-byte hex form.");
-      return;
-    }
-
-    const normalizedName = rawName.toLowerCase();
-    if (elements.transferNameInput) {
-      elements.transferNameInput.value = normalizedName;
-    }
-
-    renderTransferDraftMessage("Preparing transfer handoff...");
-
-    try {
-      const [record, activityPayload] = await Promise.all([
-        fetchJson(withBasePath("/api/name/" + encodeURIComponent(normalizedName))),
-        fetchJson(withBasePath("/api/name/" + encodeURIComponent(normalizedName) + "/activity?limit=6")).catch(() => ({ activity: [] }))
-      ]);
-
-      const draft = buildTransferDraft({
-        record,
-        activity: Array.isArray(activityPayload.activity) ? activityPayload.activity : [],
-        newOwnerPubkey,
-        mode,
-        sellerPayoutAddress,
-        bondAddress
-      });
-      state.transferDraft = draft;
-      renderTransferDraft(draft);
-      updateTransferActionStates();
-    } catch (error) {
-      renderTransferDraftError(error, normalizedName);
-    }
+    requestPrepareTransferDraftFromInputs();
   });
 
   elements.downloadTransferSellerPackageButton?.addEventListener("click", () => {
@@ -619,8 +608,8 @@ async function bootstrap() {
   });
 
   document.addEventListener("click", async (event) => {
-    const target = event.target;
-    if (!(target instanceof HTMLElement)) {
+    const target = eventTargetElement(event.target);
+    if (!target) {
       return;
     }
 
@@ -887,6 +876,93 @@ async function bootstrap() {
   });
 }
 
+function eventTargetElement(target) {
+  if (target instanceof HTMLElement) {
+    return target;
+  }
+
+  if (target instanceof Node && target.parentElement instanceof HTMLElement) {
+    return target.parentElement;
+  }
+
+  return null;
+}
+
+async function prepareTransferDraftFromInputs() {
+  const rawName = elements.transferNameInput?.value?.trim() ?? "";
+  const newOwnerPubkey = elements.transferNewOwnerPubkeyInput?.value?.trim() ?? "";
+  const mode = elements.transferModeInput?.value?.trim() ?? "auto";
+  const sellerPayoutAddress = elements.transferSellerPayoutAddressInput?.value?.trim() ?? "";
+  const bondAddress = elements.transferBondAddressInput?.value?.trim() ?? "";
+
+  if (rawName.length === 0) {
+    renderTransferDraftMessage("Enter the name you want to transfer first.");
+    return;
+  }
+
+  if (newOwnerPubkey.length === 0) {
+    renderTransferDraftMessage("Enter the recipient owner key in 32-byte hex form.");
+    return;
+  }
+
+  const normalizedName = rawName.toLowerCase();
+  if (elements.transferNameInput) {
+    elements.transferNameInput.value = normalizedName;
+  }
+
+  renderTransferDraftMessage("Preparing transfer handoff...");
+
+  try {
+    const [record, activityPayload] = await Promise.all([
+      fetchJson(withBasePath("/api/name/" + encodeURIComponent(normalizedName))),
+      fetchJson(withBasePath("/api/name/" + encodeURIComponent(normalizedName) + "/activity?limit=6")).catch(() => ({ activity: [] }))
+    ]);
+
+    const draft = buildTransferDraft({
+      record,
+      activity: Array.isArray(activityPayload.activity) ? activityPayload.activity : [],
+      newOwnerPubkey,
+      mode,
+      sellerPayoutAddress,
+      bondAddress
+    });
+    state.transferDraft = draft;
+    renderTransferDraft(draft);
+    updateTransferActionStates();
+  } catch (error) {
+    renderTransferDraftError(error, normalizedName);
+  }
+}
+
+async function renderInitialTransferNameState(name) {
+  const normalizedName = String(name ?? "").trim().toLowerCase();
+  if (!normalizedName) {
+    return;
+  }
+
+  if (elements.transferNameInput) {
+    elements.transferNameInput.value = normalizedName;
+  }
+
+  renderTransferDraftMessage("Checking whether this name has an owner to transfer...");
+
+  try {
+    await fetchJson(withBasePath("/api/name/" + encodeURIComponent(normalizedName)));
+    renderTransferDraftMessage(
+      'Ready to prepare a transfer for "' +
+        normalizedName +
+        '". Add the recipient owner key and the site will recommend the right transfer path from the current name state.'
+    );
+  } catch (error) {
+    if (error && typeof error === "object" && "status" in error && error.status === 404) {
+      renderTransferDraftNotOwned(normalizedName);
+      return;
+    }
+
+    renderTransferDraftError(error, normalizedName);
+  }
+}
+
 async function resolveNameLookup(rawName, options = {}) {
   const normalizedName = rawName.trim().toLowerCase();
 
@@ -1060,8 +1136,8 @@ function renderExploreEmptyState() {
   setText(
     elements.exploreEmptyStateDetail,
     currentHeight == null
-      ? "Open an auction, or inspect the auction rules while the namespace is still empty."
-      : "Current height " + String(currentHeight) + ". Open an auction, or inspect the auction rules while the namespace is still empty."
+      ? "Open an auction from any valid name, or use Setup if you still need a funded wallet."
+      : "Current height " + String(currentHeight) + ". Open an auction from any valid name, or use Setup if you still need a funded wallet."
   );
 }
 
@@ -1689,6 +1765,13 @@ function renderTransferDraftMessage(message) {
   elements.transferDraftResult.classList.add("empty");
   elements.transferDraftResult.textContent = message;
   updateTransferActionStates();
+  showTransferResultPanel();
+}
+
+function showTransferResultPanel(label = "Review now") {
+  setDetailsOpen(elements.transferStepInputs, true);
+  setDetailsOpen(elements.transferStepReview, true);
+  setStepChip(elements.transferStepReviewState, label, "ready");
 }
 
 function renderTransferPackageReviewMessage(message) {
@@ -1723,17 +1806,44 @@ function renderTransferDraftError(error, name) {
   state.transferDraft = null;
 
   if (error && typeof error === "object" && "status" in error && error.status === 404) {
-    renderTransferDraftMessage(
-      'No current owner is recorded for this name. Search it first, then use auctions if you want to bid for "' +
-        String(name) +
-        '".'
-    );
+    renderTransferDraftNotOwned(name);
     return;
   }
 
   const message = error instanceof Error ? error.message : "Unable to prepare the transfer handoff.";
   renderTransferDraftMessage(message);
   updateTransferActionStates();
+}
+
+function renderTransferDraftNotOwned(name) {
+  state.transferDraft = null;
+
+  if (!elements.transferDraftResult) {
+    return;
+  }
+
+  const normalizedName = String(name ?? "").trim().toLowerCase();
+  elements.transferDraftResult.classList.remove("empty");
+  elements.transferDraftResult.innerHTML = \`
+    <div class="lookup-availability-result">
+      <div class="lookup-result-title-row">
+        <p class="search-state-label">Transfer unavailable</p>
+        <span class="status-pill available">unopened</span>
+      </div>
+      <h3 class="lookup-result-name">\${escapeHtml(normalizedName)}</h3>
+      <p class="lookup-result-summary">No current owner is recorded for this name, so there is no owner-to-owner transfer to prepare.</p>
+    </div>
+    <div class="lookup-next-step">
+      <p class="search-state-label">Next step</p>
+      <p>Start from Auctions if you want to open the public auction for this name.</p>
+    </div>
+    <div class="hero-cta-row lookup-result-actions">
+      <a class="action-link" href="\${escapeHtml(buildAuctionsPath(normalizedName))}">Open auction for \${escapeHtml(normalizedName)}</a>
+      <a class="action-link secondary" href="\${escapeHtml(withBasePath("/explore"))}">Open explorer</a>
+    </div>
+  \`;
+  updateTransferActionStates();
+  showTransferResultPanel("Auction path");
 }
 
 function renderTransferPackageReviewError(error) {
@@ -2076,7 +2186,7 @@ function formatBtcDecimal(amount) {
 
 function parseBitcoinAmountToSats(value) {
   const normalized = String(value ?? "").trim().replace(/^₿/u, "");
-  if (!/^\d+(?:\.\d{1,8})?$/u.test(normalized)) {
+  if (!/^\\d+(?:\\.\\d{1,8})?$/u.test(normalized)) {
     throw new Error("Enter the bond amount as a bitcoin value like 0.01.");
   }
 
@@ -2304,7 +2414,7 @@ function statusGroupDescription(status) {
     case "mature":
       return "These names have finished settlement and no longer depend on a live bond UTXO.";
     case "invalid":
-      return "These names were released because the required bond was broken before maturity, so inspect their history before treating them as available again.";
+      return "These names were released because the required bond was broken before maturity, so review their history before treating them as available again.";
     default:
       return "Names that do not fit the main lifecycle buckets above.";
   }
@@ -2427,23 +2537,23 @@ function searchOutcomeSteps(status, record) {
         return [
           "The winning bid bond must stay in place until block " + String(record.maturityHeight) + ".",
           "A transfer is still possible, but the buyer should provide a replacement bond in the same transaction.",
-          "If you are evaluating the name, inspect the winning bid and later state transactions before treating the state as final."
+          "If you are evaluating the name, review the winning bid and later state transactions before treating the state as final."
         ];
       case "mature":
         return [
           "The auction has fully settled and the bond maturity period has cleared.",
           "The current owner can now transfer the name or publish new destinations without recreating the original winning bond.",
-          "If you want the full path, inspect the winning bid transaction and any later transfer state."
+          "If you want the full path, review the winning bid transaction and any later transfer state."
         ];
       case "invalid":
         return [
-          "Inspect the release transaction first. That is the clearest explanation for why ownership failed.",
+          "Review the release transaction first. That is the clearest explanation for why ownership failed.",
           "The usual cause is that the winning bond was spent before maturity without a valid replacement bond in the same transaction.",
           "Treat the name as historical until the transaction history makes the next valid owner state clear."
         ];
       default:
         return [
-          "Inspect the transaction history to understand the current auction state.",
+          "Review the transaction history to understand the current auction state.",
           "Wait for a clear owner state before acting on the name."
         ];
     }
@@ -2454,23 +2564,23 @@ function searchOutcomeSteps(status, record) {
       return [
         "The current owner must keep the required bond live until block " + String(record.maturityHeight) + ".",
         "A transfer is still possible, but it must create the replacement bond in the same transaction.",
-        "If you are evaluating the name, inspect the provenance and current owner rather than assuming the state is final."
+        "If you are evaluating the name, review the provenance and current owner rather than assuming the state is final."
       ];
     case "mature":
       return [
         "Ownership is now active and no longer depends on the original bond output remaining live.",
         "The current owner can publish new destinations or transfer the name without recreating the original bond.",
-        "If you want to understand how it got here, inspect the ownership transaction and any later state transaction."
+        "If you want to understand how it got here, review the ownership transaction and any later state transaction."
       ];
     case "invalid":
       return [
-        "Inspect the release transaction first. That is the clearest explanation for why the name returned to the pool.",
+        "Review the release transaction first. That is the clearest explanation for why the name returned to the pool.",
         "The usual cause is that the active bond was spent before maturity without creating a valid replacement bond in the same transaction.",
         "Do not treat the name as safely available until the transaction history makes the next auction path clear."
       ];
     default:
       return [
-        "Inspect the provenance to understand the current state transition.",
+        "Review the provenance to understand the current state transition.",
         "Wait for a clear owner state before acting on the name."
       ];
   }
@@ -2496,7 +2606,7 @@ function renderInvalidationSummary(record, activity, panelId) {
   const invalidationRecord = findLatestInvalidationActivity(record.name, activity);
   const copy =
     invalidationRecord === null
-      ? "This name was released because its bonded state failed before settlement finished. Use the related activity and transaction provenance below to inspect what happened."
+      ? "This name was released because its bonded state failed before settlement finished. Use the related activity and transaction provenance below to review what happened."
       : "This name was released when its active bond was spent before maturity without a valid replacement bond in the same transaction.";
   const details =
     invalidationRecord === null
@@ -2727,7 +2837,7 @@ function primaryLookupNote(record, valueRecord, currentHeight) {
 }
 
 function invalidLookupWarning() {
-  return "Treat released names cautiously until you inspect the detail page and confirm why the required bond failed.";
+  return "Treat released names cautiously until you review the detail page and confirm why the required bond failed.";
 }
 
 function detailSettlementValue(record, currentHeight) {
@@ -2977,7 +3087,7 @@ function buildTimelineItems(record, valueRecord, activity, currentHeight) {
 
   if (valueRecord) {
     items.push({
-      label: "Value",
+      label: "Destinations",
       title: "Current destinations published",
       meta:
         "Sequence " +
@@ -3006,7 +3116,7 @@ function renderAuctionFirstNameNotFound(name) {
     \`
     : \`
       <a class="action-link" href="\${escapeHtml(buildAuctionsPath(name))}">Open auction for \${escapeHtml(name)}</a>
-      <a class="action-link secondary" href="\${escapeHtml(buildAuctionsPath(name))}">View auction rules</a>
+      <a class="action-link secondary" href="\${escapeHtml(withBasePath("/setup"))}">Set up wallet</a>
     \`;
   const openingBidPanel = isAuctionsPage() ? renderOpeningBidComposer(name) : "";
 
@@ -3182,7 +3292,7 @@ function renderPrivateFundingResult(result) {
         <li>Refresh Sparrow so the new confirmed UTXO appears.</li>
         <li>Keep using that same wallet when you prepare auction bid transactions.</li>
         <li>Use Auctions to check names and active auctions, create an owner key, and build bid-package handoffs.</li>
-        <li>Use advanced docs for custom bid construction while the website auction flow is still being refined.</li>
+        <li>Use Advanced only when you need custom bid construction or protocol-review detail.</li>
       </ol>
     </div>
   \`;
@@ -3309,6 +3419,11 @@ function buildTransferDraft({ record, activity, newOwnerPubkey, mode, sellerPayo
     "  --wif " + ownerWifPlaceholder + " \\\\",
     "  --wif " + buyerWifPlaceholder
   ].join("\\n");
+  const matureGiftCommand = [
+    "# Active no-payment transfer is not a one-click website flow yet.",
+    "# After bond maturity, ONT does not require a replacement bond.",
+    "# Use a custom signer/CLI flow for a no-payment handoff, or choose the sale path when payment should settle with the transfer."
+  ].join("\\n");
 
   const modes = String(record.status) === "immature"
     ? [
@@ -3335,11 +3450,11 @@ function buildTransferDraft({ record, activity, newOwnerPubkey, mode, sellerPayo
     : [
         {
           key: "gift",
-          title: "Gift / pre-arranged transfer",
-          suitability: normalizedMode === "gift" ? "Selected on this page" : "Available if you want a simple owner handoff",
+          title: "No-payment active handoff",
+          suitability: normalizedMode === "gift" ? "Selected, but not fully wrapped by the website" : "Use only with a custom signer flow",
           copy:
-            "After maturity, the transfer no longer needs to recreate the original bond.",
-          command: giftCommand
+            "After maturity, ONT no longer requires a replacement bond. Active no-payment transfer still needs a custom signer flow.",
+          command: matureGiftCommand
         },
         {
           key: "sale",
@@ -3371,8 +3486,14 @@ function buildTransferDraft({ record, activity, newOwnerPubkey, mode, sellerPayo
 
 function normalizeTransferMode(mode, status) {
   const raw = String(mode ?? "auto");
-  if (raw === "gift" || raw === "immature-sale" || raw === "sale") {
+  if (raw === "gift") {
     return raw;
+  }
+  if (raw === "sale") {
+    return String(status) === "immature" ? "immature-sale" : "sale";
+  }
+  if (raw === "immature-sale") {
+    return String(status) === "immature" ? "immature-sale" : "sale";
   }
 
   return String(status) === "immature" ? "immature-sale" : "sale";
@@ -3569,7 +3690,11 @@ function buildTransferRoleChecklist(draft, mode, role) {
     ];
 
     if (mode.key === "gift") {
-      checklist.push("Confirm the bond details and fee inputs before signing.");
+      checklist.push(
+        String(draft.status) === "immature"
+          ? "Confirm the replacement bond details and fee inputs before signing."
+          : "Confirm the recipient owner key and custom no-payment transfer details before signing."
+      );
     } else {
       checklist.push("Confirm the seller payout address and payment amount before signing any shared transaction.");
       checklist.push("Do not release owner authorization against a separate promise to pay later.");
@@ -3598,12 +3723,16 @@ function buildTransferRoleChecklist(draft, mode, role) {
 
 function transferPrimarySteps(draft, mode) {
   const steps = [
-    "Replace the placeholder keys, funding inputs, payout address, and fee amounts in the command block.",
+    "Replace any remaining placeholder keys, funding inputs, payout or replacement-bond addresses, and fee amounts in the command block.",
     "Keep the current owner key and last state txid exactly as shown in this handoff."
   ];
 
   if (mode.key === "gift") {
-    steps.push("Use the gift transfer command when no buyer payment needs to settle inside the transfer transaction.");
+    if (String(draft.status) === "immature") {
+      steps.push("Use the gift transfer command when no buyer payment needs to settle inside the transfer transaction.");
+    } else {
+      steps.push("For a no-payment active transfer, use a custom signer flow for this path.");
+    }
   } else if (mode.key === "immature-sale") {
     steps.push("Use the buyer-funded settling sale command so the replacement bond and seller payout happen atomically.");
     steps.push("Both sides should review the same exact transaction details before anyone signs or funds it.");
@@ -3622,6 +3751,32 @@ function transferPrimarySteps(draft, mode) {
 
   steps.push("Run the command locally, then return to the explorer to confirm the new owner and state txid.");
   return steps;
+}
+
+function renderTransferMissingFieldWarnings(draft, mode) {
+  const warnings = [];
+
+  if (String(draft.status) === "immature" && !draft.bondAddress) {
+    warnings.push("Replacement bond address is still missing. Add the buyer's replacement bond address above and rebuild before anyone signs.");
+  }
+
+  if (mode.key !== "gift" && !draft.sellerPayoutAddress) {
+    warnings.push("Seller payout address is still missing. Add it above and rebuild before using a sale handoff.");
+  }
+
+  if (warnings.length === 0) {
+    return "";
+  }
+
+  return \`
+    <div class="search-state-banner pending transfer-field-warning">
+      <p class="search-state-label">Before signing</p>
+      <h4 class="search-state-title">Fill the missing transaction details</h4>
+      <ul class="guide-list">
+        \${warnings.map((warning) => \`<li>\${escapeHtml(warning)}</li>\`).join("")}
+      </ul>
+    </div>
+  \`;
 }
 
 function renderTransferDraft(draft) {
@@ -3643,7 +3798,7 @@ function renderTransferDraft(draft) {
         <span class="status-pill invalid">Released</span>
       </div>
       <div class="hero-cta-row">
-        <a class="action-link" href="\${escapeHtml(buildAuctionsPath(draft.name))}">Open auctions</a>
+        <a class="action-link" href="\${escapeHtml(buildAuctionsPath(draft.name))}">Open auction</a>
         <a class="action-link secondary" href="\${escapeHtml(buildNameDetailPath(draft.name))}">Open detail page</a>
       </div>
     \`;
@@ -3655,10 +3810,11 @@ function renderTransferDraft(draft) {
   const alternativeModes = getAlternativeTransferModes(draft);
   const sellerLabel = recommendedMode.key === "gift" ? "Current Owner Review" : "Seller Review";
   const buyerLabel = recommendedMode.key === "gift" ? "Recipient Review" : "Buyer Review";
+  const missingFieldWarnings = renderTransferMissingFieldWarnings(draft, recommendedMode);
   elements.transferDraftResult.innerHTML = \`
     <div class="search-state-banner \${escapeHtml(draft.status)}">
       <p class="search-state-label">Transfer Status</p>
-	      <h4 class="search-state-title">\${escapeHtml(String(draft.status) === "immature" ? "Replacement bond required" : "Ownership handoff is simpler now")}</h4>
+      <h4 class="search-state-title">\${escapeHtml(String(draft.status) === "immature" ? "Replacement bond required" : "Ownership handoff is simpler now")}</h4>
       <p class="search-state-copy">\${escapeHtml(draft.summary)}</p>
     </div>
     <div class="result-title">
@@ -3711,6 +3867,7 @@ function renderTransferDraft(draft) {
           </ul>
         </article>
       </div>
+      \${missingFieldWarnings}
       \${recommendedMode.key === "gift" ? "" : \`
         <div class="guide-grid">
           <article class="guide-card">
@@ -3784,7 +3941,7 @@ function renderTransferDraft(draft) {
                     <p class="inline-note">\${escapeHtml(mode.copy)}</p>
                     <div class="copy-block">
                       <div class="copy-block-head">
-	                        <label>Command</label>
+                          <label>Command</label>
                         <button type="button" class="copy-button" data-copy="\${escapeHtml(mode.command)}">Copy command</button>
                       </div>
                       <pre>\${escapeHtml(mode.command)}</pre>
@@ -3802,7 +3959,7 @@ function renderTransferDraft(draft) {
       <div class="detail-technical-body">
         <div class="copy-block">
           <div class="copy-block-head">
-	            <label>Handoff bundle</label>
+                <label>Handoff bundle</label>
             <button type="button" class="copy-button" data-copy="\${escapeHtml(transferEssentialsText)}">Copy all essentials</button>
           </div>
           <pre>\${escapeHtml(transferEssentialsText)}</pre>
@@ -4780,7 +4937,7 @@ function renderNameAuctionPolicyCard(nameAuction, lengthFloorExamples) {
   return [
     '<article class="guide-card guide-card-wide">',
     "  <h3>" + escapeHtml(label) + "</h3>",
-    '  <p class="result-meta">Every valid name can be opened through the same public auction mechanics. The opening floor is fixed by name length; shorter strings have higher floors.</p>',
+    '  <p class="result-meta">Every valid name can be opened through the same public auction mechanics. The opening floor is fixed by name length; shorter strings have higher fixed floors.</p>',
     '  <div class="result-grid">',
     policyRows
       .map((row) => {
@@ -4866,7 +5023,6 @@ function renderAuctionCaseCard(auctionCase) {
     '    <div class="result-item"><label>' + escapeHtml(nextBidLabel) + '</label><p class="field-value">' + escapeHtml(nextBidValue) + "</p></div>",
     '    <div class="result-item"><label>Accepted / rejected</label><p class="field-value">' + escapeHtml(String(stateView.acceptedBidCount ?? 0) + " / " + String(stateView.rejectedBidCount ?? 0)) + "</p></div>",
     '    <div class="result-item"><label>Settlement lock</label><p class="field-value">' + escapeHtml(formatBlockWindow(stateView.settlementLockBlocks)) + "</p></div>",
-    '    <div class="result-item"><label>Reference wait</label><p class="field-value">' + escapeHtml(String(stateView.blocksUntilUnlock ?? 0)) + "</p></div>",
     '    <div class="result-item"><label>' + escapeHtml(secondaryTimingLabel) + '</label><p class="field-value">' + escapeHtml(secondaryTimingValue) + "</p></div>",
     "  </div>",
     renderAuctionBidPackageComposer({
@@ -4949,7 +5105,6 @@ function renderExperimentalAuctionCard(auction) {
     '    <div class="result-item"><label>' + escapeHtml(nextBidLabel) + '</label><p class="field-value">' + escapeHtml(nextBidValue) + "</p></div>",
     '    <div class="result-item"><label>Accepted / rejected</label><p class="field-value">' + escapeHtml(String(auction.acceptedBidCount ?? 0) + " / " + String(auction.rejectedBidCount ?? 0)) + "</p></div>",
     '    <div class="result-item"><label>Observed bids</label><p class="field-value">' + escapeHtml(String(auction.totalObservedBidCount ?? 0)) + "</p></div>",
-    '    <div class="result-item"><label>Reference wait</label><p class="field-value">' + escapeHtml(String(auction.blocksUntilUnlock ?? 0)) + "</p></div>",
     '    <div class="result-item"><label>' + escapeHtml(closeLabel) + '</label><p class="field-value">' + escapeHtml(closeValue) + "</p></div>",
     '    <div class="result-item"><label>Accepted capital locked</label><p class="field-value">' + escapeHtml(formatSats(auction.currentlyLockedAcceptedBidAmountSats ?? "0")) + " (" + escapeHtml(String(auction.currentlyLockedAcceptedBidCount ?? 0)) + ")</p></div>",
     '    <div class="result-item"><label>Accepted capital releasable</label><p class="field-value">' + escapeHtml(formatSats(auction.releasableAcceptedBidAmountSats ?? "0")) + " (" + escapeHtml(String(auction.releasableAcceptedBidCount ?? 0)) + ")</p></div>",
@@ -5050,10 +5205,9 @@ function caseIdFromAuctionState(id, fallbackName) {
 function renderAuctionBidPackageComposer(input) {
   const domKey = buildAuctionPackageDomKey(input.source, input.id);
   const defaultOwnerPubkey = String(input.defaultOwnerPubkey ?? "");
-  const amountUnit = input.amountUnit === "btc" ? "btc" : "sats";
-  const amountInputValue =
-    amountUnit === "btc" ? formatBtcDecimal(BigInt(input.defaultBidAmount ?? "0")) : String(input.defaultBidAmount ?? "");
-  const amountLabel = amountUnit === "btc" ? "Bond amount (₿)" : "Bid amount";
+  const amountUnit = "btc";
+  const amountInputValue = formatBtcDecimal(BigInt(input.defaultBidAmount ?? "0"));
+  const amountLabel = "Bond amount (₿)";
   const summary = String(input.summary ?? "Preview or download bid package");
   const openAttribute = input.expanded === true ? " open" : "";
 
@@ -5079,7 +5233,7 @@ function renderAuctionBidPackageComposer(input) {
     '      <p class="tx-panel-note">Set the x-only public owner key that should control the name if this bid wins. Create it in this browser for the normal self-custody path, or use a server-generated test key only for test bids.</p>',
     '      <div class="field-actions">',
     '        <button type="button" data-auction-owner-key-action="generate-local" data-auction-package-source="' + escapeHtml(input.source) + '" data-auction-package-id="' + escapeHtml(input.id) + '" data-auction-name="' + escapeHtml(input.normalizedName ?? "") + '">Create In This Browser</button>',
-    '        <button type="button" class="secondary-button" data-auction-owner-key-action="generate-hosted" data-auction-package-source="' + escapeHtml(input.source) + '" data-auction-package-id="' + escapeHtml(input.id) + '" data-auction-name="' + escapeHtml(input.normalizedName ?? "") + '">Use Server Test Key</button>',
+    '        <button type="button" class="secondary-button" data-auction-owner-key-action="generate-hosted" data-auction-package-source="' + escapeHtml(input.source) + '" data-auction-package-id="' + escapeHtml(input.id) + '" data-auction-name="' + escapeHtml(input.normalizedName ?? "") + '">Server Test Key (Demo Only)</button>',
     "      </div>",
     '      <div class="result-card empty" data-auction-owner-key-result="' + escapeHtml(domKey) + '">No generated owner key yet for this bid. Create one in this browser for the normal self-custody path, or use a server-generated test key only for test bids.</div>',
     '      <div class="field-actions">',
@@ -5458,7 +5612,7 @@ function renderPrivateAuctionSmokeStatus() {
     finalState.phase === "settled" && typeof finalState.normalizedName === "string" && finalState.normalizedName.trim().length > 0
       ? '<a class="action-link secondary" href="' + escapeHtml(buildTransferPrepPath(finalState.normalizedName, privateDemoBasePath)) + '">Prepare transfer</a>'
       : "",
-    '<a class="action-link" href="' + escapeHtml(withBasePath("/auctions", privateDemoBasePath)) + '">Open private auction lab</a>',
+    '<a class="action-link" href="' + escapeHtml(withBasePath("/auctions", privateDemoBasePath)) + '">Open auction page</a>',
     '<a class="action-link secondary" href="' + escapeHtml(withBasePath("/explore", privateDemoBasePath)) + '">Open private explorer</a>'
   ]
     .filter(Boolean)

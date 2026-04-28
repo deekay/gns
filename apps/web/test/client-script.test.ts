@@ -47,7 +47,7 @@ describe("renderClientScript", () => {
     expect(script).toContain("Open settled name");
     expect(script).toContain("renderPrivateAuctionWorkflowSummary");
     expect(script).toContain("renderPrivateAuctionWinnerHandoffCopy");
-    expect(script).toContain("Open private auction lab");
+    expect(script).toContain("Open auction page");
     expect(script).toContain("getPrivateDemoBasePath");
   });
 
@@ -74,6 +74,12 @@ describe("renderClientScript", () => {
     expect(script).toContain("renderTransferPackageReview");
     expect(script).toContain("buildTransferPackageReviewChecklist");
     expect(script).toContain("reviewTransferPackageButton");
+    expect(script).toContain("handleTransferPlanIntent");
+    expect(script).toContain("requestPrepareTransferDraftFromInputs");
+    expect(script).toContain("prepareTransferDraftFromInputs");
+    expect(script).toContain("renderInitialTransferNameState");
+    expect(script).toContain("showTransferResultPanel");
+    expect(script).toContain("Checking whether this name has an owner to transfer...");
   });
 
   it("includes browser-local key generation and hosted helper fallback", () => {
@@ -131,6 +137,7 @@ describe("renderClientScript", () => {
     expect(script).toContain("Prepare opening bid package");
     expect(script).toContain("Bond amount (₿)");
     expect(script).toContain("parseBitcoinAmountToSats");
+    expect(script).toContain('/^\\d+(?:\\.\\d{1,8})?$/u');
     expect(script).toContain("data-auction-package-preview");
     expect(script).toContain("data-auction-owner-key-action");
     expect(script).toContain("data-auction-owner-key-result");
@@ -141,7 +148,7 @@ describe("renderClientScript", () => {
     expect(script).toContain("Creating an owner key in this browser for this bid...");
     expect(script).toContain("Requesting a server-generated test owner key for this bid...");
     expect(script).toContain("Create In This Browser");
-    expect(script).toContain("Use Server Test Key");
+    expect(script).toContain("Server Test Key (Demo Only)");
     expect(script).not.toContain("Closed without winner");
     expect(script).toContain("No current owner is recorded for this name.");
     expect(script).toContain("A valid bonded opening bid can start the auction.");
