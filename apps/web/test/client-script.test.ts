@@ -39,11 +39,11 @@ describe("renderClientScript", () => {
     const script = renderClientScript("");
 
     expect(script).toContain("atomic_same_transaction_for_sale");
-    expect(script).toContain("coordinated_cli_handoff_pending_two_party_psbt_flow");
+    expect(script).toContain("coordinated_handoff_pending_two_party_signing_flow");
     expect(script).toContain("Do not split payment and transfer into separate promises.");
     expect(script).toContain("Do not treat payment and name transfer as separate promises.");
-    expect(script).toContain("not yet a full two-party PSBT wizard for buyer and seller");
-    expect(script).toContain("Current implementation boundary: this page still exports a coordinated CLI handoff rather than a full two-party PSBT wizard.");
+    expect(script).toContain("not yet a full two-party signing wizard for buyer and seller");
+    expect(script).toContain("Current website boundary: this page exports a coordinated handoff rather than a full two-party signing wizard.");
     expect(script).toContain("Generating a local browser key for the buyer...");
     expect(script).toContain("buildSellerTransferNotesText");
     expect(script).toContain("buildBuyerTransferNotesText");
@@ -70,21 +70,21 @@ describe("renderClientScript", () => {
     expect(script).toContain("Generating a local browser key for the buyer...");
     expect(script).toContain("Creating an owner key in this browser for this bid...");
     expect(script).toContain("sourceLabel: \"local browser\"");
-    expect(script).toContain("sourceLabel: \"hosted demo\"");
+    expect(script).toContain("sourceLabel: \"server test key\"");
     expect(script).not.toContain("claimDraft");
   });
 
-  it("shows a clear empty-state when the resolver is empty", () => {
+  it("shows a clear empty-state when no activity is visible", () => {
     const script = renderClientScript("");
 
     expect(script).toContain("renderExploreEmptyState");
     expect(script).toContain("renderExploreResolverEmptyCard");
     expect(script).toContain("exploreEmptyStateMessage");
     expect(script).toContain("resolverHasVisibleState");
-    expect(script).toContain("No resolver activity yet");
+    expect(script).toContain("No activity yet");
     expect(script).toContain("No Owned Names Yet");
-    expect(script).toContain("after auctions settle or transfers publish on this resolver");
-    expect(script).toContain("Resolver reachable · no owned names visible yet.");
+    expect(script).toContain("after auctions settle or transfers are published");
+    expect(script).toContain("No owned names visible yet.");
   });
 
   it("includes auction lab handling", () => {
@@ -119,9 +119,9 @@ describe("renderClientScript", () => {
     expect(script).toContain("renderAuctionOwnerKeyHelper");
     expect(script).toContain("Generated Auction Owner Key");
     expect(script).toContain("Creating an owner key in this browser for this bid...");
-    expect(script).toContain("Requesting a demo owner key from the server for this bid...");
+    expect(script).toContain("Requesting a server-generated test owner key for this bid...");
     expect(script).toContain("Create In This Browser");
-    expect(script).toContain("Use Demo Key From Server");
+    expect(script).toContain("Use Server Test Key");
     expect(script).not.toContain("Closed without winner");
     expect(script).toContain("No current owner is recorded for this name.");
     expect(script).toContain("A valid bonded opening bid can start the auction.");

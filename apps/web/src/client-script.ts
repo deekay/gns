@@ -219,11 +219,11 @@ async function generateHostedDemoOwnerKey() {
     ownerPubkey: generated.ownerPubkey,
     privateKeyHex: generated.privateKeyHex,
     source: "hosted-demo",
-    sourceLabel: "hosted demo",
+    sourceLabel: "server test key",
     warning:
       typeof generated.warning === "string" && generated.warning.length > 0
         ? generated.warning
-        : "Hosted demo helper only. This key came from the demo server and should not be used for real value."
+        : "Server-generated test helper only. Create keys locally for any real self-custody path."
   };
 }
 
@@ -345,7 +345,7 @@ async function bootstrap() {
       renderTransferDraftMessage(
         'Ready to prepare a transfer for "' +
           initialTransferName +
-          '". Add the recipient pubkey and the site will recommend the right transfer path from the current name state.'
+          '". Add the recipient owner key and the site will recommend the right transfer path from the current name state.'
       );
     } else if (isTransferPrepPage() && restoredTransferProgress) {
       renderTransferDraftMessage(
@@ -454,7 +454,7 @@ async function bootstrap() {
       return;
     }
 
-    renderPrivateFundingMessage("Funding your private signet wallet... this can take around 20 seconds while the demo chain mines a block.");
+    renderPrivateFundingMessage("Funding your private signet wallet... this can take around 20 seconds while the private signet mines a block.");
 
     try {
       const result = await postJson(withBasePath("/api/private-signet-fund"), {
@@ -504,7 +504,7 @@ async function bootstrap() {
     }
 
     if (newOwnerPubkey.length === 0) {
-      renderTransferDraftMessage("Enter the recipient pubkey in 32-byte hex form.");
+      renderTransferDraftMessage("Enter the recipient owner key in 32-byte hex form.");
       return;
     }
 
@@ -659,7 +659,7 @@ async function bootstrap() {
       const nameHint = elements.transferNameInput?.value?.trim() || null;
       downloadTextFile(
         buildGeneratedOwnerKeyText(state.transferGeneratedOwnerKey, nameHint),
-        "ont-" + (nameHint || "recipient") + "-recipient-demo-owner-key.txt"
+        "ont-" + (nameHint || "recipient") + "-recipient-owner-key.txt"
       );
       return;
     }
@@ -679,9 +679,9 @@ async function bootstrap() {
 
       if (state.transferDraft !== null) {
         state.transferDraft = null;
-        renderTransferDraftMessage("Recipient pubkey copied into the seller form. Build the transfer plan again so the handoff stays in sync.");
+        renderTransferDraftMessage("Recipient owner key copied into the seller form. Build the transfer plan again so the handoff stays in sync.");
       } else {
-        renderTransferDraftMessage("Recipient pubkey copied into the seller form. Review the transfer details and build the plan when ready.");
+        renderTransferDraftMessage("Recipient owner key copied into the seller form. Review the transfer details and build the plan when ready.");
       }
       updateTransferActionStates();
       setDetailsOpen(elements.transferStepInputs, true);
@@ -717,7 +717,7 @@ async function bootstrap() {
       }
 
       if (ownerPubkey.length === 0) {
-        setAuctionBidPackageMessage(domKey, "Enter the owner pubkey that should control the name if this bid wins.");
+        setAuctionBidPackageMessage(domKey, "Enter the owner key that should control the name if this bid wins.");
         return;
       }
 
@@ -802,7 +802,7 @@ async function bootstrap() {
           domKey,
           action === "generate-local"
             ? "Creating an owner key in this browser for this bid..."
-            : "Requesting a demo owner key from the server for this bid..."
+            : "Requesting a server-generated test owner key for this bid..."
         );
 
         const generated =
@@ -961,13 +961,13 @@ function renderNames() {
     setText(
       elements.namesState,
       resolverEmpty
-        ? "Resolver reachable · no owned names visible yet."
-        : "No tracked names are visible from the resolver yet."
+        ? "No owned names visible yet."
+        : "No owned names match the current view."
     );
     list.innerHTML = resolverEmpty
       ? renderExploreResolverEmptyCard(
           "No Owned Names Yet",
-          "Owned, settling, and released names will appear here after auctions settle or transfers publish on this resolver."
+          "Owned, settling, and released names will appear here after auctions settle or transfers are published."
         )
       : "";
     return;
@@ -1026,18 +1026,18 @@ function renderExploreEmptyState() {
   }
 
   panel.hidden = false;
-  const networkLabel = String(state.config?.networkLabel ?? "live demo");
+  const networkLabel = String(state.config?.networkLabel ?? "private signet");
   const currentHeight = state.health?.stats?.currentHeight ?? null;
 
   setText(
     elements.exploreEmptyStateMessage,
-    "This " + networkLabel + " resolver is reachable, but it is not showing owned names, auction activity, or resolver updates right now."
+    "No owned names, auction activity, or destination updates are visible on " + networkLabel + " right now."
   );
   setText(
     elements.exploreEmptyStateDetail,
     currentHeight == null
-      ? "Open an auction or inspect the auction rules while the resolver waits for owned names."
-      : "Current height " + String(currentHeight) + ". Open an auction or inspect the auction rules while the resolver waits for owned names."
+      ? "Open an auction, or inspect the auction rules while the namespace is still empty."
+      : "Current height " + String(currentHeight) + ". Open an auction, or inspect the auction rules while the namespace is still empty."
   );
 }
 
@@ -1052,13 +1052,13 @@ function renderRecentNames() {
     setText(
       elements.recentNamesState,
       resolverEmpty
-        ? "Resolver reachable · no owned names visible yet."
-        : "No tracked names are visible from the resolver yet."
+        ? "No owned names visible yet."
+        : "No owned names match the current view."
     );
     list.innerHTML = resolverEmpty
       ? renderExploreResolverEmptyCard(
           "No Recorded Names Yet",
-          "Newly owned and transferred names will show up here in recency order after this resolver has visible state."
+          "Newly owned and transferred names will show up here in recency order once ownership activity appears."
         )
       : "";
     return;
@@ -1090,14 +1090,14 @@ function renderActivity() {
     setText(
       elements.activityState,
       resolverEmpty
-        ? "Resolver reachable · no auction activity visible yet."
-        : "No recent Open Name Tags activity is visible from the resolver yet."
+        ? "No auction activity visible yet."
+        : "No recent Open Name Tags activity matches the current view."
     );
     if (highlightsContainer) {
       highlightsContainer.innerHTML = resolverEmpty
         ? renderExploreResolverEmptyCard(
             "No Recent Activity Yet",
-            "Auction bids, transfers, and destination updates will appear here once this resolver has visible chain activity again."
+            "Auction bids, transfers, and destination updates will appear here once activity is visible."
           )
         : "";
     }
@@ -1329,11 +1329,11 @@ function resolverHasVisibleState() {
 function renderExploreResolverEmptyCard(title, copy) {
   return \`
     <article class="guide-card explore-empty-card">
-      <p class="highlight-kicker">No resolver activity yet</p>
+      <p class="highlight-kicker">No activity yet</p>
       <h3>\${escapeHtml(title)}</h3>
       <p>\${escapeHtml(copy)}</p>
       <div class="guide-card-actions">
-        <a class="action-link secondary" href="\${escapeHtml(withBasePath("/setup"))}">Open demo setup</a>
+        <a class="action-link secondary" href="\${escapeHtml(withBasePath("/setup"))}">Open setup</a>
         <a class="action-link secondary" href="\${escapeHtml(withBasePath("/auctions"))}">Open auctions</a>
       </div>
     </article>
@@ -1512,7 +1512,7 @@ function renderSearchRecord(record, valueRecord) {
       <div class="detail-technical-body">
         <div class="result-grid">
           <div class="result-item">
-            <label>Owner Pubkey</label>
+            <label>Owner Key</label>
             \${renderCopyableCode(record.currentOwnerPubkey)}
           </div>
           <div class="result-item">
@@ -1576,7 +1576,7 @@ function renderNameDetailRecord(record, valueRecord, panelId) {
       <div class="detail-technical-body">
         <div class="result-grid">
           <div class="result-item">
-            <label>Owner Pubkey</label>
+            <label>Owner Key</label>
             \${renderCopyableCode(record.currentOwnerPubkey)}
           </div>
           <div class="result-item">
@@ -1700,7 +1700,7 @@ function renderTransferDraftError(error, name) {
 
   if (error && typeof error === "object" && "status" in error && error.status === 404) {
     renderTransferDraftMessage(
-      'This name is not currently owned in the resolver view. Search it first, then use auctions if you want to bid for "' +
+      'No current owner is recorded for this name. Search it first, then use auctions if you want to bid for "' +
         String(name) +
         '".'
     );
@@ -1718,7 +1718,7 @@ function renderTransferPackageReviewError(error) {
 }
 
 function renderTransferRecipientKeyError(error) {
-  const message = error instanceof Error ? error.message : "Unable to generate a recipient key in the demo helper.";
+  const message = error instanceof Error ? error.message : "Unable to generate a recipient key.";
   renderTransferRecipientKeyMessage(message);
 }
 
@@ -1976,7 +1976,7 @@ function mapLiveSmokeStatusPill(value) {
 
 function formatSats(value) {
   const amount = BigInt(value);
-  return "₿" + amount.toLocaleString("en-US") + " (" + formatBtcDecimal(amount) + " BTC)";
+  return "₿" + formatBtcDecimal(amount);
 }
 
 function formatStateLabel(status) {
@@ -1995,18 +1995,7 @@ function formatStateLabel(status) {
 }
 
 function formatCompactSats(value) {
-  const amount = BigInt(value);
-  if (amount >= 1000000000n) {
-    return "₿" + (Number(amount) / 1000000000).toFixed(1).replace(/\.0$/, "") + "B";
-  }
-  if (amount >= 1000000n) {
-    return "₿" + (Number(amount) / 1000000).toFixed(1).replace(/\.0$/, "") + "M";
-  }
-  if (amount >= 1000n) {
-    return "₿" + (Number(amount) / 1000).toFixed(1).replace(/\.0$/, "") + "k";
-  }
-
-  return "₿" + amount.toString();
+  return formatSats(value);
 }
 
 function formatBtcDecimal(amount) {
@@ -2085,7 +2074,7 @@ function renderNameCard(record) {
         </p>
         <div class="name-grid">
           <div class="name-item">
-            <label>Owner Pubkey</label>
+            <label>Owner Key</label>
             \${renderCopyableCode(record.currentOwnerPubkey)}
           </div>
           <div class="name-item">
@@ -2151,7 +2140,7 @@ function renderCompactNameCard(record) {
         </p>
         <div class="name-grid">
           <div class="name-item">
-            <label>Owner Pubkey</label>
+            <label>Owner Key</label>
             \${renderCopyableCode(record.currentOwnerPubkey)}
           </div>
           <div class="name-item">
@@ -2228,7 +2217,7 @@ function statusGroupDescription(status) {
     case "mature":
       return "These names have finished settlement and no longer depend on a live bond UTXO.";
     case "invalid":
-      return "These names were released because bond continuity failed before settlement finished, so inspect their history before treating them as available again.";
+      return "These names were released because the required bond was broken before maturity, so inspect their history before treating them as available again.";
     default:
       return "Names that do not fit the main lifecycle buckets above.";
   }
@@ -2294,13 +2283,13 @@ function searchOutcomeSummary(record) {
   if (isAuctionNameRecord(record)) {
     switch (status) {
       case "immature":
-        return "This auction has settled, and the winning bond is still locked in its post-auction holding period.";
+        return "This auction has settled, and the winning bond is still maturing.";
       case "mature":
         return "This auction has settled, the winner owns the name, and the bond period has matured.";
       case "invalid":
-        return "This auction-derived name was released because the winning bond continuity failed before the required lock ended.";
+        return "This name was released because the winning bond was broken before maturity.";
       default:
-        return "This auction-derived name is in a transitional state.";
+        return "This auction state is still being resolved.";
     }
   }
 
@@ -2310,7 +2299,7 @@ function searchOutcomeSummary(record) {
     case "mature":
       return "This name is already owned and active.";
     case "invalid":
-      return "This name was released because bond continuity was broken before settlement finished.";
+      return "This name was released because the required bond was broken before maturity.";
     default:
       return "This name is in a transitional state.";
   }
@@ -2349,8 +2338,8 @@ function searchOutcomeSteps(status, record) {
     switch (String(status)) {
       case "immature":
         return [
-          "The winning bid bond must remain continuous until block " + String(record.maturityHeight) + ".",
-          "A transfer is still possible, but it must carry the full winning bond amount into the successor bond in the same transaction.",
+          "The winning bid bond must stay in place until block " + String(record.maturityHeight) + ".",
+          "A transfer is still possible, but the buyer should provide a replacement bond in the same transaction.",
           "If you are evaluating the name, inspect the winning bid and later state transactions before treating the state as final."
         ];
       case "mature":
@@ -2361,14 +2350,14 @@ function searchOutcomeSteps(status, record) {
         ];
       case "invalid":
         return [
-          "Inspect the invalidation transaction first. That is the clearest explanation for why the auction-derived ownership failed.",
-          "The usual cause is that the winning bond UTXO was spent before the required lock ended without creating a valid successor bond in the same transaction.",
-          "Treat the name as historical until the resolver and transaction history make the next valid owner state clear."
+          "Inspect the release transaction first. That is the clearest explanation for why ownership failed.",
+          "The usual cause is that the winning bond was spent before maturity without a valid replacement bond in the same transaction.",
+          "Treat the name as historical until the transaction history makes the next valid owner state clear."
         ];
       default:
         return [
-          "Inspect the provenance to understand the current auction-derived state transition.",
-          "Use the resolver and transaction history together before acting on the name."
+          "Inspect the transaction history to understand the current auction state.",
+          "Wait for a clear owner state before acting on the name."
         ];
     }
   }
@@ -2376,26 +2365,26 @@ function searchOutcomeSteps(status, record) {
   switch (String(status)) {
     case "immature":
       return [
-        "The current owner must preserve bond continuity until settlement finishes at height " + String(record.maturityHeight) + ".",
-        "A transfer is still possible, but it must create the successor bond in the same transaction.",
+        "The current owner must keep the required bond live until block " + String(record.maturityHeight) + ".",
+        "A transfer is still possible, but it must create the replacement bond in the same transaction.",
         "If you are evaluating the name, inspect the provenance and current owner rather than assuming the state is final."
       ];
     case "mature":
       return [
         "Ownership is now active and no longer depends on the original bond output remaining live.",
-        "The current owner can publish new destinations or transfer the name without successor-bond continuity.",
+        "The current owner can publish new destinations or transfer the name without recreating the original bond.",
         "If you want to understand how it got here, inspect the ownership transaction and any later state transaction."
       ];
     case "invalid":
       return [
         "Inspect the release transaction first. That is the clearest explanation for why the name returned to the pool.",
-        "The usual cause is that the active bond UTXO was spent before settlement finished without creating a valid successor bond in the same transaction.",
-        "Do not treat the name as safely available until the resolver and transaction history make the next auction path clear."
+        "The usual cause is that the active bond was spent before maturity without creating a valid replacement bond in the same transaction.",
+        "Do not treat the name as safely available until the transaction history makes the next auction path clear."
       ];
     default:
       return [
         "Inspect the provenance to understand the current state transition.",
-        "Use the resolver and transaction history together before acting on the name."
+        "Wait for a clear owner state before acting on the name."
       ];
   }
 }
@@ -2421,7 +2410,7 @@ function renderInvalidationSummary(record, activity, panelId) {
   const copy =
     invalidationRecord === null
       ? "This name was released because its bonded state failed before settlement finished. Use the related activity and transaction provenance below to inspect what happened."
-      : "This name was released when its active bond outpoint was spent before settlement finished without a valid successor bond in the same transaction.";
+      : "This name was released when its active bond was spent before maturity without a valid replacement bond in the same transaction.";
   const details =
     invalidationRecord === null
       ? ""
@@ -2608,7 +2597,7 @@ function ownerSummaryCopy(record) {
     return "This was the last recorded owner before the name was released.";
   }
 
-  return "This is the key currently recognized by the resolver as the controlling owner.";
+  return "This is the owner key currently controlling the name.";
 }
 
 function primaryLookupNote(record, valueRecord, currentHeight) {
@@ -2616,7 +2605,7 @@ function primaryLookupNote(record, valueRecord, currentHeight) {
 
   if (status === "invalid") {
     return isAuctionNameRecord(record)
-      ? "This auction-derived name was released before bond maturity. Use the detail page if you want the full bid and bond history before acting on it."
+      ? "This name was released before bond maturity. Use the detail page if you want the full bid and bond history before acting on it."
       : "This name was released before settlement finished. Use the detail page if you want the full transaction history before treating it as available again.";
   }
 
@@ -2634,8 +2623,8 @@ function primaryLookupNote(record, valueRecord, currentHeight) {
 
   if (currentHeight === null) {
     return isAuctionNameRecord(record)
-      ? "This auction winner is still inside the bond period under the current resolver snapshot."
-      : "This name is still settling under the current resolver snapshot.";
+      ? "This auction winner is still inside the bond period."
+      : "This name is still settling.";
   }
 
   const blocksLeft = Math.max(0, Number(record.maturityHeight) - Number(currentHeight));
@@ -2646,12 +2635,12 @@ function primaryLookupNote(record, valueRecord, currentHeight) {
   }
 
   return blocksLeft === 0
-    ? "This name is at the edge of settlement and should become active once the resolver advances."
+    ? "This name is at the edge of settlement and should become active after the next state update."
     : "This name is still settling. About " + String(blocksLeft) + " blocks remain before it becomes active.";
 }
 
 function invalidLookupWarning() {
-  return "Treat released names cautiously until you inspect the detail page and confirm why the bond continuity failed.";
+  return "Treat released names cautiously until you inspect the detail page and confirm why the required bond failed.";
 }
 
 function detailSettlementValue(record, currentHeight) {
@@ -2682,8 +2671,8 @@ function detailSettlementCopy(record, currentHeight) {
 
   if (status === "invalid") {
     return isAuctionNameRecord(record)
-      ? "Winning-bid bond continuity broke before the required lock ended, so this auction-derived state should be treated as historical rather than live ownership."
-      : "Bond continuity broke before settlement finished, so this recorded state should be treated as historical rather than live ownership.";
+      ? "The winning bond was broken before maturity, so this state should be treated as historical rather than live ownership."
+      : "The required bond was broken before maturity, so this recorded state should be treated as historical rather than live ownership.";
   }
 
   if (status === "mature") {
@@ -2694,8 +2683,8 @@ function detailSettlementCopy(record, currentHeight) {
 
   if (currentHeight === null) {
     return isAuctionNameRecord(record)
-      ? "The resolver has not published a current height yet, but this auction winner is still within the bond period."
-      : "The resolver has not published a current height yet, but this name is still within the settlement window.";
+      ? "Current height is unavailable, but this auction winner is still within the bond period."
+      : "Current height is unavailable, but this name is still within the settlement window.";
   }
 
   const blocksLeft = Math.max(0, Number(record.maturityHeight) - Number(currentHeight));
@@ -2882,10 +2871,10 @@ function buildTimelineItems(record, valueRecord, activity, currentHeight) {
   if (String(record.status) === "invalid") {
     items.push({
       label: "Release",
-      title: "Bond continuity failed",
+      title: "Required bond failed",
       meta:
         invalidationRecord === null
-          ? "The active bond was spent before settlement finished without a valid successor bond."
+          ? "The active bond was spent before maturity without a valid replacement bond."
           : "Height " + String(invalidationRecord.blockHeight) + " · " + truncateMiddle(invalidationRecord.txid, 10, 8)
     });
   } else {
@@ -2996,7 +2985,7 @@ function renderTransferRecipientKey(generated) {
       <p class="step-list-label">Buyer Side</p>
       <ol>
         <li>Download or copy the private key now and keep it with the buyer.</li>
-        <li>Share only the pubkey with the seller for transfer prep.</li>
+        <li>Share only the public owner key with the seller for transfer prep.</li>
         <li>Use this private key later if the recipient will publish destinations or authorize the next transfer.</li>
       </ol>
       <div class="hero-cta-row">
@@ -3006,7 +2995,7 @@ function renderTransferRecipientKey(generated) {
     </div>
     <div class="result-grid">
       <div class="result-item">
-        <label>Recipient Pubkey</label>
+        <label>Recipient Owner Key</label>
         \${renderCopyableCode(generated.ownerPubkey)}
       </div>
       <div class="result-item">
@@ -3035,7 +3024,7 @@ function renderPrivateFundingResult(result) {
   elements.privateFundingResult.classList.remove("empty");
   elements.privateFundingResult.innerHTML = \`
     <div class="result-title">
-      <h3>Demo Coins Sent</h3>
+      <h3>Private Signet Coins Sent</h3>
       <span class="status-pill available">funded</span>
     </div>
     <p class="field-value">
@@ -3065,7 +3054,7 @@ function renderPrivateFundingResult(result) {
         <li>Refresh Sparrow so the new confirmed UTXO appears.</li>
         <li>Keep using that same wallet when you prepare auction bid transactions.</li>
         <li>Use Auctions to check names and active auctions, create an owner key, and build bid-package handoffs.</li>
-        <li>Use the CLI for custom bid construction until the website auction flow is fully settled.</li>
+        <li>Use advanced docs for custom bid construction while the website auction flow is still being refined.</li>
       </ol>
     </div>
   \`;
@@ -3106,7 +3095,7 @@ function buildGeneratedOwnerKeyText(generatedOwnerKey, nameHint) {
     "",
     "Name: " + String(nameHint ?? "unassigned"),
     "Source: " + String(generatedOwnerKey.sourceLabel ?? "generated helper"),
-    "Owner pubkey: " + String(generatedOwnerKey.ownerPubkey),
+    "Owner key: " + String(generatedOwnerKey.ownerPubkey),
     "Owner private key: " + String(generatedOwnerKey.privateKeyHex),
     "",
     "Why this matters",
@@ -3200,7 +3189,7 @@ function buildTransferDraft({ record, activity, newOwnerPubkey, mode, sellerPayo
           title: "Gift / pre-arranged transfer",
           suitability: normalizedMode === "gift" ? "Selected on this page" : "Good default when no sale payment needs to be embedded",
           copy:
-            "Use the current bond outpoint plus a successor bond output. The current CLI flow carries the bond forward in the same transfer transaction.",
+            "Carry the current bond forward with a replacement bond in the same transfer transaction.",
           command: giftCommand
         },
         {
@@ -3211,7 +3200,7 @@ function buildTransferDraft({ record, activity, newOwnerPubkey, mode, sellerPayo
               ? "Selected on this page"
               : "Best sale path while the name is still settling",
           copy:
-            "The buyer funds the successor bond and seller payout atomically, so bond continuity and sale settlement happen in one transaction.",
+            "The buyer funds the replacement bond and seller payout together, so the sale and required bond settle in one transaction.",
           command: immatureSaleCommand
         }
       ]
@@ -3221,7 +3210,7 @@ function buildTransferDraft({ record, activity, newOwnerPubkey, mode, sellerPayo
           title: "Gift / pre-arranged transfer",
           suitability: normalizedMode === "gift" ? "Selected on this page" : "Available if you want a simple owner handoff",
           copy:
-            "The protocol no longer requires bond continuity after maturity, but the current CLI gift flow still carries the recorded bond input forward conservatively.",
+            "After maturity, the transfer no longer needs to recreate the original bond.",
           command: giftCommand
         },
         {
@@ -3389,8 +3378,8 @@ function transferParticipantLines(draft, mode) {
     return [
       "The current owner provides the owner key material and the recorded bond context.",
       String(draft.status) === "immature"
-        ? "You still need a successor bond output in the same transaction because the name is still settling."
-        : "The current CLI still carries bond details forward conservatively, even though active names no longer require continuity.",
+        ? "You still need a replacement bond output in the same transaction because the name is still settling."
+        : "The name is mature, so the transfer can focus on moving owner control.",
       "A fee input and destination addresses still need to be filled in before signing."
     ];
   }
@@ -3398,8 +3387,8 @@ function transferParticipantLines(draft, mode) {
   if (mode.key === "immature-sale") {
     return [
       "The seller provides the owner key material and confirms the exact transfer terms.",
-      "The buyer provides the funding inputs for the successor bond and the seller payout.",
-      "Both sides should review one exact transaction because payment and bond continuity settle together."
+      "The buyer provides the funding inputs for the replacement bond and the seller payout.",
+      "Both sides should review one exact transaction because payment and the required bond settle together."
     ];
   }
 
@@ -3418,13 +3407,13 @@ function getTransferSettlementExpectation(mode) {
 
 function getTransferExecutionModel(mode) {
   return mode.key === "gift"
-    ? "coordinated_cli_handoff"
-    : "coordinated_cli_handoff_pending_two_party_psbt_flow";
+    ? "coordinated_handoff"
+    : "coordinated_handoff_pending_two_party_signing_flow";
 }
 
 function buildTransferSharedReviewChecklist(draft, mode) {
   const checklist = [
-    "Confirm the exact name, current owner pubkey, recipient pubkey, and last state txid."
+    "Confirm the exact name, current owner key, recipient owner key, and last state txid."
   ];
 
   if (mode.key !== "gift") {
@@ -3438,7 +3427,7 @@ function buildTransferSharedReviewChecklist(draft, mode) {
 
   if (String(draft.status) === "immature") {
     checklist.push(
-      "Confirm the successor bond output is present in the same transaction and still meets the required bond."
+      "Confirm the replacement bond output is present in the same transaction and still meets the required bond."
     );
   }
 
@@ -3448,7 +3437,7 @@ function buildTransferSharedReviewChecklist(draft, mode) {
 function buildTransferRoleChecklist(draft, mode, role) {
   if (role === "seller") {
     const checklist = [
-      "Confirm the recipient pubkey is the exact buyer key you intend to authorize."
+      "Confirm the recipient owner key is the exact buyer key you intend to authorize."
     ];
 
     if (mode.key === "gift") {
@@ -3462,18 +3451,18 @@ function buildTransferRoleChecklist(draft, mode, role) {
   }
 
   const checklist = [
-    "Confirm the recipient pubkey matches the key whose private half you actually control."
+    "Confirm the recipient owner key matches the key whose private half you actually control."
   ];
 
   if (mode.key === "gift") {
     checklist.push("Confirm the resulting ownership handoff matches the exact name and state txid in this package.");
   } else {
-    checklist.push("Confirm the transaction you fund is the same transaction that moves the name to your pubkey.");
+    checklist.push("Confirm the transaction you fund is the same transaction that moves the name to your owner key.");
     checklist.push("Do not send payment in a separate step against a promise to transfer later.");
   }
 
   if (String(draft.status) === "immature") {
-    checklist.push("Confirm the successor bond output is created for the buyer side in the same transaction.");
+    checklist.push("Confirm the replacement bond output is created for the buyer side in the same transaction.");
   }
 
   return checklist;
@@ -3482,13 +3471,13 @@ function buildTransferRoleChecklist(draft, mode, role) {
 function transferPrimarySteps(draft, mode) {
   const steps = [
     "Replace the placeholder keys, funding inputs, payout address, and fee amounts in the command block.",
-    "Keep the current owner pubkey and last state txid exactly as shown in this handoff."
+    "Keep the current owner key and last state txid exactly as shown in this handoff."
   ];
 
   if (mode.key === "gift") {
     steps.push("Use the gift transfer command when no buyer payment needs to settle inside the transfer transaction.");
   } else if (mode.key === "immature-sale") {
-    steps.push("Use the buyer-funded settling sale command so the successor bond and seller payout happen atomically.");
+    steps.push("Use the buyer-funded settling sale command so the replacement bond and seller payout happen atomically.");
     steps.push("Both sides should review the same exact transaction details before anyone signs or funds it.");
   } else {
     steps.push("Use the cooperative active sale command so the seller payout and ownership transfer finalize together.");
@@ -3496,11 +3485,11 @@ function transferPrimarySteps(draft, mode) {
   }
 
   if (String(draft.status) === "immature") {
-    steps.push("Because this name is still settling, confirm the successor bond output is present and at least meets the required bond.");
+    steps.push("Because this name is still settling, confirm the replacement bond output is present and at least meets the required bond.");
   }
 
   if (mode.key !== "gift") {
-    steps.push("Current implementation boundary: this page still exports a coordinated CLI handoff rather than a full two-party PSBT wizard.");
+    steps.push("Current website boundary: this page exports a coordinated handoff rather than a full two-party signing wizard.");
   }
 
   steps.push("Run the command locally, then return to the explorer to confirm the new owner and state txid.");
@@ -3541,7 +3530,7 @@ function renderTransferDraft(draft) {
   elements.transferDraftResult.innerHTML = \`
     <div class="search-state-banner \${escapeHtml(draft.status)}">
       <p class="search-state-label">Transfer Status</p>
-      <h4 class="search-state-title">\${escapeHtml(String(draft.status) === "immature" ? "Bond continuity still matters" : "Ownership handoff is simpler now")}</h4>
+	      <h4 class="search-state-title">\${escapeHtml(String(draft.status) === "immature" ? "Replacement bond required" : "Ownership handoff is simpler now")}</h4>
       <p class="search-state-copy">\${escapeHtml(draft.summary)}</p>
     </div>
     <div class="result-title">
@@ -3601,28 +3590,28 @@ function renderTransferDraft(draft) {
             <p class="field-value">Do not treat payment and name transfer as separate promises. Both sides should settle against the same exact Bitcoin transaction.</p>
           </article>
           <article class="guide-card">
-            <h3>Current Implementation Boundary</h3>
-            <p class="field-value">This page still exports a coordinated CLI handoff. It is not yet a full two-party PSBT wizard for buyer and seller, so both parties should review the exact fields before any signatures happen.</p>
+            <h3>Current Website Boundary</h3>
+            <p class="field-value">This page exports a coordinated handoff. It is not yet a full two-party signing wizard for buyer and seller, so both parties should review the exact fields before any signatures happen.</p>
           </article>
         </div>
       \`}
       <div class="copy-block">
         <div class="copy-block-head">
-          <label>Primary CLI command</label>
+          <label>Primary command</label>
           <button type="button" class="copy-button" data-copy="\${escapeHtml(recommendedMode.command)}">Copy command</button>
         </div>
         <pre>\${escapeHtml(recommendedMode.command)}</pre>
       </div>
     </div>
     <div class="guide-grid">
-	      <article class="guide-card">
-	        <h3>Current Owner</h3>
-	        <p class="field-value">Use the seller package and seller notes when the current owner is preparing the handoff or reviewing the exact transaction terms.</p>
-	      </article>
-	      <article class="guide-card">
-	        <h3>Receiver</h3>
-	        <p class="field-value">Use the buyer package and buyer notes when the receiver is confirming the recipient pubkey, funding side, and atomic settlement details.</p>
-	      </article>
+      <article class="guide-card">
+        <h3>Current Owner</h3>
+        <p class="field-value">Use the seller package and seller notes when the current owner is preparing the handoff or reviewing the exact transaction terms.</p>
+      </article>
+      <article class="guide-card">
+        <h3>Receiver</h3>
+        <p class="field-value">Use the buyer package and buyer notes when the receiver is confirming the recipient owner key, funding side, and atomic settlement details.</p>
+      </article>
     </div>
     <div class="step-list">
       <p class="step-list-label">Role Checklists</p>
@@ -3667,7 +3656,7 @@ function renderTransferDraft(draft) {
                     <p class="inline-note">\${escapeHtml(mode.copy)}</p>
                     <div class="copy-block">
                       <div class="copy-block-head">
-                        <label>CLI command</label>
+	                        <label>Command</label>
                         <button type="button" class="copy-button" data-copy="\${escapeHtml(mode.command)}">Copy command</button>
                       </div>
                       <pre>\${escapeHtml(mode.command)}</pre>
@@ -3685,7 +3674,7 @@ function renderTransferDraft(draft) {
       <div class="detail-technical-body">
         <div class="copy-block">
           <div class="copy-block-head">
-            <label>CLI handoff bundle</label>
+	            <label>Handoff bundle</label>
             <button type="button" class="copy-button" data-copy="\${escapeHtml(transferEssentialsText)}">Copy all essentials</button>
           </div>
           <pre>\${escapeHtml(transferEssentialsText)}</pre>
@@ -3818,7 +3807,7 @@ function renderTransferPackageReview(pkg, role) {
         <p class="field-value">\${escapeHtml(pkg.sellerPayoutAddress ?? "(set before signing)")}</p>
       </div>
       <div class="result-item">
-        <label>Successor bond address</label>
+        <label>Replacement bond address</label>
         <p class="field-value">\${escapeHtml(pkg.successorBondAddress ?? "(set before signing)")}</p>
       </div>
     </div>
@@ -3832,7 +3821,7 @@ function renderTransferPackageReview(pkg, role) {
             <p class="inline-note">\${escapeHtml(recommendedMode.summary)}</p>
           </article>
           <article class="guide-card">
-            <h3>CLI command</h3>
+	            <h3>Command</h3>
             <div class="copy-block">
               <div class="copy-block-head">
                 <label>Recommended command</label>
@@ -3856,11 +3845,11 @@ function renderTransferPackageReview(pkg, role) {
 function buildTransferPackageReviewChecklist(pkg, role) {
   const items = [];
   if (role === "buyer") {
-    items.push("Confirm the new owner pubkey is your pubkey before you fund or sign anything.");
+    items.push("Confirm the new owner key is your key before you fund or sign anything.");
     items.push("Confirm the recommended mode matches what you believe you are buying or receiving.");
     if (pkg.recommendedMode !== "gift") {
       items.push("Do not fund a separate payment step against a promise to transfer later.");
-      items.push("The Bitcoin transaction you fund should be the same transaction that moves the name to your pubkey.");
+      items.push("The Bitcoin transaction you fund should be the same transaction that moves the name to your owner key.");
       items.push(
         pkg.sellerPayoutAddress
           ? "Confirm the seller payout address matches the agreed destination."
@@ -3870,15 +3859,15 @@ function buildTransferPackageReviewChecklist(pkg, role) {
     if (pkg.currentStatus === "immature") {
       items.push(
         pkg.successorBondAddress
-          ? "Confirm the successor bond address is present for the live bond path."
-          : "Ask the seller to finalize the successor bond address before signing, because bond continuity still matters."
+          ? "Confirm the replacement bond address is present for the live bond path."
+          : "Ask the seller to finalize the replacement bond address before signing, because the required bond still matters."
       );
     }
     items.push("Only proceed once the package fields match the exact transaction terms you expect.");
     return items;
   }
 
-  items.push("Confirm the new owner pubkey came from the intended buyer.");
+  items.push("Confirm the new owner key came from the intended buyer.");
   items.push("Confirm the recommended mode matches the deal you intend to settle.");
   if (pkg.recommendedMode !== "gift") {
     items.push("Do not authorize the transfer against a separate promise to pay later.");
@@ -3892,8 +3881,8 @@ function buildTransferPackageReviewChecklist(pkg, role) {
   if (pkg.currentStatus === "immature") {
     items.push(
       pkg.successorBondAddress
-        ? "Confirm the successor bond address is correct for the live bond path."
-        : "Set and verify the successor bond address before signing, because bond continuity still matters."
+        ? "Confirm the replacement bond address is correct for the live bond path."
+        : "Set and verify the replacement bond address before signing, because the required bond still matters."
     );
   }
   items.push("Only proceed once the package fields match the exact transaction terms you intend to settle.");
@@ -3989,8 +3978,8 @@ function buildTransferEssentialsText(draft) {
     "",
     "Name: " + String(draft.name),
     "Current status: " + formatStateLabel(draft.status),
-    "Current owner pubkey: " + String(draft.record.currentOwnerPubkey),
-    "New owner pubkey: " + String(draft.newOwnerPubkey),
+    "Current owner key: " + String(draft.record.currentOwnerPubkey),
+    "New owner key: " + String(draft.newOwnerPubkey),
     "Last state txid: " + String(draft.record.lastStateTxid),
     "Current bond outpoint: " + String(draft.record.currentBondTxid) + ":" + String(draft.record.currentBondVout),
     "Current bond amount: " + formatSats(draft.record.currentBondValueSats),
@@ -4017,7 +4006,7 @@ function buildTransferEssentialsText(draft) {
     lines.push(mode.title + ": " + mode.copy);
   }
 
-  lines.push("", "CLI commands", "------------");
+  lines.push("", "Commands", "--------");
   for (const mode of draft.modes) {
     lines.push("", mode.title, mode.command);
   }
@@ -4037,8 +4026,8 @@ function buildSellerTransferNotesText(draft) {
     "",
     "Name: " + String(draft.name),
     "Mode: " + recommendedMode.title,
-    "Current owner pubkey: " + String(draft.record.currentOwnerPubkey),
-    "New owner pubkey: " + String(draft.newOwnerPubkey),
+    "Current owner key: " + String(draft.record.currentOwnerPubkey),
+    "New owner key: " + String(draft.newOwnerPubkey),
     "Last state txid: " + String(draft.record.lastStateTxid),
     ""
   ];
@@ -4060,8 +4049,8 @@ function buildSellerTransferNotesText(draft) {
 
   lines.push(
     "",
-    "Recommended CLI command",
-    "-----------------------",
+    "Recommended command",
+    "-------------------",
     recommendedMode.command
   );
 
@@ -4081,7 +4070,7 @@ function buildBuyerTransferNotesText(draft) {
     "",
     "Name: " + String(draft.name),
     "Mode: " + recommendedMode.title,
-    "New owner pubkey: " + String(draft.newOwnerPubkey),
+    "New owner key: " + String(draft.newOwnerPubkey),
     "Last state txid: " + String(draft.record.lastStateTxid),
     ""
   ];
@@ -4091,7 +4080,7 @@ function buildBuyerTransferNotesText(draft) {
       "Atomic sale reminder",
       "--------------------",
       "Do not fund a separate payment step against a promise to transfer later.",
-      "The transaction you fund should be the same transaction that moves the name to your pubkey.",
+      "The transaction you fund should be the same transaction that moves the name to your owner key.",
       ""
     );
   }
@@ -4107,7 +4096,7 @@ function buildBuyerTransferNotesText(draft) {
       "Generated recipient key",
       "-----------------------",
       "Source: " + String(generatedRecipientKey.sourceLabel ?? "generated helper"),
-      "Owner pubkey: " + String(generatedRecipientKey.ownerPubkey),
+      "Owner key: " + String(generatedRecipientKey.ownerPubkey),
       "Owner private key: " + String(generatedRecipientKey.privateKeyHex),
       "Warning: " + String(generatedRecipientKey.warning)
     );
@@ -4122,14 +4111,14 @@ function transferOutcomeSteps(draft) {
   }
 
   const steps = [
-    "Choose the CLI mode that matches whether this is a gift/pre-arranged transfer or a sale.",
+    "Choose the handoff mode that matches whether this is a gift/pre-arranged transfer or a sale.",
     "Replace the placeholder addresses, inputs, WIFs, and fee amounts in the copied command block.",
-    "Run the command locally so the CLI can build, sign, and broadcast the transfer transaction."
+    "Run the command locally so your tools can build, sign, and broadcast the transfer transaction."
   ];
 
   if (String(draft.status) === "immature") {
     steps.push(
-      "Because this name is still settling, make sure the chosen flow preserves or recreates a valid successor bond in the same transaction."
+      "Because this name is still settling, make sure the chosen flow creates a valid replacement bond in the same transaction."
     );
   } else {
     steps.push(
@@ -4271,7 +4260,7 @@ function renderTxEventPayload(payload) {
   const rows = [];
 
   if (payload.ownerPubkey) {
-    rows.push('<div class="result-item"><label>Owner Pubkey</label>' + renderCopyableCode(payload.ownerPubkey) + "</div>");
+    rows.push('<div class="result-item"><label>Owner Key</label>' + renderCopyableCode(payload.ownerPubkey) + "</div>");
   }
   if (payload.name) {
     rows.push('<div class="result-item"><label>Name</label><p class="field-value">' + escapeHtml(String(payload.name)) + "</p></div>");
@@ -4289,7 +4278,7 @@ function renderTxEventPayload(payload) {
     rows.push('<div class="result-item"><label>Bond Vout</label><p class="field-value">' + escapeHtml(String(payload.bondVout)) + "</p></div>");
   }
   if (payload.successorBondVout !== undefined) {
-    rows.push('<div class="result-item"><label>Successor Bond Vout</label><p class="field-value">' + escapeHtml(String(payload.successorBondVout)) + "</p></div>");
+    rows.push('<div class="result-item"><label>Replacement Bond Vout</label><p class="field-value">' + escapeHtml(String(payload.successorBondVout)) + "</p></div>");
   }
   if (payload.flags !== undefined) {
     rows.push('<div class="result-item"><label>Flags</label><p class="field-value">' + escapeHtml(String(payload.flags)) + "</p></div>");
@@ -4516,7 +4505,7 @@ function renderAuctionLab() {
     elements.auctionLabMeta,
     [
       String(auctionLab.cases.length) + " auction reference case" + (auctionLab.cases.length === 1 ? "" : "s"),
-      "showing current demo rules"
+      "showing current auction rules"
     ].join(" · ")
   );
   if (!elements.auctionLabList) {
@@ -4537,10 +4526,10 @@ function renderExperimentalAuctionFeed() {
   const payload = state.experimentalAuctions;
   if (!payload || !Array.isArray(payload.auctions)) {
     elements.experimentalAuctionList.classList.add("empty");
-    elements.experimentalAuctionList.innerHTML = '<div class="result-card empty">No observed auction state is available yet.</div>';
+    elements.experimentalAuctionList.innerHTML = '<div class="result-card empty">No auction activity is available yet.</div>';
     setText(
       elements.experimentalAuctionMeta,
-      "Waiting for resolver-backed observed auction state."
+      "Waiting for auction activity."
     );
     return;
   }
@@ -4550,9 +4539,9 @@ function renderExperimentalAuctionFeed() {
   setText(
     elements.experimentalAuctionMeta,
     [
-      String(visibleAuctions.length) + " observed auction state" + (visibleAuctions.length === 1 ? "" : "s"),
-      payload.currentBlockHeight == null ? "resolver has not reached a current block yet" : "derived at block " + String(payload.currentBlockHeight),
-      "leaders, stale bid rejection, and settlement summaries come from observed AUCTION_BID transactions"
+      String(visibleAuctions.length) + " auction state" + (visibleAuctions.length === 1 ? "" : "s"),
+      payload.currentBlockHeight == null ? "current block unavailable" : "derived at block " + String(payload.currentBlockHeight),
+      "leaders, stale bid rejection, and settlement summaries come from visible bid transactions"
     ].join(" · ")
   );
   elements.experimentalAuctionList.innerHTML = visibleAuctions
@@ -4864,8 +4853,8 @@ function renderExperimentalAuctionCard(auction) {
           : phase === "pending_unlock"
           ? "This internal timing entry is filtered out of public auction views."
           : phase === "soft_close"
-          ? "Built from current resolver-derived state. A soft-close extension bid must clear the stronger late increment and may go stale if another bid lands first."
-          : "Build a bid package from the current resolver-derived auction state.",
+          ? "Built from current auction state. A soft-close extension bid must clear the stronger late increment and may go stale if another bid lands first."
+          : "Build a bid package from the current auction state.",
       fallbackPath: buildAuctionsPath(auction.normalizedName ?? "")
     }),
     renderExperimentalAuctionBidHistory(auction.visibleBidOutcomes),
@@ -4895,11 +4884,11 @@ function renderSettledAuctionHandoff(auction, configuredBasePath = BASE_PATH) {
     ? "This settled auction is already a live name, but the bond period is still active."
     : "This settled auction is already a live name with a normal owner workflow.";
   const copy = lockIsActive
-    ? "Use the detail page for the current owner-visible state, publish destinations if you want a destination or profile attached, and only transfer with buyer replacement bond continuity until maturity."
+    ? "Use the detail page for the current owner state, publish destinations if you want a destination or profile attached, and only transfer with a buyer replacement bond until maturity."
     : "Use the detail page for the current owner-visible state, update destinations, and treat transfer prep the same way you would for any other mature name.";
   const releaseCopy =
     blocksUntilRelease === null
-      ? "Bond maturity height is not available in this snapshot."
+      ? "Bond maturity block is not available."
       : blocksUntilRelease === 0
         ? "The bond period has matured."
         : String(blocksUntilRelease) + " blocks remain before bond maturity.";
@@ -4949,16 +4938,16 @@ function renderAuctionBidPackageComposer(input) {
     '<details class="detail-technical">',
     "  <summary>Preview or download bid package</summary>",
     '  <div class="detail-technical-body draft-grid">',
-    '    <div class="field"><label class="field-label" for="auction-bidder-' + escapeHtml(domKey) + '">Bidder label</label><input id="auction-bidder-' + escapeHtml(domKey) + '" type="text" data-auction-bidder-id="' + escapeHtml(input.id) + '" data-auction-package-source="' + escapeHtml(input.source) + '" value="' + escapeHtml(input.defaultBidderId) + '" /><p class="field-note">This is a stable identifier for the bidding entity. The website pre-fills a demo label here and the package derives a bidder commitment from it.</p></div>',
-    '    <div class="field"><label class="field-label" for="auction-owner-' + escapeHtml(domKey) + '">Owner pubkey</label><input id="auction-owner-' + escapeHtml(domKey) + '" type="text" data-auction-owner-pubkey="' + escapeHtml(input.id) + '" data-auction-package-source="' + escapeHtml(input.source) + '" value="' + escapeHtml(defaultOwnerPubkey) + '" placeholder="32-byte x-only pubkey" /></div>',
+    '    <div class="field"><label class="field-label" for="auction-bidder-' + escapeHtml(domKey) + '">Bidder label</label><input id="auction-bidder-' + escapeHtml(domKey) + '" type="text" data-auction-bidder-id="' + escapeHtml(input.id) + '" data-auction-package-source="' + escapeHtml(input.source) + '" value="' + escapeHtml(input.defaultBidderId) + '" /><p class="field-note">This is a stable identifier for the bidding entity. The website pre-fills a sample label here and the package derives a bidder commitment from it.</p></div>',
+    '    <div class="field"><label class="field-label" for="auction-owner-' + escapeHtml(domKey) + '">Owner key</label><input id="auction-owner-' + escapeHtml(domKey) + '" type="text" data-auction-owner-pubkey="' + escapeHtml(input.id) + '" data-auction-package-source="' + escapeHtml(input.source) + '" value="' + escapeHtml(defaultOwnerPubkey) + '" placeholder="32-byte x-only public key" /></div>',
     '    <div class="field"><label class="field-label" for="auction-amount-' + escapeHtml(domKey) + '">Bid amount</label><input id="auction-amount-' + escapeHtml(domKey) + '" type="text" inputmode="numeric" data-auction-bid-amount="' + escapeHtml(input.id) + '" data-auction-package-source="' + escapeHtml(input.source) + '" value="' + escapeHtml(input.defaultBidAmount) + '" /></div>',
     '    <div class="draft-field-full">',
-    '      <p class="tx-panel-note">Set the x-only owner pubkey that should control the name if this bid wins. Create it in this browser for the normal self-custody path, or use a demo key from the server only for demo testing.</p>',
+    '      <p class="tx-panel-note">Set the x-only public owner key that should control the name if this bid wins. Create it in this browser for the normal self-custody path, or use a server-generated test key only for test bids.</p>',
     '      <div class="field-actions">',
     '        <button type="button" data-auction-owner-key-action="generate-local" data-auction-package-source="' + escapeHtml(input.source) + '" data-auction-package-id="' + escapeHtml(input.id) + '" data-auction-name="' + escapeHtml(input.normalizedName ?? "") + '">Create In This Browser</button>',
-    '        <button type="button" class="secondary-button" data-auction-owner-key-action="generate-hosted" data-auction-package-source="' + escapeHtml(input.source) + '" data-auction-package-id="' + escapeHtml(input.id) + '" data-auction-name="' + escapeHtml(input.normalizedName ?? "") + '">Use Demo Key From Server</button>',
+    '        <button type="button" class="secondary-button" data-auction-owner-key-action="generate-hosted" data-auction-package-source="' + escapeHtml(input.source) + '" data-auction-package-id="' + escapeHtml(input.id) + '" data-auction-name="' + escapeHtml(input.normalizedName ?? "") + '">Use Server Test Key</button>',
     "      </div>",
-    '      <div class="result-card empty" data-auction-owner-key-result="' + escapeHtml(domKey) + '">No generated owner key yet for this bid. Create one in this browser for the normal self-custody path, or use a demo key from the server only for demo testing.</div>',
+    '      <div class="result-card empty" data-auction-owner-key-result="' + escapeHtml(domKey) + '">No generated owner key yet for this bid. Create one in this browser for the normal self-custody path, or use a server-generated test key only for test bids.</div>',
     '      <div class="field-actions">',
     '        <button type="button" data-auction-package-action="preview" data-auction-package-source="' + escapeHtml(input.source) + '" data-auction-package-id="' + escapeHtml(input.id) + '">Preview bid package</button>',
     '        <button type="button" class="secondary-button" data-auction-package-action="download" data-auction-package-source="' + escapeHtml(input.source) + '" data-auction-package-id="' + escapeHtml(input.id) + '">Download bid package</button>',
@@ -5014,7 +5003,7 @@ function renderAuctionOwnerKeyHelper(domKey, source, id, name, generated) {
     '    <p class="step-list-label">Do This Now</p>',
     "    <ol>",
     "      <li>Save the private key before you leave this page.</li>",
-    "      <li>Use only the x-only pubkey in the owner pubkey field above.</li>",
+    "      <li>Use only the x-only public key in the owner key field above.</li>",
     "      <li>If this bid wins, keep this private key for later destination updates or owner-authorized transfers.</li>",
     "    </ol>",
     '    <div class="hero-cta-row">',
@@ -5022,7 +5011,7 @@ function renderAuctionOwnerKeyHelper(domKey, source, id, name, generated) {
     "    </div>",
     "  </div>",
     '  <div class="result-grid">',
-    '    <div class="result-item"><label>Owner Pubkey</label>' + renderCopyableCode(String(generated.ownerPubkey)) + "</div>",
+    '    <div class="result-item"><label>Owner Key</label>' + renderCopyableCode(String(generated.ownerPubkey)) + "</div>",
     '    <div class="result-item"><label>Private Key</label>' + renderCopyableCode(String(generated.privateKeyHex)) + "</div>",
     "  </div>"
   ].join("");
@@ -5056,7 +5045,7 @@ function renderAuctionBidPackagePreview(pkg, sourceLabel) {
     '  <div class="result-grid">',
     '    <div class="result-item"><label>Observed source</label><p class="field-value">' + escapeHtml(sourceLabel) + "</p></div>",
     '    <div class="result-item"><label>Preview status</label><p class="field-value">' + escapeHtml(formatAuctionPreviewStatus(pkg.previewStatus)) + "</p></div>",
-    '    <div class="result-item"><label>Owner pubkey</label>' + renderCopyableCode(String(pkg.ownerPubkey ?? "")) + "</div>",
+    '    <div class="result-item"><label>Owner key</label>' + renderCopyableCode(String(pkg.ownerPubkey ?? "")) + "</div>",
     '    <div class="result-item"><label>Bid amount</label><p class="field-value">' + escapeHtml(formatSats(pkg.bidAmountSats ?? "0")) + "</p></div>",
     '    <div class="result-item"><label>Required minimum</label><p class="field-value">' + escapeHtml(pkg.previewRequiredMinimumBidSats ? formatSats(pkg.previewRequiredMinimumBidSats) : "Not applicable") + "</p></div>",
     '    <div class="result-item"><label>Would become leader</label><p class="field-value">' + escapeHtml(pkg.wouldBecomeLeader ? "Yes" : "No") + "</p></div>",
@@ -5068,7 +5057,7 @@ function renderAuctionBidPackagePreview(pkg, sourceLabel) {
     "  </div>",
     '  <ul class="guide-list">',
     '    <li>Save the package if you want a durable handoff from this observed auction state.</li>',
-    '    <li>Next CLI step: build the unsigned bid artifacts from this package, then sign and broadcast them with the funding wallet.</li>',
+    '    <li>Next step: build the unsigned bid artifacts from this package, then sign and broadcast them with the funding wallet.</li>',
     '    <li>If another bid lands first, rebuild the package from the latest state before signing.</li>',
     "  </ul>",
     "</article>"

@@ -44,13 +44,13 @@ export function renderPageHtml(options: PageShellOptions): string {
       : pageKind === "transfer"
         ? `${PRODUCT_NAME} Transfer Prep`
         : pageKind === "setup"
-          ? `${PRODUCT_NAME} Demo Setup`
+          ? `${PRODUCT_NAME} Setup`
         : pageKind === "explainer"
           ? `${PRODUCT_NAME} Overview`
           : `${PRODUCT_NAME} Explorer`;
   const description =
     pageKind === "home"
-      ? "Search a name, inspect ownership, and choose whether to bid, explore, or review the current Open Name Tags demo."
+      ? "Search a name, inspect ownership, and open the public auction path for Open Name Tags."
       : pageKind === "advanced"
       ? "Open Name Tags reference material for CLI-heavy workflows and protocol review."
     : pageKind === "auctions"
@@ -58,12 +58,12 @@ export function renderPageHtml(options: PageShellOptions): string {
       : pageKind === "values"
         ? "Update the destinations for an owned Open Name Tags name by signing locally and publishing the signed update."
       : pageKind === "transfer"
-        ? "Prepare an Open Name Tags transfer handoff, then finish the gift or sale flow in the CLI and your signer."
+        ? "Prepare an Open Name Tags transfer handoff, then finish the gift or sale flow with your signer."
       : pageKind === "setup"
-          ? "Set up Sparrow, connect to the hosted demo wallet endpoint, request demo coins, and complete the private signet walkthrough."
+          ? "Set up Sparrow, connect to the hosted private signet endpoint, request private signet coins, and prepare auction transactions."
         : pageKind === "explainer"
           ? "Quick orientation for using the hosted Open Name Tags tools."
-        : "Explorer for browsing owned names and resolver status in Open Name Tags.";
+        : "Explorer for browsing owned names, recent activity, and current Open Name Tags state.";
 
   const pageScripts = [
     `<script type="module" src="${withBasePath("/app.js", basePath)}"></script>`,
@@ -128,7 +128,7 @@ function renderHeroSection(
       <div class="hero-copy">
         <h1>Transfer A Name</h1>
         <p class="lede">
-          Send or receive a name by moving control to a new owner key. The website prepares the handoff; the CLI and signer finish the transaction.
+          Send or receive a name by moving control to a new owner key. The website prepares the handoff; your signer finishes the transaction.
         </p>
         <p id="chainSummary" class="hero-status">
           ${escapeHtml(configuredNetworkLabel)} · Height - · 0 names · 0 pending
@@ -156,7 +156,7 @@ function renderHeroSection(
       <div class="hero-copy">
         <h1>How ONTs Work</h1>
         <p class="lede">
-          Ownership, destinations, and public bonded auctions in the current demo.
+          Ownership, destinations, and public bonded auctions.
         </p>
       </div>
     </header>`;
@@ -167,7 +167,7 @@ function renderHeroSection(
       <div class="hero-copy">
         <h1>Set Up Your Wallet</h1>
         <p class="lede">
-          Common Sparrow setup for the hosted private demo: connect once, fund the same wallet, then use that wallet for auction signing.
+          Common Sparrow setup for the hosted private signet environment: connect once, fund the same wallet, then use that wallet for auction signing.
         </p>
       </div>
     </header>`;
@@ -178,7 +178,7 @@ function renderHeroSection(
       <div class="hero-copy">
         <h1>Explore The Live Registry</h1>
         <p class="lede">
-          Recent names, current activity, and live registry state.
+          Recent names, current activity, and visible ownership state.
         </p>
         <p id="chainSummary" class="hero-status">
           ${escapeHtml(configuredNetworkLabel)} · Height - · 0 names
@@ -192,7 +192,7 @@ function renderHeroSection(
       <div class="hero-copy">
         <h1>Advanced Tools</h1>
         <p class="lede">
-          CLI-heavy workflows, implementation notes, and protocol review. Most first-time users can stay on Demo Setup, Auctions, Destinations, Transfer, and Explore.
+          CLI-heavy workflows, implementation notes, and protocol review. Most first-time users can stay on Setup, Auctions, Destinations, Transfer, and Explore.
         </p>
         <p class="hero-status">
           Advanced / optional surface · use when you need deeper protocol context or expert tooling.
@@ -280,7 +280,7 @@ function renderPrimaryNav(configuredBasePath: string, pageKind: PageKind, favico
     { href: withBasePath("/explainer", configuredBasePath), label: "Overview", active: pageKind === "explainer" },
     { href: withBasePath("/auctions", configuredBasePath), label: "Auctions", active: pageKind === "auctions" },
     { href: withBasePath("/explore", configuredBasePath), label: "Explore", active: pageKind === "explore" },
-    { href: withBasePath("/setup", configuredBasePath), label: "Demo Setup", active: pageKind === "setup" },
+    { href: withBasePath("/setup", configuredBasePath), label: "Setup", active: pageKind === "setup" },
     { href: withBasePath("/values", configuredBasePath), label: "Destinations", active: pageKind === "values" },
     { href: withBasePath("/transfer", configuredBasePath), label: "Transfer", active: pageKind === "transfer" },
     { href: withBasePath("/advanced", configuredBasePath), label: "Advanced", active: pageKind === "advanced" }
@@ -345,23 +345,23 @@ function renderExploreEmptyStateSection(configuredBasePath: string): string {
   return `<section id="explore-empty-state" class="panel panel-guide panel-empty-state" hidden>
     ${renderPanelHead(
       "No Visible Names Yet",
-      "The resolver is reachable, but it is not showing owned names or activity yet."
+      "No owned names or auction activity are visible yet."
     )}
     <div class="guide-grid guide-grid-balanced">
       <article class="guide-card">
         <h3>What This Usually Means</h3>
-        <p id="exploreEmptyStateMessage">This resolver is not showing any names or activity yet.</p>
-        <p id="exploreEmptyStateDetail" class="field-note">Open an auction or check the auction rules while the resolver waits for owned names.</p>
+        <p id="exploreEmptyStateMessage">No owned names or auction activity are visible yet.</p>
+        <p id="exploreEmptyStateDetail" class="field-note">Open an auction, or check the auction rules while the namespace is still empty.</p>
       </article>
       <article class="guide-card">
         <h3>What You Can Do Next</h3>
         <ul class="guide-list">
           <li>Use Auctions to check a name and review the current opening floors.</li>
-          <li>Use Overview to understand the model and current demo boundaries.</li>
+          <li>Use Overview to understand ownership, destination records, and bonded auctions.</li>
           <li>Use Destinations after a name exists and the owner is ready to publish records.</li>
         </ul>
         <div class="guide-card-actions">
-          <a class="action-link secondary" href="${withBasePath("/setup", configuredBasePath)}">Open demo setup</a>
+          <a class="action-link secondary" href="${withBasePath("/setup", configuredBasePath)}">Open setup</a>
           <a class="action-link secondary" href="${withBasePath("/auctions", configuredBasePath)}">Open auctions</a>
           <a class="action-link secondary" href="${withBasePath("/explainer", configuredBasePath)}">Open overview</a>
         </div>
@@ -396,7 +396,7 @@ function renderAdvancedGuideSection(configuredBasePath: string): string {
       <article class="guide-card">
         <h3>Most People Can Ignore This</h3>
         <ul class="guide-list">
-          <li>Use Auctions, Demo Setup, Destinations, Transfer, and Explore for the normal website walkthrough.</li>
+          <li>Use Auctions, Setup, Destinations, Transfer, and Explore for the normal website walkthrough.</li>
           <li>The website already hides most expert knobs from those pages on purpose.</li>
           <li>If you are learning the system for the first time, start there instead.</li>
         </ul>
@@ -422,7 +422,7 @@ function renderAdvancedGuideSection(configuredBasePath: string): string {
     <div class="hero-cta-row section-cta-row">
       <a class="action-link secondary" href="${DOC_URLS.implementation}" target="_blank" rel="noreferrer noopener">Implementation notes</a>
       <a class="action-link secondary" href="${withBasePath("/explainer", configuredBasePath)}">Open overview</a>
-      <a class="action-link secondary" href="${withBasePath("/setup", configuredBasePath)}">Back to demo setup</a>
+      <a class="action-link secondary" href="${withBasePath("/setup", configuredBasePath)}">Back to setup</a>
     </div>
   </section>`;
 }
@@ -436,7 +436,7 @@ function renderAdvancedReferencesSection(_configuredBasePath: string): string {
     <div class="guide-grid guide-grid-balanced">
       <article class="guide-card">
         <h3>Implementation Notes</h3>
-        <p>Review how the demo pieces fit together: resolver state, bid-package handoffs, destination records, transfers, and the remaining validation work.</p>
+        <p>Review how the current pieces fit together: resolver state, bid-package handoffs, destination records, transfers, and the remaining validation work.</p>
         <div class="guide-card-actions">
           <a class="action-link secondary" href="${DOC_URLS.implementation}" target="_blank" rel="noreferrer noopener">Implementation</a>
         </div>
@@ -497,7 +497,7 @@ function renderAuctionOpenSection(configuredBasePath: string): string {
     ${renderPanelHead(
       "Open An Auction",
       "A bonded opening bid starts the auction clock. Before that, an unowned name is unopened.",
-      `<p>Use this as the common acquisition path. The website checks resolver ownership and shows the current auction rules; signing and broadcast still happen with your wallet and CLI handoff.</p>`
+      `<p>Use this as the common acquisition path. The website checks current ownership and shows the auction rules; signing and broadcast still happen with your wallet.</p>`
     )}
     <div class="value-intake-grid">
       <form id="searchForm" class="tool-draft-form">
@@ -523,7 +523,7 @@ function renderAuctionOpenSection(configuredBasePath: string): string {
     </div>
     <div id="searchResult" class="result-card empty" hidden></div>
     <div class="hero-cta-row section-cta-row">
-      <a class="action-link secondary" href="${withBasePath("/setup", configuredBasePath)}">Open demo setup</a>
+      <a class="action-link secondary" href="${withBasePath("/setup", configuredBasePath)}">Open setup</a>
       <a class="action-link secondary" href="${withBasePath("/advanced", configuredBasePath)}">Advanced auction reference</a>
     </div>
   </section>`;
@@ -534,7 +534,7 @@ function renderAuctionRulesSection(): string {
     ${renderPanelHead(
       "Auction Rules",
       "Length-based opening floors and stronger late-bid increments keep public auctions orderly.",
-      `<p>These are current demo rules surfaced read-only. Use the CLI and docs for deeper policy modeling.</p>`
+      `<p>These current rules are surfaced read-only. Use the advanced docs for deeper policy modeling.</p>`
     )}
     <p id="auctionLabMeta" class="helper-text">Loading current auction rules.</p>
     <div id="auctionPolicySummary" class="guide-grid"></div>
@@ -551,7 +551,7 @@ function renderAuctionWorkflowSection(configuredBasePath: string): string {
     <div class="guide-grid guide-grid-balanced">
       <article class="guide-card">
         <h3>1. Fund The Bid</h3>
-        <p>Use the demo setup path to connect Sparrow and fund the wallet that will lock the opening bid bond.</p>
+        <p>Use the setup path to connect Sparrow and fund the wallet that will lock the opening bid bond.</p>
       </article>
       <article class="guide-card">
         <h3>2. Save The Owner Key</h3>
@@ -567,7 +567,7 @@ function renderAuctionWorkflowSection(configuredBasePath: string): string {
       </article>
     </div>
     <div class="hero-cta-row section-cta-row">
-      <a class="action-link" href="${withBasePath("/setup", configuredBasePath)}">Open demo setup</a>
+      <a class="action-link" href="${withBasePath("/setup", configuredBasePath)}">Open setup</a>
       <a class="action-link secondary" href="${withBasePath("/values", configuredBasePath)}">Open destinations</a>
       <a class="action-link secondary" href="${withBasePath("/transfer", configuredBasePath)}">Open transfer</a>
     </div>
@@ -605,7 +605,7 @@ function renderExperimentalAuctionFeedSection(): string {
       "Resolver-backed view derived from observed AUCTION_BID transactions.",
       `<p>This sits closer to observed chain behavior than the reference states above.</p>
       <ul>
-        <li>The feed still uses demo entries while fully on-demand auction-opening tooling is being built.</li>
+        <li>The feed still uses reference entries while fully on-demand auction-opening tooling is being built.</li>
         <li>Leaders, minimum next bids, stale-state rejection, and bond spend/release summaries are derived from observed AUCTION_BID transactions.</li>
         <li>A real auction begins when a valid bonded opening bid confirms; names with no opening bid should not be described as failed auctions.</li>
         <li>Bids that merely clear the normal increment are not enough during soft close if they would extend the auction. Late extension bids use the stronger soft-close increment rule.</li>
@@ -670,30 +670,30 @@ function renderHomeActionsSection(configuredBasePath: string): string {
   return `<section id="start-here" class="panel panel-guide panel-home">
     ${renderPanelHead(
       "Choose A Path",
-      "Use the home page to do one thing quickly: understand the model, try the demo, or inspect the live registry."
+      "Use the home page to do one thing quickly: understand the model, open an auction, or inspect visible ownership."
     )}
     <div class="path-grid">
       <article class="path-card">
         <p class="path-card-kicker">Read</p>
         <h3>Understand ONT</h3>
-        <p>Read the overview when you want how the current demo works, what is live today, and where to go next.</p>
+        <p>Read the overview when you want the clean model: Bitcoin ownership, owner-signed destinations, and public auctions.</p>
         <div class="path-card-actions">
           <a class="action-link secondary" href="${withBasePath("/explainer", configuredBasePath)}">Open overview</a>
         </div>
       </article>
       <article class="path-card">
         <p class="path-card-kicker">Walk Through</p>
-        <h3>Try The Demo</h3>
+        <h3>Try It On Signet</h3>
         <p>Set up Sparrow, then open Auctions to prepare a bid package with the same wallet you will use to sign.</p>
         <div class="path-card-actions">
-          <a class="action-link secondary" href="${withBasePath("/setup", configuredBasePath)}">Open demo setup</a>
+          <a class="action-link secondary" href="${withBasePath("/setup", configuredBasePath)}">Open setup</a>
           <a class="action-link secondary" href="${withBasePath("/auctions", configuredBasePath)}">Open auctions</a>
         </div>
       </article>
       <article class="path-card">
         <p class="path-card-kicker">Inspect</p>
-        <h3>Explore The Registry</h3>
-        <p>Resolve a name, browse recent activity, and inspect the current visible registry without working through the full auction flow.</p>
+        <h3>Explore Current State</h3>
+        <p>Resolve a name, browse recent activity, and inspect currently visible ownership without working through the full auction flow.</p>
         <div class="path-card-actions">
           <a class="action-link secondary" href="${withBasePath("/explore", configuredBasePath)}">Open explorer</a>
         </div>
@@ -721,7 +721,7 @@ function renderHomeModelSection(): string {
           <p><span>name</span><strong class="mono">alice</strong></p>
           <p><span>auction</span><strong>won</strong></p>
           <p><span>owner</span><strong class="mono">8f3c...12ab</strong></p>
-          <p><span>bond</span><strong>₿6,250,000 (0.0625 BTC)</strong></p>
+          <p><span>bond</span><strong>₿0.0625</strong></p>
         </div>
       </article>
       <div class="protocol-flow-arrow" aria-hidden="true"></div>
@@ -762,7 +762,7 @@ function renderExplainerJumpBar(_configuredBasePath: string): string {
     <span class="jump-bar-label">Overview sections</span>
     <a href="#how-ont-works">How it works</a>
     <a href="#one-name-many-destinations">One name, many destinations</a>
-    <a href="#using-ont">Use the demo</a>
+    <a href="#using-ont">Use the website</a>
     <a href="#current-docs">Current status</a>
   </nav>`;
 }
@@ -823,7 +823,7 @@ function renderHomeDocsSection(): string {
   return `<section id="current-docs" class="panel panel-guide">
     ${renderPanelHead(
       "Current Status",
-      "The hosted demo is real, but it is not mainnet-ready. Use this page to separate what works now from what is still under active design."
+      "The hosted private signet environment is live, but it is not mainnet-ready. Use this page to separate what works now from what is still under active design."
     )}
     <div class="guide-grid guide-grid-balanced">
       <article class="guide-card">
@@ -838,9 +838,9 @@ function renderHomeDocsSection(): string {
       <article class="guide-card">
         <h3>Not Mainnet-Ready Yet</h3>
         <ul class="guide-list">
-          <li>Transfers still rely on external signer and CLI steps.</li>
+          <li>Transfers still rely on external signing tools.</li>
           <li>Resolver availability is only partly decentralized in v1.</li>
-          <li>The public-auction flow is implemented in the demo and still not mainnet-ready.</li>
+          <li>The public-auction flow is implemented in the private signet environment and still not mainnet-ready.</li>
           <li>Mainnet-ready usage is not ready yet.</li>
         </ul>
       </article>
@@ -865,16 +865,16 @@ function renderUsingOntSection(configuredBasePath: string): string {
   return `<section id="using-ont" class="panel panel-guide">
     ${renderPanelHead(
       "Use The Website",
-      "The website is meant for the common path. Use the CLI when you want custom artifacts, advanced overrides, or deeper protocol experiments."
+      "The website is meant for the common path: open auctions, update destinations, transfer names, and inspect current state."
     )}
     <div class="guide-grid">
       <article class="guide-card">
-        <h3>Demo Setup And Auctions</h3>
-        <p>Use Demo Setup to connect Sparrow to the hosted demo wallet server, then use Auctions to check names and prepare bid handoffs.</p>
+        <h3>Setup And Auctions</h3>
+        <p>Use Setup to connect Sparrow to the hosted private signet endpoint, then use Auctions to check names and prepare bids.</p>
       </article>
       <article class="guide-card">
         <h3>Explore</h3>
-        <p>Use Explore when you want live registry data: name lookups, recent activity, and the tracked namespace.</p>
+        <p>Use Explore when you want name lookups, recent activity, and currently visible ownership.</p>
       </article>
       <article class="guide-card">
         <h3>Destinations And Transfer</h3>
@@ -882,11 +882,11 @@ function renderUsingOntSection(configuredBasePath: string): string {
       </article>
       <article class="guide-card">
         <h3>Advanced Tools</h3>
-        <p>If you want custom outputs, custom value formats, deeper transfer flows, or protocol experiments, use the Advanced area, CLI, and docs. Most new users can ignore those paths at first.</p>
+        <p>If you want custom outputs, raw destination formats, deeper transfer flows, or protocol experiments, use the Advanced area and docs. Most new users can ignore those paths at first.</p>
       </article>
     </div>
     <div class="hero-cta-row section-cta-row">
-      <a class="action-link" href="${withBasePath("/setup", configuredBasePath)}">Open demo setup</a>
+      <a class="action-link" href="${withBasePath("/setup", configuredBasePath)}">Open setup</a>
       <a class="action-link" href="${withBasePath("/auctions", configuredBasePath)}">Open auctions</a>
       <a class="action-link secondary" href="${withBasePath("/explore", configuredBasePath)}">Open explorer</a>
       <a class="action-link secondary" href="${withBasePath("/values", configuredBasePath)}">Open destinations</a>
@@ -924,10 +924,10 @@ function renderOverviewSection(collapsible = false): string {
     return `<section id="overview" class="panel panel-overview">
     ${renderPanelHead(
       "Live Snapshot",
-      "Quick snapshot of the currently visible namespace.",
-      `<p>Current tracked names and chain height.</p>
+      "Quick snapshot of currently visible ownership.",
+      `<p>Current owned names and chain height.</p>
       <ul>
-        <li><strong>Tracked Names</strong> are names the resolver currently recognizes.</li>
+        <li><strong>Tracked Names</strong> are names currently visible to this website.</li>
         <li><strong>Current Height</strong> tells you which block the snapshot is based on.</li>
       </ul>`
     )}
@@ -939,7 +939,7 @@ function renderOverviewSection(collapsible = false): string {
     <summary class="panel-summary">
       <div class="panel-summary-copy">
         <h2>Live Snapshot</h2>
-        <p>Quick snapshot of the currently visible namespace.</p>
+        <p>Quick snapshot of currently visible ownership.</p>
       </div>
       <span class="summary-chip">Open stats</span>
     </summary>
@@ -963,7 +963,7 @@ function renderActivitySection(collapsible = false): string {
         <li>Auction bids and settlements</li>
         <li>Transfers between owners</li>
         <li>Destination publications</li>
-        <li>Invalidations when bond continuity fails</li>
+        <li>Releases when the required bond is broken before maturity</li>
       </ul>`
     )}
     ${body}
@@ -1006,11 +1006,11 @@ function renderPrivateAuctionSmokeSection(collapsible = false): string {
   if (!collapsible) {
     return `<section class="panel panel-live-smoke">
     ${renderPanelHead(
-      "Auction Demo Check",
+      "Auction Smoke Check",
       "Latest status from the hosted private-signet auction walkthrough.",
       `<p>This is the current live-chain proof for the auction slice.</p>
       <ul>
-        <li>It starts from a dedicated demo entry, then opens the auction with a real bonded bid.</li>
+        <li>It starts from a dedicated reference entry, then opens the auction with a real bonded bid.</li>
         <li>It submits an opening bid, then a higher bid, settles the auction into a live owned name, publishes winner destinations, and later transfers that name after the winner bond matures.</li>
         <li>It still spends the losing bond early to prove the chain-derived feed flags that violation.</li>
         <li>The resulting website feed shows accepted bid history, settlement state, post-settlement handoff, and bond spend / release consequences.</li>
@@ -1023,10 +1023,10 @@ function renderPrivateAuctionSmokeSection(collapsible = false): string {
   return `<details class="panel panel-live-smoke panel-collapsible">
     <summary class="panel-summary">
       <div class="panel-summary-copy">
-        <h2>Auction Demo Check</h2>
+        <h2>Auction Smoke Check</h2>
         <p>Latest status from the hosted private-signet auction walkthrough: bidding, settlement, winner handoff, and release-valve checks.</p>
       </div>
-      <span class="summary-chip">Open demo check</span>
+      <span class="summary-chip">Open setup check</span>
     </summary>
     <div class="collapsible-panel-body">${body}</div>
   </details>`;
@@ -1037,10 +1037,10 @@ function renderSetupQuickstartSection(configuredBasePath: string, privateSignetE
   const transportNote = endpoint.transport === "s" ? "SSL on" : "SSL off";
   return `<section id="setup-start" class="panel panel-guide">
     ${renderPanelHead(
-      "Private Demo Setup",
-      "Open Sparrow in signet mode, point it at the hosted demo wallet endpoint, then return to auctions."
+      "Private Signet Setup",
+      "Open Sparrow in signet mode, point it at the hosted private signet endpoint, then return to auctions."
     )}
-    <p class="tool-handoff-note">No SSH access is required for this hosted path. Sparrow talks to the demo chain through a public wallet endpoint while the underlying Bitcoin Core RPC stays private on the server.</p>
+    <p class="tool-handoff-note">No SSH access is required for this hosted path. Sparrow talks to the private signet chain through a public wallet endpoint while the underlying Bitcoin Core RPC stays private on the server.</p>
     <div class="guide-grid">
       <article class="guide-card">
         <h3>1. Open Sparrow In Signet Mode</h3>
@@ -1052,7 +1052,7 @@ function renderSetupQuickstartSection(configuredBasePath: string, privateSignetE
         </ul>
       </article>
       <article class="guide-card">
-        <h3>2. Point Sparrow At The Demo Wallet Server</h3>
+        <h3>2. Point Sparrow At The Private Signet Endpoint</h3>
         <ul class="guide-list">
           <li>Open <code>Settings</code> then <code>Server</code>.</li>
           <li>Turn <code>Public Server</code> off.</li>
@@ -1065,7 +1065,7 @@ function renderSetupQuickstartSection(configuredBasePath: string, privateSignetE
       <article class="guide-card">
         <h3>3. Confirm Balance, Then Open Auctions</h3>
         <ul class="guide-list">
-          <li>Use the funding form below to request demo coins.</li>
+          <li>Use the funding form below to request private signet coins.</li>
           <li>Refresh Sparrow and confirm the balance appears in the same wallet.</li>
           <li>Then return to Auctions and inspect the bid handoff.</li>
         </ul>
@@ -1081,7 +1081,7 @@ function renderSetupQuickstartSection(configuredBasePath: string, privateSignetE
 function renderSetupFundingSection(privateSignetFundingAmountSats: bigint): string {
   return `<section id="setup-funding" class="panel panel-guide">
     ${renderPanelHead(
-      "Get Demo Coins",
+      "Get Private Signet Coins",
       "Paste a signet receive address from the same Sparrow wallet you plan to spend from."
     )}
     <p class="tool-handoff-note">${formatBitcoinDisplay(privateSignetFundingAmountSats)} per request, with one block mined immediately so Sparrow sees a confirmed balance.</p>
@@ -1096,7 +1096,7 @@ function renderSetupFundingSection(privateSignetFundingAmountSats: bigint): stri
             placeholder="Paste a signet receive address from Sparrow"
             autocomplete="off"
           />
-          <span class="field-hint">Use the same wallet you plan to spend from for demo auction transactions. If Sparrow cannot see the funds afterward, the hosted demo server settings are usually the missing step.</span>
+          <span class="field-hint">Use the same wallet you plan to spend from for private signet auction transactions. If Sparrow cannot see the funds afterward, the server settings are usually the missing step.</span>
         </label>
       </div>
       <div class="draft-actions">
@@ -1104,14 +1104,14 @@ function renderSetupFundingSection(privateSignetFundingAmountSats: bigint): stri
       </div>
     </form>
     <div id="privateFundingResult" class="result-card empty">
-      Paste a Sparrow receive address above to get demo coins on this private signet network.
+      Paste a Sparrow receive address above to get private signet coins.
     </div>
   </section>`;
 }
 
 function formatBitcoinDisplay(value: bigint | string | number): string {
   const amount = BigInt(value);
-  return `₿${amount.toLocaleString("en-US")} (${formatBtcDecimal(amount)} BTC)`;
+  return `₿${formatBtcDecimal(amount)}`;
 }
 
 function formatBtcDecimal(amount: bigint): string {
@@ -1163,7 +1163,7 @@ function renderValuesToolSection(): string {
               <ul class="guide-list">
                 <li>The owner private key saved for this name.</li>
                 <li>The destinations you want apps to use now.</li>
-                <li>The resolver receives the signed update, not your private key.</li>
+                <li>Only the signed update is published; your private key never leaves the browser.</li>
               </ul>
             </article>
           </div>
@@ -1212,7 +1212,7 @@ function renderValuesToolSection(): string {
                   placeholder="https://example.com"
                   spellcheck="false"
                 ></textarea>
-                <span id="valuePayloadHint" class="field-hint">Website and payment targets are encoded as normal text. For raw or app-defined binary data, use the CLI.</span>
+                <span id="valuePayloadHint" class="field-hint">Website and payment targets are encoded as normal text. Advanced tools cover raw or app-defined binary data.</span>
               </label>
               <div id="valueBundleEditor" class="value-bundle-editor draft-field-full">
                 <div class="value-bundle-editor-head">
@@ -1242,7 +1242,7 @@ function renderValuesToolSection(): string {
                 <span class="claim-step-badge">Step 3</span>
                 <div class="wizard-step-copy">
                   <h3>Publish The Update</h3>
-                  <p>Send the signed update to the resolver. Ownership stays on-chain; the resolver stores the latest owner-authorized destinations.</p>
+                  <p>Publish the signed update. Ownership stays on Bitcoin; clients can use the latest owner-authorized destinations.</p>
                 </div>
               </div>
               <span id="valueStepPublishState" class="summary-chip wizard-step-state">After step 2</span>
@@ -1253,7 +1253,7 @@ function renderValuesToolSection(): string {
             <button id="publishValueButton" type="button" disabled>Publish Destinations</button>
           </div>
           <div id="valuePublishResult" class="result-card empty">
-            Sign the update first. Then this step will publish it to the resolver and reload the current destinations.
+            Sign the update first. Then this step will publish it and reload the current destinations.
           </div>
         </div>
       </details>
@@ -1266,7 +1266,7 @@ function renderValuesGuideSection(configuredBasePath: string): string {
     ${renderPanelHead(
       "How Destination Updates Work",
       "The name owner signs a small off-chain record. Resolvers store that record, while Bitcoin remains the source of ownership.",
-      `<p>The website focuses on normal destination bundles. Use the CLI for raw payloads, custom formats, or multi-resolver fanout.</p>`
+      `<p>The website focuses on normal destination bundles. Advanced tools and docs cover raw payloads, custom formats, and multi-resolver fanout.</p>`
     )}
     <div class="guide-grid guide-grid-balanced">
       <article class="guide-card">
@@ -1298,7 +1298,7 @@ function renderValuesGuideSection(configuredBasePath: string): string {
       </article>
       <article class="guide-card guide-card-wide">
         <h3>Find A Live Name First</h3>
-        <p>Destinations are signed by the current owner key. Start in Explore if you need a live name from the resolver, or Auctions if you want to inspect how names become owned.</p>
+        <p>Destinations are signed by the current owner key. Start in Explore if you need an already-owned name, or Auctions if you want to inspect how names become owned.</p>
         <div class="guide-card-actions">
           <a class="action-link secondary" href="${withBasePath("/explore", configuredBasePath)}">Open explorer</a>
           <a class="action-link secondary" href="${withBasePath("/auctions", configuredBasePath)}">Open auctions</a>
@@ -1323,15 +1323,15 @@ function renderWalletCompatibilityFaqSection(configuredBasePath: string, collaps
   const body = `<div class="guide-grid">
       <article class="guide-card">
         <h3>Do I have to use Sparrow?</h3>
-        <p>No, but the hosted private demo is only fully supported and tested end to end with Sparrow right now.</p>
+        <p>No, but the hosted private signet environment is only fully supported and tested end to end with Sparrow right now.</p>
       </article>
       <article class="guide-card">
         <h3>Does Electrum work?</h3>
-        <p>Not for this hosted private demo. The official Electrum app reaches the endpoint, but then rejects the chain because this small private signet sits below Electrum’s built-in public signet checkpoint height. Sparrow is still the supported path.</p>
+        <p>Not for this hosted private signet environment. The official Electrum app reaches the endpoint, but then rejects the chain because this small private signet sits below Electrum’s built-in public signet checkpoint height. Sparrow is still the supported path.</p>
       </article>
       <article class="guide-card">
-        <h3>Why do I need the hosted demo endpoint?</h3>
-        <p>The hosted demo runs on a private signet chain. Use the endpoint shown above so Sparrow follows the same demo chain as the website.</p>
+        <h3>Why do I need the hosted private signet endpoint?</h3>
+        <p>The hosted environment runs on a private signet chain. Use the endpoint shown above so Sparrow follows the same chain as the website.</p>
       </article>
       <article class="guide-card">
         <h3>What about other wallets later?</h3>
@@ -1409,21 +1409,21 @@ function renderTransferGuideSection(): string {
     ${renderPanelHead(
       "What This Page Does",
       "A transfer changes who controls the name. For sales, payment and ownership change should be checked against the same transaction.",
-      `<p>The site prepares role-specific packages. Signing and broadcast still happen outside the website.</p>`
+      `<p>The site prepares role-specific review packages. Signing and broadcast still happen outside the website.</p>`
     )}
     <div class="guide-grid guide-grid-balanced">
       <article class="guide-card">
         <h3>Receiver</h3>
         <ul class="guide-list">
           <li>Create the new control key.</li>
-          <li>Give only the pubkey to the current owner.</li>
+          <li>Give only the public owner key to the current owner.</li>
           <li>Review the buyer package before signing or funding anything.</li>
         </ul>
       </article>
       <article class="guide-card">
         <h3>Current Owner</h3>
         <ul class="guide-list">
-          <li>Paste the receiver's pubkey.</li>
+          <li>Paste the receiver's public owner key.</li>
           <li>Add a seller payout address only for sales.</li>
           <li>Export packages so both sides review the same plan.</li>
         </ul>
@@ -1433,15 +1433,15 @@ function renderTransferGuideSection(): string {
         <ul class="guide-list">
           <li>Buyer payment and ONT ownership change should settle in one Bitcoin transaction.</li>
           <li>Do not treat payment and transfer as separate promises.</li>
-          <li>Use the CLI package review when checking handoff files outside the website.</li>
+          <li>Review the exact shared transaction before either side signs or funds it.</li>
         </ul>
       </article>
       <article class="guide-card">
-        <h3>Implementation Boundary</h3>
+        <h3>Current Website Boundary</h3>
         <ul class="guide-list">
           <li>The website prepares the handoff packages.</li>
-          <li>The CLI and your signer finish the transaction.</li>
-          <li>The current implementation is not yet a full two-party PSBT wizard for buyer and seller.</li>
+          <li>Your signer finishes the transaction.</li>
+          <li>The website is not yet a full two-party signing wizard for buyer and seller.</li>
         </ul>
       </article>
     </div>
@@ -1457,7 +1457,7 @@ function renderTransferPrepSection(): string {
             <span class="claim-step-badge">Step 1</span>
             <div class="wizard-step-copy">
               <h3>Start With Your Role</h3>
-              <p>The receiver creates the new control key. The current owner uses that pubkey to build the transfer handoff.</p>
+              <p>The receiver creates the new owner key. The current owner uses its public key to build the transfer handoff.</p>
             </div>
           </div>
           <span id="transferStepInputsState" class="summary-chip wizard-step-state">Start here</span>
@@ -1470,14 +1470,14 @@ function renderTransferPrepSection(): string {
                 <h3>Create The Recipient Key</h3>
                 <span class="status-pill transfer">receiver</span>
               </div>
-              <p class="field-value">Create the key that should control the name after transfer. Share only the pubkey with the current owner.</p>
+              <p class="field-value">Create the key that should control the name after transfer. Share only the public key with the current owner.</p>
               <div class="field-actions">
                 <button id="generateTransferOwnerKeyLocalButton" type="button">Create Recipient Key</button>
               </div>
               <div id="transferRecipientKeyResult" class="result-card empty">
-                Create the recipient key in this browser, then give only the pubkey to the current owner.
+                Create the recipient key in this browser, then give only the public owner key to the current owner.
               </div>
-              <p class="field-note">After the current owner sends you a buyer package, review it on this page or run <code>inspect-transfer-package --role buyer &lt;path&gt;</code>.</p>
+              <p class="field-note">After the current owner sends you a buyer package, review it on this page before signing or funding anything.</p>
             </section>
             <section class="transfer-role-panel transfer-role-panel-sender">
               <p class="support-strip-label">I am sending a name</p>
@@ -1485,7 +1485,7 @@ function renderTransferPrepSection(): string {
                 <h3>Build The Transfer Handoff</h3>
                 <span class="status-pill transfer">current owner</span>
               </div>
-              <p class="field-value">Paste the receiver's pubkey, then build the plan both sides will review.</p>
+              <p class="field-value">Paste the receiver's public owner key, then build the plan both sides will review.</p>
               <form id="transferDraftForm" class="tool-draft-form">
                 <div class="draft-grid">
                   <label class="draft-field">
@@ -1493,19 +1493,19 @@ function renderTransferPrepSection(): string {
                     <input id="transferNameInput" name="transferName" type="text" maxlength="32" placeholder="alice" autocomplete="off" />
                   </label>
                   <label class="draft-field">
-                    <span class="field-label">Recipient Pubkey (new control key)</span>
+                    <span class="field-label">Recipient Owner Key (public)</span>
                     <input
                       id="transferNewOwnerPubkeyInput"
                       name="transferNewOwnerPubkey"
                       type="text"
                       maxlength="64"
-                      placeholder="Paste the buyer's 32-byte x-only control pubkey in hex"
+                      placeholder="Paste the buyer's 32-byte x-only public owner key in hex"
                       autocomplete="off"
-	                    />
-	                <span class="field-hint">This becomes the new control key for the name after transfer.</span>
-	                  </label>
-	                  <label class="draft-field">
-	                    <span class="field-label">Seller Payout Address (only for sales)</span>
+                    />
+                    <span class="field-hint">This becomes the new control key for the name after transfer.</span>
+                  </label>
+                  <label class="draft-field">
+                    <span class="field-label">Seller Payout Address (only for sales)</span>
                     <input
                       id="transferSellerPayoutAddressInput"
                       name="transferSellerPayoutAddress"
@@ -1518,9 +1518,9 @@ function renderTransferPrepSection(): string {
                 <input id="transferModeInput" name="transferMode" type="hidden" value="auto" />
                 <input id="transferBondAddressInput" name="transferBondAddress" type="hidden" value="" />
                 <div class="draft-actions">
-	                  <button type="submit">Build Transfer Plan</button>
-	                </div>
-	              </form>
+                  <button type="submit">Build Transfer Plan</button>
+                </div>
+              </form>
             </section>
           </div>
         </div>
@@ -1537,14 +1537,14 @@ function renderTransferPrepSection(): string {
           <span id="transferStepReviewState" class="summary-chip wizard-step-state">After step 1</span>
         </summary>
         <div class="wizard-step-body">
-          <p class="field-note">Both exports come from the same transfer plan. Seller and receiver should each review the role-specific package against the same transaction details. The CLI can also validate a package with <code>inspect-transfer-package --role buyer|seller &lt;path&gt;</code>.</p>
+          <p class="field-note">Both exports come from the same transfer plan. Seller and receiver should each review the role-specific package against the same transaction details.</p>
           <div class="transfer-export-grid">
             <article class="guide-card transfer-export-card">
               <div class="result-title">
                 <h3>Seller Handoff</h3>
                 <span class="status-pill transfer">seller</span>
               </div>
-	              <p>For the current owner to check recipient details, payout expectations, and the recommended transfer mode.</p>
+              <p>For the current owner to check recipient details, payout expectations, and the recommended transfer mode.</p>
               <div class="transfer-export-actions">
                 <button id="downloadTransferSellerPackageButton" type="button">Download Seller Package</button>
                 <button id="downloadTransferSellerNotesButton" type="button" class="secondary-button">Download Seller Notes</button>
@@ -1555,7 +1555,7 @@ function renderTransferPrepSection(): string {
                 <h3>Buyer Handoff</h3>
                 <span class="status-pill transfer">buyer</span>
               </div>
-	              <p>For the receiver to check the new owner pubkey, sale path, and transaction details before signing or funding anything.</p>
+              <p>For the receiver to check the new owner key, sale path, and transaction details before signing or funding anything.</p>
               <div class="transfer-export-actions">
                 <button id="downloadTransferBuyerPackageButton" type="button">Download Buyer Package</button>
                 <button id="downloadTransferBuyerNotesButton" type="button" class="secondary-button">Download Buyer Notes</button>
@@ -1597,7 +1597,7 @@ function renderTransferPrepSection(): string {
             </div>
           </section>
           <div id="transferDraftResult" class="result-card empty">
-            Enter an owned name and the recipient pubkey to build a transfer-ready handoff.
+            Enter an owned name and the recipient owner key to build a transfer-ready handoff.
           </div>
           <div id="transferPackageReviewResult" class="result-card empty">
             Paste or upload a transfer package JSON file to review it from the buyer or seller side.
@@ -1637,7 +1637,7 @@ function renderSiteFooter(configuredBasePath: string): string {
       <section class="site-footer-group">
         <h2>Try</h2>
         <div class="site-footer-links">
-          <a href="${withBasePath("/setup", configuredBasePath)}">Demo Setup</a>
+          <a href="${withBasePath("/setup", configuredBasePath)}">Setup</a>
           <a href="${withBasePath("/auctions", configuredBasePath)}">Auctions</a>
           <a href="${withBasePath("/values", configuredBasePath)}">Destinations</a>
           <a href="${withBasePath("/transfer", configuredBasePath)}">Transfer</a>
@@ -1696,7 +1696,7 @@ function renderNetworkDetailsSection(collapsible: boolean): string {
 
   if (!collapsible) {
     return `<section id="network-details" class="panel panel-network">
-      ${renderPanelHead("Network Details", "Network, chain source, and resolver target.", `<p>The current resolver snapshot, chain source, and active network.</p>`)}
+      ${renderPanelHead("Network Details", "Network, chain source, and destination endpoint.", `<p>The current endpoint snapshot, chain source, and active network.</p>`)}
       ${body}
     </section>`;
   }
@@ -1741,7 +1741,7 @@ function renderNamesSection(collapsible = false): string {
         <h2>All Names</h2>
         <p>Grouped by lifecycle state for deeper browsing.</p>
       </div>
-      <span class="summary-chip">Open registry</span>
+      <span class="summary-chip">Open names</span>
     </summary>
     <div class="collapsible-panel-body">${body}</div>
   </details>`;

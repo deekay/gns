@@ -266,7 +266,7 @@ async function loadName(rawName: string): Promise<void> {
           error: null
         })).catch((error) => ({
           summary: null,
-          error: error instanceof Error ? error.message : "Unable to compare configured resolver views."
+          error: error instanceof Error ? error.message : "Unable to compare destination views."
         }))
       : Promise.resolve({
           summary: null,
@@ -337,7 +337,7 @@ function signLocally(): void {
     const derivedOwnerPubkey = deriveOwnerPubkey(ownerPrivateKeyHex);
 
     if (derivedOwnerPubkey !== state.currentName.currentOwnerPubkey) {
-      throw new Error("This private key does not match the resolver's current owner pubkey.");
+      throw new Error("This private key does not match the current owner key for this name.");
     }
 
     const sequence = parseNonNegativeInteger(
@@ -363,7 +363,7 @@ function signLocally(): void {
 
     state.signedRecord = signedRecord;
     renderSignedRecord(signedRecord);
-    renderPublishMessage("Signed update ready. Publish it to update the resolver's current destinations.");
+    renderPublishMessage("Signed update ready. Publish it to update the current destinations.");
     syncWizard();
   } catch (error) {
     state.signedRecord = null;
@@ -383,7 +383,7 @@ async function publishSignedRecord(options: {
 
   renderPublishMessage(
     options.fanout
-      ? "Publishing the signed destination update to the configured resolver set..."
+      ? "Publishing the signed destination update to the configured destination endpoints..."
       : "Publishing the signed destination update..."
   );
 
@@ -563,9 +563,9 @@ function renderResolverCompare(
   const rows = [
     valueCompare.canonicalResolverUrl === null
       ? null
-      : `<p><strong>Canonical resolver:</strong> ${escapeHtml(valueCompare.canonicalResolverUrl)}</p>`,
+      : `<p><strong>Primary endpoint:</strong> ${escapeHtml(valueCompare.canonicalResolverUrl)}</p>`,
     valueCompare.currentSequence === null
-      ? `<p><strong>Current update:</strong> no resolver currently shows published destinations.</p>`
+      ? `<p><strong>Current update:</strong> no endpoint currently shows published destinations.</p>`
       : `<p><strong>Current update:</strong> ${escapeHtml(String(valueCompare.currentSequence))}</p>`,
     valueCompare.laggingResolverUrls.length === 0
       ? null
@@ -584,8 +584,8 @@ function renderResolverCompare(
   return `
     <div class="resolver-compare-card">
       <div class="value-history-head">
-        <p class="step-list-label">Resolver Comparison</p>
-        <p class="field-value">${escapeHtml(statusLabel)} · ${escapeHtml(String(valueCompare.resolverCount))} configured resolvers</p>
+        <p class="step-list-label">Destination Endpoint Comparison</p>
+        <p class="field-value">${escapeHtml(statusLabel)} · ${escapeHtml(String(valueCompare.resolverCount))} configured endpoints</p>
       </div>
       <div class="resolver-compare-list">${rows.join("")}</div>
     </div>
@@ -666,11 +666,11 @@ function renderPublishResult(result: unknown): void {
     elements.publishResult.classList.remove("empty");
     elements.publishResult.innerHTML = `
       <div class="result-title">
-        <h3>Destinations Published To Resolver Set</h3>
+        <h3>Destinations Published To Endpoint Set</h3>
         <span class="status-pill mature">${escapeHtml(String(summary.successCount))}/${escapeHtml(String(summary.resolverCount))} accepted</span>
       </div>
       <p class="result-meta">${escapeHtml(summary.name)} · sequence ${escapeHtml(String(summary.sequence))} · ${escapeHtml(formatValueType(valueType, payloadHex))}</p>
-      <p class="field-value">The same signed destination update was sent to ${escapeHtml(String(summary.resolverCount))} configured resolvers. ${escapeHtml(String(summary.successCount))} accepted it and ${escapeHtml(String(summary.failureCount))} rejected or missed it.</p>
+      <p class="field-value">The same signed destination update was sent to ${escapeHtml(String(summary.resolverCount))} configured endpoints. ${escapeHtml(String(summary.successCount))} accepted it and ${escapeHtml(String(summary.failureCount))} rejected or missed it.</p>
       ${failures === "" ? "" : `<div class="resolver-compare-list">${failures}</div>`}
     `;
     return;
@@ -686,10 +686,10 @@ function renderPublishResult(result: unknown): void {
   elements.publishResult.innerHTML = `
     <div class="result-title">
       <h3>Destinations Published</h3>
-      <span class="status-pill mature">Resolver updated</span>
+      <span class="status-pill mature">Destinations updated</span>
     </div>
     <p class="result-meta">${escapeHtml(name)} · sequence ${escapeHtml(String(sequence))} · ${escapeHtml(formatValueType(valueType, payloadHex))}</p>
-    <p class="field-value">The resolver accepted the signed destination update${recordHash === "" ? "." : ` at ${escapeHtml(truncateMiddle(recordHash, 12, 10))}.`}</p>
+    <p class="field-value">The signed destination update was accepted${recordHash === "" ? "." : ` at ${escapeHtml(truncateMiddle(recordHash, 12, 10))}.`}</p>
   `;
 }
 
@@ -715,15 +715,15 @@ function updateResolverFanoutUi(): void {
 
   if (elements.publishModeNote) {
     elements.publishModeNote.textContent = state.resolverFanoutAvailable
-      ? `The primary publish button updates the hosted resolver. The secondary button sends the same signed JSON to ${state.resolverCandidates.length} configured resolvers. The owner private key never leaves the page.`
+      ? `The primary publish button updates the hosted destination endpoint. The secondary button sends the same signed JSON to ${state.resolverCandidates.length} configured endpoints. The owner private key never leaves the page.`
       : "Publishing sends only the signed JSON update. The owner private key never leaves the page.";
   }
 }
 
 function getDefaultPublishMessage(): string {
   return state.resolverFanoutAvailable
-    ? "Sign the destination update first. Then publish the signed JSON to the hosted resolver or configured resolver set."
-    : "Sign the destination update first. Then publish the signed JSON to the resolver.";
+    ? "Sign the destination update first. Then publish the signed JSON to the hosted endpoint or configured endpoint set."
+    : "Sign the destination update first. Then publish the signed JSON.";
 }
 
 function updateDerivedOwnerState(): void {
@@ -735,7 +735,7 @@ function updateDerivedOwnerState(): void {
   if (privateKey === "") {
     elements.ownerPubkeyPreview.value = "";
     if (elements.ownerMatchNote) {
-      elements.ownerMatchNote.textContent = "Paste the owner private key to derive the current owner pubkey locally.";
+      elements.ownerMatchNote.textContent = "Paste the owner private key to derive the current owner key locally.";
     }
     return;
   }
@@ -746,16 +746,16 @@ function updateDerivedOwnerState(): void {
     if (elements.ownerMatchNote) {
       elements.ownerMatchNote.textContent =
         state.currentName === null
-          ? "Owner pubkey derived locally. Load the owned name to compare it against the resolver's current owner."
+          ? "Owner key derived locally. Load the owned name to compare it against the current owner."
           : derived === state.currentName.currentOwnerPubkey
-            ? "Derived owner matches the resolver's current owner."
-            : "Derived owner does not match the resolver's current owner.";
+            ? "Derived owner matches the current owner."
+            : "Derived owner does not match the current owner.";
     }
   } catch (error) {
     elements.ownerPubkeyPreview.value = "";
     if (elements.ownerMatchNote) {
       elements.ownerMatchNote.textContent =
-        error instanceof Error ? error.message : "Unable to derive the owner pubkey from this private key.";
+        error instanceof Error ? error.message : "Unable to derive the owner key from this private key.";
     }
   }
 }
@@ -1221,7 +1221,7 @@ function renderBundleValue(value: string): string {
 
 function formatSats(value: string | number | bigint): string {
   const amount = BigInt(value);
-  return `₿${amount.toLocaleString("en-US")} (${formatBtcDecimal(amount)} BTC)`;
+  return `₿${formatBtcDecimal(amount)}`;
 }
 
 function formatBtcDecimal(amount: bigint): string {
